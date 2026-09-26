@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>전남소방학교 외부강사 등록신청</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+<style>
+  :root {
+    --navy: #1B3A5F;
+    --navy-hover: #142a45;
+    --text: #1a1a1a;
+    --text-sub: #4A4946;
+    --text-muted: #8c8c8c;
+    --border: #e6e6e6;
+    --border-input: #d1d1d1;
+    --bg-light: #f0f2f5;
+    --danger: #d93025;
+    --success: #188038;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Pretendard', sans-serif;
+    background: var(--bg-light);
+    color: var(--text);
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 20px 80px 20px; }
+
+  header { margin-bottom: 32px; text-align: center; }
+  header .eyebrow { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 8px; letter-spacing: 0.5px; }
+  header h1 { margin: 0 0 12px 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  header p { margin: 0; font-size: 15px; color: var(--text-sub); line-height: 1.6; word-break: keep-all; }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: var(--navy);
+    border-bottom: 2px solid var(--bg-light);
+    padding-bottom: 12px;
+  }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .field { margin-bottom: 20px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+  .required::after { content: " *"; color: var(--danger); }
+
+  input[type=text], input[type=tel], input[type=email], select, textarea {
+    width: 100%; height: 48px; border: 1px solid var(--border-input); border-radius: 8px;
+    padding: 0 16px; font-size: 15px; font-family: 'Pretendard', sans-serif; color: var(--text);
+    transition: all 0.2s; background: #fff;
+  }
+  textarea { height: 100px; padding: 16px; resize: vertical; line-height: 1.5; }
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(27,58,95,0.1);
+  }
+  input::placeholder, textarea::placeholder { color: #b0b0b0; }
+
+  input[type=file] {
+    width: 100%; font-size: 14px; padding: 12px; border: 1px dashed var(--border-input);
+    border-radius: 8px; background: #fafafa; cursor: pointer; color: var(--text-sub);
+    transition: border-color 0.2s;
+  }
+  input[type=file]:hover { border-color: var(--navy); }
+
+  .radio-group { display: flex; gap: 12px; }
+  .radio-item { flex: 1; position: relative; }
+  .radio-group input { position: absolute; opacity: 0; pointer-events: none; }
+  .radio-group label {
+    height: 48px; border: 1px solid var(--border-input); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 600; color: var(--text-sub); cursor: pointer; transition: all 0.2s;
+    margin: 0;
+  }
+  .radio-group input:checked + label {
+    border-color: var(--navy); color: var(--navy); background: #f4f7fa; box-shadow: inset 0 0 0 1px var(--navy);
+  }
+
+  button[type=submit] {
+    width: 100%; height: 56px; border: none; border-radius: 12px;
+    background: var(--navy); color: #fff; font-size: 18px; font-weight: 700;
+    font-family: 'Pretendard', sans-serif; cursor: pointer; transition: all 0.2s;
+    margin-top: 12px; box-shadow: 0 4px 12px rgba(27, 58, 95, 0.2);
+  }
+  button[type=submit]:hover { background: var(--navy-hover); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(27, 58, 95, 0.3); }
+  button[type=submit]:disabled { background: #9AA5B1; box-shadow: none; transform: none; cursor: not-allowed; }
+
+  .hint { font-size: 13px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
+  .hint-danger { color: var(--danger); font-weight: 600; }
+  .age-badge {
+    display: inline-block; margin-left: 8px; font-size: 13px; font-weight: 700;
+    color: var(--navy); background: #e3e9ee; padding: 2px 8px; border-radius: 12px;
+  }
+
+  #msg { margin-top: 20px; padding: 16px; border-radius: 8px; font-size: 15px; font-weight: 600; text-align: center; display: none; }
+  #msg.ok { display: block; background: #e6f4ea; color: var(--success); border: 1px solid #cce8d6; }
+  #msg.err { display: block; background: #fce8e6; color: var(--danger); border: 1px solid #fad2cf; }
+
+  .process-guide { background: #f4f7fa; border-radius: 12px; padding: 28px 24px; margin-bottom: 24px; }
+  .process-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 18px; }
+  .process-steps { display: flex; flex-direction: column; gap: 0; }
+  .pstep { display: flex; align-items: flex-start; gap: 14px; position: relative; padding-bottom: 22px; }
+  .pstep:last-child { padding-bottom: 0; }
+  .pstep:not(:last-child)::before {
+    content: ""; position: absolute; left: 13px; top: 28px; bottom: 0; width: 1px; background: var(--border-input);
+  }
+  .pnum {
+    width: 26px; height: 26px; border-radius: 50%; background: var(--navy); color: #fff;
+    font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; z-index: 1;
+  }
+  .pnum-muted { background: #9AA5B1; }
+  .ptext { font-size: 14px; font-weight: 700; color: var(--text); padding-top: 3px; }
+  .pnote { display: block; font-size: 12px; font-weight: 400; color: var(--text-muted); margin-top: 2px; }
+
+  .notice-box {
+    background: #fff8e1; border: 1px solid #ffe08a; border-radius: 10px;
+    padding: 16px 18px; font-size: 13px; color: #6b5300; line-height: 1.7; margin-bottom: 24px;
+  }
+
+  footer.contact {
+    margin-top: 32px; padding: 18px 20px; background: #fff; border-radius: 12px;
+    font-size: 13px; color: var(--text-sub); text-align: center; line-height: 1.7;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+  }
+  footer.contact b { color: var(--navy); }
+
+  @media (max-width: 600px){
+    .wrap { padding: 24px 16px 60px 16px; }
+    .card, .process-guide { padding: 24px 20px; }
+    .row { grid-template-columns: 1fr; gap: 16px; }
+    header h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">외부강사 등록신청</div>
+    <h1>전남소방학교 외부강사<br>등록을 신청합니다</h1>
+    <p>등록 신청 후 담당자 승인이 완료되면 강사 명단에 정식 등록됩니다.<br><b>승인 결과는 메일로 안내되니, 신청 후 메일을 꼭 확인해 주시기 바랍니다.</b><br>강의가 확정된 건에 대한 자료(동의서·강의계획서 등)는 별도 안내를 통해 제출하시게 됩니다.</p>
+  </header>
+
+  <div class="process-guide">
+    <div class="process-title">등록 절차 안내</div>
+    <div class="process-steps">
+      <div class="pstep"><div class="pnum">1</div><div class="ptext">강사 등록 신청</div></div>
+      <div class="pstep"><div class="pnum">2</div><div class="ptext">담당자 심사</div></div>
+      <div class="pstep"><div class="pnum">3</div><div class="ptext">승인 / 반려</div></div>
+      <div class="pstep"><div class="pnum">4</div><div class="ptext">메일로 결과 통보</div></div>
+      <div class="pstep">
+        <div class="pnum pnum-muted">5</div>
+        <div class="ptext">강의 배정<span class="pnote">승인된 경우, 필요할 때 진행됩니다</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notice-box">
+    ※ 강사풀 DB 등록에 협조해 주시면, 앞으로 강사 관리·강의 배정 안내가 전산으로 자동 처리되어 더 빠르고 정확하게 소통드릴 수 있습니다.
+  </div>
+
+  <form id="regForm">
+
+    <div class="card">
+      <div class="card-title">기본 정보</div>
+      <div class="row">
+        <div class="field">
+          <label class="required" for="name">성명</label>
+          <input type="text" id="name" required>
+        </div>
+        <div class="field">
+          <label class="required" for="birth">생년월일 <span class="age-badge" id="ageBadge"></span></label>
+          <input type="text" id="birth" inputmode="numeric" maxlength="10" placeholder="예: 19900101 (숫자만 입력)" required>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label class="required" for="phone">연락처</label>
+          <input type="tel" id="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label class="required" for="email">이메일</label>
+          <input type="email" id="email" required>
+        </div>
+      </div>
+      <div class="field">
+        <label class="required" for="photo">증명사진</label>
+        <input type="file" id="photo" accept="image/*" required>
+      </div>
+      <div class="field">
+        <label class="required" for="profileFile">프로필 파일 (이력서 등)</label>
+        <input type="file" id="profileFile" accept=".pdf,image/*" required>
+        <div class="hint">PDF 또는 이미지(JPG 등) 파일만 업로드해 주세요. 미리보기로 바로 확인할 수 있는 형식입니다.</div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label class="required" for="org">소속</label>
+          <input type="text" id="org" placeholder="예 : ○○소방서, ○○대학교" required>
+        </div>
+        <div class="field">
+          <label for="position">직위 / 직책</label>
+          <input type="text" id="position" placeholder="예 : 교수, 소방경">
+        </div>
+      </div>
+      <div class="field">
+        <label class="required">강사 구분</label>
+        <div class="radio-group">
+          <div class="radio-item">
+            <input type="radio" name="type" id="type-solo" value="단독" checked>
+            <label for="type-solo">단독(개인) 강사</label>
+          </div>
+          <div class="radio-item">
+            <input type="radio" name="type" id="type-org" value="기관소속">
+            <label for="type-org">기관 소속 파견 강사</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">분야</div>
+      <div class="row">
+        <div class="field">
+          <label class="required" for="specialty">분야</label>
+          <select id="specialty" required>
+            <option value="" disabled selected>선택하세요</option>
+            <option value="직무교육">직무교육</option>
+            <option value="직무역량교육">직무역량교육</option>
+            <option value="소양교육">소양교육</option>
+          </select>
+          <div class="hint">
+            직무교육 : 소방업무 수행에 필요한 전문역량<br>
+            직무역량교육 : 직무를 더 잘 수행하기 위한 공통역량<br>
+            소양교육 : 소방공무원으로서 갖춰야 할 기본 가치와 태도
+          </div>
+        </div>
+        <div class="field">
+          <label for="subject">강의 가능 교과목</label>
+          <input type="text" id="subject" placeholder="예 : 화재조사실무">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="region">활동지역</label>
+          <input type="text" id="region" placeholder="예 : 전남 동부권">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="degree">학위</label>
+          <input type="text" id="degree" placeholder="예 : 최종 학력(소방행정학 석사 등)">
+        </div>
+        <div class="field">
+          <label for="cert">자격증</label>
+          <input type="text" id="cert" placeholder="예 : 대표 자격증(화재조사관 등)">
+        </div>
+      </div>
+      <div class="field">
+        <label for="bio">약력 / 경력사항</label>
+        <textarea id="bio" placeholder="주요 경력을 간략히 작성해 주세요."></textarea>
+      </div>
+    </div>
+
+    <div class="hint hint-danger" style="margin-bottom:20px;">
+      ※ 심사 결과 승인되지 않은 경우, 제출하신 서류(사진, 첨부파일 등)는 별도로 반환되지 않습니다.<br>
+      ※ 사진·첨부파일 용량이 크면 업로드가 지연될 수 있습니다. "제출 중..." 표시 중에는 창을 닫지 말고 기다려 주세요.
+    </div>
+
+    <button type="submit" id="submitBtn">등록 신청하기</button>
+    <div id="msg"></div>
+
+  </form>
+
+  <footer class="contact">
+    등록이 안 되거나 문의사항이 있으시면<br>
+    <b>교육훈련팀 061-860-4731</b>로 연락 주시기 바랍니다.
+  </footer>
+
+</div>
+
+<script>
+  var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwLgHlqLhN79N0Rc1ZvtmsOJH5ocu_5faU_qv62IKWEiUOHQ7_0sZNoG8sGSbGCV8e3/exec';
+
+  var form = document.getElementById('regForm');
+  var msg = document.getElementById('msg');
+  var btn = document.getElementById('submitBtn');
+
+  function fileToBase64(file){
+    return new Promise(function(resolve, reject){
+      if (!file) { resolve(null); return; }
+      var reader = new FileReader();
+      reader.onload = function(){ resolve(reader.result); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function calcAge(birthStr){
+    var parts = birthStr.split('-');
+    if (parts.length !== 3) return null;
+    var b = new Date(parts[0], parts[1]-1, parts[2]);
+    if (isNaN(b.getTime())) return null;
+    var today = new Date();
+    var age = today.getFullYear() - b.getFullYear();
+    var m = today.getMonth() - b.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--;
+    return age;
+  }
+
+  var birthInput = document.getElementById('birth');
+  var ageBadge = document.getElementById('ageBadge');
+  birthInput.addEventListener('input', function(){
+    var digits = birthInput.value.replace(/[^0-9]/g, '').slice(0, 8);
+    var formatted = digits;
+    if (digits.length > 4) formatted = digits.slice(0,4) + '-' + digits.slice(4);
+    if (digits.length > 6) formatted = digits.slice(0,4) + '-' + digits.slice(4,6) + '-' + digits.slice(6);
+    birthInput.value = formatted;
+
+    if (digits.length === 8) {
+      var age = calcAge(formatted);
+      ageBadge.textContent = age !== null ? '(만 ' + age + '세)' : '';
+    } else {
+      ageBadge.textContent = '';
+    }
+  });
+
+  var phoneInput = document.getElementById('phone');
+  phoneInput.addEventListener('input', function(){
+    var digits = phoneInput.value.replace(/[^0-9]/g, '').slice(0, 11);
+    var formatted = digits;
+    if (digits.length > 3) formatted = digits.slice(0,3) + '-' + digits.slice(3);
+    if (digits.length > 7) formatted = digits.slice(0,3) + '-' + digits.slice(3,7) + '-' + digits.slice(7);
+    phoneInput.value = formatted;
+  });
+
+  form.addEventListener('submit', function(e){
+    if (!form.checkValidity()) { e.preventDefault(); form.reportValidity(); return; }
+    e.preventDefault();
+    msg.style.display = 'none';
+    msg.className = '';
+
+    var typeEl = document.querySelector('input[name=type]:checked');
+    var photoFile = document.getElementById('photo').files[0];
+    var profileFile = document.getElementById('profileFile').files[0];
+
+    var payload = {
+      action: 'register',
+      성명: document.getElementById('name').value.trim(),
+      생년월일: document.getElementById('birth').value,
+      연락처: document.getElementById('phone').value.trim(),
+      이메일: document.getElementById('email').value.trim(),
+      소속: document.getElementById('org').value.trim(),
+      직위: document.getElementById('position').value.trim(),
+      강사구분: typeEl ? typeEl.value : '',
+      전문분야: document.getElementById('specialty').value.trim(),
+      교과목명: document.getElementById('subject').value.trim(),
+      활동지역: document.getElementById('region').value.trim(),
+      자격증학위: [
+        document.getElementById('degree').value.trim() ? '학위: ' + document.getElementById('degree').value.trim() : '',
+        document.getElementById('cert').value.trim() ? '자격증: ' + document.getElementById('cert').value.trim() : ''
+      ].filter(Boolean).join(' / '),
+      약력: document.getElementById('bio').value.trim()
+    };
+
+    if (!payload.성명 || !payload.생년월일 || !payload.연락처 || !payload.이메일 || !payload.소속 || !payload.전문분야) {
+      msg.textContent = '필수 항목(*)을 모두 입력해 주세요.';
+      msg.className = 'err';
+      msg.style.display = 'block';
+      return;
+    }
+    if (!photoFile) {
+      msg.textContent = '증명사진을 첨부해 주세요.';
+      msg.className = 'err';
+      msg.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '제출 중...';
+
+    fileToBase64(photoFile)
+      .then(function(base64){
+        if (base64) {
+          payload.사진base64 = base64;
+          payload.사진타입 = photoFile.type;
+        }
+        return fileToBase64(profileFile);
+      })
+      .then(function(profileBase64){
+        if (profileBase64) {
+          payload.프로필base64 = profileBase64;
+          payload.프로필타입 = profileFile.type;
+        }
+        return fetch(WEBAPP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+      })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (data.status === 'ok') {
+          msg.innerHTML = '등록 신청이 접수되었습니다.<br><b>승인 여부는 메일로 안내되니, 반드시 메일을 확인해 주시기 바랍니다.</b>';
+          msg.className = 'ok';
+          msg.style.display = 'block';
+          form.reset();
+          ageBadge.textContent = '';
+        } else {
+          throw new Error('server error');
+        }
+      })
+      .catch(function(){
+        msg.textContent = '제출 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+        msg.className = 'err';
+        msg.style.display = 'block';
+      })
+      .finally(function(){
+        btn.disabled = false;
+        btn.textContent = '등록 신청하기';
+      });
+  });
+</script>
+
+</body>
+</html>
