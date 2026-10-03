@@ -87,6 +87,9 @@
   .course{font-weight:700;color:var(--text);}
   .course small{display:block;font-weight:500;color:var(--text-muted);font-size:11.5px;margin-top:2px;}
   .tag{display:inline-block;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:700;line-height:1.4;}
+  .rb{display:inline-block;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;line-height:1.5;margin-right:5px;vertical-align:1px;}
+  .rb.m{background:#E3ECF8;color:#1F4B8F;}
+  .rb.s{background:#ECEBE6;color:#4A4946;}
   .t-ok{background:var(--ok-bg);color:var(--ok-fg);}
   .t-warn{background:var(--warn-bg);color:var(--warn-fg);}
   .t-err{background:var(--err-bg);color:var(--err-fg);}
@@ -299,7 +302,7 @@
     th{position:static;}
     th,td{padding:5px 6px;}
     tr{page-break-inside:avoid;}
-    .tag{border:1px solid #999;background:#fff !important;color:#000 !important;}
+    .tag,.rb{border:1px solid #999;background:#fff !important;color:#000 !important;}
     #count{color:#000;}
   }
 
@@ -1092,6 +1095,8 @@
         '<input type="text" id="sRoomText" maxlength="100" placeholder="강의실 이름 직접 입력" style="display:none;margin-top:6px;"></div>' +
       '<div class="span2" style="position:relative;"><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin-bottom:3px;"><label for="sInstr" style="margin:0;">강사</label>' +
         '<button type="button" class="btn" id="sBrowse" style="height:26px;padding:0 10px;font-size:12px;">강사 찾아보기 (사진·이력)</button></div><div id="sChip"></div>' +
+        '<div id="sRoleWrap" style="display:none;margin:6px 0;"><span class="hint" style="margin-right:6px;font-weight:700;">역할</span><select id="sRole" style="width:auto;"><option>주강사</option><option>보조강사</option></select> ' +
+        '<span class="hint">강사가 2명 이상이면 목록에 주/보조로 표시됩니다. 누적 횟수·시수는 주강사만 집계합니다.</span></div>' +
         '<input type="text" id="sInstr" autocomplete="off" placeholder="이름·소속·분야·교과목으로 검색"><div id="sPicker" class="picker" style="display:none;"></div>' +
         '</div>' +
       '<div class="span2"><label for="sNote">비고</label><input type="text" id="sNote" maxlength="200" placeholder="선택 입력"></div>' +
@@ -1105,6 +1110,8 @@
     var big = Number(p['계획인원']) > 120;
     $('sKlassHint').textContent = big ? '계획인원이 120명을 넘습니다. A·B 분반 운영을 검토해 보세요.' : '';
     updateDow();
+    $('sRole').value = form.role === '보조강사' ? '보조강사' : '주강사';
+    $('sRole').addEventListener('change', function(){ form.role = $('sRole').value; });
     renderChip();
     $('sDate').addEventListener('change', function(){ updateDow(); renderChip(); });
     $('sStart').addEventListener('change', function(){
@@ -1166,6 +1173,8 @@
     }
     var x = $('sChipX');
     if (x) x.addEventListener('click', function(){ form.iid = ''; form.iname = ''; renderChip(); });
+    var rw = $('sRoleWrap');
+    if (rw) rw.style.display = (form.iid || form.iname) ? '' : 'none';
   }
   function showPicker(){
     var pk = $('sPicker');
@@ -1229,7 +1238,7 @@
     lastKlass = String(r['반'] || '전체');
     lastCat = String(r['교과목 구분'] || '');
     lastRoom = String(r['강의실'] || '');
-    form = { id: mode === 'edit' ? String(r['편성ID']) : '', iid: String(r['강사ID'] || ''), iname: String(r['강사명'] || '') };
+    form = { id: mode === 'edit' ? String(r['편성ID']) : '', iid: String(r['강사ID'] || ''), iname: String(r['강사명'] || ''), role: isSubRole(r) ? '보조강사' : '주강사' };
     renderForm(p);
     $('sStart').value = String(Number(r['시작교시']));
     $('sEnd').value = String(Number(r['끝교시']));
@@ -1284,6 +1293,7 @@
     var body = {
       action: 'saveSession', password: getPw(), 개설키: currentKey, 반: klass, 일자: date,
       시작교시: s, 끝교시: e, 교과목: subj, '교과목 구분': cat, 강사ID: form.iid, 강사명: form.iid ? '' : form.iname,
+      '강사 역할': (form.iid || form.iname) ? ($('sRole').value || '주강사') : '',
       강의실: room, 비고: $('sNote').value.trim()
     };
     if (form.id) body.편성ID = form.id;
@@ -1337,12 +1347,26 @@
   }
 
   /* --- 목록 --- */
+  // 주강사/보조강사 표시: 같은 과정·일자·교시·교과목·반에 강사가 2명 이상일 때만 배지를 붙임(1명이면 그 사람이 주강사). 역할 빈칸은 주강사
+  var roleCnt = {};
+  function roleKey(r){ return groupId(r) + '|' + String(r['반'] || '전체'); }
+  function buildRoleCnt(){
+    var m = {};
+    allSessions.forEach(function(r){ if (!hasInstr(r)) return; var k = roleKey(r); m[k] = (m[k] || 0) + 1; });
+    roleCnt = m;
+  }
+  function isSubRole(r){ return String(r['강사 역할'] || '') === '보조강사'; }
+  function roleTag(r){
+    if (!hasInstr(r) || (roleCnt[roleKey(r)] || 0) < 2) return '';
+    var sub = isSubRole(r);
+    return '<span class="rb ' + (sub ? 's' : 'm') + '">' + (sub ? '보조' : '주') + '</span>';
+  }
   function instrCell(r){
     if (r['강사ID']) {
       var ins = instrById[r['강사ID']];
-      return '<span class="tag t-ok">' + esc(ins ? ins.name : (r['강사명'] || r['강사ID'])) + '</span>';
+      return roleTag(r) + '<span class="tag t-ok">' + esc(ins ? ins.name : (r['강사명'] || r['강사ID'])) + '</span>';
     }
-    if (r['강사명']) return '<span class="tag t-info">' + esc(r['강사명']) + ' (직접 입력)</span>';
+    if (r['강사명']) return roleTag(r) + '<span class="tag t-info">' + esc(r['강사명']) + ' (직접 입력)</span>';
     return (isViewer() || isCancelled(planByKey(currentKey))) ? '<span class="tag t-none">미지정</span>' : '<button type="button" class="btn sm" data-act="assign" data-id="' + esc(r['편성ID']) + '">강사 지정</button>';
   }
   function actCell(r){
@@ -1356,6 +1380,7 @@
     var p = planByKey(currentKey);
     var list = sessionsOf(currentKey);
     var viewer = isViewer();
+    buildRoleCnt();
     if (!list.length) {
       $('sTableWrap').innerHTML = ''; $('sCards').innerHTML = '';
       $('sEmpty').style.display = 'block';
@@ -1420,8 +1445,13 @@
     });
     var mineHtml = mine.length ? mine.map(function(r){
       var pt = periodText(r);
-      return '<div class="hi">' + esc(md(r['일자'])) + ' · ' + esc(pt.txt) + ' · ' + esc(r['교과목']) + '<br><span class="hint">' + esc(r['개설키']) + '</span></div>';
+      return '<div class="hi">' + (isSubRole(r) ? '<span class="rb s">보조</span>' : '') + esc(md(r['일자'])) + ' · ' + esc(pt.txt) + ' · ' + esc(r['교과목']) + '<br><span class="hint">' + esc(r['개설키']) + '</span></div>';
     }).join('') : '<div class="hint">강의배정DB에 편성된 내역이 없습니다.</div>';
+    // 누적은 주강사만 집계(1교시=1시간), 보조강사는 기록만. 취소된 기수는 제외
+    var live = mine.filter(function(r){ var pp = planByKey(String(r['개설키'])); return !(pp && isCancelled(pp)); });
+    var mainRows = live.filter(function(r){ return !isSubRole(r); });
+    var mainHrs = mainRows.reduce(function(a, r){ return a + Math.max(0, Number(r['끝교시']) - Number(r['시작교시']) + 1); }, 0);
+    var sumHtml = mine.length ? '<div class="hint" style="margin-bottom:6px;"><b>주강사 ' + mainRows.length + '건(' + mainHrs + '시간)</b> · 보조강사 ' + (live.length - mainRows.length) + '건<br>누적은 주강사만 집계하고 보조강사는 기록만 합니다(취소된 기수 제외).</div>' : '';
     var ps = ['활성', '승인', '정식'].indexOf(x.status) > -1 ? 't-ok' : 't-warn';
     $('iCard').innerHTML =
       '<div class="top"><div><h2>' + esc(x.name) + ' <span class="tag ' + ps + '" style="vertical-align:middle;">' + esc(x.status || '-') + '</span></h2>' +
@@ -1438,7 +1468,7 @@
       '<div class="fi full"><div class="fk">약력</div><div class="fv">' + esc(joinLines(x.bio) || '-') + '</div></div>' +
       '</div>' +
       '<div class="sec">강의 이력 <span class="hint">(강사DB 기록)</span></div><div class="hbox" id="iHist">불러오는 중...</div>' +
-      '<div class="sec">강의배정DB 편성 내역</div><div class="hbox">' + mineHtml + '</div>' +
+      '<div class="sec">강의배정DB 편성 내역</div><div class="hbox">' + sumHtml + mineHtml + '</div>' +
       '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button>' +
       (canPick ? '<button type="button" class="btn primary" id="iPick" data-pick="' + esc(id) + '">이 강사 선택</button>' : '') + '</div>';
     $('iOverlay').style.display = 'flex';
@@ -1914,6 +1944,7 @@
         body: {
           반: String(r['반'] || '전체'), 일자: m.date || '', 시작교시: Number(r['시작교시']), 끝교시: Number(r['끝교시']),
           교과목: String(r['교과목'] || ''), '교과목 구분': String(r['교과목 구분'] || ''), 강사ID: iid, 강사명: iname,
+          '강사 역할': (iid || iname) ? String(r['강사 역할'] || '') : '',
           강의실: cp.room === 'plan' ? String(p['예정 강의실'] || '') : String(r['강의실'] || ''), 비고: String(r['비고'] || '')
         }
       };
