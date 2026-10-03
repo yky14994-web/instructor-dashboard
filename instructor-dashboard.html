@@ -459,7 +459,8 @@
         <option value="반려">반려</option>
         <option value="휴면">휴면</option>
       </select>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-sub);border:1px solid var(--border);border-radius:6px;padding:0 12px;height:40px;cursor:pointer;">
+      <!-- 강의배정 메뉴로 옮겨 재사용 예정이라 숨김(체크 해제 상태 유지). 다시 쓰려면 display:none 제거 -->
+      <label style="display:none;align-items:center;gap:6px;font-size:13px;color:var(--text-sub);border:1px solid var(--border);border-radius:6px;padding:0 12px;height:40px;cursor:pointer;">
         <input type="checkbox" id="filterPending" style="width:auto;height:auto;">
         배정받은 사람만 보기
       </label>
