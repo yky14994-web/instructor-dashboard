@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>전남소방학교 강의배정 · 연간계획</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --navy:#1B3A5F;
+    --text:#2C2C2A;
+    --text-sub:#4A4946;
+    --text-muted:#767F8C;
+    --border:#EFEDE7;
+    --border-input:#D9D6CF;
+    --ok-bg:#E3F1E4; --ok-fg:#1F6B2B;
+    --warn-bg:#FFF2C9; --warn-fg:#7A5B00;
+    --err-bg:#FBE0DD; --err-fg:#9B1C12;
+    --none-bg:#ECEEF1; --none-fg:#4A5360;
+    --info-bg:#E3EBF5; --info-fg:#1B3A5F;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+    background:#F0F2F5;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1280px;margin:0 auto;padding:20px 16px 60px 16px;}
+  header{
+    padding:18px 22px;background:#fff;border-radius:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;
+  }
+  header .title{font-size:19px;font-weight:800;color:var(--navy);}
+  header .sub{font-size:12.5px;color:var(--text-muted);margin-top:3px;}
+  .hbtns{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn{
+    height:36px;padding:0 14px;border-radius:6px;background:#fff;border:1px solid var(--border-input);
+    color:var(--text-sub);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
+    display:inline-flex;align-items:center;text-decoration:none;white-space:nowrap;
+  }
+  .btn:hover{background:#F4F7FA;}
+  .btn.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .btn.primary:hover{background:#142a45;}
+  .btn:disabled{opacity:.5;cursor:default;}
+
+  /* 로그인 */
+  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  #loginCard{background:#fff;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,0.08);padding:34px 30px;width:100%;max-width:360px;text-align:center;}
+  #loginCard .title{font-size:19px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+  #loginCard .sub{font-size:13px;color:var(--text-muted);margin-bottom:22px;}
+  .pin-box{width:48px;height:56px;border:1.5px solid var(--border-input);border-radius:8px;text-align:center;font-size:22px;font-family:inherit;}
+  .pin-box:focus{outline:none;border-color:var(--navy);}
+  #loginBtn{width:100%;height:42px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
+  #loginBtn:disabled{opacity:.6;}
+  #loginMsg{display:none;color:var(--err-fg);font-size:12.5px;margin-top:12px;}
+
+  /* 카드·필터 */
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+  .card{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:14px 16px;}
+  .card .n{font-size:26px;font-weight:800;color:var(--navy);line-height:1.1;}
+  .card .n .u{font-size:13px;font-weight:700;color:var(--text-muted);margin-left:2px;}
+  .card .l{font-size:12.5px;color:var(--text-sub);margin-top:6px;line-height:1.4;}
+  .card.warn .n{color:var(--warn-fg);}
+  .card.none .n{color:var(--none-fg);}
+  .bar{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;}
+  .bar select,.bar input[type=search]{height:36px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;font-family:inherit;font-size:13px;background:#fff;color:var(--text);}
+  .bar input[type=search]{min-width:190px;flex:1 1 190px;max-width:320px;}
+  .bar .spacer{flex:1 1 auto;}
+  .legend{font-size:12px;color:var(--text-muted);}
+  #msgBox{display:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:12px;}
+  #msgBox.warn{display:block;background:var(--warn-bg);color:var(--warn-fg);}
+  #msgBox.err{display:block;background:var(--err-bg);color:var(--err-fg);}
+  #count{font-size:12.5px;color:var(--text-muted);margin:2px 2px 8px 2px;}
+
+  /* 표 */
+  .tw{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow-x:auto;}
+  table{border-collapse:collapse;width:100%;font-size:13px;}
+  th{background:#F6F7F9;color:var(--text-sub);font-weight:700;text-align:left;padding:10px 10px;border-bottom:1px solid var(--border-input);white-space:nowrap;position:sticky;top:0;}
+  td{padding:10px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td.num,th.num{text-align:right;}
+  td.nw{white-space:nowrap;}
+  .course{font-weight:700;color:var(--text);}
+  .course small{display:block;font-weight:500;color:var(--text-muted);font-size:11.5px;margin-top:2px;}
+  .tag{display:inline-block;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:700;line-height:1.4;}
+  .t-ok{background:var(--ok-bg);color:var(--ok-fg);}
+  .t-warn{background:var(--warn-bg);color:var(--warn-fg);}
+  .t-err{background:var(--err-bg);color:var(--err-fg);}
+  .t-none{background:var(--none-bg);color:var(--none-fg);}
+  .t-info{background:var(--info-bg);color:var(--info-fg);}
+  .chk{font-size:11.5px;margin-top:4px;color:var(--text-sub);line-height:1.35;}
+  .empty{padding:36px 16px;text-align:center;color:var(--text-muted);font-size:13.5px;line-height:1.6;}
+  #loading{padding:40px 16px;text-align:center;color:var(--text-muted);}
+
+  /* 모바일 카드 */
+  #cardList{display:none;}
+  .rc{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:12px 14px;margin-bottom:10px;}
+  .rc .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;}
+  .rc .nm{font-weight:800;font-size:14px;}
+  .rc .meta{font-size:12px;color:var(--text-muted);margin-top:2px;}
+  .rc dl{display:grid;grid-template-columns:76px 1fr;gap:4px 8px;margin:10px 0 0 0;font-size:12.5px;}
+  .rc dt{color:var(--text-muted);}
+  .rc dd{margin:0;}
+
+  @media (max-width:900px){
+    .cards{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:720px){
+    .tw{display:none;}
+    #cardList{display:block;}
+    header .title{font-size:17px;}
+    .bar input[type=search]{max-width:none;}
+  }
+
+  /* 인쇄: A4 가로, 표만 */
+  @page{size:A4 landscape;margin:10mm;}
+  @media print{
+    body{background:#fff;}
+    .wrap{max-width:none;padding:0;}
+    header .hbtns,.bar,#msgBox,.cards,#loading{display:none !important;}
+    header{box-shadow:none;padding:0 0 8px 0;margin-bottom:6px;}
+    .tw{display:block !important;box-shadow:none;overflow:visible;}
+    #cardList{display:none !important;}
+    table{font-size:10.5px;}
+    th{position:static;}
+    th,td{padding:5px 6px;}
+    tr{page-break-inside:avoid;}
+    .tag{border:1px solid #999;background:#fff !important;color:#000 !important;}
+    #count{color:#000;}
+  }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div id="loginCard">
+    <div class="title">전남소방학교 강의배정</div>
+    <div class="sub">담당자 전용 · 비밀번호를 입력해 주세요</div>
+    <form id="loginForm">
+      <div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px;">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" data-idx="0" aria-label="비밀번호 1번째 자리">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" data-idx="1" aria-label="비밀번호 2번째 자리">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" data-idx="2" aria-label="비밀번호 3번째 자리">
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" data-idx="3" aria-label="비밀번호 4번째 자리">
+      </div>
+      <button type="submit" id="loginBtn">로그인</button>
+      <div id="loginMsg">비밀번호가 올바르지 않습니다.</div>
+    </form>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+<div class="wrap">
+  <header>
+    <div>
+      <div class="title">강의배정 · 연간계획</div>
+      <div class="sub">연간 교육훈련계획의 과정·기수별 현황입니다. (조회 전용)</div>
+    </div>
+    <div class="hbtns">
+      <a class="btn" href="instructor-dashboard.html">강사 조회로 이동</a>
+      <button class="btn" id="logoutBtn" type="button">로그아웃</button>
+    </div>
+  </header>
+
+  <div class="cards">
+    <div class="card"><div class="n"><span id="cCourses">0</span><span class="u">회</span></div><div class="l"><b>과정·기수</b><br>표시 중인 과정 수</div></div>
+    <div class="card"><div class="n"><span id="cPeople">0</span><span class="u">명</span></div><div class="l"><b>계획인원 합계</b><br>표시 중인 과정 기준</div></div>
+    <div class="card warn"><div class="n"><span id="cCheck">0</span><span class="u">건</span></div><div class="l"><b>확인 필요·오류</b><br>검사 결과가 OK가 아닌 과정</div></div>
+    <div class="card none"><div class="n"><span id="cNoSubj">0</span><span class="u">건</span></div><div class="l"><b>교과목 미편성</b><br>아직 교과목이 없는 과정</div></div>
+  </div>
+
+  <div id="msgBox"></div>
+
+  <div class="bar">
+    <select id="fYear" aria-label="연도"></select>
+    <select id="fMonth" aria-label="월"></select>
+    <select id="fType" aria-label="구분"></select>
+    <select id="fCheck" aria-label="검사 결과">
+      <option value="">검사 전체</option>
+      <option value="ok">OK(이상 없음)</option>
+      <option value="warn">확인 필요</option>
+      <option value="err">오류(수정 필요)</option>
+    </select>
+    <input type="search" id="fText" placeholder="과정명 검색" aria-label="과정명 검색">
+    <span class="spacer"></span>
+    <button class="btn" id="reloadBtn" type="button">새로고침</button>
+    <button class="btn" id="excelBtn" type="button">엑셀 내려받기</button>
+    <button class="btn" id="printBtn" type="button">인쇄</button>
+  </div>
+  <div class="legend" style="margin:0 2px 8px 2px;">초록=이상 없음 · 노랑=확인 필요 · 빨강=오류(수정 필요) · 검사 결과는 강의배정DB 연간계획 시트의 값입니다.</div>
+
+  <div id="loading">불러오는 중입니다. 처음에는 몇 초 걸릴 수 있습니다.</div>
+  <div id="count"></div>
+  <div class="tw" id="tableWrap" style="display:none;">
+    <table>
+      <thead>
+        <tr>
+          <th>구분</th><th>과정 · 기수</th><th>사이버</th><th>입교</th><th>교육기간</th>
+          <th class="num">계획인원</th><th>강의실</th><th>합숙</th><th>편성 담당</th><th>강사 배정 현황</th><th>검사</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div id="cardList"></div>
+  <div class="empty" id="emptyBox" style="display:none;"></div>
+</div>
+</div>
+
+<script>
+(function(){
+  var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwLgHlqLhN79N0Rc1ZvtmsOJH5ocu_5faU_qv62IKWEiUOHQ7_0sZNoG8sGSbGCV8e3/exec';
+  var KEY_PW = 'jsfa_dash_pw';
+  var KEY_ROLE = 'jsfa_dash_role';
+
+  var plans = [];      // 연간계획 행(정렬됨)
+  var sessionsByKey = {}; // 개설키 -> {total, assigned}
+  var shown = [];      // 현재 필터 결과
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  function getPw(){ try { return sessionStorage.getItem(KEY_PW); } catch(e){ return null; } }
+  function setSess(k, v){ try { sessionStorage.setItem(k, v); } catch(e){} }
+  function delSess(k){ try { sessionStorage.removeItem(k); } catch(e){} }
+
+  function api(body){
+    return fetch(WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    }).then(function(res){ return res.json(); });
+  }
+
+  /* ---------- 날짜 표시 ---------- */
+  var DOW = ['일','월','화','수','목','금','토'];
+  function parseYmd(s){
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''));
+    if (!m) return null;
+    return { y: +m[1], m: +m[2], d: +m[3], dow: new Date(+m[1], +m[2] - 1, +m[3]).getDay() };
+  }
+  function md(s){
+    var p = parseYmd(s);
+    if (!p) return String(s || '');
+    return p.m + '/' + p.d + '(' + DOW[p.dow] + ')';
+  }
+  function range(a, b){
+    if (!a && !b) return '';
+    if (a && !b) return md(a) + '~';
+    if (!a && b) return '~' + md(b);
+    if (a === b) return md(a);
+    return md(a) + '~' + md(b);
+  }
+
+  /* ---------- 검사 결과 분류 ---------- */
+  function checkClass(v){
+    v = String(v || '').trim();
+    if (!v) return 'none';
+    if (v === 'OK') return 'ok';
+    if (v.indexOf('[확인]') === 0) return 'warn';
+    return 'err';
+  }
+  function checkLabel(c){ return c === 'ok' ? 'OK' : c === 'warn' ? '확인 필요' : c === 'err' ? '오류' : '-'; }
+  function checkText(v){ return String(v || '').replace(/^\[확인\]\s*/, ''); }
+
+  /* ---------- 데이터 정리 ---------- */
+  function buildSessionMap(list){
+    // 같은 일자·교시·교과목은 분반(A/B)이어도 교과목 1개로 셈. 모든 반에 강사가 있어야 배정됨.
+    var groups = {};
+    list.forEach(function(r){
+      var key = r['개설키'];
+      if (!key) return;
+      var g = key + '|' + r['일자'] + '|' + r['시작교시'] + '|' + r['끝교시'] + '|' + r['교과목'];
+      if (!groups[g]) groups[g] = { key: key, all: true };
+      var has = !!(String(r['강사ID'] || '').trim() || String(r['강사명'] || '').trim());
+      if (!has) groups[g].all = false;
+    });
+    var out = {};
+    Object.keys(groups).forEach(function(g){
+      var o = groups[g];
+      if (!out[o.key]) out[o.key] = { total: 0, assigned: 0 };
+      out[o.key].total++;
+      if (o.all) out[o.key].assigned++;
+    });
+    return out;
+  }
+
+  function subjState(p){
+    var key = p['과정+기수'];
+    if (!key) return { kind: 'na', text: '-' };
+    var s = sessionsByKey[key];
+    if (!s || !s.total) return { kind: 'none', text: '교과목 미편성' };
+    var cls = s.assigned >= s.total ? 'ok' : 'info';
+    return { kind: cls, text: '교과목 ' + s.total + '개 중 ' + s.assigned + '개 배정' };
+  }
+
+  function sortPlans(list){
+    return list.slice().sort(function(a, b){
+      var x = String(a['입교 시작일'] || '9999'), y = String(b['입교 시작일'] || '9999');
+      if (x !== y) return x < y ? -1 : 1;
+      return String(a['과정명'] || '').localeCompare(String(b['과정명'] || ''), 'ko');
+    });
+  }
+
+  /* ---------- 필터 ---------- */
+  function fillSelect(sel, items, firstLabel, keep){
+    var cur = keep ? sel.value : '';
+    var html = '<option value="">' + esc(firstLabel) + '</option>';
+    items.forEach(function(it){ html += '<option value="' + esc(it.v) + '">' + esc(it.t) + '</option>'; });
+    sel.innerHTML = html;
+    if (cur && items.some(function(it){ return String(it.v) === cur; })) sel.value = cur;
+  }
+
+  function initFilters(){
+    var years = {};
+    plans.forEach(function(p){
+      var d = parseYmd(p['입교 시작일']);
+      if (d) years[d.y] = (years[d.y] || 0) + 1;
+    });
+    var ys = Object.keys(years).map(Number).sort();
+    fillSelect($('fYear'), ys.map(function(y){ return { v: y, t: y + '년' }; }), '전체 연도', true);
+    if (!$('fYear').value && ys.length) {
+      // 처음에는 과정이 가장 많은 연도를 보여 줌(같으면 나중 연도)
+      var pick = ys[0];
+      ys.forEach(function(y){ if (years[y] >= years[pick]) pick = y; });
+      $('fYear').value = String(pick);
+    }
+    var ms = [];
+    for (var m = 1; m <= 12; m++) ms.push({ v: m, t: m + '월' });
+    fillSelect($('fMonth'), ms, '전체 월', true);
+    var types = {};
+    plans.forEach(function(p){ if (p['구분']) types[p['구분']] = true; });
+    fillSelect($('fType'), Object.keys(types).map(function(t){ return { v: t, t: t }; }), '전체 구분', true);
+  }
+
+  function applyFilters(){
+    var fy = $('fYear').value, fm = $('fMonth').value, ft = $('fType').value, fc = $('fCheck').value;
+    var q = $('fText').value.trim().toLowerCase();
+    shown = plans.filter(function(p){
+      var d = parseYmd(p['입교 시작일']);
+      if (fy || fm) {
+        if (!d) return false;
+        if (fy && String(d.y) !== fy) return false;
+        if (fm && String(d.m) !== fm) return false;
+      }
+      if (ft && String(p['구분']) !== ft) return false;
+      if (fc) {
+        var c = checkClass(p['검사 결과']);
+        if (fc === 'ok' && c !== 'ok') return false;
+        if (fc === 'warn' && c !== 'warn') return false;
+        if (fc === 'err' && c !== 'err') return false;
+      }
+      if (q && String(p['과정명'] || '').toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+    render();
+  }
+
+  /* ---------- 그리기 ---------- */
+  function typeCell(p){
+    var t = String(p['구분'] || '');
+    var s = String(p['세부구분'] || '');
+    return esc(t) + (s ? '<br><span class="legend">' + esc(s) + '</span>' : '');
+  }
+  function courseCell(p){
+    var gisu = String(p['기수'] || '');
+    return '<span class="course">' + esc(p['과정명']) + ' ' + esc(gisu) + '</span>' +
+      (p['비고'] ? '<small>' + esc(p['비고']) + '</small>' : '');
+  }
+  function cyber(p){ return range(p['사이버 시작일'], p['사이버 종료일']) || '-'; }
+  function ipgyo(p){ return range(p['입교 시작일'], p['입교 종료일']) || '날짜 미입력'; }
+  function camp(p){ var v = String(p['합숙여부'] || ''); return v || '-'; }
+  function checkCell(p){
+    var v = p['검사 결과'];
+    var c = checkClass(v);
+    var html = '<span class="tag t-' + c + '">' + checkLabel(c) + '</span>';
+    if (c === 'warn' || c === 'err') html += '<div class="chk">' + esc(checkText(v)) + '</div>';
+    return html;
+  }
+  function subjCell(p){
+    var s = subjState(p);
+    if (s.kind === 'na') return '<span class="legend">-</span>';
+    var cls = s.kind === 'none' ? 't-none' : s.kind === 'ok' ? 't-ok' : 't-info';
+    return '<span class="tag ' + cls + '">' + esc(s.text) + '</span>';
+  }
+
+  function render(){
+    $('loading').style.display = 'none';
+    var ppl = 0, check = 0, nosubj = 0;
+    shown.forEach(function(p){
+      ppl += Number(p['계획인원']) || 0;
+      var c = checkClass(p['검사 결과']);
+      if (c === 'warn' || c === 'err') check++;
+      var s = subjState(p);
+      if (s.kind === 'none') nosubj++;
+    });
+    $('cCourses').textContent = shown.length;
+    $('cPeople').textContent = ppl.toLocaleString('ko-KR');
+    $('cCheck').textContent = check;
+    $('cNoSubj').textContent = nosubj;
+    $('count').textContent = '전체 ' + plans.length + '개 중 ' + shown.length + '개 표시';
+
+    if (!shown.length) {
+      $('tableWrap').style.display = 'none';
+      $('cardList').innerHTML = '';
+      $('emptyBox').style.display = 'block';
+      $('emptyBox').innerHTML = plans.length
+        ? '조건에 맞는 과정이 없습니다. 필터를 바꿔 보세요.'
+        : '연간계획에 입력된 과정이 없습니다.<br>강의배정DB의 연간계획 시트에 과정명, 입교 시작일, 입교 종료일 등을 입력한 뒤 새로고침을 눌러 주세요.';
+      return;
+    }
+    $('emptyBox').style.display = 'none';
+    $('tableWrap').style.display = '';
+
+    var rows = '', cards = '';
+    shown.forEach(function(p){
+      rows += '<tr>' +
+        '<td class="nw">' + typeCell(p) + '</td>' +
+        '<td>' + courseCell(p) + '</td>' +
+        '<td class="nw">' + esc(cyber(p)) + '</td>' +
+        '<td class="nw">' + esc(ipgyo(p)) + '</td>' +
+        '<td class="nw">' + esc(p['교육기간'] || '-') + '</td>' +
+        '<td class="num nw">' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '</td>' +
+        '<td>' + esc(p['예정 강의실'] || '-') + '</td>' +
+        '<td class="nw">' + esc(camp(p)) + '</td>' +
+        '<td>' + esc(p['편성 담당'] || '-') + '</td>' +
+        '<td class="nw">' + subjCell(p) + '</td>' +
+        '<td>' + checkCell(p) + '</td>' +
+        '</tr>';
+      cards += '<div class="rc"><div class="top"><div><div class="nm">' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') + '</div>' +
+        '<div class="meta">' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ')) + '</div></div>' +
+        '<div>' + subjCell(p) + '</div></div>' +
+        '<dl><dt>입교</dt><dd>' + esc(ipgyo(p)) + (p['교육기간'] ? ' (' + esc(p['교육기간']) + ')' : '') + '</dd>' +
+        '<dt>사이버</dt><dd>' + esc(cyber(p)) + '</dd>' +
+        '<dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd>' +
+        '<dt>강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd>' +
+        '<dt>편성 담당</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd>' +
+        '<dt>검사</dt><dd>' + checkCell(p) + '</dd></dl></div>';
+    });
+    $('tbody').innerHTML = rows;
+    $('cardList').innerHTML = cards;
+  }
+
+  /* ---------- 불러오기 ---------- */
+  function showMsg(kind, text){
+    var b = $('msgBox');
+    if (!text) { b.className = ''; b.textContent = ''; return; }
+    b.className = kind;
+    b.textContent = text;
+  }
+
+  function loadAll(pw, quiet){
+    if (!quiet) { $('loading').style.display = 'block'; }
+    showMsg('', '');
+    return Promise.all([
+      api({ action: 'listAssignmentData', password: pw }),
+      api({ action: 'listSessions', password: pw }),
+      api({ action: 'login', password: pw })
+    ]).then(function(res){
+      var a = res[0], s = res[1], lg = res[2];
+      if (a.status !== 'ok') {
+        var err = new Error(a.message || '불러오지 못했습니다');
+        err.auth = /인증|비밀번호/.test(a.message || '');
+        throw err;
+      }
+      $('loginScreen').style.display = 'none';
+      $('app').style.display = 'block';
+      setSess(KEY_PW, pw);
+      if (lg && lg.role) setSess(KEY_ROLE, lg.role);
+
+      plans = sortPlans(a['연간계획'] || []);
+      var msgs = [];
+      if (a['시트없음'] && a['시트없음'].length) msgs.push('강의배정DB에서 다음 시트를 찾지 못했습니다: ' + a['시트없음'].join(', '));
+      if (s.status === 'ok') {
+        sessionsByKey = buildSessionMap(s.data || []);
+      } else {
+        sessionsByKey = {};
+        msgs.push('교과목 편성 현황을 불러오지 못했습니다(' + (s.message || '오류') + '). 강사 배정 현황은 "교과목 미편성"으로 표시될 수 있습니다.');
+      }
+      if (msgs.length) showMsg('warn', msgs.join(' / '));
+      initFilters();
+      applyFilters();
+    });
+  }
+
+  /* ---------- 내려받기·인쇄 ---------- */
+  var XLSX_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  function loadXlsxLib(cb){
+    if (window.XLSX) { cb(true); return; }
+    var sc = document.createElement('script');
+    sc.src = XLSX_CDN;
+    sc.onload = function(){ cb(!!window.XLSX); };
+    sc.onerror = function(){ cb(false); };
+    document.head.appendChild(sc);
+  }
+  var EXPORT_HEAD = ['구분', '세부구분', '과정명', '기수', '교육대상', '입교 시작일', '입교 종료일', '교육기간', '계획인원', '예정 강의실',
+    '합숙여부', '입교 시수', '편성 담당', '사이버 시작일', '사이버 종료일', '실습(외부) 시작일', '실습(외부) 종료일', '보조 장소', '비고',
+    '강사 배정 현황', '검사 결과'];
+  function exportRows(){
+    var aoa = [EXPORT_HEAD];
+    shown.forEach(function(p){
+      aoa.push(EXPORT_HEAD.map(function(k){
+        if (k === '강사 배정 현황') return subjState(p).text;
+        var v = p[k];
+        if (v === undefined || v === null) return '';
+        if (k === '계획인원' || k === '입교 시수') { var n = Number(v); return isNaN(n) || v === '' ? String(v) : n; }
+        return v;
+      }));
+    });
+    return aoa;
+  }
+  function fileLabel(){
+    var parts = ['연간계획'];
+    if ($('fYear').value) parts.push($('fYear').value);
+    if ($('fMonth').value) parts.push($('fMonth').value + '월');
+    if ($('fType').value) parts.push($('fType').value);
+    var d = new Date();
+    parts.push(d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'));
+    return parts.join('_');
+  }
+  function downloadCsv(aoa, name){
+    var csv = aoa.map(function(r){
+      return r.map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(',');
+    }).join('\r\n');
+    var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  }
+  function doExcel(){
+    if (!shown.length) { alert('내려받을 과정이 없습니다.'); return; }
+    var aoa = exportRows();
+    var name = fileLabel();
+    loadXlsxLib(function(ok){
+      if (!ok) {
+        if (confirm('엑셀 파일 생성 도구를 불러오지 못했습니다.\nCSV 파일(엑셀에서 열 수 있음)로 내려받을까요?')) downloadCsv(aoa, name);
+        return;
+      }
+      var ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols'] = EXPORT_HEAD.map(function(k, ci){
+        var w = k.length * 2 + 2;
+        aoa.slice(1, 300).forEach(function(row){
+          var len = 0, str = String(row[ci] == null ? '' : row[ci]);
+          for (var i = 0; i < str.length; i++) len += str.charCodeAt(i) > 255 ? 2 : 1;
+          if (len > w) w = len;
+        });
+        return { wch: Math.min(w + 2, 50) };
+      });
+      ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: aoa.length - 1, c: EXPORT_HEAD.length - 1 } }) };
+      ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '연간계획');
+      XLSX.writeFile(wb, name + '.xlsx');
+    });
+  }
+  function doPrint(){
+    if (!shown.length) { alert('인쇄할 과정이 없습니다.'); return; }
+    window.print();
+  }
+
+  /* ---------- 이벤트 ---------- */
+  ['fYear', 'fMonth', 'fType', 'fCheck'].forEach(function(id){ $(id).addEventListener('change', applyFilters); });
+  $('fText').addEventListener('input', applyFilters);
+  $('reloadBtn').addEventListener('click', function(){
+    var pw = getPw();
+    if (!pw) return;
+    var b = $('reloadBtn'); b.disabled = true; b.textContent = '불러오는 중...';
+    loadAll(pw, true).catch(function(e){ showMsg('err', e.message || '불러오지 못했습니다'); })
+      .finally(function(){ b.disabled = false; b.textContent = '새로고침'; });
+  });
+  $('excelBtn').addEventListener('click', doExcel);
+  $('printBtn').addEventListener('click', doPrint);
+  $('logoutBtn').addEventListener('click', function(){
+    delSess(KEY_PW); delSess(KEY_ROLE);
+    location.reload();
+  });
+
+  /* ---------- 로그인 ---------- */
+  var pinBoxes = Array.prototype.slice.call(document.querySelectorAll('.pin-box'));
+  function getPin(){ return pinBoxes.map(function(b){ return b.value; }).join(''); }
+  function clearPin(){ pinBoxes.forEach(function(b){ b.value = ''; }); pinBoxes[0].focus(); }
+  pinBoxes.forEach(function(box, idx){
+    box.addEventListener('input', function(){
+      box.value = box.value.replace(/[^0-9]/g, '').slice(0, 1);
+      if (box.value && idx < pinBoxes.length - 1) pinBoxes[idx + 1].focus();
+      if (box.value && idx === pinBoxes.length - 1) {
+        var f = $('loginForm');
+        if (f.requestSubmit) f.requestSubmit(); else $('loginBtn').click();
+      }
+    });
+    box.addEventListener('keydown', function(e){
+      if (e.key === 'Backspace' && !box.value && idx > 0) { pinBoxes[idx - 1].focus(); pinBoxes[idx - 1].value = ''; }
+    });
+  });
+  pinBoxes[0].focus();
+
+  $('loginForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var pw = getPin();
+    var btn = $('loginBtn'), msg = $('loginMsg');
+    msg.style.display = 'none';
+    if (pw.length < 4) return;
+    btn.disabled = true; btn.textContent = '확인 중...';
+    loadAll(pw).catch(function(err){
+      if (err.auth === true) msg.textContent = '비밀번호가 올바르지 않습니다.';
+      else if (err.auth === false) msg.textContent = err.message || '불러오지 못했습니다';
+      else msg.textContent = '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+      msg.style.display = 'block';
+      delSess(KEY_PW); delSess(KEY_ROLE);
+      clearPin();
+    }).finally(function(){ btn.disabled = false; btn.textContent = '로그인'; });
+  });
+
+  var saved = getPw();
+  if (saved) {
+    loadAll(saved).catch(function(err){
+      if (err.auth) { delSess(KEY_PW); delSess(KEY_ROLE); return; }
+      // 비밀번호는 맞지만 데이터 연결 문제: 화면은 열고 오류 표시
+      $('loginScreen').style.display = 'none';
+      $('app').style.display = 'block';
+      $('loading').style.display = 'none';
+      showMsg('err', err.message || '불러오지 못했습니다');
+    });
+  }
+})();
+</script>
+</body>
+</html>
