@@ -335,7 +335,7 @@
 
   // 서식 다운로드 링크
   var cfl = document.getElementById('consentFormLink'); cfl.href = 'forms/consent.hwpx'; cfl.setAttribute('download', '개인정보수집활용동의서_양식.hwpx'); cfl.removeAttribute('target');
-  document.getElementById('planFormLink').href = 'https://drive.google.com/uc?export=download&id=1zZmiBfokw9YYsC836ZOY_PvT6WJpbX4L';
+  var pfl = document.getElementById('planFormLink'); pfl.href = 'forms/lecture-plan.hwpx'; pfl.setAttribute('download', '강의계획서_양식.hwpx'); pfl.removeAttribute('target');
 
   function postJson(payload){
     return fetch(WEBAPP_URL, {
