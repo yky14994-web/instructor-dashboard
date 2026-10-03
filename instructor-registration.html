@@ -329,12 +329,12 @@
   var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwLgHlqLhN79N0Rc1ZvtmsOJH5ocu_5faU_qv62IKWEiUOHQ7_0sZNoG8sGSbGCV8e3/exec';
 
   // 서식 다운로드 주소: 한글 양식을 드라이브에 올린 뒤 주소를 넣으면 버튼이 나타납니다.
-  var CARD_FORM_URL = '';
-  var CONSENT_FORM_URL = 'https://drive.google.com/uc?export=download&id=1F4nHTVL4aSK7PKo40Y46gWayhHl3C4NJ';
+  var CARD_FORM_URL = 'forms/instructor-card.hwpx';
+  var CONSENT_FORM_URL = 'forms/consent.hwpx';
   [['cardFormLink', CARD_FORM_URL], ['consentFormLink', CONSENT_FORM_URL]].forEach(function(p){
     var el = document.getElementById(p[0]);
     el.style.display = 'inline-flex';
-    if (p[1]) { el.href = p[1]; }
+    if (p[1]) { el.href = p[1]; el.setAttribute('download', p[0] === 'cardFormLink' ? '강사관리카드_양식.hwpx' : '개인정보수집활용동의서_양식.hwpx'); el.removeAttribute('target'); }
     else { el.classList.add('disabled'); el.removeAttribute('href'); el.removeAttribute('target'); el.textContent = el.textContent.replace('다운로드', '다운로드 (양식 준비 중)'); }
   });
   var MAX_PDF_BYTES = 10 * 1024 * 1024;
