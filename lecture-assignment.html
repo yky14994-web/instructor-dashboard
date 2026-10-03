@@ -90,6 +90,8 @@
   .rb{display:inline-block;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;line-height:1.5;margin-right:5px;vertical-align:1px;}
   .rb.m{background:#E3ECF8;color:#1F4B8F;}
   .rb.s{background:#ECEBE6;color:#4A4946;}
+  .ins{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;white-space:nowrap;min-height:34px;}
+  .ins .act{flex-wrap:nowrap;}
   .t-ok{background:var(--ok-bg);color:var(--ok-fg);}
   .t-warn{background:var(--warn-bg);color:var(--warn-fg);}
   .t-err{background:var(--err-bg);color:var(--err-fg);}
@@ -1392,9 +1394,22 @@
     $('sEmpty').style.display = 'none';
     $('sEmpty').innerHTML = '';
     var rows = '', cards = '', lastDay = '', seenG = {};
+    // 같은 일자·교시·교과목·반이고 구분·강의실·비고가 같은 줄은 한 줄로 합쳐 강사만 줄로 나눠 표시(주강사 먼저). 강사 미지정 줄은 합치지 않음
+    var units = [], uMap = {};
     list.forEach(function(r){
+      if (!hasInstr(r)) { units.push([r]); return; }
+      var uk = [roleKey(r), String(r['교과목 구분'] || ''), String(r['강의실'] || ''), String(r['비고'] || '')].join('|');
+      if (!uMap[uk]) { uMap[uk] = []; units.push(uMap[uk]); }
+      uMap[uk].push(r);
+    });
+    units.forEach(function(u){
+      if (u.length > 1) u.sort(function(x, y){ return (isSubRole(x) ? 1 : 0) - (isSubRole(y) ? 1 : 0); });
+    });
+    units.forEach(function(u){
+      var r = u[0], multi = u.length > 1;
       var pt = periodText(r);
-      var warns = rowWarnings(r, p);
+      var seenW = {}, warns = [];
+      u.forEach(function(x){ rowWarnings(x, p).forEach(function(w){ if (!seenW[w]) { seenW[w] = true; warns.push(w); } }); });
       var wHtml = warns.map(function(w){ return '<div class="warnrow">⚠ ' + esc(w) + '</div>'; }).join('');
       var gid = groupId(r);
       if (!seenG[gid] && cflByGid[gid]) {
@@ -1406,18 +1421,23 @@
         rows += '<tr class="day"><td colspan="' + (viewer ? 7 : 8) + '">' + esc(md(r['일자'])) + '</td></tr>';
         cards += '<div class="src"><div class="dayh">' + esc(md(r['일자'])) + '</div></div>';
       }
+      var insHtml = multi ? u.map(function(x){ return '<div class="ins">' + instrCell(x) + '</div>'; }).join('') : instrCell(r);
+      var actHtml = multi ? u.map(function(x){ return '<div class="ins">' + actCell(x) + '</div>'; }).join('') : actCell(r);
       rows += '<tr><td class="nw">' + esc(pt.txt) + (pt.time ? '<span class="t">' + esc(pt.time) + '</span>' : '') + '</td>' +
         '<td>' + esc(r['교과목']) + wHtml + '</td>' +
         '<td>' + esc(r['교과목 구분'] || '-') + '</td>' +
         '<td>' + esc(r['반'] || '전체') + '</td>' +
-        '<td>' + instrCell(r) + '</td>' +
+        '<td>' + insHtml + '</td>' +
         '<td>' + esc(r['강의실'] || '-') + '</td>' +
         '<td>' + esc(r['비고'] || '') + '</td>' +
-        (viewer ? '' : '<td>' + actCell(r) + '</td>') + '</tr>';
-      cards += '<div class="src"><div class="h"><div class="n">' + esc(pt.txt) + ' · ' + esc(r['교과목']) + '</div><div>' + instrCell(r) + '</div></div>' +
+        (viewer ? '' : '<td>' + actHtml + '</td>') + '</tr>';
+      var cardActs = viewer ? '' : (multi ? '' : '<div style="margin-top:8px;">' + actCell(r) + '</div>');
+      var cardIns = multi
+        ? '<div style="margin-top:8px;">' + u.map(function(x){ return '<div class="ins" style="justify-content:space-between;"><span>' + instrCell(x) + '</span>' + (viewer ? '' : actCell(x)) + '</div>'; }).join('') + '</div>'
+        : '';
+      cards += '<div class="src"><div class="h"><div class="n">' + esc(pt.txt) + ' · ' + esc(r['교과목']) + '</div>' + (multi ? '' : '<div>' + instrCell(r) + '</div>') + '</div>' +
         '<div class="m">' + esc([pt.time, r['교과목 구분'], (r['반'] && r['반'] !== '전체') ? r['반'] + '반' : ''].filter(Boolean).join(' · ')) +
-        '<br>' + esc(r['강의실'] || '강의실 미정') + (r['비고'] ? ' · ' + esc(r['비고']) : '') + '</div>' + wHtml +
-        (viewer ? '' : '<div style="margin-top:8px;">' + actCell(r) + '</div>') + '</div>';
+        '<br>' + esc(r['강의실'] || '강의실 미정') + (r['비고'] ? ' · ' + esc(r['비고']) : '') + '</div>' + cardIns + wHtml + cardActs + '</div>';
     });
     $('sTableWrap').innerHTML = '<table><thead><tr><th>교시</th><th>교과목</th><th>구분</th><th>반</th><th>강사</th><th>강의실</th><th>비고</th>' +
       (viewer ? '' : '<th>작업</th>') + '</tr></thead><tbody>' + rows + '</tbody></table>';
