@@ -328,6 +328,23 @@
   @media (max-width:640px){
     #ttTable th, .ttEntry{font-size:10px;}
   }
+
+  /* 공통 상단 메뉴 (강사 조회·강의배정 페이지 동일) */
+  .gnav{background:#1B3A5F;color:#fff;}
+  .gnav-in{display:flex;align-items:stretch;gap:2px;padding:0 20px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .gnav-in::-webkit-scrollbar{display:none;}
+  .gnav-brand{display:flex;align-items:center;font-size:13px;font-weight:800;letter-spacing:-0.2px;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
+  .gnav-i{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;font-size:14px;font-weight:700;color:rgba(255,255,255,0.82);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;box-sizing:border-box;}
+  a.gnav-i:hover{color:#fff;background:rgba(255,255,255,0.08);}
+  .gnav-i.on{color:#fff;border-bottom-color:#fff;}
+  .gnav-i.off{color:rgba(255,255,255,0.45);cursor:default;}
+  .gnav-i small{font-size:10.5px;font-weight:700;border:1px solid rgba(255,255,255,0.35);border-radius:999px;padding:1px 7px;color:rgba(255,255,255,0.6);}
+  @media (max-width:640px){
+    .gnav-in{padding:0 8px;}
+    .gnav-brand{display:none;}
+    .gnav-i{padding:0 12px;font-size:13px;}
+  }
+  @media print{ .gnav{display:none !important;} }
 </style>
 </head>
 <body>
@@ -350,6 +367,7 @@
 </div>
 
 <div id="app" style="display:none;">
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><span class="gnav-i off" aria-disabled="true">홈<small>준비 중</small></span><a class="gnav-i on" aria-current="page" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" href="lecture-assignment.html">강의배정</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
 
   <header>
