@@ -220,12 +220,42 @@
   .binfo{padding:30px 10px;text-align:center;color:var(--text-muted);font-size:13.5px;}
   @media (max-width:640px){ #bCard{height:96vh;} #bCard .bf{grid-template-columns:1fr 1fr;} #bCard .bf input{grid-column:span 2;} .bgrid{grid-template-columns:repeat(2,1fr);} }
 
+  /* 연간계획 변경 */
+  #msgBox.ok{display:block;background:var(--ok-bg);color:var(--ok-fg);}
+  tr.cx td{background:#F4F4F4;color:#8A8F98;}
+  tr.cx .course{text-decoration:line-through;}
+  tr.cx .tag{opacity:.9;}
+  .rc.cx{background:#F4F4F4;color:#8A8F98;}
+  .rc.cx .nm{text-decoration:line-through;}
+  .orig{display:block;font-size:11.5px;color:var(--text-muted);}
+  #cOverlay{display:none;position:fixed;inset:0;background:rgba(20,20,19,.45);z-index:110;align-items:center;justify-content:center;padding:16px;}
+  #cCard{background:#fff;border-radius:14px;max-width:660px;width:100%;max-height:92vh;overflow-y:auto;padding:20px 22px 18px;box-shadow:0 10px 40px rgba(0,0,0,.25);}
+  #cCard h2{margin:0;font-size:18px;color:var(--navy);}
+  #cCard .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;}
+  #cCard .old{background:#F7F6F3;border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.6;margin-top:12px;}
+  #cCard .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-top:12px;}
+  #cCard .g2 label,#cCard label.l{font-size:12px;color:var(--text-muted);display:block;margin-bottom:3px;}
+  #cCard input[type=date]{width:100%;height:36px;border:1px solid var(--border-input);border-radius:6px;padding:0 8px;font-family:inherit;font-size:13px;background:#fff;color:var(--text);}
+  #cCard textarea{width:100%;height:64px;border:1px solid var(--border-input);border-radius:6px;padding:8px;font-family:inherit;font-size:13px;resize:vertical;}
+  #cCard .full{grid-column:span 2;}
+  #cCard .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  #cCard .chips button{border:1px solid var(--border-input);border-radius:14px;padding:3px 10px;font-family:inherit;font-size:12px;background:#fff;cursor:pointer;color:var(--text-sub);}
+  #cCard .box{border-radius:10px;padding:12px 14px;margin-top:14px;font-size:13px;line-height:1.7;}
+  #cCard .box.w{background:var(--warn-bg);color:#5C4500;}
+  #cCard .box.i{background:var(--info-bg);color:#17304F;}
+  #cCard .box.e{background:var(--err-bg);color:var(--err-fg);}
+  #cCard .box ul{margin:6px 0 0;padding-left:18px;}
+  #cCard .btns{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;}
+  #cCard .btns .r{display:flex;gap:10px;}
+  #cCard .msg{margin-top:10px;}
+  @media (max-width:560px){ #cCard .g2{grid-template-columns:1fr;} #cCard .full{grid-column:span 1;} }
+
   /* 인쇄: A4 가로, 표만 */
   @page{size:A4 landscape;margin:10mm;}
   @media print{
     body{background:#fff;}
     .wrap{max-width:none;padding:0;}
-    header .hbtns,.bar,#msgBox,.cards,#loading,#editView,#iOverlay,#bOverlay{display:none !important;}
+    header .hbtns,.bar,#msgBox,.cards,#loading,#editView,#iOverlay,#bOverlay,#cOverlay,.chg{display:none !important;}
     header{box-shadow:none;padding:0 0 8px 0;margin-bottom:6px;}
     .tw{display:block !important;box-shadow:none;overflow:visible;}
     #cardList{display:none !important;}
@@ -274,7 +304,7 @@
 
   <div id="planView">
   <div class="cards">
-    <div class="card"><div class="n"><span id="cCourses">0</span><span class="u">회</span></div><div class="l"><b>과정·기수</b><br>표시 중인 과정 수</div></div>
+    <div class="card"><div class="n"><span id="cCourses">0</span><span class="u">회</span></div><div class="l"><b>과정·기수</b><br><span id="cCoursesL">표시 중인 과정 수</span></div></div>
     <div class="card"><div class="n"><span id="cPeople">0</span><span class="u">명</span></div><div class="l"><b>계획인원 합계</b><br>표시 중인 과정 기준</div></div>
     <div class="card warn"><div class="n"><span id="cCheck">0</span><span class="u">건</span></div><div class="l"><b>확인 필요·오류</b><br>검사 결과가 OK가 아닌 과정</div></div>
     <div class="card none"><div class="n"><span id="cNoSubj">0</span><span class="u">건</span></div><div class="l"><b>교과목 미편성</b><br>아직 교과목이 없는 과정</div></div>
@@ -289,6 +319,10 @@
       <option value="ok">OK(이상 없음)</option>
       <option value="warn">확인 필요</option>
       <option value="err">오류(수정 필요)</option>
+    </select>
+    <select id="fStatus" aria-label="상태">
+      <option value="">진행 중만 보기</option>
+      <option value="all">취소 포함</option>
     </select>
     <input type="search" id="fText" placeholder="과정명 검색" aria-label="과정명 검색">
     <span class="spacer"></span>
@@ -305,7 +339,7 @@
       <thead>
         <tr>
           <th>구분</th><th>과정 · 기수</th><th>사이버</th><th>입교</th><th>교육기간</th>
-          <th class="num">계획인원</th><th>강의실</th><th>합숙</th><th>편성 담당</th><th>강사 배정 현황</th><th>검사</th>
+          <th class="num">계획인원</th><th>강의실</th><th>합숙</th><th>편성 담당</th><th>강사 배정 현황</th><th>검사</th><th class="chg" id="thChg">변경</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -332,6 +366,7 @@
 </div>
 
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
+<div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -347,6 +382,7 @@
   var rooms = [];      // 강의실명 목록
   var allSessions = []; // 교과목시간표 전체 행
   var sessionsOk = false;
+  var history = [];    // 변경이력(일정 변경·기수 취소·취소 해제)
 
   function $(id){ return document.getElementById(id); }
   function esc(s){
@@ -429,12 +465,31 @@
   function subjState(p){
     var key = p['과정+기수'];
     if (!key || !sessionsOk) return { kind: 'na', text: '-' };
+    if (isCancelled(p)) return { kind: 'cx', text: '취소됨' };
     var s = sessionsByKey[key];
     if (!s || !s.total) return { kind: 'none', text: '교과목 미편성' };
     var cls = s.assigned >= s.total ? 'ok' : 'info';
     return { kind: cls, text: '교과목 ' + s.total + '개 중 ' + s.assigned + '개 배정' };
   }
 
+  function isCancelled(p){
+    var v = String(p && p['상태'] != null ? p['상태'] : '').replace(/\s+/g, '');
+    return v === '취소됨' || v === '취소';
+  }
+  // 일정이 바뀐 적이 있으면 원안(처음 값)을 돌려줌
+  function changeInfo(key){
+    var o = { changed: false, start: '', end: '', cancelReason: '' };
+    history.forEach(function(h){
+      if (h['개설키'] !== key) return;
+      if (h['유형'] === '일정 변경') {
+        if (h['항목'] === '입교 시작일' && !o.start) { o.start = h['전']; o.changed = true; }
+        if (h['항목'] === '입교 종료일' && !o.end) { o.end = h['전']; o.changed = true; }
+        if (h['항목'] === '입교 시작일' || h['항목'] === '입교 종료일') o.changed = true;
+      }
+      if (h['유형'] === '기수 취소') o.cancelReason = h['사유'];
+    });
+    return o;
+  }
   function sortPlans(list){
     return list.slice().sort(function(a, b){
       var x = String(a['입교 시작일'] || '9999'), y = String(b['입교 시작일'] || '9999');
@@ -475,7 +530,7 @@
   }
 
   function applyFilters(){
-    var fy = $('fYear').value, fm = $('fMonth').value, ft = $('fType').value, fc = $('fCheck').value;
+    var fy = $('fYear').value, fm = $('fMonth').value, ft = $('fType').value, fc = $('fCheck').value, fs = $('fStatus').value;
     var q = $('fText').value.trim().toLowerCase();
     shown = plans.filter(function(p){
       var d = parseYmd(p['입교 시작일']);
@@ -485,6 +540,7 @@
         if (fm && String(d.m) !== fm) return false;
       }
       if (ft && String(p['구분']) !== ft) return false;
+      if (!fs && isCancelled(p)) return false;
       if (fc) {
         var c = checkClass(p['검사 결과']);
         if (fc === 'ok' && c !== 'ok') return false;
@@ -505,13 +561,30 @@
   }
   function courseCell(p){
     var gisu = String(p['기수'] || '');
-    return '<span class="course">' + esc(p['과정명']) + ' ' + esc(gisu) + '</span>' +
-      (p['비고'] ? '<small>' + esc(p['비고']) + '</small>' : '');
+    var ci = changeInfo(p['과정+기수']);
+    var tagHtml = isCancelled(p) ? ' <span class="tag t-err">취소됨</span>' : (ci.changed ? ' <span class="tag t-warn">일정 변경됨</span>' : '');
+    var sub = isCancelled(p) && ci.cancelReason ? '취소 사유: ' + ci.cancelReason : (p['비고'] || '');
+    return '<span class="course">' + esc(p['과정명']) + ' ' + esc(gisu) + '</span>' + tagHtml +
+      (sub ? '<small>' + esc(sub) + '</small>' : '');
+  }
+  function origText(p){
+    var ci = changeInfo(p['과정+기수']);
+    if (!ci.changed || isCancelled(p)) return '';
+    var a = ci.start || p['입교 시작일'], b = ci.end || p['입교 종료일'];
+    return '원안 ' + range(a, b);
+  }
+  function chgCell(p){
+    if (isViewer() || !p['과정+기수']) return '';
+    var k = esc(p['과정+기수']);
+    return isCancelled(p)
+      ? '<button type="button" class="btn sm" data-chg="' + k + '" data-ck="restore">취소 해제</button>'
+      : '<button type="button" class="btn sm" data-chg="' + k + '" data-ck="dates">변경</button>';
   }
   function cyber(p){ return range(p['사이버 시작일'], p['사이버 종료일']) || '-'; }
   function ipgyo(p){ return range(p['입교 시작일'], p['입교 종료일']) || '날짜 미입력'; }
   function camp(p){ var v = String(p['합숙여부'] || ''); return v || '-'; }
   function checkCell(p){
+    if (isCancelled(p)) return '<span class="legend">-</span>';
     var v = p['검사 결과'];
     var c = checkClass(v);
     var html = '<span class="tag t-' + c + '">' + checkLabel(c) + '</span>';
@@ -521,25 +594,35 @@
   function subjCell(p){
     var s = subjState(p);
     if (s.kind === 'na') return '<span class="legend">-</span>';
+    if (s.kind === 'cx') {
+      var st0 = sessionsByKey[p['과정+기수']];
+      if (!st0 || !st0.total) return '<span class="legend">-</span>';
+      return '<button type="button" class="tag tagbtn t-none" data-open="' + esc(p['과정+기수']) + '" title="남아 있는 편성 보기">남은 교과목 ' + st0.total + '개 ›</button>';
+    }
     var cls = s.kind === 'none' ? 't-none' : s.kind === 'ok' ? 't-ok' : 't-info';
     return '<button type="button" class="tag tagbtn ' + cls + '" data-open="' + esc(p['과정+기수']) + '" title="교과목 편성 화면 열기">' + esc(s.text) + ' ›</button>';
   }
 
   function render(){
     $('loading').style.display = 'none';
-    var ppl = 0, check = 0, nosubj = 0;
+    var ppl = 0, check = 0, nosubj = 0, cxShown = 0, nActive = 0;
     shown.forEach(function(p){
+      if (isCancelled(p)) { cxShown++; return; }
+      nActive++;
       ppl += Number(p['계획인원']) || 0;
       var c = checkClass(p['검사 결과']);
       if (c === 'warn' || c === 'err') check++;
       var s = subjState(p);
       if (s.kind === 'none') nosubj++;
     });
-    $('cCourses').textContent = shown.length;
+    $('cCourses').textContent = nActive;
+    $('cCoursesL').textContent = cxShown ? '표시 중인 과정 수 (취소 ' + cxShown + '건 제외)' : '표시 중인 과정 수';
     $('cPeople').textContent = ppl.toLocaleString('ko-KR');
     $('cCheck').textContent = check;
     $('cNoSubj').textContent = nosubj;
-    $('count').textContent = '전체 ' + plans.length + '개 중 ' + shown.length + '개 표시';
+    var cxAll = plans.filter(isCancelled).length;
+    $('count').textContent = '전체 ' + plans.length + '개 중 ' + shown.length + '개 표시' + (cxAll && !$('fStatus').value ? ' (취소된 ' + cxAll + '건은 숨김 — 위 상태 선택에서 "취소 포함"으로 볼 수 있습니다)' : '');
+    $('thChg').style.display = isViewer() ? 'none' : '';
 
     if (!shown.length) {
       $('tableWrap').style.display = 'none';
@@ -555,11 +638,12 @@
 
     var rows = '', cards = '';
     shown.forEach(function(p){
-      rows += '<tr>' +
+      var cx = isCancelled(p), og = origText(p);
+      rows += '<tr' + (cx ? ' class="cx"' : '') + '>' +
         '<td class="nw">' + typeCell(p) + '</td>' +
         '<td>' + courseCell(p) + '</td>' +
         '<td class="nw">' + esc(cyber(p)) + '</td>' +
-        '<td class="nw">' + esc(ipgyo(p)) + '</td>' +
+        '<td class="nw">' + esc(ipgyo(p)) + (og ? '<span class="orig">(' + esc(og) + ')</span>' : '') + '</td>' +
         '<td class="nw">' + esc(p['교육기간'] || '-') + '</td>' +
         '<td class="num nw">' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '</td>' +
         '<td>' + esc(p['예정 강의실'] || '-') + '</td>' +
@@ -567,16 +651,19 @@
         '<td>' + esc(p['편성 담당'] || '-') + '</td>' +
         '<td class="nw">' + subjCell(p) + '</td>' +
         '<td>' + checkCell(p) + '</td>' +
+        (isViewer() ? '' : '<td class="nw chg">' + chgCell(p) + '</td>') +
         '</tr>';
-      cards += '<div class="rc"><div class="top"><div><div class="nm">' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') + '</div>' +
+      cards += '<div class="rc' + (cx ? ' cx' : '') + '"><div class="top"><div><div class="nm">' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') +
+        (cx ? ' <span class="tag t-err">취소됨</span>' : (changeInfo(p['과정+기수']).changed ? ' <span class="tag t-warn">일정 변경됨</span>' : '')) + '</div>' +
         '<div class="meta">' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ')) + '</div></div>' +
         '<div>' + subjCell(p) + '</div></div>' +
-        '<dl><dt>입교</dt><dd>' + esc(ipgyo(p)) + (p['교육기간'] ? ' (' + esc(p['교육기간']) + ')' : '') + '</dd>' +
+        '<dl><dt>입교</dt><dd>' + esc(ipgyo(p)) + (p['교육기간'] ? ' (' + esc(p['교육기간']) + ')' : '') + (og ? '<span class="orig">(' + esc(og) + ')</span>' : '') + '</dd>' +
         '<dt>사이버</dt><dd>' + esc(cyber(p)) + '</dd>' +
         '<dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd>' +
         '<dt>강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd>' +
         '<dt>편성 담당</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd>' +
-        '<dt>검사</dt><dd>' + checkCell(p) + '</dd></dl></div>';
+        '<dt>검사</dt><dd>' + checkCell(p) + '</dd></dl>' +
+        (isViewer() ? '' : '<div style="margin-top:8px;">' + chgCell(p) + '</div>') + '</div>';
     });
     $('tbody').innerHTML = rows;
     $('cardList').innerHTML = cards;
@@ -610,6 +697,7 @@
       if (lg && lg.role) setSess(KEY_ROLE, lg.role);
 
       plans = sortPlans(a['연간계획'] || []);
+      history = a['변경이력'] || [];
       periods = (a['교시표'] || []).map(function(r){
         return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || '') };
       }).filter(function(x){ return isFinite(x.n); }).sort(function(x, y){ return x.n - y.n; });
@@ -645,11 +733,12 @@
   }
   var EXPORT_HEAD = ['구분', '세부구분', '과정명', '기수', '교육대상', '입교 시작일', '입교 종료일', '교육기간', '계획인원', '예정 강의실',
     '합숙여부', '입교 시수', '편성 담당', '사이버 시작일', '사이버 종료일', '실습(외부) 시작일', '실습(외부) 종료일', '보조 장소', '비고',
-    '강사 배정 현황', '검사 결과'];
+    '상태', '강사 배정 현황', '검사 결과'];
   function exportRows(){
     var aoa = [EXPORT_HEAD];
     shown.forEach(function(p){
       aoa.push(EXPORT_HEAD.map(function(k){
+        if (k === '상태') return isCancelled(p) ? '취소됨' : '';
         if (k === '강사 배정 현황') return subjState(p).text;
         var v = p[k];
         if (v === undefined || v === null) return '';
@@ -720,6 +809,7 @@
   var instrFailed = false;
   var form = { id: '', iid: '', iname: '' };
   var lastDate = '', lastKlass = '전체', lastCat = '', lastRoom = null;
+  var formState = null;
 
   function isViewer(){ try { return sessionStorage.getItem(KEY_ROLE) === 'viewer'; } catch (e) { return false; } }
   function planByKey(key){
@@ -817,7 +907,7 @@
   }
   function showPlan(){
     currentKey = '';
-    closeBrowse(); closeInstructor();
+    closeBrowse(); closeInstructor(); closeChange();
     $('editView').style.display = 'none';
     $('planView').style.display = '';
     $('hTitle').textContent = '강의배정 · 연간계획';
@@ -846,6 +936,8 @@
     var p = planByKey(currentKey);
     if (!p) { showPlan(); return; }
     renderHead(p);
+    var fs0 = isViewer() ? 'viewer' : (isCancelled(p) ? 'cx' : 'ok');
+    if (fs0 !== formState) { form = { id: '', iid: '', iname: '' }; renderForm(p); }
     renderSessionList();
   }
 
@@ -859,10 +951,19 @@
       '<span class="tag t-none">편성 시수 합계 ' + st.hours + '시간</span>' +
       (unassigned ? '<span class="tag t-warn">강사 미지정 ' + unassigned + '건</span>' : '');
     var cy = range(p['사이버 시작일'], p['사이버 종료일']);
-    $('sHead').innerHTML = '<h2>' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') + '</h2>' +
+    var cxd = isCancelled(p), ci = changeInfo(currentKey), og = origText(p);
+    var kk = esc(currentKey);
+    var chgBtns = isViewer() ? '' : (cxd
+      ? '<button type="button" class="btn sm" data-chg="' + kk + '" data-ck="restore">취소 해제</button>'
+      : '<button type="button" class="btn sm" data-chg="' + kk + '" data-ck="dates">일정 변경</button>' +
+        '<button type="button" class="btn sm danger" data-chg="' + kk + '" data-ck="cancel">기수 취소</button>');
+    $('sHead').innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;"><h2>' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') +
+      (cxd ? ' <span class="tag t-err" style="vertical-align:middle;">취소됨</span>' : (ci.changed ? ' <span class="tag t-warn" style="vertical-align:middle;">일정 변경됨</span>' : '')) + '</h2>' +
+      (chgBtns ? '<div class="act">' + chgBtns + '</div>' : '') + '</div>' +
+      (cxd ? '<div class="note-err" style="margin-top:10px;">취소된 기수입니다' + (ci.cancelReason ? ' (사유: ' + esc(ci.cancelReason) + ')' : '') + '. 새 교과목은 추가할 수 없고, 남아 있는 편성은 삭제만 할 수 있습니다.</div>' : '') +
       '<dl class="meta">' +
       '<div><dt>구분</dt><dd>' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ') || '-') + '</dd></div>' +
-      '<div><dt>입교</dt><dd>' + esc(ipgyo(p)) + (p['교육기간'] ? ' · ' + esc(p['교육기간']) : '') + '</dd></div>' +
+      '<div><dt>입교</dt><dd>' + esc(ipgyo(p)) + (p['교육기간'] ? ' · ' + esc(p['교육기간']) : '') + (og ? '<span class="orig" style="font-weight:500;">(' + esc(og) + ')</span>' : '') + '</dd></div>' +
       (cy ? '<div><dt>사이버</dt><dd>' + esc(cy) + '</dd></div>' : '') +
       '<div><dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd></div>' +
       '<div><dt>예정 강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd></div>' +
@@ -883,7 +984,8 @@
   }
   function renderForm(p){
     var panel = $('sFormPanel');
-    if (isViewer()) { panel.style.display = 'none'; return; }
+    formState = isViewer() ? 'viewer' : (isCancelled(p) ? 'cx' : 'ok');
+    if (formState !== 'ok') { panel.style.display = 'none'; panel.innerHTML = ''; return; }
     panel.style.display = '';
     var defDate = lastDate || String(p['입교 시작일'] || '');
     var defRoom = lastRoom !== null ? lastRoom : String(p['예정 강의실'] || '');
@@ -1137,11 +1239,12 @@
       return '<span class="tag t-ok">' + esc(ins ? ins.name : (r['강사명'] || r['강사ID'])) + '</span>';
     }
     if (r['강사명']) return '<span class="tag t-info">' + esc(r['강사명']) + ' (직접 입력)</span>';
-    return isViewer() ? '<span class="tag t-none">미지정</span>' : '<button type="button" class="btn sm" data-act="assign" data-id="' + esc(r['편성ID']) + '">강사 지정</button>';
+    return (isViewer() || isCancelled(planByKey(currentKey))) ? '<span class="tag t-none">미지정</span>' : '<button type="button" class="btn sm" data-act="assign" data-id="' + esc(r['편성ID']) + '">강사 지정</button>';
   }
   function actCell(r){
     if (isViewer()) return '';
     var id = esc(r['편성ID']);
+    if (isCancelled(planByKey(currentKey))) return '<div class="act"><button type="button" class="btn sm danger" data-act="del" data-id="' + id + '">삭제</button></div>';
     return '<div class="act"><button type="button" class="btn sm" data-act="edit" data-id="' + id + '">수정</button>' +
       '<button type="button" class="btn sm danger" data-act="del" data-id="' + id + '">삭제</button></div>';
   }
@@ -1263,6 +1366,185 @@
           (st ? ' <span class="tag ' + (st === '취소됨' ? 't-err' : 't-none') + '">' + esc(st) + '</span>' : '') + '</div>';
       }).join('') + (all.length > 15 ? '<div class="hint">최근 15건만 표시합니다.</div>' : '');
   }
+  /* --- 연간계획 변경 창(일정 변경·기수 취소·취소 해제) --- */
+  var CHG_FIELDS = [['입교 시작일', '입교 종료일', '입교'], ['사이버 시작일', '사이버 종료일', '사이버'], ['실습(외부) 시작일', '실습(외부) 종료일', '실습(외부)']];
+  var CHG_CHIPS = {
+    dates: ['월 이동', '기간 단축·연장', '강의실 사정', '교육대상 일정 조정', '기타'],
+    cancel: ['수요 부족', '과정 통합', '강사·강의실 사정', '예산·기타'],
+    restore: ['취소 철회', '계획 재확정']
+  };
+  var chg = { key: '', mode: 'dates', busy: false };
+  function closeChange(){ $('cOverlay').style.display = 'none'; chg.busy = false; }
+  function ymdToDate(v){ var q = parseYmd(v); return q ? new Date(q.y, q.m - 1, q.d) : null; }
+  function periodLabel(a, b){
+    var d1 = ymdToDate(a), d2 = ymdToDate(b);
+    if (!d1 || !d2 || d2 < d1) return '';
+    var cal = Math.round((d2 - d1) / 86400000) + 1;
+    if (cal <= 7) {
+      var n = 0;
+      for (var i = 0; i < cal; i++) { var w = new Date(d1.getFullYear(), d1.getMonth(), d1.getDate() + i).getDay(); if (w !== 0 && w !== 6) n++; }
+      return n + '일';
+    }
+    return Math.round(cal / 7) + '주';
+  }
+  function openChange(key, mode){
+    if (isViewer()) return;
+    var p = planByKey(key);
+    if (!p) return;
+    chg = { key: key, mode: mode, busy: false };
+    renderChange(p);
+    $('cOverlay').style.display = 'flex';
+  }
+  function chgFieldHtml(p){
+    var html = '';
+    CHG_FIELDS.forEach(function(g, i){
+      var a = String(p[g[0]] || ''), b = String(p[g[1]] || '');
+      if (i > 0 && !(a && b)) return;
+      html += '<div><label for="cfS' + i + '">새 ' + g[2] + ' 시작일</label><input type="date" id="cfS' + i + '" value="' + esc(a) + '"></div>' +
+        '<div><label for="cfE' + i + '">새 ' + g[2] + ' 종료일</label><input type="date" id="cfE' + i + '" value="' + esc(b) + '"></div>';
+    });
+    return html;
+  }
+  function renderChange(p){
+    var mode = chg.mode;
+    var title = mode === 'dates' ? '일정 변경' : mode === 'cancel' ? '기수 취소' : '취소 해제';
+    var cur = '입교 <b>' + esc(ipgyo(p)) + '</b>' + (p['교육기간'] ? ' · ' + esc(p['교육기간']) : '') + ' · ' + esc(p['예정 강의실'] || '강의실 미정') +
+      ' · ' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명';
+    var h = '<div class="top"><h2>' + title + '</h2><span class="hint">' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') + '</span></div>' +
+      '<div class="old">현재: ' + cur + '</div>';
+    if (mode === 'dates') h += '<div class="g2">' + chgFieldHtml(p) + '<div class="full hint" id="cHint"></div></div>';
+    h += '<div style="margin-top:12px;"><label class="l" for="cReason">' + (mode === 'cancel' ? '취소 사유' : mode === 'restore' ? '해제 사유' : '변경 사유') + ' (필수)</label>' +
+      '<textarea id="cReason" maxlength="200" placeholder="예: ' + esc(CHG_CHIPS[mode][0]) + '"></textarea>' +
+      '<div class="chips">' + CHG_CHIPS[mode].map(function(c){ return '<button type="button" data-chip="' + esc(c) + '">' + esc(c) + '</button>'; }).join('') + '</div></div>' +
+      '<div id="cPrev"></div><div class="msg" id="cMsg"></div>' +
+      '<div class="btns"><div>' +
+      (mode === 'dates' ? '<button type="button" class="btn sm danger" id="cSwitch">이 기수 취소하기</button>' : mode === 'cancel' ? '<button type="button" class="btn sm" id="cSwitch">일정 변경으로</button>' : '') +
+      '</div><div class="r"><button type="button" class="btn" id="cClose">닫기</button>' +
+      '<button type="button" class="btn ' + (mode === 'cancel' ? 'danger' : 'primary') + '" id="cSave">' + (mode === 'dates' ? '변경 저장' : mode === 'cancel' ? '취소됨으로 표시' : '취소 해제') + '</button></div></div>';
+    $('cCard').innerHTML = h;
+    $('cClose').addEventListener('click', closeChange);
+    $('cSave').addEventListener('click', saveChange);
+    if ($('cSwitch')) $('cSwitch').addEventListener('click', function(){ chg.mode = chg.mode === 'dates' ? 'cancel' : 'dates'; renderChange(p); });
+    [].forEach.call($('cCard').querySelectorAll('[data-chip]'), function(b){
+      b.addEventListener('click', function(){ $('cReason').value = b.getAttribute('data-chip'); $('cReason').focus(); });
+    });
+    [].forEach.call($('cCard').querySelectorAll('input[type=date]'), function(i){ i.addEventListener('change', updateChangePreview); i.addEventListener('input', updateChangePreview); });
+    updateChangePreview();
+  }
+  function readChgDates(){
+    var o = {};
+    CHG_FIELDS.forEach(function(g, i){
+      if ($('cfS' + i)) { o[g[0]] = $('cfS' + i).value; o[g[1]] = $('cfE' + i).value; }
+    });
+    return o;
+  }
+  function chgValidate(p){
+    var vals = readChgDates(), changed = [], err = '';
+    var a = vals['입교 시작일'], b = vals['입교 종료일'];
+    if (!parseYmd(a) || !parseYmd(b)) err = '입교 시작일과 종료일을 선택해 주세요.';
+    else if (a > b) err = '입교 종료일이 시작일보다 빠릅니다.';
+    CHG_FIELDS.forEach(function(g, i){
+      if (!$('cfS' + i)) return;
+      var x = vals[g[0]], y = vals[g[1]];
+      if (i > 0 && !err) {
+        if (!x || !y) err = g[2] + ' 시작일과 종료일을 모두 입력해 주세요.';
+        else if (x > y) err = g[2] + ' 종료일이 시작일보다 빠릅니다.';
+      }
+      if (x !== String(p[g[0]] || '')) changed.push(g[0]);
+      if (y !== String(p[g[1]] || '')) changed.push(g[1]);
+    });
+    return { vals: vals, changed: changed, err: err };
+  }
+  function nameOfInstr(r){
+    if (r['강사ID'] && instrById[r['강사ID']]) return instrById[r['강사ID']].name;
+    return (r['강사명'] || r['강사ID'] || '') + (r['강사ID'] ? '' : '(수기)');
+  }
+  function updateChangePreview(){
+    var p = planByKey(chg.key), box = $('cPrev');
+    if (!p || !box) return;
+    var sess = sessionsOf(chg.key);
+    if (chg.mode === 'dates') {
+      var v = chgValidate(p), hint = $('cHint');
+      var a = v.vals['입교 시작일'], b = v.vals['입교 종료일'];
+      if (v.err) { hint.textContent = v.err; hint.className = 'full hint warn'; }
+      else {
+        var m0 = parseYmd(p['입교 시작일']), m1 = parseYmd(a);
+        hint.className = 'full hint';
+        hint.textContent = '→ ' + range(a, b) + ' · ' + periodLabel(a, b) + (m0 && m1 && (m0.m !== m1.m || m0.y !== m1.y) ? ' (월 ' + (m0.y !== m1.y ? m0.y + '년 ' : '') + m0.m + '월 → ' + (m0.y !== m1.y ? m1.y + '년 ' : '') + m1.m + '월 이동)' : '');
+      }
+      if (v.err || !v.changed.length) { box.innerHTML = v.err ? '' : '<div class="box i">날짜를 바꾸면 영향이 여기에 표시됩니다.</div>'; return; }
+      var tmp = {};
+      for (var k in p) if (Object.prototype.hasOwnProperty.call(p, k)) tmp[k] = p[k];
+      for (var k2 in v.vals) tmp[k2] = v.vals[k2];
+      var items = [];
+      if (!sessionsOk) items.push('편성 목록을 불러오지 못해 영향을 확인할 수 없습니다. 새로고침 후 다시 시도해 주세요.');
+      else if (!sess.length) items.push('이 기수에는 편성된 교과목이 없어 편성 영향은 없습니다.');
+      else {
+        var out = sess.filter(function(r){ return !dateInRanges(tmp, r['일자']); });
+        items.push('이미 편성한 교과목 <b>' + sess.length + '건</b> 중 <b>' + out.length + '건</b>이 새 기간 밖이 됩니다' + (out.length ? '(편성은 지워지지 않으며, 편성 화면에서 날짜를 고쳐야 합니다)' : '') + '.');
+        var withI = out.filter(hasInstr), tally = {}, order = [];
+        withI.forEach(function(r){ var nm = nameOfInstr(r); if (!tally[nm]) { tally[nm] = 0; order.push(nm); } tally[nm]++; });
+        if (withI.length) items.push('강사 지정이 된 <b>' + withI.length + '건</b>: ' + order.map(function(nm){ return esc(nm) + ' ' + tally[nm] + '건'; }).join(', ') + ' → 변경 안내가 필요한 강사입니다.');
+      }
+      var room = String(p['예정 강의실'] || '');
+      if (room) {
+        var ov = plans.filter(function(q){
+          return q !== p && !isCancelled(q) && String(q['예정 강의실'] || '') === room && q['입교 시작일'] && q['입교 종료일'] && !(q['입교 종료일'] < a || q['입교 시작일'] > b);
+        });
+        items.push('같은 강의실(' + esc(room) + ') 기간이 겹치는 다른 과정: ' + (ov.length ? '<b>' + ov.length + '건</b> — ' + ov.map(function(q){ return esc(q['과정명'] + ' ' + (q['기수'] || '')) + ' (' + esc(range(q['입교 시작일'], q['입교 종료일'])) + ')'; }).join(', ') : '<b>없음</b>'));
+      }
+      var impact = sessionsOk && sess.length && sess.some(function(r){ return !dateInRanges(tmp, r['일자']); });
+      box.innerHTML = '<div class="box ' + (impact ? 'w' : 'i') + '"><b>영향 미리보기</b><ul>' + items.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul></div>' +
+        '<div class="box i"><b>기수 번호</b>: 변경 후에도 이 과정의 기수는 <b>' + esc(p['기수'] || '') + '</b> 그대로 유지됩니다. 처음 변경할 때 시트의 기수 열(수식)을 값으로 고정하고 변경이력에 기록합니다.</div>';
+    } else if (chg.mode === 'cancel') {
+      var n = sess.length;
+      box.innerHTML = '<div class="box w"><b>영향 미리보기</b><ul><li>편성된 교과목 <b>' + (sessionsOk ? n + '건' : '확인 불가') + '</b>' + (n ? '(지워지지 않고 남습니다)' : '') + '</li>' +
+        '<li>취소하면 연간계획 합계(계획인원 등)와 강의실 겹침 확인에서 <b>제외</b>되고, 표에서는 회색 "취소됨"으로 표시됩니다. 기수 번호는 그대로 유지됩니다.</li></ul></div>';
+    } else {
+      box.innerHTML = '<div class="box i">취소를 해제하면 다시 진행 중인 기수로 표시되고, 교과목을 추가할 수 있습니다.</div>';
+    }
+  }
+  function chgMsg(kind, text){ $('cMsg').innerHTML = text ? '<div class="' + kind + '">' + esc(text) + '</div>' : ''; }
+  function saveChange(){
+    if (chg.busy) return;
+    var p = planByKey(chg.key);
+    if (!p) return;
+    var reason = $('cReason').value.trim();
+    var body = { action: 'updatePlan', password: getPw(), 개설키: chg.key, 종류: chg.mode, 사유: reason };
+    var monthMoved = false;
+    if (chg.mode === 'dates') {
+      if (!sessionsOk) { chgMsg('note-err', '편성 목록을 불러오지 못해 변경할 수 없습니다. 새로고침 후 다시 시도해 주세요.'); return; }
+      var v = chgValidate(p);
+      if (v.err) { chgMsg('note-err', v.err); return; }
+      if (!v.changed.length) { chgMsg('note-err', '바뀐 날짜가 없습니다.'); return; }
+      var exp = {};
+      Object.keys(v.vals).forEach(function(k){ body[k] = v.vals[k]; exp[k] = String(p[k] || ''); });
+      body.기존 = exp;
+      var m0 = parseYmd(p['입교 시작일']), m1 = parseYmd(v.vals['입교 시작일']);
+      monthMoved = !!(m0 && m1 && (m0.m !== m1.m || m0.y !== m1.y));
+    }
+    if (!reason) { chgMsg('note-err', '사유를 입력해 주세요.'); return; }
+    if (chg.mode === 'cancel' && !confirm('"' + p['과정명'] + ' ' + (p['기수'] || '') + '"을(를) 취소됨으로 표시할까요?\n(행은 지워지지 않으며 나중에 취소 해제할 수 있습니다.)')) return;
+    chg.busy = true;
+    var btn = $('cSave'); btn.disabled = true; btn.textContent = '저장 중...';
+    chgMsg('', '');
+    api(body).then(function(j){
+      if (j.status !== 'ok') { chg.busy = false; btn.disabled = false; btn.textContent = chg.mode === 'dates' ? '변경 저장' : chg.mode === 'cancel' ? '취소됨으로 표시' : '취소 해제'; chgMsg('note-err', j.message || '저장하지 못했습니다.'); return; }
+      closeChange();
+      var text;
+      if (j.종류 === 'dates') {
+        text = '일정을 변경했습니다: ' + (j.변경 || []).map(function(c){ return c.항목 + ' ' + c.전 + ' → ' + c.후; }).join(', ') + '. 변경이력 시트에 기록했습니다.' +
+          (j.기수고정 ? ' (기수 열 ' + j.기수고정 + '줄을 값으로 고정했습니다.)' : '') +
+          (monthMoved && $('fMonth').value ? ' 월이 바뀌어 현재 월 필터에서는 보이지 않을 수 있습니다.' : '');
+      } else if (j.종류 === 'cancel') text = '기수를 취소됨으로 표시했습니다. 변경이력 시트에 기록했습니다.';
+      else text = '취소를 해제했습니다. 변경이력 시트에 기록했습니다.';
+      return loadAll(getPw(), true).then(function(){ showMsg('ok', text); window.scrollTo(0, 0); }).catch(function(e){ showMsg('err', '저장은 되었으나 다시 불러오지 못했습니다. 새로고침을 눌러 주세요. ' + (e && e.message || '')); });
+    }).catch(function(){
+      chg.busy = false; btn.disabled = false; btn.textContent = '변경 저장';
+      chgMsg('note-err', '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    });
+  }
+
   /* --- 강사 찾아보기(큰 팝업) --- */
   var BPAGE = 48;
   var bs = { q: '', field: '', region: '', status: 'active', shown: BPAGE };
@@ -1364,8 +1646,10 @@
 
   function onListClick(ev){
     var t = ev.target;
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-manual') !== null))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-manual') !== null))) t = t.parentNode;
     if (!t || t === document) return;
+    var chgKey = t.getAttribute('data-chg');
+    if (chgKey) { openChange(chgKey, t.getAttribute('data-ck') || 'dates'); return; }
     var open = t.getAttribute('data-open');
     if (open) { openCourse(open); return; }
     var bp = t.getAttribute('data-bpick');
@@ -1387,7 +1671,7 @@
   }
 
   /* ---------- 이벤트 ---------- */
-  ['fYear', 'fMonth', 'fType', 'fCheck'].forEach(function(id){ $(id).addEventListener('change', applyFilters); });
+  ['fYear', 'fMonth', 'fType', 'fCheck', 'fStatus'].forEach(function(id){ $(id).addEventListener('change', applyFilters); });
   $('fText').addEventListener('input', applyFilters);
   $('reloadBtn').addEventListener('click', function(){
     var pw = getPw();
@@ -1406,6 +1690,7 @@
   $('bOverlay').addEventListener('click', function(ev){ if (ev.target === $('bOverlay')) closeBrowse(); });
   document.addEventListener('keydown', function(ev){
     if (ev.key !== 'Escape') return;
+    if ($('cOverlay').style.display === 'flex') { closeChange(); return; }
     if ($('iOverlay').style.display === 'flex') closeInstructor(); else closeBrowse();
   });
   $('backBtn').addEventListener('click', function(){ location.hash = ''; });
