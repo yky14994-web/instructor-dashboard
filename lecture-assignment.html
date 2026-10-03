@@ -58,13 +58,14 @@
   #loginMsg{display:none;color:var(--err-fg);font-size:12.5px;margin-top:12px;}
 
   /* 카드·필터 */
-  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+  .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
   .card{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:14px 16px;}
   .card .n{font-size:26px;font-weight:800;color:var(--navy);line-height:1.1;}
   .card .n .u{font-size:13px;font-weight:700;color:var(--text-muted);margin-left:2px;}
   .card .l{font-size:12.5px;color:var(--text-sub);margin-top:6px;line-height:1.4;}
   .card.warn .n{color:var(--warn-fg);}
   .card.none .n{color:var(--none-fg);}
+  .card.ovl .n{color:var(--err-fg);}
   .bar{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;}
   .bar select,.bar input[type=search]{height:36px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;font-family:inherit;font-size:13px;background:#fff;color:var(--text);}
   .bar input[type=search]{min-width:190px;flex:1 1 190px;max-width:320px;}
@@ -250,6 +251,19 @@
   #cCard .msg{margin-top:10px;}
   @media (max-width:560px){ #cCard .g2{grid-template-columns:1fr;} #cCard .full{grid-column:span 1;} }
 
+  /* 겹침 경고 */
+  .wl{margin-top:6px;border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.55;font-weight:500;}
+  .wl.e{background:var(--err-bg);color:#7A140D;}
+  .wl.w{background:var(--warn-bg);color:#5C4500;}
+  .wl.c{background:var(--none-bg);color:var(--none-fg);}
+  .wl b{font-weight:800;}
+  .wl .row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+  .btn.ok{color:var(--navy);}
+  .picker .it .bz{flex-shrink:0;text-align:right;font-size:11px;line-height:1.35;}
+  .picker .it .bz small{display:block;color:var(--warn-fg);margin-top:2px;}
+  .picker .it .bz.g small{color:var(--text-muted);}
+  .bc.busy{background:#FFFBEF;border-color:#EBD58C;}
+
   /* 인쇄: A4 가로, 표만 */
   @page{size:A4 landscape;margin:10mm;}
   @media print{
@@ -308,6 +322,7 @@
     <div class="card"><div class="n"><span id="cPeople">0</span><span class="u">명</span></div><div class="l"><b>계획인원 합계</b><br>표시 중인 과정 기준</div></div>
     <div class="card warn"><div class="n"><span id="cCheck">0</span><span class="u">건</span></div><div class="l"><b>확인 필요·오류</b><br>검사 결과가 OK가 아닌 과정</div></div>
     <div class="card none"><div class="n"><span id="cNoSubj">0</span><span class="u">건</span></div><div class="l"><b>교과목 미편성</b><br>아직 교과목이 없는 과정</div></div>
+    <div class="card" id="cardOv"><div class="n"><span id="cOverlap">0</span><span class="u">건</span></div><div class="l"><b>겹침 경고 (미확인)</b><br><span id="cOverlapL">강사·강의실·같은 반</span></div></div>
   </div>
 
   <div class="bar">
@@ -319,6 +334,7 @@
       <option value="ok">OK(이상 없음)</option>
       <option value="warn">확인 필요</option>
       <option value="err">오류(수정 필요)</option>
+      <option value="ovl">겹침 경고(미확인)</option>
     </select>
     <select id="fStatus" aria-label="상태">
       <option value="">진행 중만 보기</option>
@@ -382,7 +398,12 @@
   var rooms = [];      // 강의실명 목록
   var allSessions = []; // 교과목시간표 전체 행
   var sessionsOk = false;
-  var history = [];    // 변경이력(일정 변경·기수 취소·취소 해제)
+  var history = [];    // 변경이력(일정 변경·기수 취소·취소 해제·겹침 확인)
+  var roomSkip = {};   // 겹침 검사 '제외' 강의실
+  var confMap = {};    // 확인된 겹침 서명 -> {when, role}
+  var cfl = [];        // 겹침 목록
+  var cflByGid = {};   // 교과목 묶음 -> 겹침 목록
+  var cflByKey = {};   // 개설키 -> {open, done}
 
   function $(id){ return document.getElementById(id); }
   function esc(s){
@@ -541,7 +562,10 @@
       }
       if (ft && String(p['구분']) !== ft) return false;
       if (!fs && isCancelled(p)) return false;
-      if (fc) {
+      if (fc === 'ovl') {
+        var oo = cflByKey[p['과정+기수']];
+        if (!(oo && oo.open)) return false;
+      } else if (fc) {
         var c = checkClass(p['검사 결과']);
         if (fc === 'ok' && c !== 'ok') return false;
         if (fc === 'warn' && c !== 'warn') return false;
@@ -600,7 +624,7 @@
       return '<button type="button" class="tag tagbtn t-none" data-open="' + esc(p['과정+기수']) + '" title="남아 있는 편성 보기">남은 교과목 ' + st0.total + '개 ›</button>';
     }
     var cls = s.kind === 'none' ? 't-none' : s.kind === 'ok' ? 't-ok' : 't-info';
-    return '<button type="button" class="tag tagbtn ' + cls + '" data-open="' + esc(p['과정+기수']) + '" title="교과목 편성 화면 열기">' + esc(s.text) + ' ›</button>';
+    return '<button type="button" class="tag tagbtn ' + cls + '" data-open="' + esc(p['과정+기수']) + '" title="교과목 편성 화면 열기">' + esc(s.text) + ' ›</button>' + cflTag(p);
   }
 
   function render(){
@@ -620,6 +644,16 @@
     $('cPeople').textContent = ppl.toLocaleString('ko-KR');
     $('cCheck').textContent = check;
     $('cNoSubj').textContent = nosubj;
+    var shownKeys = {};
+    shown.forEach(function(p){ if (!isCancelled(p)) shownKeys[p['과정+기수']] = true; });
+    var ovOpen = 0, ovDone = 0;
+    cfl.forEach(function(c){
+      if (!c.keys.some(function(k){ return shownKeys[k]; })) return;
+      if (c.conf) ovDone++; else ovOpen++;
+    });
+    $('cOverlap').textContent = ovOpen;
+    $('cOverlapL').textContent = '강사·강의실·같은 반' + (ovDone ? ' (확인됨 ' + ovDone + '건 제외)' : '');
+    $('cardOv').className = 'card' + (ovOpen ? ' ovl' : ' none');
     var cxAll = plans.filter(isCancelled).length;
     $('count').textContent = '전체 ' + plans.length + '개 중 ' + shown.length + '개 표시' + (cxAll && !$('fStatus').value ? ' (취소된 ' + cxAll + '건은 숨김 — 위 상태 선택에서 "취소 포함"으로 볼 수 있습니다)' : '');
     $('thChg').style.display = isViewer() ? 'none' : '';
@@ -702,6 +736,14 @@
         return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || '') };
       }).filter(function(x){ return isFinite(x.n); }).sort(function(x, y){ return x.n - y.n; });
       rooms = (a['강의실'] || []).map(function(r){ return String(r['강의실명'] || ''); }).filter(Boolean);
+      roomSkip = {};
+      (a['강의실'] || []).forEach(function(r){
+        var nm = String(r['강의실명'] || '');
+        if (!nm) return;
+        Object.keys(r).forEach(function(k){
+          if (k.replace(/\s+/g, '') === '겹침검사' && /제외/.test(String(r[k] || ''))) roomSkip[nm] = true;
+        });
+      });
       var msgs = [];
       if (a['시트없음'] && a['시트없음'].length) msgs.push('강의배정DB에서 다음 시트를 찾지 못했습니다: ' + a['시트없음'].join(', '));
       if (s.status === 'ok') {
@@ -715,6 +757,7 @@
         msgs.push('교과목 편성 현황을 불러오지 못했습니다(' + (s.message || '오류') + '). 강사 배정 현황은 "교과목 미편성"으로 표시될 수 있습니다.');
       }
       if (msgs.length) showMsg('warn', msgs.join(' / '));
+      refreshConflicts();
       initFilters();
       applyFilters();
       route();
@@ -950,6 +993,9 @@
     else tags += '<span class="tag ' + (unassigned ? 't-info' : 't-ok') + '">교과목 ' + st.total + '개 중 ' + st.assigned + '개 배정</span>' +
       '<span class="tag t-none">편성 시수 합계 ' + st.hours + '시간</span>' +
       (unassigned ? '<span class="tag t-warn">강사 미지정 ' + unassigned + '건</span>' : '');
+    var co = cflByKey[currentKey];
+    if (co && co.open) tags += '<span class="tag t-err">겹침 경고 ' + co.open + '건 (미확인)</span>';
+    if (co && co.done) tags += '<span class="tag t-none">겹침 ' + co.done + '건 확인됨</span>';
     var cy = range(p['사이버 시작일'], p['사이버 종료일']);
     var cxd = isCancelled(p), ci = changeInfo(currentKey), og = origText(p);
     var kk = esc(currentKey);
@@ -1020,13 +1066,16 @@
     $('sKlassHint').textContent = big ? '계획인원이 120명을 넘습니다. A·B 분반 운영을 검토해 보세요.' : '';
     updateDow();
     renderChip();
-    $('sDate').addEventListener('change', updateDow);
+    $('sDate').addEventListener('change', function(){ updateDow(); renderChip(); });
     $('sStart').addEventListener('change', function(){
       if (Number($('sEnd').value) < Number($('sStart').value)) $('sEnd').value = $('sStart').value;
+      renderChip();
     });
     $('sEnd').addEventListener('change', function(){
       if (Number($('sEnd').value) < Number($('sStart').value)) $('sStart').value = $('sEnd').value;
+      renderChip();
     });
+    $('sSubj').addEventListener('change', renderChip);
     $('sRoom').addEventListener('change', function(){
       var other = $('sRoom').value === '__other';
       $('sRoomText').style.display = other ? '' : 'none';
@@ -1071,6 +1120,10 @@
       box.innerHTML = '<span class="tag t-info chip">' + esc(form.iname) + ' (직접 입력) <button type="button" id="sChipX" aria-label="강사 지우기">×</button></span>';
     } else box.innerHTML = '';
     if (form.iid && instrById[form.iid]) box.innerHTML += ' <button type="button" class="detailBtn" style="height:24px;" data-detail="' + esc(form.iid) + '">상세</button>';
+    if (form.iid) {
+      var bl = busyLines(busyOf(form.iid));
+      if (bl && bl.warn) box.innerHTML += '<div class="hint warn" style="margin-top:4px;">⚠ 이 강사는 ' + bl.head + '에 ' + bl.sub + '에 이미 배정되어 있습니다(저장은 가능합니다).</div>';
+    }
     var x = $('sChipX');
     if (x) x.addEventListener('click', function(){ form.iid = ''; form.iname = ''; renderChip(); });
   }
@@ -1112,6 +1165,7 @@
           '<div class="tx"><b>' + esc(x.name) + ' <span class="tag ' + cls + '">' + esc(x.status || '-') + '</span></b>' +
           '<small>' + esc([x.field, x.org, x.region].filter(Boolean).join(' · ') + subjLine) + '</small>' +
           '<small>강의 ' + x.count + '회' + (why.length ? ' · <span style="color:var(--navy);">일치: ' + esc(why.join('·')) + '</span>' : '') + '</small></div>' +
+          busyPickerHtml(x.id) +
           '<button type="button" class="detailBtn" data-detail="' + esc(x.id) + '">상세</button></div>';
       });
       if (scored.length > hits.length) html += '<div class="info">외 ' + (scored.length - hits.length) + '명이 더 있습니다. 검색어를 더 입력해 좁혀 보세요.</div>';
@@ -1199,6 +1253,7 @@
     api(body).then(function(res){
       if (res.status !== 'ok') { showFormMsg('note-err', esc(res.message || '저장하지 못했습니다')); return; }
       upsertSession(res.data);
+      refreshConflicts();
       lastDate = date; lastKlass = klass; lastCat = cat; lastRoom = room;
       var warns = res.warnings || [];
       var next = e + 1;
@@ -1213,6 +1268,14 @@
       var box = $('sMsg');
       box.innerHTML = '<div class="note-ok">' + html + '</div>' +
         (warns.length ? '<div class="note-warn"><b>확인이 필요합니다(저장은 되었습니다)</b><br>' + warns.map(function(w){ return '· ' + esc(w); }).join('<br>') + '</div>' : '');
+      var savedId = String(res.data['편성ID']);
+      var mine = cfl.filter(function(c){ return !c.conf && (c.a.ids.indexOf(savedId) > -1 || c.b.ids.indexOf(savedId) > -1); });
+      if (mine.length) {
+        box.innerHTML += '<div class="note-warn" style="background:var(--err-bg);color:#7A140D;"><b>겹침이 있습니다(저장은 되었습니다)</b>' + mine.map(function(c){
+          var me = c.a.ids.indexOf(savedId) > -1 ? c.a : c.b, pt = conflictParts(c, me);
+          return '<br>· <b>' + esc(pt.label) + '</b> ' + pt.body;
+        }).join('') + '<br>아래 목록에서 확인·조정할 수 있습니다.</div>';
+      }
     }).catch(function(){
       showFormMsg('note-err', '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }).then(function(){ setBusy(false); });
@@ -1226,6 +1289,7 @@
       if (res.status !== 'ok') { alert(res.message || '삭제하지 못했습니다'); return; }
       allSessions = allSessions.filter(function(x){ return String(x['편성ID']) !== id; });
       sessionsByKey = buildSessionMap(allSessions);
+      refreshConflicts();
       if (form.id === id) resetForm();
       renderHead(planByKey(currentKey));
       renderSessionList();
@@ -1259,11 +1323,16 @@
       return;
     }
     $('sEmpty').style.display = 'none';
-    var rows = '', cards = '', lastDay = '';
+    var rows = '', cards = '', lastDay = '', seenG = {};
     list.forEach(function(r){
       var pt = periodText(r);
       var warns = rowWarnings(r, p);
       var wHtml = warns.map(function(w){ return '<div class="warnrow">⚠ ' + esc(w) + '</div>'; }).join('');
+      var gid = groupId(r);
+      if (!seenG[gid] && cflByGid[gid]) {
+        seenG[gid] = true;
+        wHtml += cflByGid[gid].map(function(c){ return conflictHtml(c, gid); }).join('');
+      } else seenG[gid] = true;
       if (r['일자'] !== lastDay) {
         lastDay = r['일자'];
         rows += '<tr class="day"><td colspan="' + (viewer ? 7 : 8) + '">' + esc(md(r['일자'])) + '</td></tr>';
@@ -1545,6 +1614,203 @@
     });
   }
 
+  /* --- 겹침 경고(강사·강의실·같은 반) --- */
+  var PRIORITY = ['전문', '특별', '기본', '민관'];
+  function hashStr(str, seed){
+    var h = seed >>> 0;
+    for (var i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619) >>> 0;
+    return h.toString(16);
+  }
+  function groupId(r){
+    return String(r['개설키']) + '|' + String(r['일자']) + '|' + Number(r['시작교시']) + '|' + Number(r['끝교시']) + '|' + String(r['교과목']);
+  }
+  function instrIdent(r){
+    var id = String(r['강사ID'] || '').trim(), nm = String(r['강사명'] || '').trim();
+    if (id) return 'i:' + id;
+    if (nm) return 'n:' + nm;
+    return '';
+  }
+  // 같은 과정·일자·교시·교과목의 줄(분반·공동강사)은 한 묶음으로 보고, 묶음끼리만 겹침을 비교
+  function buildGroups(){
+    var map = {}, list = [];
+    allSessions.forEach(function(r){
+      var key = String(r['개설키'] || '');
+      if (!key) return;
+      var p = planByKey(key);
+      if (p && isCancelled(p)) return;
+      var d = String(r['일자'] || ''), s = Number(r['시작교시']), e = Number(r['끝교시']);
+      if (!parseYmd(d) || !isFinite(s) || !isFinite(e) || e < s) return;
+      var gid = groupId(r), g = map[gid];
+      if (!g) { g = map[gid] = { gid: gid, key: key, date: d, s: s, e: e, subj: String(r['교과목'] || ''), ids: [], who: {}, rooms: {}, klass: {} }; list.push(g); }
+      g.ids.push(String(r['편성ID']));
+      var ik = instrIdent(r);
+      if (ik) g.who[ik] = String(r['강사명'] || '');
+      var rm = String(r['강의실'] || '').trim();
+      if (rm && !roomSkip[rm]) g.rooms[rm] = true;
+      g.klass[String(r['반'] || '전체')] = true;
+    });
+    return list;
+  }
+  function klassOverlap(a, b){
+    if (a.klass['전체'] || b.klass['전체']) return true;
+    return Object.keys(a.klass).some(function(k){ return !!b.klass[k]; });
+  }
+  function buildConfMap(){
+    var m = {};
+    history.forEach(function(h){
+      if (h['유형'] === '겹침 확인') m[h['항목']] = { when: h['일시'], role: h['역할'] };
+      else if (h['유형'] === '겹침 확인 해제') delete m[h['항목']];
+    });
+    return m;
+  }
+  function periodRangeText(g){ return g.s === g.e ? g.s + '교시' : g.s + '~' + g.e + '교시'; }
+  function makeConflict(type, what, a, b){
+    function part(g){
+      return g.ids.slice().sort().join(',') + '@' + g.date + '@' + g.s + '-' + g.e + '@' + Object.keys(g.rooms).sort().join(',') + '@' + Object.keys(g.who).sort().join(',');
+    }
+    var raw = type + '|' + what + '|' + [part(a), part(b)].sort().join('||');
+    var sig = 'ov-' + type.charAt(0) + '-' + hashStr(raw, 2166136261) + '-' + hashStr(raw, 5381);
+    var os = Math.max(a.s, b.s), oe = Math.min(a.e, b.e);
+    return { type: type, what: what, a: a, b: b, sig: sig, date: a.date, ov: os === oe ? os + '교시' : os + '~' + oe + '교시',
+      keys: a.key === b.key ? [a.key] : [a.key, b.key], conf: confMap[sig] || null };
+  }
+  function computeConflicts(){
+    var byDate = {}, out = [];
+    buildGroups().forEach(function(g){ (byDate[g.date] = byDate[g.date] || []).push(g); });
+    Object.keys(byDate).sort().forEach(function(d){
+      var L = byDate[d];
+      for (var i = 0; i < L.length; i++) {
+        for (var j = i + 1; j < L.length; j++) {
+          var a = L[i], b = L[j];
+          if (a.s > b.e || b.s > a.e) continue;
+          var isClass = a.key === b.key && klassOverlap(a, b);
+          if (isClass) out.push(makeConflict('class', '', a, b));
+          Object.keys(a.who).forEach(function(w){ if (Object.prototype.hasOwnProperty.call(b.who, w)) out.push(makeConflict('instr', w, a, b)); });
+          if (!isClass) Object.keys(a.rooms).forEach(function(rm){ if (b.rooms[rm]) out.push(makeConflict('room', rm, a, b)); });
+        }
+      }
+    });
+    return out;
+  }
+  function refreshConflicts(){
+    confMap = buildConfMap();
+    try { cfl = computeConflicts(); } catch (e) { cfl = []; if (window.console) console.error('겹침 계산 오류', e); }
+    cflByGid = {}; cflByKey = {};
+    cfl.forEach(function(c){
+      [c.a.gid, c.b.gid].forEach(function(g){ (cflByGid[g] = cflByGid[g] || []).push(c); });
+      c.keys.forEach(function(k){
+        var o = cflByKey[k] = cflByKey[k] || { open: 0, done: 0 };
+        if (c.conf) o.done++; else o.open++;
+      });
+    });
+  }
+  function courseLabel(key, withType){
+    var p = planByKey(key);
+    if (!p) return String(key);
+    return String(p['과정명'] || '') + ' ' + String(p['기수'] || '') + (withType && p['구분'] ? '(' + p['구분'] + ')' : '');
+  }
+  function cflTag(p){
+    var o = cflByKey[p['과정+기수']];
+    if (!o) return '';
+    var key = esc(p['과정+기수']);
+    if (o.open) return ' <button type="button" class="tag tagbtn t-err" data-open="' + key + '" title="겹침 경고 보기">겹침 ' + o.open + '</button>';
+    return ' <button type="button" class="tag tagbtn t-none" data-open="' + key + '" title="확인된 겹침 보기">겹침 ' + o.done + ' (확인됨)</button>';
+  }
+  function whoName(c){
+    var isId = c.what.indexOf('i:') === 0, raw = c.what.slice(2);
+    if (isId && instrById[raw]) return instrById[raw].name;
+    var nm = c.a.who[c.what] || c.b.who[c.what] || raw;
+    return nm + (isId ? '' : '(직접 입력)');
+  }
+  function prioText(ka, kb){
+    var pa = planByKey(ka), pb = planByKey(kb);
+    if (!pa || !pb || ka === kb) return '';
+    var ia = PRIORITY.indexOf(String(pa['구분'])), ib = PRIORITY.indexOf(String(pb['구분']));
+    if (ia < 0 || ib < 0 || ia === ib) return '';
+    return ' 우선순위: ' + PRIORITY[Math.min(ia, ib)] + ' &gt; ' + PRIORITY[Math.max(ia, ib)];
+  }
+  function conflictParts(c, me){
+    var other = me === c.a ? c.b : c.a;
+    var sameKey = me.key === other.key;
+    var oc = sameKey ? '이 과정' : '<b>' + esc(courseLabel(other.key, true)) + '</b>';
+    var ot = '\'' + esc(other.subj) + '\'(' + periodRangeText(other) + ')';
+    if (c.type === 'instr') return { label: '강사 겹침', body: esc(whoName(c)) + ' 강사가 같은 시간(' + c.ov + ')에 ' + oc + '의 ' + ot + '에도 배정되어 있습니다.' };
+    if (c.type === 'room') return { label: '강의실 겹침', body: '<b>' + esc(c.what) + '</b>을(를) 같은 시간(' + c.ov + ')에 ' + oc + '의 ' + ot + '도 사용합니다.' + prioText(me.key, other.key) };
+    return { label: '같은 반 겹침', body: '같은 과정의 ' + ot + ' 교과목과 시간이 겹칩니다(' + c.ov + ').' };
+  }
+  function conflictHtml(c, meGid){
+    var me = c.a.gid === meGid ? c.a : c.b;
+    var pt = conflictParts(c, me);
+    var cls = c.conf ? 'c' : (c.type === 'class' ? 'w' : 'e');
+    var btn = isViewer() ? '' : '<button type="button" class="btn sm ok" data-cf="' + esc(c.sig) + '" data-cfk="' + (c.conf ? 'unconfirm' : 'confirm') + '">' + (c.conf ? '확인 취소' : '확인했음, 그대로 진행') + '</button>';
+    return '<div class="wl ' + cls + '"><div class="row"><span><b>' + esc(pt.label) + (c.conf ? ' · 확인됨' : '') + '</b> ' + pt.body +
+      (c.conf ? ' <span class="hint">(확인 ' + esc(c.conf.when) + ' · ' + esc(c.conf.role || '관리자') + ')</span>' : '') + '</span>' + btn + '</div></div>';
+  }
+  function conflictPlain(c){
+    var t = c.type === 'instr' ? '강사 겹침 · ' + whoName(c) : c.type === 'room' ? '강의실 겹침 · ' + c.what : '같은 반 겹침';
+    return t + ' · ' + md(c.date) + ' ' + c.ov + ' · ' + courseLabel(c.a.key) + ' \'' + c.a.subj + '\' ↔ ' + courseLabel(c.b.key) + ' \'' + c.b.subj + '\'';
+  }
+  function doConfirm(sig, kind, btn){
+    if (isViewer()) return;
+    var c = cfl.filter(function(x){ return x.sig === sig; })[0];
+    if (!c) return;
+    if (kind === 'unconfirm' && !confirm('이 겹침의 "확인됨"을 취소하고 다시 경고로 표시할까요?')) return;
+    var key = currentKey || c.keys[0];
+    btn.disabled = true;
+    api({ action: 'confirmConflict', password: getPw(), 종류: kind, 서명: sig, 개설키: key, 설명: conflictPlain(c), 편성ID들: c.a.ids.concat(c.b.ids) }).then(function(j){
+      if (j.status !== 'ok') { btn.disabled = false; alert(j.message || '처리하지 못했습니다'); return; }
+      history.push({ 일시: j.일시 || '', 개설키: key, 유형: kind === 'confirm' ? '겹침 확인' : '겹침 확인 해제', 항목: sig, 전: '', 후: '', 사유: '', 역할: j.역할 || '관리자' });
+      refreshConflicts();
+      if (currentKey && planByKey(currentKey)) { renderHead(planByKey(currentKey)); renderSessionList(); }
+    }).catch(function(){
+      btn.disabled = false;
+      alert('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    });
+  }
+
+  /* --- 강사 '이미 배정됨' 표시(입력 칸의 일자·교시 기준) --- */
+  function busyOf(iid){
+    if (!iid || !$('sDate')) return null;
+    var d = $('sDate').value, s = Number($('sStart').value), e = Number($('sEnd').value);
+    if (!parseYmd(d) || !isFinite(s) || !isFinite(e)) return null;
+    var subj = $('sSubj') ? $('sSubj').value.trim() : '';
+    var over = [], same = [];
+    allSessions.forEach(function(r){
+      if (String(r['강사ID']) !== String(iid) || String(r['일자']) !== d) return;
+      var p = planByKey(r['개설키']);
+      if (p && isCancelled(p)) return;
+      if (form.id && String(r['편성ID']) === form.id) return;
+      var rs = Number(r['시작교시']), re = Number(r['끝교시']);
+      if (!isFinite(rs) || !isFinite(re)) return;
+      if (String(r['개설키']) === currentKey && String(r['교과목']) === subj && rs === s && re === e) return; // 같은 교과목의 공동강사
+      (rs <= e && s <= re ? over : same).push(r);
+    });
+    if (!over.length && !same.length) return null;
+    return { over: over, same: same };
+  }
+  function busyLines(b){
+    if (!b) return null;
+    if (b.over.length) {
+      var r = b.over[0];
+      return { warn: true, head: esc(md(r['일자'])) + ' ' + esc(periodText(r).txt), sub: esc(courseLabel(r['개설키'])) + (b.over.length > 1 ? ' 외 ' + (b.over.length - 1) + '건' : '') };
+    }
+    var seen = {}, txt = [];
+    b.same.forEach(function(r){ var t = periodText(r).txt; if (!seen[t]) { seen[t] = true; txt.push(t); } });
+    return { warn: false, head: '같은 날 ' + esc(txt.join(', ')) + ' 배정', sub: '(시간 안 겹침)' };
+  }
+  function busyPickerHtml(iid){
+    var l = busyLines(busyOf(iid));
+    if (!l) return '';
+    if (l.warn) return '<span class="bz"><span class="tag t-warn">이미 배정됨</span><small>' + l.head + '<br>' + l.sub + '</small></span>';
+    return '<span class="bz g"><small>' + l.head + '<br>' + l.sub + '</small></span>';
+  }
+  function busyCardHtml(iid){
+    var l = busyLines(busyOf(iid));
+    if (!l) return '';
+    if (l.warn) return '<span class="tag t-warn">이미 배정됨</span><div class="sm">' + l.head + '<br>' + l.sub + '</div>';
+    return '<div class="sm mu">' + l.head + l.sub + '</div>';
+  }
+
   /* --- 강사 찾아보기(큰 팝업) --- */
   var BPAGE = 48;
   var bs = { q: '', field: '', region: '', status: 'active', shown: BPAGE };
@@ -1621,12 +1887,13 @@
       var x = h.x;
       var cls = ['활성', '승인', '정식'].indexOf(x.status) > -1 ? 't-ok' : 't-warn';
       var sel = form.iid === x.id;
-      return '<div class="bc' + (sel ? ' sel' : '') + '" data-detail="' + esc(x.id) + '" title="눌러서 상세·강의 이력 보기">' + avatar(x, 'xl') +
+      var bz = busyCardHtml(x.id);
+      return '<div class="bc' + (sel ? ' sel' : '') + (bz.indexOf('이미 배정됨') > -1 ? ' busy' : '') + '" data-detail="' + esc(x.id) + '" title="눌러서 상세·강의 이력 보기">' + avatar(x, 'xl') +
         '<div class="nm">' + esc(x.name) + '</div>' +
         '<span class="tag ' + cls + '">' + esc(x.status || '-') + '</span>' +
         '<div class="sm">' + esc([x.org, x.pos].filter(Boolean).join(' · ') || '-') + '</div>' +
         '<div class="sm">' + esc(x.field || '-') + '</div>' +
-        '<div class="sm mu">' + esc(x.region || '-') + ' · 강의 ' + x.count + '회</div>' +
+        '<div class="sm mu">' + esc(x.region || '-') + ' · 강의 ' + x.count + '회</div>' + bz +
         '<div class="bbt"><button type="button" data-detail="' + esc(x.id) + '">상세</button><button type="button" class="pk" data-bpick="' + esc(x.id) + '">' + (sel ? '선택됨' : '선택') + '</button></div></div>';
     }).join('') + '</div>' +
     (all.length > list.length ? '<div class="bmore"><button type="button" class="btn" id="bMore">더 보기 (+' + Math.min(BPAGE, all.length - list.length) + ')</button></div>' : '');
@@ -1646,8 +1913,10 @@
 
   function onListClick(ev){
     var t = ev.target;
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-manual') !== null))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-manual') !== null))) t = t.parentNode;
     if (!t || t === document) return;
+    var cfSig = t.getAttribute('data-cf');
+    if (cfSig) { doConfirm(cfSig, t.getAttribute('data-cfk') || 'confirm', t); return; }
     var chgKey = t.getAttribute('data-chg');
     if (chgKey) { openChange(chgKey, t.getAttribute('data-ck') || 'dates'); return; }
     var open = t.getAttribute('data-open');
