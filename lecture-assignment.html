@@ -195,12 +195,37 @@
   #iCard .btns{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;flex-wrap:wrap;}
   @media (max-width:560px){ .fgrid{grid-template-columns:1fr;} .fgrid .fi.full{grid-column:span 1;} }
 
+  /* 강사 찾아보기(큰 팝업) */
+  #bOverlay{display:none;position:fixed;inset:0;background:rgba(20,20,19,.45);z-index:90;align-items:center;justify-content:center;padding:16px;}
+  #bCard{background:#fff;border-radius:14px;max-width:1040px;width:100%;height:92vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.25);}
+  #bCard .bh{padding:18px 22px 12px;border-bottom:1px solid var(--border);}
+  #bCard .bh .tr{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  #bCard h2{margin:0;font-size:19px;color:var(--navy);}
+  #bCard .bf{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-top:12px;}
+  #bCard .bf input,#bCard .bf select{width:100%;height:36px;border:1px solid var(--border-input);border-radius:6px;padding:0 8px;font:inherit;font-size:13px;background:#fff;}
+  #bCard .bcnt{font-size:12.5px;color:var(--text-muted);margin-top:8px;}
+  #bCard .bb{padding:14px 22px 18px;overflow-y:auto;flex:1;}
+  .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;}
+  .bc{border:1px solid var(--border);border-radius:12px;padding:14px 12px 12px;text-align:center;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .bc:hover{border-color:var(--navy);box-shadow:0 2px 10px rgba(27,58,95,.12);}
+  .bc.sel{border-color:var(--ok-fg);background:#F5FBF5;}
+  .bc .avatar{width:88px;height:88px;font-size:22px;margin-bottom:4px;}
+  .bc .nm{font-weight:800;font-size:14.5px;color:var(--text);}
+  .bc .sm{font-size:12px;color:var(--text-sub);line-height:1.5;word-break:break-word;}
+  .bc .sm.mu{color:var(--text-muted);}
+  .bc .bbt{display:flex;gap:6px;margin-top:8px;width:100%;}
+  .bc .bbt button{flex:1;height:30px;border-radius:6px;border:1px solid var(--border-input);background:#fff;font:inherit;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;}
+  .bc .bbt button.pk{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .bmore{text-align:center;margin-top:14px;}
+  .binfo{padding:30px 10px;text-align:center;color:var(--text-muted);font-size:13.5px;}
+  @media (max-width:640px){ #bCard{height:96vh;} #bCard .bf{grid-template-columns:1fr 1fr;} #bCard .bf input{grid-column:span 2;} .bgrid{grid-template-columns:repeat(2,1fr);} }
+
   /* 인쇄: A4 가로, 표만 */
   @page{size:A4 landscape;margin:10mm;}
   @media print{
     body{background:#fff;}
     .wrap{max-width:none;padding:0;}
-    header .hbtns,.bar,#msgBox,.cards,#loading,#editView,#iOverlay{display:none !important;}
+    header .hbtns,.bar,#msgBox,.cards,#loading,#editView,#iOverlay,#bOverlay{display:none !important;}
     header{box-shadow:none;padding:0 0 8px 0;margin-bottom:6px;}
     .tw{display:block !important;box-shadow:none;overflow:visible;}
     #cardList{display:none !important;}
@@ -306,6 +331,7 @@
 </div>
 </div>
 
+<div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -791,6 +817,7 @@
   }
   function showPlan(){
     currentKey = '';
+    closeBrowse(); closeInstructor();
     $('editView').style.display = 'none';
     $('planView').style.display = '';
     $('hTitle').textContent = '강의배정 · 연간계획';
@@ -875,8 +902,10 @@
         '</select><div class="hint" id="sKlassHint"></div></div>' +
       '<div class="span2"><label for="sRoom">강의실</label><select id="sRoom">' + roomOptions(defRoom) + '</select>' +
         '<input type="text" id="sRoomText" maxlength="100" placeholder="강의실 이름 직접 입력" style="display:none;margin-top:6px;"></div>' +
-      '<div class="span2" style="position:relative;"><label for="sInstr">강사</label><div id="sChip"></div>' +
-        '<input type="text" id="sInstr" autocomplete="off" placeholder="이름·소속·분야·교과목으로 검색"><div id="sPicker" class="picker" style="display:none;"></div></div>' +
+      '<div class="span2" style="position:relative;"><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin-bottom:3px;"><label for="sInstr" style="margin:0;">강사</label>' +
+        '<button type="button" class="btn" id="sBrowse" style="height:26px;padding:0 10px;font-size:12px;">강사 찾아보기 (사진·이력)</button></div><div id="sChip"></div>' +
+        '<input type="text" id="sInstr" autocomplete="off" placeholder="이름·소속·분야·교과목으로 검색"><div id="sPicker" class="picker" style="display:none;"></div>' +
+        '</div>' +
       '<div class="span2"><label for="sNote">비고</label><input type="text" id="sNote" maxlength="200" placeholder="선택 입력"></div>' +
       '</div>' +
       '<div class="fbtn"><button type="button" class="btn primary" id="sSave">저장</button>' +
@@ -903,6 +932,7 @@
     });
     $('sInstr').addEventListener('input', showPicker);
     $('sInstr').addEventListener('focus', showPicker);
+    $('sBrowse').addEventListener('click', openBrowse);
     $('sSave').addEventListener('click', saveForm);
     $('sReset').addEventListener('click', function(){ resetForm(); showFormMsg('', ''); });
   }
@@ -1233,6 +1263,95 @@
           (st ? ' <span class="tag ' + (st === '취소됨' ? 't-err' : 't-none') + '">' + esc(st) + '</span>' : '') + '</div>';
       }).join('') + (all.length > 15 ? '<div class="hint">최근 15건만 표시합니다.</div>' : '');
   }
+  /* --- 강사 찾아보기(큰 팝업) --- */
+  var BPAGE = 48;
+  var bs = { q: '', field: '', region: '', status: 'active', shown: BPAGE };
+  function splitVals(t){ return String(t || '').split(/[,，、\/\n;]+/).map(function(v){ return v.trim(); }).filter(Boolean); }
+  function uniqVals(key){
+    var m = {};
+    (instructors || []).forEach(function(x){ splitVals(x[key]).forEach(function(v){ m[v] = (m[v] || 0) + 1; }); });
+    return Object.keys(m).sort(function(a, b){ return a.localeCompare(b, 'ko'); });
+  }
+  function closeBrowse(){ $('bOverlay').style.display = 'none'; }
+  function openBrowse(){
+    if (isViewer() || !$('sInstr')) return;
+    hidePicker();
+    ensureInstructors();
+    bs.q = $('sInstr').value.trim(); bs.field = ''; bs.region = ''; bs.status = 'active'; bs.shown = BPAGE;
+    renderBrowseShell();
+    $('bOverlay').style.display = 'flex';
+    setTimeout(function(){ var i = $('bQ'); if (i) i.focus(); }, 50);
+  }
+  function opts(list, cur, all){
+    return '<option value="">' + all + '</option>' + list.map(function(v){ return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(v) + '</option>'; }).join('');
+  }
+  function renderBrowseShell(){
+    var ready = instructors !== null && !instrLoading;
+    $('bCard').innerHTML =
+      '<div class="bh"><div class="tr"><h2>강사 찾아보기</h2><button type="button" class="btn" id="bClose">닫기</button></div>' +
+      '<div class="bf">' +
+      '<input type="text" id="bQ" autocomplete="off" placeholder="이름·소속·분야·교과목·지역으로 검색" value="' + esc(bs.q) + '">' +
+      '<select id="bField" aria-label="전문분야">' + opts(ready ? uniqVals('field') : [], bs.field, '전문분야 전체') + '</select>' +
+      '<select id="bRegion" aria-label="활동지역">' + opts(ready ? uniqVals('region') : [], bs.region, '활동지역 전체') + '</select>' +
+      '<select id="bStatus" aria-label="상태"><option value="active"' + (bs.status === 'active' ? ' selected' : '') + '>활성 강사만</option><option value="all"' + (bs.status === 'all' ? ' selected' : '') + '>모든 상태</option></select>' +
+      '</div><div class="bcnt" id="bCnt"></div></div>' +
+      '<div class="bb" id="bBody"></div>';
+    $('bClose').addEventListener('click', closeBrowse);
+    $('bQ').addEventListener('input', function(){ bs.q = this.value.trim(); bs.shown = BPAGE; renderBrowseList(); });
+    $('bField').addEventListener('change', function(){ bs.field = this.value; bs.shown = BPAGE; renderBrowseList(); });
+    $('bRegion').addEventListener('change', function(){ bs.region = this.value; bs.shown = BPAGE; renderBrowseList(); });
+    $('bStatus').addEventListener('change', function(){ bs.status = this.value; bs.shown = BPAGE; renderBrowseList(); });
+    renderBrowseList();
+  }
+  function browseMatches(){
+    var tokens = bs.q.toLowerCase().split(/\s+/).filter(Boolean);
+    var out = [];
+    instructors.forEach(function(x){
+      if (bs.status === 'active' && x.status !== '활성') return;
+      if (bs.field && splitVals(x.field).indexOf(bs.field) === -1) return;
+      if (bs.region && splitVals(x.region).indexOf(bs.region) === -1) return;
+      var fields = [x.name, x.org, x.field, x.subj, x.region], score = 0, ok = true;
+      tokens.forEach(function(tk){
+        var hit = false;
+        fields.forEach(function(f, i){ if (String(f).toLowerCase().indexOf(tk) > -1) { hit = true; score += (i === 0 ? 3 : i === 1 ? 2 : 1); } });
+        if (!hit) ok = false;
+      });
+      if (ok) out.push({ x: x, score: score });
+    });
+    out.sort(function(a, b){
+      if (a.score !== b.score) return b.score - a.score;
+      var aa = a.x.status === '활성' ? 0 : 1, bb = b.x.status === '활성' ? 0 : 1;
+      if (aa !== bb) return aa - bb;
+      return a.x.name.localeCompare(b.x.name, 'ko');
+    });
+    return out;
+  }
+  function renderBrowseList(){
+    var body = $('bBody'), cnt = $('bCnt');
+    if (!body) return;
+    if (instructors === null || instrLoading) { body.innerHTML = '<div class="binfo">강사 목록을 불러오는 중입니다…</div>'; cnt.textContent = ''; return; }
+    if (instrFailed || !instructors.length) { body.innerHTML = '<div class="binfo">강사 목록을 불러오지 못했습니다. 닫은 뒤 "직접 입력"을 사용하거나 새로고침해 주세요.</div>'; cnt.textContent = ''; return; }
+    var all = browseMatches();
+    var list = all.slice(0, bs.shown);
+    cnt.textContent = '검색 결과 ' + all.length + '명' + (all.length > list.length ? ' 중 ' + list.length + '명 표시' : '') + (bs.status === 'active' ? ' (활성 강사만)' : '');
+    if (!all.length) { body.innerHTML = '<div class="binfo">조건에 맞는 강사가 없습니다. 검색어를 줄이거나 필터를 바꿔 보세요.</div>'; return; }
+    body.innerHTML = '<div class="bgrid">' + list.map(function(h){
+      var x = h.x;
+      var cls = ['활성', '승인', '정식'].indexOf(x.status) > -1 ? 't-ok' : 't-warn';
+      var sel = form.iid === x.id;
+      return '<div class="bc' + (sel ? ' sel' : '') + '" data-detail="' + esc(x.id) + '" title="눌러서 상세·강의 이력 보기">' + avatar(x, 'xl') +
+        '<div class="nm">' + esc(x.name) + '</div>' +
+        '<span class="tag ' + cls + '">' + esc(x.status || '-') + '</span>' +
+        '<div class="sm">' + esc([x.org, x.pos].filter(Boolean).join(' · ') || '-') + '</div>' +
+        '<div class="sm">' + esc(x.field || '-') + '</div>' +
+        '<div class="sm mu">' + esc(x.region || '-') + ' · 강의 ' + x.count + '회</div>' +
+        '<div class="bbt"><button type="button" data-detail="' + esc(x.id) + '">상세</button><button type="button" class="pk" data-bpick="' + esc(x.id) + '">' + (sel ? '선택됨' : '선택') + '</button></div></div>';
+    }).join('') + '</div>' +
+    (all.length > list.length ? '<div class="bmore"><button type="button" class="btn" id="bMore">더 보기 (+' + Math.min(BPAGE, all.length - list.length) + ')</button></div>' : '');
+    var mb = $('bMore');
+    if (mb) mb.addEventListener('click', function(){ bs.shown += BPAGE; renderBrowseList(); });
+  }
+
   function pickInstructor(id){
     if (isViewer() || !$('sInstr')) return;
     form.iid = id; form.iname = '';
@@ -1240,14 +1359,17 @@
     hidePicker();
     renderChip();
     closeInstructor();
+    closeBrowse();
   }
 
   function onListClick(ev){
     var t = ev.target;
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-iid') || t.getAttribute('data-manual') !== null))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-manual') !== null))) t = t.parentNode;
     if (!t || t === document) return;
     var open = t.getAttribute('data-open');
     if (open) { openCourse(open); return; }
+    var bp = t.getAttribute('data-bpick');
+    if (bp) { pickInstructor(bp); return; }
     var det = t.getAttribute('data-detail');
     if (det) { openInstructor(det); return; }
     var iid = t.getAttribute('data-iid');
@@ -1281,7 +1403,11 @@
   });
   window.addEventListener('hashchange', route);
   $('iOverlay').addEventListener('click', function(ev){ if (ev.target === $('iOverlay')) closeInstructor(); });
-  document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') closeInstructor(); });
+  $('bOverlay').addEventListener('click', function(ev){ if (ev.target === $('bOverlay')) closeBrowse(); });
+  document.addEventListener('keydown', function(ev){
+    if (ev.key !== 'Escape') return;
+    if ($('iOverlay').style.display === 'flex') closeInstructor(); else closeBrowse();
+  });
   $('backBtn').addEventListener('click', function(){ location.hash = ''; });
   $('sReload').addEventListener('click', function(){
     var pw = getPw(); if (!pw) return;
