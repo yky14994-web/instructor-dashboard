@@ -371,6 +371,8 @@
   .nmk:hover{background:#dbe7f6;}
   .gc .eb{border:none;background:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:0 2px;}
   .db{display:inline-block;font-size:10.5px;font-weight:800;border-radius:8px;padding:0 6px;line-height:1.6;vertical-align:1px;white-space:nowrap;}
+  .db[data-doc]{cursor:pointer;}
+  .db[data-doc]:hover{filter:brightness(.94);text-decoration:underline;}
   .db.ok{background:var(--ok-bg);color:var(--ok-fg);} .db.bad{background:var(--err-bg);color:var(--err-fg);} .db.wn{background:var(--warn-bg);color:var(--warn-fg);}
   .gdays{display:none;gap:4px;margin-bottom:8px;}
   .gdays button{flex:1;height:34px;border:1px solid var(--border-input);background:#fff;border-radius:6px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer;}
@@ -1463,9 +1465,10 @@
   function docBadge(x){
     if (!x) return '';
     var d = docState(x);
-    if (d.miss.length) return '<span class="db bad" title="' + esc(d.miss.join(', ')) + '">미비 ' + d.miss.length + '</span>';
-    if (d.due) return '<span class="db wn" title="개인정보 보유기간 만료 임박(' + esc(d.ret.expire) + ')">보유 임박</span>';
-    return '<span class="db ok" title="강사카드·개인정보 동의서 제출됨">서류 완비</span>';
+    var a = ' data-doc="' + esc(x.id) + '" role="button" tabindex="0"';
+    if (d.miss.length) return '<span class="db bad"' + a + ' title="' + esc(d.miss.join(', ')) + ' · 눌러서 보기">미비 ' + d.miss.length + '</span>';
+    if (d.due) return '<span class="db wn"' + a + ' title="개인정보 보유기간 만료 임박(' + esc(d.ret.expire) + ') · 눌러서 보기">보유 임박</span>';
+    return '<span class="db ok"' + a + ' title="강사카드·개인정보 동의서 제출됨 · 눌러서 보기">서류 완비</span>';
   }
   function instrCell(r){
     if (r['강사ID']) {
@@ -1795,12 +1798,36 @@
     }
     return '<table class="dtab" style="width:100%;border-collapse:collapse;margin-top:4px;">' + cardRow + '<tr><td>개인정보 동의서</td><td>' + cs + '</td></tr></table>';
   }
+  /* 배지를 누르면 그 강사의 서류 상태만 간단히 보여 줌(미비 항목 먼저) */
+  function openDocInfo(id){
+    var x = instrById[id];
+    if (!x) return;
+    var d = docState(x), ret = d.ret, items = [];
+    items.push({ name: '강사카드', ok: !!x.card, text: x.card ? '제출' : '미제출', fid: x.card });
+    if (!x.consent) items.push({ name: '개인정보 동의서', ok: false, text: '미제출', fid: '' });
+    else items.push({ name: '개인정보 동의서', ok: !ret.over, warn: d.due, text: ret.over ? '보유기간 만료(' + ret.expire + ')' : d.due ? '보유기간 임박(' + ret.expire + ' 만료)' : '제출 · 보유 ~' + ret.expire, fid: x.consent, hint: x.reconsent ? '재동의 확인 ' + x.reconsent + ' 기준' : '등록일 ' + (ret.base || '-') + ' 기준 3년' });
+    items.sort(function(a, b){ return (a.ok && !a.warn ? 1 : 0) - (b.ok && !b.warn ? 1 : 0); });
+    var need = items.filter(function(i){ return !i.ok || i.warn; });
+    var rows = items.map(function(i){
+      var cls = !i.ok ? 'bad' : i.warn ? 'wn' : 'ok';
+      return '<tr><td>' + esc(i.name) + '</td><td><span class="db ' + cls + '">' + esc(i.text) + '</span>' + (i.fid ? fileLinks(i.fid) : '') + (i.hint ? '<div class="hint" style="margin-top:3px;">' + esc(i.hint) + '</div>' : '') + '</td></tr>';
+    }).join('');
+    var head = need.length
+      ? '<div class="note-warn" style="margin:0 0 10px;"><b>확인이 필요한 서류 ' + need.length + '건</b><br>' + need.map(function(i){ return '· ' + esc(i.name) + ' — ' + esc(i.text); }).join('<br>') + '<br><span class="hint">강사 안내는 자동으로 가지 않으니 담당자가 직접 요청해 주세요.</span></div>'
+      : '<div class="note-ok" style="margin:0 0 10px;">강사카드·개인정보 동의서가 모두 제출되어 있습니다.</div>';
+    $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(x.name) + ' <span class="hint" style="font-weight:600;">서류 현황</span></h2><div class="sub">' + esc([x.org, x.pos].filter(Boolean).join(' · ')) + '</div></div>' + avatar(x, 'lg') + '</div>' +
+      head + '<table class="dtab" style="width:100%;border-collapse:collapse;">' + rows + '</table>' +
+      '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button><button type="button" class="btn" id="iFull" data-full="' + esc(id) + '">강사 정보 전체 보기</button></div>';
+    $('iOverlay').style.display = 'flex';
+    $('iClose').addEventListener('click', closeInstructor);
+    $('iFull').addEventListener('click', function(){ openInstructor(id, false); });
+  }
   function closeInstructor(){ $('iOverlay').style.display = 'none'; }
-  function openInstructor(id){
+  function openInstructor(id, fromPicker){
     var x = instrById[id];
     if (!x) return;
     var viewer = isViewer();
-    var canPick = !viewer && !!$('sInstr');
+    var canPick = !viewer && !!$('sInstr') && !!fromPicker;
     hidePicker();
     var mine = allSessions.filter(function(r){ return String(r['강사ID']) === id; }).sort(function(a, b){
       return String(b['일자']).localeCompare(String(a['일자']));
@@ -2514,7 +2541,7 @@
 
   function onListClick(ev){
     var t = ev.target;
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-manual') !== null))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-manual') !== null))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var cfSig = t.getAttribute('data-cf');
@@ -2532,7 +2559,9 @@
     var bp = t.getAttribute('data-bpick');
     if (bp) { pickInstructor(bp); return; }
     var det = t.getAttribute('data-detail');
-    if (det) { openInstructor(det); return; }
+    if (det) { openInstructor(det, !!(t.closest && t.closest('#sPicker, #bCard'))); return; }
+    var dc = t.getAttribute('data-doc');
+    if (dc) { openDocInfo(dc); return; }
     var iid = t.getAttribute('data-iid');
     if (iid) { form.iid = iid; form.iname = ''; $('sInstr').value = ''; hidePicker(); renderChip(); return; }
     if (t.getAttribute('data-manual') !== null) {
@@ -2558,6 +2587,9 @@
       .finally(function(){ b.disabled = false; b.textContent = '새로고침'; });
   });
   document.addEventListener('click', onListClick);
+  document.addEventListener('keydown', function(ev){
+    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.getAttribute && ev.target.getAttribute('data-doc')) { ev.preventDefault(); openDocInfo(ev.target.getAttribute('data-doc')); }
+  });
   document.addEventListener('click', function(ev){
     var pk = $('sPicker');
     if (pk && pk.style.display !== 'none' && ev.target !== $('sInstr') && !pk.contains(ev.target)) hidePicker();
