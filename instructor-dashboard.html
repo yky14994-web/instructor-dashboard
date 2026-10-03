@@ -463,6 +463,10 @@
         <input type="checkbox" id="filterPending" style="width:auto;height:auto;">
         배정받은 사람만 보기
       </label>
+      <label id="retentionFilterLabel" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-sub);border:1px solid var(--border);border-radius:6px;padding:0 12px;height:40px;cursor:pointer;">
+        <input type="checkbox" id="filterRetention" style="width:auto;height:auto;">
+        보유기간 3년 도래·임박
+      </label>
     </div>
   </div>
 
@@ -629,6 +633,20 @@
     return age;
   }
 
+  // 개인정보 보유기간: 등록일(재동의 확인일이 있으면 그 날짜 중 늦은 날)부터 3년. 만료 90일 전부터 '임박'으로 표시
+  function retentionInfo(d){
+    var base = String(d.등록일 || '').slice(0,10);
+    var re = String(d.재동의확인일 || '').slice(0,10);
+    if (re && re > base) base = re;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(base);
+    if (!m) return { base:'', expire:'', due:false, over:false };
+    var exp = new Date(Number(m[1]) + 3, Number(m[2]) - 1, Number(m[3]));
+    var expStr = exp.getFullYear() + '-' + ('0'+(exp.getMonth()+1)).slice(-2) + '-' + ('0'+exp.getDate()).slice(-2);
+    var now = new Date(); now.setHours(0,0,0,0);
+    var soon = new Date(now.getTime() + 90*86400000);
+    return { base:base, expire:expStr, due: exp <= soon, over: exp <= now };
+  }
+
   function getAdminPw(){
     var stored = sessionStorage.getItem('jsfa_admin_pw');
     if (stored) return stored;
@@ -744,12 +762,14 @@
     var fRegion = document.getElementById('filterRegion').value;
     var fStatus = document.getElementById('filterStatus').value;
     var fPending = document.getElementById('filterPending').checked;
+    var fRetention = document.getElementById('filterRetention').checked;
 
     var filtered = allData.filter(function(d){
       if (fSpecialty && d.전문분야 !== fSpecialty) return false;
       if (fRegion && d.활동지역 !== fRegion) return false;
       if (fStatus && d.상태 !== fStatus) return false;
       if (fPending && !d.강의확정) return false;
+      if (fRetention && !retentionInfo(d).due) return false;
       if (q) {
         var haystack = ((d.성명||'') + (d.소속||'') + (d.연락처||'')).toLowerCase();
         if (haystack.indexOf(q) === -1) return false;
@@ -893,6 +913,8 @@
         '<div class="fi"><div class="fk">활동지역</div><div class="fv">' + (d.활동지역||'-') + '</div></div>' +
         '<div class="fi"><div class="fk">강의회차</div><div class="fv">' + (d.강의회차 || 0) + '회</div></div>' +
         '<div class="fi"><div class="fk">등록일</div><div class="fv">' + (d.등록일||'-') + '</div></div>' +
+        (isViewer ? '' : (function(){ var r = retentionInfo(d); return '<div class="fi"><div class="fk">보유기간 만료일 (3년)</div><div class="fv"' + (r.due ? ' style="color:#A32D2D;font-weight:700;"' : '') + '>' + (r.expire || '-') + (r.over ? ' (도래)' : (r.due ? ' (임박)' : '')) + '</div></div>' +
+          '<div class="fi"><div class="fk">재동의 확인</div><div class="fv">' + (d.재동의확인일 ? (d.재동의확인일 + (d.재동의메모 ? '<br><span style="font-size:12px;font-weight:400;">' + String(d.재동의메모).replace(/</g,'&lt;') + '</span>' : '')) : '-') + '</div></div>'; })()) +
         '<div class="fi full"><div class="fk">자격증·학위</div><div class="fv">' + (slashJoinLines(d.자격증학위) || '-') + '</div></div>' +
         '<div class="fi full"><div class="fk">약력</div><div class="fv">' + (slashJoinLines(d.약력) || '-') + '</div></div>' +
         '<div class="fi full"><div class="fk">강사카드</div><div class="fv">' + profileLinkHtml + '</div></div>' +
@@ -946,6 +968,7 @@
         '<div style="display:flex;gap:14px;align-items:center;">' +
           (isViewer ? '' :
             '<button id="dormantBtn" style="border:none;background:none;color:#5F5E5A;font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">휴면 처리 (관리자 전용)</button>' +
+            '<button id="reconsentBtn" style="border:none;background:none;color:#1B3A5F;font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">재동의 확인 기록 (관리자 전용)</button>' +
             (d.강의회차 > 0
               ? '<span style="font-size:11px;color:var(--text-muted);">강의 이력이 있는 강사는 삭제할 수 없습니다</span>'
               : '<button id="deleteBtn" style="border:none;background:none;color:#A32D2D;font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">강사카드 삭제 (관리자 전용)</button>')) +
@@ -958,6 +981,34 @@
     document.getElementById('detailCloseBottomBtn').addEventListener('click', function(){
       document.getElementById('overlay').style.display = 'none';
     });
+
+    if (document.getElementById('reconsentBtn')) {
+      document.getElementById('reconsentBtn').addEventListener('click', function(){
+        var adminPw = getAdminPw();
+        if (adminPw === null) return;
+        var memo = prompt('재동의 확인 내용을 입력해 주세요 (예: 유선통화로 개인정보 재사용 동의 확인, 확인자 홍길동):', '유선통화로 개인정보 재사용 동의 확인');
+        if (memo === null) return;
+        var pw = sessionStorage.getItem('jsfa_dash_pw');
+        fetch(WEBAPP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'recordReconsent', 강사ID: d.강사ID, 메모: memo, password: pw, adminPassword: adminPw })
+        })
+        .then(function(res){ return res.json(); })
+        .then(function(json){
+          if (json.status === 'ok') {
+            d.재동의확인일 = json.date;
+            d.재동의메모 = json.memo;
+            render();
+            openDetail(d);
+          } else {
+            if ((json.message||'').indexOf('권한 비밀번호') > -1) sessionStorage.removeItem('jsfa_admin_pw');
+            alert(json.message || '기록 중 오류가 발생했습니다.');
+          }
+        })
+        .catch(function(){ alert('기록 중 오류가 발생했습니다.'); });
+      });
+    }
 
     if (document.getElementById('dormantBtn')) {
       document.getElementById('dormantBtn').addEventListener('click', function(){
@@ -2279,6 +2330,7 @@
   ['search'].forEach(function(id){
     document.getElementById(id).addEventListener('input', render);
   });
+  document.getElementById('filterRetention').addEventListener('change', render);
   document.getElementById('filterPending').addEventListener('change', function(){
     if (this.checked) {
       document.getElementById('filterStatus').value = '';
@@ -2413,6 +2465,7 @@
       sessionStorage.setItem('jsfa_dash_role', json.role || 'admin');
       document.getElementById('viewerModeBanner').style.display = isViewerRole() ? 'block' : 'none';
       document.getElementById('exportRow').style.display = isViewerRole() ? 'none' : 'flex';
+      document.getElementById('retentionFilterLabel').style.display = isViewerRole() ? 'none' : 'flex';
 
       allData = json.data || [];
       document.getElementById('loading').style.display = 'none';
