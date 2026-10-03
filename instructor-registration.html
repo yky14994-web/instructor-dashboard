@@ -87,6 +87,17 @@
     border-color: var(--navy); color: var(--navy); background: #f4f7fa; box-shadow: inset 0 0 0 1px var(--navy);
   }
 
+  .form-download {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--navy);
+    font-weight: 700; text-decoration: none; margin-top: 10px; background: #f4f7fa;
+    padding: 8px 16px; border-radius: 8px; transition: background 0.2s;
+  }
+  .form-download:hover { background: #e3e9ee; }
+  .consent-box { background: #f8f9fb; border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; font-size: 13px; color: var(--text-sub); line-height: 1.7; }
+  .consent-box ul { margin: 8px 0 0 0; padding-left: 18px; }
+  .consent-check { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 15px; font-weight: 700; color: var(--text); cursor: pointer; }
+  .consent-check input { width: 20px; height: 20px; margin: 0; flex-shrink: 0; cursor: pointer; }
+  .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
   button[type=submit] {
     width: 100%; height: 56px; border: none; border-radius: 12px;
     background: var(--navy); color: #fff; font-size: 18px; font-weight: 700;
@@ -200,9 +211,16 @@
         <input type="file" id="photo" accept="image/*" required>
       </div>
       <div class="field">
-        <label class="required" for="profileFile">프로필 파일 (이력서 등)</label>
-        <input type="file" id="profileFile" accept=".pdf,image/*" required>
-        <div class="hint">PDF 또는 이미지(JPG 등) 파일만 업로드해 주세요. 미리보기로 바로 확인할 수 있는 형식입니다.</div>
+        <label class="required" for="profileFile">강사카드 (PDF)</label>
+        <input type="file" id="profileFile" accept=".pdf,application/pdf" required>
+        <a class="form-download" id="cardFormLink" href="#" target="_blank" style="display:none;">↓ 강사카드 양식 다운로드</a>
+        <div class="hint">한글 양식을 작성한 뒤 <b>PDF로 변환(저장)</b>해서 올려 주세요. PDF 파일만 올릴 수 있습니다(10MB 이하).</div>
+      </div>
+      <div class="field">
+        <label class="required" for="consentFile">개인정보 수집·이용 동의서 (서명본, PDF)</label>
+        <input type="file" id="consentFile" accept=".pdf,application/pdf" required>
+        <a class="form-download" id="consentFormLink" href="#" target="_blank" style="display:none;">↓ 개인정보 동의서 양식 다운로드</a>
+        <div class="hint">양식을 내려받아 작성·서명한 뒤 PDF로 변환해 올려 주세요.</div>
       </div>
       <div class="row">
         <div class="field">
@@ -273,6 +291,22 @@
       </div>
     </div>
 
+    <div class="card">
+      <div class="card-title">개인정보 수집·이용 동의</div>
+      <div class="consent-box">
+        전남소방학교는 외부강사 등록 심사와 강사 관리를 위해 아래와 같이 개인정보를 수집·이용합니다.
+        <ul>
+          <li><b>수집 항목</b>: 성명, 생년월일, 연락처, 이메일, 소속·직위, 증명사진, 강사카드, 개인정보 동의서(서명본), 학위·자격증·약력</li>
+          <li><b>이용 목적</b>: 외부강사 등록 심사, 강사 명단 관리, 강의 배정 및 안내 연락</li>
+          <li><b>보유·이용 기간</b>: 강사 명단 등록 기간 동안 (삭제를 요청하시면 지체 없이 파기합니다)</li>
+          <li>동의를 거부하실 수 있으며, 거부하시면 등록 신청이 제한됩니다.</li>
+        </ul>
+      </div>
+      <label class="consent-check" for="consent"><input type="checkbox" id="consent"> 위 내용을 확인하였으며 개인정보 수집·이용에 동의합니다. (필수)</label>
+    </div>
+
+    <div class="hp-field" aria-hidden="true"><label for="website">웹사이트 (비워 두세요)</label><input type="text" id="website" tabindex="-1" autocomplete="off"></div>
+
     <div class="hint hint-danger" style="margin-bottom:20px;">
       ※ 심사 결과 승인되지 않은 경우, 제출하신 서류(사진, 첨부파일 등)는 별도로 반환되지 않습니다.<br>
       ※ 사진·첨부파일 용량이 크면 업로드가 지연될 수 있습니다. "제출 중..." 표시 중에는 창을 닫지 말고 기다려 주세요.
@@ -292,6 +326,14 @@
 
 <script>
   var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwLgHlqLhN79N0Rc1ZvtmsOJH5ocu_5faU_qv62IKWEiUOHQ7_0sZNoG8sGSbGCV8e3/exec';
+
+  // 서식 다운로드 주소: 한글 양식을 드라이브에 올린 뒤 주소를 넣으면 버튼이 나타납니다.
+  var CARD_FORM_URL = '';
+  var CONSENT_FORM_URL = 'https://drive.google.com/uc?export=download&id=1F4nHTVL4aSK7PKo40Y46gWayhHl3C4NJ';
+  [['cardFormLink', CARD_FORM_URL], ['consentFormLink', CONSENT_FORM_URL]].forEach(function(p){
+    if (p[1]) { var el = document.getElementById(p[0]); el.href = p[1]; el.style.display = 'inline-flex'; }
+  });
+  var MAX_PDF_BYTES = 10 * 1024 * 1024;
 
   var form = document.getElementById('regForm');
   var msg = document.getElementById('msg');
@@ -354,6 +396,7 @@
     var typeEl = document.querySelector('input[name=type]:checked');
     var photoFile = document.getElementById('photo').files[0];
     var profileFile = document.getElementById('profileFile').files[0];
+    var consentFile = document.getElementById('consentFile').files[0];
 
     var payload = {
       action: 'register',
@@ -371,7 +414,9 @@
         document.getElementById('degree').value.trim() ? '학위: ' + document.getElementById('degree').value.trim() : '',
         document.getElementById('cert').value.trim() ? '자격증: ' + document.getElementById('cert').value.trim() : ''
       ].filter(Boolean).join(' / '),
-      약력: document.getElementById('bio').value.trim()
+      약력: document.getElementById('bio').value.trim(),
+      동의: document.getElementById('consent').checked === true,
+      website: document.getElementById('website').value
     };
 
     if (!payload.성명 || !payload.생년월일 || !payload.연락처 || !payload.이메일 || !payload.소속 || !payload.전문분야) {
@@ -380,10 +425,28 @@
       msg.style.display = 'block';
       return;
     }
+    if (!payload.동의) {
+      msg.textContent = '개인정보 수집·이용에 동의해 주셔야 신청할 수 있습니다.';
+      msg.className = 'err';
+      msg.style.display = 'block';
+      return;
+    }
     if (!photoFile) {
       msg.textContent = '증명사진을 첨부해 주세요.';
       msg.className = 'err';
       msg.style.display = 'block';
+      return;
+    }
+
+    var pdfBad = null;
+    [[profileFile, '강사카드'], [consentFile, '개인정보 동의서']].forEach(function(p){
+      if (pdfBad) return;
+      if (!p[0]) pdfBad = p[1] + ' 파일을 첨부해 주세요.';
+      else if (!/\.pdf$/i.test(p[0].name) && p[0].type !== 'application/pdf') pdfBad = p[1] + '는 PDF 파일만 올릴 수 있습니다. 한글 양식을 PDF로 변환해 주세요.';
+      else if (p[0].size > MAX_PDF_BYTES) pdfBad = p[1] + ' 파일이 너무 큽니다. 10MB 이하로 올려 주세요.';
+    });
+    if (pdfBad) {
+      msg.textContent = pdfBad; msg.className = 'err'; msg.style.display = 'block';
       return;
     }
 
@@ -401,7 +464,14 @@
       .then(function(profileBase64){
         if (profileBase64) {
           payload.프로필base64 = profileBase64;
-          payload.프로필타입 = profileFile.type;
+          payload.프로필타입 = profileFile.type || 'application/pdf';
+        }
+        return fileToBase64(consentFile);
+      })
+      .then(function(consentBase64){
+        if (consentBase64) {
+          payload.동의서base64 = consentBase64;
+          payload.동의서타입 = consentFile.type || 'application/pdf';
         }
         return fetch(WEBAPP_URL, {
           method: 'POST',
@@ -417,6 +487,10 @@
           msg.style.display = 'block';
           form.reset();
           ageBadge.textContent = '';
+        } else if (data.message) {
+          msg.textContent = data.message;
+          msg.className = 'err';
+          msg.style.display = 'block';
         } else {
           throw new Error('server error');
         }
