@@ -964,7 +964,7 @@
         return { id: String(d['강사ID']), name: String(d['성명'] || ''), org: String(d['소속'] || ''), field: String(d['전문분야'] || ''),
           region: String(d['활동지역'] || ''), status: String(d['상태'] || ''), subj: String(d['교과목명'] || ''),
           photo: String(d['사진링크'] || ''), bio: String(d['약력'] || ''), cert: String(d['자격증학위'] || ''), pos: String(d['직위'] || ''),
-          kind: String(d['강사구분'] || ''), phone: String(d['연락처'] || ''), email: String(d['이메일'] || ''), count: Number(d['강의회차']) || 0 };
+          regDate: String(d['등록일'] || '').slice(0, 10), kind: String(d['강사구분'] || ''), phone: String(d['연락처'] || ''), email: String(d['이메일'] || ''), count: Number(d['강의회차']) || 0 };
       });
       instructors.forEach(function(x){ instrById[x.id] = x; });
     }).catch(function(){
@@ -1483,7 +1483,8 @@
       '<div class="fi"><div class="fk">활동지역</div><div class="fv">' + esc(x.region || '-') + '</div></div>' +
       '<div class="fi"><div class="fk">연락처</div><div class="fv">' + (x.phone ? '<a href="tel:' + esc(x.phone.replace(/[^0-9+]/g, '')) + '" style="color:var(--navy);">' + esc(x.phone) + '</a>' : '-') + '</div></div>' +
       '<div class="fi"><div class="fk">강의회차</div><div class="fv">' + x.count + '회</div></div>' +
-      '<div class="fi full"><div class="fk">이메일</div><div class="fv">' + (x.email ? '<a href="mailto:' + esc(x.email) + '" style="color:var(--navy);">' + esc(x.email) + '</a>' : '-') + '</div></div>' +
+      '<div class="fi"><div class="fk">시스템 등록일</div><div class="fv">' + esc(x.regDate || '-') + '</div></div>' +
+      '<div class="fi"><div class="fk">이메일</div><div class="fv">' + (x.email ? '<a href="mailto:' + esc(x.email) + '" style="color:var(--navy);">' + esc(x.email) + '</a>' : '-') + '</div></div>' +
       '<div class="fi full"><div class="fk">자격증·학위</div><div class="fv">' + esc(joinLines(x.cert) || '-') + '</div></div>' +
       '<div class="fi full"><div class="fk">약력</div><div class="fv">' + esc(joinLines(x.bio) || '-') + '</div></div>' +
       '</div>' +
