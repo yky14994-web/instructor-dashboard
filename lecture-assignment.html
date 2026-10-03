@@ -729,7 +729,7 @@
       if (j.status !== 'ok') throw new Error(j.message || 'fail');
       instructors = (j.data || []).map(function(d){
         return { id: String(d['강사ID']), name: String(d['성명'] || ''), org: String(d['소속'] || ''), field: String(d['전문분야'] || ''),
-          region: String(d['활동지역'] || ''), status: String(d['상태'] || '') };
+          region: String(d['활동지역'] || ''), status: String(d['상태'] || ''), subj: String(d['교과목명'] || '') };
       });
       instructors.forEach(function(x){ instrById[x.id] = x; });
     }).catch(function(){
@@ -845,7 +845,7 @@
       '<div class="span2"><label for="sRoom">강의실</label><select id="sRoom">' + roomOptions(defRoom) + '</select>' +
         '<input type="text" id="sRoomText" maxlength="100" placeholder="강의실 이름 직접 입력" style="display:none;margin-top:6px;"></div>' +
       '<div class="span2" style="position:relative;"><label for="sInstr">강사</label><div id="sChip"></div>' +
-        '<input type="text" id="sInstr" autocomplete="off" placeholder="이름으로 검색"><div id="sPicker" class="picker" style="display:none;"></div></div>' +
+        '<input type="text" id="sInstr" autocomplete="off" placeholder="이름·소속·분야·교과목으로 검색"><div id="sPicker" class="picker" style="display:none;"></div></div>' +
       '<div class="span2"><label for="sNote">비고</label><input type="text" id="sNote" maxlength="200" placeholder="선택 입력"></div>' +
       '</div>' +
       '<div class="fbtn"><button type="button" class="btn primary" id="sSave">저장</button>' +
@@ -918,19 +918,37 @@
     if (instructors === null || instrLoading) html += '<div class="info">강사 목록을 불러오는 중입니다…</div>';
     else if (instrFailed) html += '<div class="info">강사 목록을 불러오지 못했습니다. 아래 "직접 입력"은 사용할 수 있습니다.</div>';
     else {
-      var ql = q.toLowerCase();
-      var hits = instructors.filter(function(x){
-        return x.name.toLowerCase().indexOf(ql) > -1 || x.org.toLowerCase().indexOf(ql) > -1;
-      }).sort(function(a, b){
-        var aa = a.status === '활성' ? 0 : 1, bb = b.status === '활성' ? 0 : 1;
-        if (aa !== bb) return aa - bb;
-        return a.name.localeCompare(b.name, 'ko');
-      }).slice(0, 8);
-      hits.forEach(function(x){
-        var cls = ['활성', '승인', '정식'].indexOf(x.status) > -1 ? 't-ok' : 't-warn';
-        html += '<div class="it" data-iid="' + esc(x.id) + '"><b>' + esc(x.name) + ' <span class="tag ' + cls + '">' + esc(x.status || '-') + '</span></b>' +
-          '<small>' + esc([x.field, x.org, x.region].filter(Boolean).join(' · ')) + '</small></div>';
+      var tokens = q.toLowerCase().split(/\s+/).filter(Boolean);
+      var scored = [];
+      instructors.forEach(function(x){
+        var fields = [['이름', x.name], ['소속', x.org], ['분야', x.field], ['교과목', x.subj], ['지역', x.region]];
+        var matched = {}, ok = true, score = 0;
+        tokens.forEach(function(tk){
+          var hit = false;
+          fields.forEach(function(f, i){
+            if (String(f[1]).toLowerCase().indexOf(tk) > -1) { hit = true; matched[f[0]] = true; if (i === 0) score += 3; else if (i === 1) score += 2; else score += 1; }
+          });
+          if (!hit) ok = false;
+        });
+        if (ok) scored.push({ x: x, matched: matched, score: score });
       });
+      scored.sort(function(a, b){
+        if (a.score !== b.score) return b.score - a.score;
+        var aa = a.x.status === '활성' ? 0 : 1, bb = b.x.status === '활성' ? 0 : 1;
+        if (aa !== bb) return aa - bb;
+        return a.x.name.localeCompare(b.x.name, 'ko');
+      });
+      var hits = scored.slice(0, 8);
+      hits.forEach(function(h){
+        var x = h.x;
+        var cls = ['활성', '승인', '정식'].indexOf(x.status) > -1 ? 't-ok' : 't-warn';
+        var why = Object.keys(h.matched).filter(function(k){ return k !== '이름'; });
+        var subjLine = (h.matched['교과목'] && x.subj) ? ' · 교과목: ' + x.subj : '';
+        html += '<div class="it" data-iid="' + esc(x.id) + '"><b>' + esc(x.name) + ' <span class="tag ' + cls + '">' + esc(x.status || '-') + '</span></b>' +
+          '<small>' + esc([x.field, x.org, x.region].filter(Boolean).join(' · ') + subjLine) + '</small>' +
+          (why.length ? '<small style="display:block;color:var(--navy);">일치: ' + esc(why.join('·')) + '</small>' : '') + '</div>';
+      });
+      if (scored.length > hits.length) html += '<div class="info">외 ' + (scored.length - hits.length) + '명이 더 있습니다. 검색어를 더 입력해 좁혀 보세요.</div>';
       if (!hits.length) html += '<div class="info">일치하는 강사가 없습니다.</div>';
     }
     html += '<div class="it manual" data-manual="' + esc(q) + '">+ "' + esc(q) + '" 강사 목록에 없는 사람으로 직접 입력</div>';
