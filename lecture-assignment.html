@@ -168,12 +168,39 @@
     .src .dayh{font-weight:800;color:var(--navy);padding:10px 0 4px;font-size:13px;}
   }
 
+
+  /* 강사 카드(미리보기·상세 팝업) */
+  .avatar{position:relative;width:38px;height:38px;border-radius:50%;background:#E3E9EE;color:var(--navy);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;border:1px solid var(--border);overflow:hidden;}
+  .avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .avatar.lg{width:104px;height:104px;font-size:26px;}
+  .picker .it.row{display:flex;gap:10px;align-items:center;}
+  .picker .it.row .tx{flex:1;min-width:0;}
+  .picker .it.row .tx small{display:block;}
+  .picker .it .detailBtn{flex-shrink:0;height:28px;padding:0 10px;border:1px solid var(--border-input);border-radius:6px;background:#fff;font-family:inherit;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;}
+  .picker .it .detailBtn:hover{background:#F4F7FA;}
+  #iOverlay{display:none;position:fixed;inset:0;background:rgba(20,20,19,.45);z-index:100;align-items:center;justify-content:center;padding:16px;}
+  #iCard{background:#fff;border-radius:14px;max-width:640px;width:100%;max-height:92vh;overflow-y:auto;padding:22px 22px 18px;box-shadow:0 10px 40px rgba(0,0,0,.25);}
+  #iCard .top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:14px;}
+  #iCard h2{margin:0;font-size:20px;color:var(--navy);}
+  #iCard .sub{font-size:13px;color:var(--text-muted);margin-top:3px;}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;font-size:13px;}
+  .fgrid .fi.full{grid-column:span 2;}
+  .fgrid .fk{font-size:12px;color:var(--text-muted);}
+  .fgrid .fv{margin-top:2px;font-weight:600;line-height:1.5;word-break:break-word;}
+  .hbox{background:#F7F6F3;border-radius:10px;padding:12px 14px;font-size:13px;margin-top:6px;}
+  .hbox .hi{padding:7px 0;border-bottom:1px solid #E8E6E0;line-height:1.5;}
+  .hbox .hi:last-child{border-bottom:none;}
+  .hbox .hs{font-weight:700;color:var(--navy);margin-bottom:4px;}
+  #iCard .sec{font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 0;}
+  #iCard .btns{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;flex-wrap:wrap;}
+  @media (max-width:560px){ .fgrid{grid-template-columns:1fr;} .fgrid .fi.full{grid-column:span 1;} }
+
   /* 인쇄: A4 가로, 표만 */
   @page{size:A4 landscape;margin:10mm;}
   @media print{
     body{background:#fff;}
     .wrap{max-width:none;padding:0;}
-    header .hbtns,.bar,#msgBox,.cards,#loading,#editView{display:none !important;}
+    header .hbtns,.bar,#msgBox,.cards,#loading,#editView,#iOverlay{display:none !important;}
     header{box-shadow:none;padding:0 0 8px 0;margin-bottom:6px;}
     .tw{display:block !important;box-shadow:none;overflow:visible;}
     #cardList{display:none !important;}
@@ -278,6 +305,8 @@
   </div>
 </div>
 </div>
+
+<div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
 (function(){
@@ -729,7 +758,9 @@
       if (j.status !== 'ok') throw new Error(j.message || 'fail');
       instructors = (j.data || []).map(function(d){
         return { id: String(d['강사ID']), name: String(d['성명'] || ''), org: String(d['소속'] || ''), field: String(d['전문분야'] || ''),
-          region: String(d['활동지역'] || ''), status: String(d['상태'] || ''), subj: String(d['교과목명'] || '') };
+          region: String(d['활동지역'] || ''), status: String(d['상태'] || ''), subj: String(d['교과목명'] || ''),
+          photo: String(d['사진링크'] || ''), bio: String(d['약력'] || ''), cert: String(d['자격증학위'] || ''), pos: String(d['직위'] || ''),
+          kind: String(d['강사구분'] || ''), phone: String(d['연락처'] || ''), email: String(d['이메일'] || ''), count: Number(d['강의회차']) || 0 };
       });
       instructors.forEach(function(x){ instrById[x.id] = x; });
     }).catch(function(){
@@ -907,6 +938,7 @@
     } else if (form.iname) {
       box.innerHTML = '<span class="tag t-info chip">' + esc(form.iname) + ' (직접 입력) <button type="button" id="sChipX" aria-label="강사 지우기">×</button></span>';
     } else box.innerHTML = '';
+    if (form.iid && instrById[form.iid]) box.innerHTML += ' <button type="button" class="detailBtn" style="height:24px;" data-detail="' + esc(form.iid) + '">상세</button>';
     var x = $('sChipX');
     if (x) x.addEventListener('click', function(){ form.iid = ''; form.iname = ''; renderChip(); });
   }
@@ -944,9 +976,11 @@
         var cls = ['활성', '승인', '정식'].indexOf(x.status) > -1 ? 't-ok' : 't-warn';
         var why = Object.keys(h.matched).filter(function(k){ return k !== '이름'; });
         var subjLine = (h.matched['교과목'] && x.subj) ? ' · 교과목: ' + x.subj : '';
-        html += '<div class="it" data-iid="' + esc(x.id) + '"><b>' + esc(x.name) + ' <span class="tag ' + cls + '">' + esc(x.status || '-') + '</span></b>' +
+        html += '<div class="it row" data-iid="' + esc(x.id) + '">' + avatar(x, '') +
+          '<div class="tx"><b>' + esc(x.name) + ' <span class="tag ' + cls + '">' + esc(x.status || '-') + '</span></b>' +
           '<small>' + esc([x.field, x.org, x.region].filter(Boolean).join(' · ') + subjLine) + '</small>' +
-          (why.length ? '<small style="display:block;color:var(--navy);">일치: ' + esc(why.join('·')) + '</small>' : '') + '</div>';
+          '<small>강의 ' + x.count + '회' + (why.length ? ' · <span style="color:var(--navy);">일치: ' + esc(why.join('·')) + '</span>' : '') + '</small></div>' +
+          '<button type="button" class="detailBtn" data-detail="' + esc(x.id) + '">상세</button></div>';
       });
       if (scored.length > hits.length) html += '<div class="info">외 ' + (scored.length - hits.length) + '명이 더 있습니다. 검색어를 더 입력해 좁혀 보세요.</div>';
       if (!hits.length) html += '<div class="info">일치하는 강사가 없습니다.</div>';
@@ -1121,12 +1155,102 @@
     $('sCards').innerHTML = cards;
   }
 
+  /* --- 강사 카드(미리보기·상세 팝업) --- */
+  var histCache = {};
+  function photoUrl(fileId, sz){ return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=' + sz; }
+  function avatar(x, cls){
+    var ini = String(x.name || '').replace(/[^가-힣A-Za-z]/g, '').slice(-2) || '?';
+    return '<span class="avatar ' + (cls || '') + '"><span>' + esc(ini) + '</span>' +
+      (x.photo ? '<img src="' + esc(photoUrl(x.photo, cls === 'lg' ? 'w220' : 'w80')) + '" alt="" onerror="this.style.display=\'none\'">' : '') + '</span>';
+  }
+  function joinLines(t){ return String(t || '').split(/\r?\n/).map(function(v){ return v.trim(); }).filter(Boolean).join(' / '); }
+  function closeInstructor(){ $('iOverlay').style.display = 'none'; }
+  function openInstructor(id){
+    var x = instrById[id];
+    if (!x) return;
+    var viewer = isViewer();
+    var canPick = !viewer && !!$('sInstr');
+    hidePicker();
+    var mine = allSessions.filter(function(r){ return String(r['강사ID']) === id; }).sort(function(a, b){
+      return String(b['일자']).localeCompare(String(a['일자']));
+    });
+    var mineHtml = mine.length ? mine.map(function(r){
+      var pt = periodText(r);
+      return '<div class="hi">' + esc(md(r['일자'])) + ' · ' + esc(pt.txt) + ' · ' + esc(r['교과목']) + '<br><span class="hint">' + esc(r['개설키']) + '</span></div>';
+    }).join('') : '<div class="hint">강의배정DB에 편성된 내역이 없습니다.</div>';
+    var ps = ['활성', '승인', '정식'].indexOf(x.status) > -1 ? 't-ok' : 't-warn';
+    $('iCard').innerHTML =
+      '<div class="top"><div><h2>' + esc(x.name) + ' <span class="tag ' + ps + '" style="vertical-align:middle;">' + esc(x.status || '-') + '</span></h2>' +
+      '<div class="sub">' + esc([x.org, x.pos].filter(Boolean).join(' · ')) + '</div></div>' + avatar(x, 'lg') + '</div>' +
+      '<div class="fgrid">' +
+      '<div class="fi"><div class="fk">분야</div><div class="fv">' + esc(x.field || '-') + '</div></div>' +
+      '<div class="fi"><div class="fk">강사구분</div><div class="fv">' + esc(x.kind || '-') + '</div></div>' +
+      '<div class="fi"><div class="fk">교과목명</div><div class="fv">' + esc(x.subj || '-') + '</div></div>' +
+      '<div class="fi"><div class="fk">활동지역</div><div class="fv">' + esc(x.region || '-') + '</div></div>' +
+      '<div class="fi"><div class="fk">연락처</div><div class="fv">' + (x.phone ? '<a href="tel:' + esc(x.phone.replace(/[^0-9+]/g, '')) + '" style="color:var(--navy);">' + esc(x.phone) + '</a>' : '-') + '</div></div>' +
+      '<div class="fi"><div class="fk">강의회차</div><div class="fv">' + x.count + '회</div></div>' +
+      '<div class="fi full"><div class="fk">이메일</div><div class="fv">' + (x.email ? '<a href="mailto:' + esc(x.email) + '" style="color:var(--navy);">' + esc(x.email) + '</a>' : '-') + '</div></div>' +
+      '<div class="fi full"><div class="fk">자격증·학위</div><div class="fv">' + esc(joinLines(x.cert) || '-') + '</div></div>' +
+      '<div class="fi full"><div class="fk">약력</div><div class="fv">' + esc(joinLines(x.bio) || '-') + '</div></div>' +
+      '</div>' +
+      '<div class="sec">강의 이력 <span class="hint">(강사DB 기록)</span></div><div class="hbox" id="iHist">불러오는 중...</div>' +
+      '<div class="sec">강의배정DB 편성 내역</div><div class="hbox">' + mineHtml + '</div>' +
+      '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button>' +
+      (canPick ? '<button type="button" class="btn primary" id="iPick" data-pick="' + esc(id) + '">이 강사 선택</button>' : '') + '</div>';
+    $('iOverlay').style.display = 'flex';
+    $('iClose').addEventListener('click', closeInstructor);
+    if ($('iPick')) $('iPick').addEventListener('click', function(){ pickInstructor(id); });
+    loadHistory(id);
+  }
+  function loadHistory(id){
+    var box = $('iHist');
+    if (histCache[id]) { renderHist(histCache[id]); return; }
+    if (!instrById[id] || !instrById[id].count) { renderHist([]); return; }
+    api({ action: 'getHistory', 강사ID: id, password: getPw() }).then(function(j){
+      if (j.status !== 'ok') throw new Error('fail');
+      histCache[id] = j.data || [];
+      renderHist(histCache[id]);
+    }).catch(function(){
+      var b = $('iHist'); if (b) b.textContent = '이력을 불러오지 못했습니다.';
+    });
+  }
+  function renderHist(all){
+    var box = $('iHist');
+    if (!box) return;
+    var list = all.filter(function(h){ return String(h['상태'] || '') !== '취소됨'; });
+    var cancelled = all.length - list.length;
+    if (!all.length) { box.textContent = '지난 강의 이력이 없습니다.'; return; }
+    var hours = 0;
+    list.forEach(function(h){
+      var pr = String(h['시간'] || '').split('~');
+      if (pr.length !== 2) return;
+      var a = parseInt(pr[0], 10), b = parseInt(pr[1], 10);
+      if (!isNaN(a) && !isNaN(b) && b > a) hours += (b - a);
+    });
+    box.innerHTML = '<div class="hs">총 ' + list.length + '회' + (hours ? ' · 누적 ' + hours + '시간' : '') + (cancelled ? ' <span class="hint">(취소 ' + cancelled + '건 제외)</span>' : '') + '</div>' +
+      all.slice(0, 15).map(function(h){
+        var st = String(h['상태'] || '');
+        return '<div class="hi">' + esc(h['일자'] || '') + ' · ' + esc(h['강의명'] || '') + (h['교과목'] ? ' · ' + esc(h['교과목']) : '') +
+          (st ? ' <span class="tag ' + (st === '취소됨' ? 't-err' : 't-none') + '">' + esc(st) + '</span>' : '') + '</div>';
+      }).join('') + (all.length > 15 ? '<div class="hint">최근 15건만 표시합니다.</div>' : '');
+  }
+  function pickInstructor(id){
+    if (isViewer() || !$('sInstr')) return;
+    form.iid = id; form.iname = '';
+    $('sInstr').value = '';
+    hidePicker();
+    renderChip();
+    closeInstructor();
+  }
+
   function onListClick(ev){
     var t = ev.target;
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-open') || t.getAttribute('data-iid') || t.getAttribute('data-manual') !== null))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-iid') || t.getAttribute('data-manual') !== null))) t = t.parentNode;
     if (!t || t === document) return;
     var open = t.getAttribute('data-open');
     if (open) { openCourse(open); return; }
+    var det = t.getAttribute('data-detail');
+    if (det) { openInstructor(det); return; }
     var iid = t.getAttribute('data-iid');
     if (iid) { form.iid = iid; form.iname = ''; $('sInstr').value = ''; hidePicker(); renderChip(); return; }
     if (t.getAttribute('data-manual') !== null) {
@@ -1157,6 +1281,8 @@
     if (pk && pk.style.display !== 'none' && ev.target !== $('sInstr') && !pk.contains(ev.target)) hidePicker();
   });
   window.addEventListener('hashchange', route);
+  $('iOverlay').addEventListener('click', function(ev){ if (ev.target === $('iOverlay')) closeInstructor(); });
+  document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') closeInstructor(); });
   $('backBtn').addEventListener('click', function(){ location.hash = ''; });
   $('sReload').addEventListener('click', function(){
     var pw = getPw(); if (!pw) return;
