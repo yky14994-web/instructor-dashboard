@@ -1462,18 +1462,64 @@
     else if (ret.over) miss.push('동의서 보유기간 만료');
     return { miss: miss, due: !!x.consent && ret.due, ret: ret };
   }
-  function docBadge(x){
+  /* 교과목(편성 1줄)별 강의계획서 상태: 강사ID가 있는 주강사 줄만 대상(보조강사·직접 입력·취소된 기수 제외).
+     기한 = 강의일 7일 전. 이미 지난 강의는 '강의 종료'로 표시만 하고 미비 집계에서는 뺀다. */
+  function dayDiff(a, b){
+    var p = parseYmd(a), q = parseYmd(b);
+    if (!p || !q) return null;
+    return Math.round((Date.UTC(q.y, q.m - 1, q.d) - Date.UTC(p.y, p.m - 1, p.d)) / 86400000);
+  }
+  function planState(r){
+    if (!r || !r['강사ID'] || isSubRole(r)) return null;
+    var pp = planByKey(String(r['개설키'] || ''));
+    if (pp && isCancelled(pp)) return null;
+    var date = String(r['일자'] || ''), today = ymd(new Date());
+    var st = { sid: String(r['편성ID'] || ''), iid: String(r['강사ID']), subj: String(r['교과목'] || ''), date: date,
+      done: !!r['계획서파일ID'], fid: String(r['계획서파일ID'] || ''), at: String(r['계획서제출일시'] || ''), due: '', left: null, ended: false, over: false };
+    if (parseYmd(date)) {
+      st.due = addDays(date, -7);
+      st.left = dayDiff(today, st.due);
+      st.ended = date < today;
+    }
+    st.over = !st.done && !st.ended && st.left !== null && st.left < 0;
+    return st;
+  }
+  function planText(st){
+    if (st.done) return '제출' + (st.at ? ' · ' + st.at : '');
+    if (st.ended) return '강의 종료 · 미제출';
+    if (st.over) return '미제출 · 기한 지남(' + st.due + ', ' + Math.abs(st.left) + '일)';
+    if (st.left === null) return '미제출';
+    return '미제출 · 기한 ' + st.due + (st.left === 0 ? '(오늘)' : '(' + st.left + '일 남음)');
+  }
+  function planLink(iid, sid){
+    return new URL('lecture-submission.html', location.href).href.split('#')[0] + '?id=' + encodeURIComponent(iid) + '&sid=' + encodeURIComponent(sid);
+  }
+  function copyText(t, btn){
+    var done = function(){ if (btn) { var o = btn.getAttribute('data-o') || btn.textContent; btn.setAttribute('data-o', o); btn.textContent = '복사했습니다'; setTimeout(function(){ btn.textContent = o; }, 1800); } };
+    var fb = function(){
+      var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { window.prompt('아래 링크를 복사해 주세요', t); }
+      document.body.removeChild(ta);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
+  }
+  function docBadge(x, row){
     if (!x) return '';
-    var d = docState(x);
-    var a = ' data-doc="' + esc(x.id) + '" role="button" tabindex="0"';
-    if (d.miss.length) return '<span class="db bad"' + a + ' title="' + esc(d.miss.join(', ')) + ' · 눌러서 보기">미비 ' + d.miss.length + '</span>';
+    var d = docState(x), ps = row ? planState(row) : null;
+    var miss = d.miss.slice();
+    if (ps && ps.over) miss.push('강의계획서');
+    var pend = !!(ps && !ps.done && !ps.ended && !ps.over);
+    var a = ' data-doc="' + esc(x.id) + '"' + (row ? ' data-sid="' + esc(row['편성ID']) + '"' : '') + ' role="button" tabindex="0"';
+    if (miss.length) return '<span class="db bad"' + a + ' title="' + esc(miss.join(', ')) + ' · 눌러서 보기">미비 ' + miss.length + '</span>';
     if (d.due) return '<span class="db wn"' + a + ' title="개인정보 보유기간 만료 임박(' + esc(d.ret.expire) + ') · 눌러서 보기">보유 임박</span>';
-    return '<span class="db ok"' + a + ' title="강사카드·개인정보 동의서 제출됨 · 눌러서 보기">서류 완비</span>';
+    if (pend) return '<span class="db wn"' + a + ' title="강의계획서 미제출 · 기한 ' + esc(ps.due) + ' · 눌러서 보기">계획서 대기</span>';
+    return '<span class="db ok"' + a + ' title="강사카드·개인정보 동의서' + (ps && ps.done ? '·강의계획서' : '') + ' 제출됨 · 눌러서 보기">서류 완비</span>';
   }
   function instrCell(r){
     if (r['강사ID']) {
       var ins = instrById[r['강사ID']];
-      return roleTag(r) + (ins ? '<span class="tag t-ok nmk" data-detail="' + esc(r['강사ID']) + '" title="강사 정보 보기">' + esc(ins.name) + '</span> ' + docBadge(ins)
+      return roleTag(r) + (ins ? '<span class="tag t-ok nmk" data-detail="' + esc(r['강사ID']) + '" title="강사 정보 보기">' + esc(ins.name) + '</span> ' + docBadge(ins, r)
         : '<span class="tag t-ok">' + esc(r['강사명'] || r['강사ID']) + '</span>');
     }
     if (r['강사명']) return roleTag(r) + '<span class="tag t-info">' + esc(r['강사명']) + ' (직접 입력)</span>';
@@ -1658,7 +1704,7 @@
       var nm;
       if (x['강사ID']) {
         var o = instrById[x['강사ID']];
-        nm = o ? '<span class="nmk" data-detail="' + esc(x['강사ID']) + '" title="강사 정보 보기">' + esc(o.name) + '</span>' + docBadge(o) : esc(x['강사명'] || x['강사ID']);
+        nm = o ? '<span class="nmk" data-detail="' + esc(x['강사ID']) + '" title="강사 정보 보기">' + esc(o.name) + '</span>' + docBadge(o, x) : esc(x['강사명'] || x['강사ID']);
       } else nm = esc(x['강사명']) + ' <span class="hint">(직접 입력)</span>';
       var eb = (multi && canEdit) ? '<button type="button" class="eb" data-act="edit" data-id="' + esc(x['편성ID']) + '" title="이 강사 줄 수정">✎</button>' : '';
       return '<div class="i">' + roleTag(x) + nm + eb + '</div>';
@@ -1750,7 +1796,7 @@
       '<button type="button" class="btn sm" data-gw="print" style="margin-left:auto;">인쇄</button></div>' +
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:#FBE0DD;border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span>' +
-      '<span><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박</span> 강사카드·동의서</span></div>' +
+      '<span><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
       empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
       '<div class="hint" style="margin-top:8px;">' + (canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div></div>';
@@ -1799,30 +1845,51 @@
     return '<table class="dtab" style="width:100%;border-collapse:collapse;margin-top:4px;">' + cardRow + '<tr><td>개인정보 동의서</td><td>' + cs + '</td></tr></table>';
   }
   /* 배지를 누르면 그 강사의 서류 상태만 간단히 보여 줌(미비 항목 먼저) */
-  function openDocInfo(id){
+  function openDocInfo(id, sid){
     var x = instrById[id];
     if (!x) return;
     var d = docState(x), ret = d.ret, items = [];
+    var srow = sid ? allSessions.filter(function(r){ return String(r['편성ID']) === String(sid); })[0] : null;
+    var ps = srow ? planState(srow) : null;
     items.push({ name: '강사카드', ok: !!x.card, text: x.card ? '제출' : '미제출', fid: x.card });
     if (!x.consent) items.push({ name: '개인정보 동의서', ok: false, text: '미제출', fid: '' });
     else items.push({ name: '개인정보 동의서', ok: !ret.over, warn: d.due, text: ret.over ? '보유기간 만료(' + ret.expire + ')' : d.due ? '보유기간 임박(' + ret.expire + ' 만료)' : '제출 · 보유 ~' + ret.expire, fid: x.consent, hint: x.reconsent ? '재동의 확인 ' + x.reconsent + ' 기준' : '등록일 ' + (ret.base || '-') + ' 기준 3년' });
+    if (ps) items.push({ name: '강의계획서 · ' + (ps.subj || '교과목') + ' (' + md(ps.date) + ')', ok: ps.done || ps.ended, warn: !ps.done && !ps.ended && !ps.over, text: planText(ps), fid: ps.fid,
+      hint: '교과목별 제출 · 기한은 강의일 7일 전', neutral: !ps.done && ps.ended });
     items.sort(function(a, b){ return (a.ok && !a.warn ? 1 : 0) - (b.ok && !b.warn ? 1 : 0); });
     var need = items.filter(function(i){ return !i.ok || i.warn; });
     var rows = items.map(function(i){
-      var cls = !i.ok ? 'bad' : i.warn ? 'wn' : 'ok';
+      var cls = i.neutral ? '' : !i.ok ? 'bad' : i.warn ? 'wn' : 'ok';
       return '<tr><td>' + esc(i.name) + '</td><td><span class="db ' + cls + '">' + esc(i.text) + '</span>' + (i.fid ? fileLinks(i.fid) : '') + (i.hint ? '<div class="hint" style="margin-top:3px;">' + esc(i.hint) + '</div>' : '') + '</td></tr>';
     }).join('');
     var head = need.length
       ? '<div class="note-warn" style="margin:0 0 10px;"><b>확인이 필요한 서류 ' + need.length + '건</b><br>' + need.map(function(i){ return '· ' + esc(i.name) + ' — ' + esc(i.text); }).join('<br>') + '<br><span class="hint">강사 안내는 자동으로 가지 않으니 담당자가 직접 요청해 주세요.</span></div>'
-      : '<div class="note-ok" style="margin:0 0 10px;">강사카드·개인정보 동의서가 모두 제출되어 있습니다.</div>';
+      : '<div class="note-ok" style="margin:0 0 10px;">' + (ps && ps.done ? '강사카드·개인정보 동의서·강의계획서가' : '강사카드·개인정보 동의서가') + ' 모두 제출되어 있습니다.</div>';
     $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(x.name) + ' <span class="hint" style="font-weight:600;">서류 현황</span></h2><div class="sub">' + esc([x.org, x.pos].filter(Boolean).join(' · ')) + '</div></div>' + avatar(x, 'lg') + '</div>' +
       head + '<table class="dtab" style="width:100%;border-collapse:collapse;">' + rows + '</table>' +
-      '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button><button type="button" class="btn" id="iFull" data-full="' + esc(id) + '">강사 정보 전체 보기</button></div>';
+      '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button><button type="button" class="btn" id="iFull" data-full="' + esc(id) + '">강사 정보 전체 보기</button>' +
+      (ps && !ps.done && !ps.ended && !isViewer() ? '<button type="button" class="btn primary" id="iCopyLink">제출 링크 복사</button>' : '') + '</div>' +
+      (ps && !ps.done && !ps.ended && !isViewer() ? '<div class="hint" style="margin-top:8px;">복사한 링크를 강사에게 직접 전달해 주세요(자동 발송은 하지 않습니다). 이 링크는 이 교과목 전용입니다.</div>' : '');
     $('iOverlay').style.display = 'flex';
     $('iClose').addEventListener('click', closeInstructor);
     $('iFull').addEventListener('click', function(){ openInstructor(id, false); });
+    if ($('iCopyLink')) $('iCopyLink').addEventListener('click', function(){ copyText(planLink(id, sid), this); });
   }
   function closeInstructor(){ $('iOverlay').style.display = 'none'; }
+  /* 이 강사의 주강사 편성(교과목별) 강의계획서 제출 현황 */
+  function planSecHtml(id, mine, viewer){
+    var list = mine.map(function(r){ return { r: r, st: planState(r) }; }).filter(function(o){ return o.st; })
+      .sort(function(a, b){ return String(a.st.date).localeCompare(String(b.st.date)); });
+    if (!list.length) return '';
+    var n = list.filter(function(o){ return !o.st.done && !o.st.ended; }).length;
+    return '<div class="sec">강의계획서 <span class="hint">(주강사 교과목별 · 기한 강의일 7일 전)</span> ' + (n ? '<span class="db wn">미제출 ' + n + '</span>' : '<span class="db ok">모두 제출</span>') + '</div>' +
+      '<div class="hbox">' + list.map(function(o){
+        var st = o.st, cls = st.done ? 'ok' : st.over ? 'bad' : st.ended ? '' : 'wn';
+        return '<div class="hi">' + esc(md(st.date)) + ' · ' + esc(st.subj) + ' <span class="db ' + cls + '">' + esc(planText(st)) + '</span>' + (st.fid ? fileLinks(st.fid) : '') +
+          (!st.done && !st.ended && !viewer ? ' <button type="button" class="btn sm" data-plink="' + esc(st.sid) + '">제출 링크 복사</button>' : '') +
+          '<br><span class="hint">' + esc(String(o.r['개설키'] || '')) + '</span></div>';
+      }).join('') + '</div>';
+  }
   function openInstructor(id, fromPicker){
     var x = instrById[id];
     if (!x) return;
@@ -1858,12 +1925,16 @@
       '<div class="fi full"><div class="fk">약력</div><div class="fv">' + esc(joinLines(x.bio) || '-') + '</div></div>' +
       '</div>' +
       '<div class="sec">서류 현황 ' + docBadge(x) + '</div>' + docTable(x) +
+      planSecHtml(id, mine, viewer) +
       '<div class="sec">강의 이력 <span class="hint">(강사DB 기록)</span></div><div class="hbox" id="iHist">불러오는 중...</div>' +
       '<div class="sec">강의배정DB 편성 내역</div><div class="hbox">' + sumHtml + mineHtml + '</div>' +
       '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button>' +
       (canPick ? '<button type="button" class="btn primary" id="iPick" data-pick="' + esc(id) + '">이 강사 선택</button>' : '') + '</div>';
     $('iOverlay').style.display = 'flex';
     $('iClose').addEventListener('click', closeInstructor);
+    Array.prototype.forEach.call($('iCard').querySelectorAll('[data-plink]'), function(b){
+      b.addEventListener('click', function(){ copyText(planLink(id, b.getAttribute('data-plink')), b); });
+    });
     if ($('iPick')) $('iPick').addEventListener('click', function(){ pickInstructor(id); });
     loadHistory(id);
   }
@@ -2561,7 +2632,7 @@
     var det = t.getAttribute('data-detail');
     if (det) { openInstructor(det, !!(t.closest && t.closest('#sPicker, #bCard'))); return; }
     var dc = t.getAttribute('data-doc');
-    if (dc) { openDocInfo(dc); return; }
+    if (dc) { openDocInfo(dc, t.getAttribute('data-sid') || ''); return; }
     var iid = t.getAttribute('data-iid');
     if (iid) { form.iid = iid; form.iname = ''; $('sInstr').value = ''; hidePicker(); renderChip(); return; }
     if (t.getAttribute('data-manual') !== null) {
@@ -2588,7 +2659,7 @@
   });
   document.addEventListener('click', onListClick);
   document.addEventListener('keydown', function(ev){
-    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.getAttribute && ev.target.getAttribute('data-doc')) { ev.preventDefault(); openDocInfo(ev.target.getAttribute('data-doc')); }
+    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.getAttribute && ev.target.getAttribute('data-doc')) { ev.preventDefault(); openDocInfo(ev.target.getAttribute('data-doc'), ev.target.getAttribute('data-sid') || ''); }
   });
   document.addEventListener('click', function(ev){
     var pk = $('sPicker');

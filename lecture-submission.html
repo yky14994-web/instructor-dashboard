@@ -150,6 +150,11 @@
       <div id="greeting" style="display:none;"></div>
     </header>
 
+    <div class="card" id="sidError" style="display:none;text-align:center;">
+      <div class="card-title" style="margin-bottom:16px;">강의계획서를 제출할 수 없습니다</div>
+      <div id="sidErrorMsg" style="font-size:15px;line-height:1.7;color:var(--text-sub);word-break:keep-all;"></div>
+    </div>
+
     <form id="lectureForm">
 
       <div class="card" id="profileSection">
@@ -222,7 +227,9 @@
         <div><b>일자/시간:</b> <span id="aiDateTime"></span></div>
         <div><b>교과목:</b> <span id="aiSubject"></span></div>
         <div><b>구분:</b> <span id="aiCategory"></span></div>
+        <div id="aiRoomRow" style="display:none;"><b>강의실:</b> <span id="aiRoom"></span></div>
       </div>
+      <div id="sidDone" style="display:none;background:#e6f4ea;color:var(--success);border:1px solid #cce8d6;border-radius:12px;padding:14px 18px;margin-bottom:24px;font-size:14px;font-weight:600;line-height:1.6;"></div>
 
       <div class="card" id="lectureInfoSection">
         <div class="card-title">강의 정보</div>
@@ -284,6 +291,8 @@
   var qs = new URLSearchParams(location.search);
   var instructorId = qs.get('id') || '';
   var hid = qs.get('hid') || '';
+  var sid = qs.get('sid') || '';   // 편성ID: 있으면 '교과목별 강의계획서 제출' 모드
+  var sidMode = false;
   var isExisting = false;
 
   function fileToBase64(file){
@@ -388,6 +397,38 @@
     document.getElementById('category').required = false;
   }
 
+  // 교과목별 강의계획서 제출 모드: 배정된 교과목 정보 + 계획서 파일만 받음
+  function showSessionPlanMode(d, name){
+    sidMode = true; hasAssignment = true;
+    document.getElementById('pageTitle').textContent = '강의계획서를 제출해 주세요';
+    document.getElementById('pageDesc').textContent = '배정된 교과목의 강의계획서(PDF)를 올려 주세요. 교과목마다 따로 제출합니다.';
+    var g = document.getElementById('greeting');
+    g.style.display = 'block';
+    g.innerHTML = '안녕하세요, <b>' + (name || '강사') + '</b>님.';
+    ['profileSection','consentSection','lectureInfoSection'].forEach(function(id){ document.getElementById(id).style.display = 'none'; });
+    ['name','birth','phone','email','org','specialty','photo','profileFile','consentFile','lectureName','lectureDate','startHour','endHour','category'].forEach(function(id){ document.getElementById(id).required = false; });
+    document.getElementById('assignedInfoBox').style.display = 'block';
+    document.getElementById('aiName').textContent = d.과정 || '-';
+    document.getElementById('aiDateTime').textContent = (d.일자 || '') + (d.시간 ? ' · ' + d.시간 : '');
+    document.getElementById('aiSubject').textContent = d.교과목 || '-';
+    document.getElementById('aiCategory').textContent = d.구분 || '-';
+    if (d.강의실) { document.getElementById('aiRoom').textContent = d.강의실; document.getElementById('aiRoomRow').style.display = 'block'; }
+    if (d.제출됨) {
+      var done = document.getElementById('sidDone');
+      done.textContent = '이미 제출하셨습니다' + (d.제출일시 ? ' (' + d.제출일시 + ')' : '') + '. 다시 올리면 이전 파일을 대체합니다.';
+      done.style.display = 'block';
+    }
+  }
+
+  function showSessionPlanError(msg){
+    sidMode = true;
+    document.getElementById('pageTitle').textContent = '강의계획서 제출';
+    document.getElementById('pageDesc').textContent = '';
+    document.getElementById('lectureForm').style.display = 'none';
+    document.getElementById('sidError').style.display = 'block';
+    document.getElementById('sidErrorMsg').textContent = msg;
+  }
+
   function populateHourSelects(){
     var start = document.getElementById('startHour');
     var end = document.getElementById('endHour');
@@ -403,7 +444,23 @@
   populateHourSelects();
 
   function init(){
-    if (instructorId) {
+    if (instructorId && sid) {
+      postJson({ action: 'getSessionForSubmit', 강사ID: instructorId, 편성ID: sid })
+        .then(function(res){
+          if (res.status !== 'ok') throw new Error('server');
+          if (!res.found) { showSessionPlanError(res.message || '제출 링크가 올바르지 않습니다. 담당자에게 문의해 주세요.'); return; }
+          if (res.cancelled) { showSessionPlanError('취소된 기수의 교과목이라 제출할 수 없습니다. 담당자에게 문의해 주세요.'); return; }
+          if (!res.required) { showSessionPlanError('보조강사는 강의계획서를 제출하지 않아도 됩니다.'); return; }
+          return postJson({ action: 'checkInstructor', 강사ID: instructorId })
+            .catch(function(){ return {}; })
+            .then(function(c){ showSessionPlanMode(res.data, c && c.found ? c.성명 : ''); });
+        })
+        .catch(function(){ showSessionPlanError('정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'); })
+        .finally(function(){
+          document.getElementById('loadingScreen').style.display = 'none';
+          document.getElementById('content').style.display = 'block';
+        });
+    } else if (instructorId) {
       postJson({ action: 'checkInstructor', 강사ID: instructorId })
         .then(function(res){
           if (res.found) {
@@ -448,6 +505,34 @@
         msg.className = 'err'; msg.style.display = 'block';
         return;
       }
+    }
+
+    if (sidMode) {
+      var pf = document.getElementById('planFile').files[0];
+      if (!pf) { msg.textContent = '강의계획서 PDF 파일을 첨부해 주세요.'; msg.className = 'err'; msg.style.display = 'block'; return; }
+      if (!/\.pdf$/i.test(pf.name) && !/pdf/i.test(pf.type)) { msg.textContent = '강의계획서는 PDF 파일만 올릴 수 있습니다.'; msg.className = 'err'; msg.style.display = 'block'; return; }
+      if (pf.size > 10 * 1024 * 1024) { msg.textContent = '강의계획서 파일이 너무 큽니다. 10MB 이하로 올려주세요.'; msg.className = 'err'; msg.style.display = 'block'; return; }
+      var sbtn = document.getElementById('submitBtn');
+      sbtn.disabled = true; sbtn.textContent = '제출 중...';
+      fileToBase64(pf).then(function(b64){
+        return postJson({ action: 'submitSessionPlan', 강사ID: instructorId, 편성ID: sid, 계획서base64: b64, 계획서타입: 'application/pdf' });
+      }).then(function(data){
+        if (data.status === 'ok') {
+          msg.textContent = '강의계획서 제출이 완료되었습니다. 감사합니다.';
+          msg.className = 'ok'; msg.style.display = 'block';
+          var done = document.getElementById('sidDone');
+          done.textContent = '제출 완료 (' + (data.제출일시 || '') + '). 다시 올리면 이전 파일을 대체합니다.';
+          done.style.display = 'block';
+          document.getElementById('planFile').value = '';
+        } else {
+          msg.textContent = data.message || '제출 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+          msg.className = 'err'; msg.style.display = 'block';
+        }
+      }).catch(function(){
+        msg.textContent = '제출 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+        msg.className = 'err'; msg.style.display = 'block';
+      }).finally(function(){ sbtn.disabled = false; sbtn.textContent = '제출하기'; });
+      return;
     }
 
     var planFileCheck = document.getElementById('planFile').files[0];
