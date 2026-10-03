@@ -93,6 +93,7 @@
     padding: 8px 16px; border-radius: 8px; transition: background 0.2s;
   }
   .form-download:hover { background: #e3e9ee; }
+  .form-download.disabled { opacity: .55; cursor: not-allowed; pointer-events: none; }
   .consent-box { background: #f8f9fb; border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; font-size: 13px; color: var(--text-sub); line-height: 1.7; }
   .consent-box ul { margin: 8px 0 0 0; padding-left: 18px; }
   .consent-check { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 15px; font-weight: 700; color: var(--text); cursor: pointer; }
@@ -331,7 +332,10 @@
   var CARD_FORM_URL = '';
   var CONSENT_FORM_URL = 'https://drive.google.com/uc?export=download&id=1F4nHTVL4aSK7PKo40Y46gWayhHl3C4NJ';
   [['cardFormLink', CARD_FORM_URL], ['consentFormLink', CONSENT_FORM_URL]].forEach(function(p){
-    if (p[1]) { var el = document.getElementById(p[0]); el.href = p[1]; el.style.display = 'inline-flex'; }
+    var el = document.getElementById(p[0]);
+    el.style.display = 'inline-flex';
+    if (p[1]) { el.href = p[1]; }
+    else { el.classList.add('disabled'); el.removeAttribute('href'); el.removeAttribute('target'); el.textContent = el.textContent.replace('다운로드', '다운로드 (양식 준비 중)'); }
   });
   var MAX_PDF_BYTES = 10 * 1024 * 1024;
 
