@@ -479,7 +479,8 @@
   <div id="loading">불러오는 중...</div>
   <div id="empty" style="display:none;">조건에 맞는 강사가 없습니다.</div>
 
-  <div style="display:flex;gap:8px;margin-bottom:14px;">
+  <!-- 일정별 표·캘린더·시간표 보기는 강의배정 메뉴로 옮겨 재사용할 예정이라 버튼만 숨김(코드는 유지). 다시 쓰려면 아래 display:none 제거 -->
+  <div style="display:none;gap:8px;margin-bottom:14px;" id="viewSwitchRow">
     <button type="button" id="viewByInstructorBtn" class="badge" style="border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer;font-family:'Nanum Gothic',sans-serif;">강사별 보기</button>
     <button type="button" id="viewByScheduleBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:'Nanum Gothic',sans-serif;">일정별 표 보기</button>
     <button type="button" id="viewByCalendarBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:'Nanum Gothic',sans-serif;">캘린더 보기</button>
