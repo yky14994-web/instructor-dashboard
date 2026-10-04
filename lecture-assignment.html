@@ -417,6 +417,7 @@
   .vtabs button{height:30px;padding:0 16px;border:1px solid var(--border-input);background:#fff;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-sub);cursor:pointer;}
   .vtabs button:first-child{border-radius:6px 0 0 6px;} .vtabs button:last-child{border-radius:0 6px 6px 0;border-left:none;}
   .vtabs button.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .vtabs button{white-space:nowrap;}
   #fBackdrop{display:none;position:fixed;inset:0;background:rgba(20,20,19,.45);z-index:80;}
   #sFormPanel .fclose{display:none;}
   #sFormPanel.fmodal{position:fixed;z-index:85;top:50%;left:50%;transform:translate(-50%,-50%);width:min(760px,94vw);max-height:92vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);margin:0;}
@@ -1613,7 +1614,7 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
   }
   /* ---------- 연간계획 화면: [표 | 월 캘린더] 보기 ---------- */
-  var planMode = 'table', calMonth = '', calType = '', calRoom = '', pendingEdit = '';
+  var planMode = 'table', calMonth = '', calManual = false, calType = '', calRoom = '', pendingEdit = '';
   try { if (sessionStorage.getItem('jsfa_la_pmode') === 'cal') planMode = 'cal'; } catch (e) {}
   function planViewSync(){
     var cal = planMode === 'cal';
@@ -1627,6 +1628,7 @@
   }
   function setPlanMode(m){
     planMode = m === 'cal' ? 'cal' : 'table';
+    if (planMode === 'cal' && !calManual) calMonth = '';
     try { sessionStorage.setItem('jsfa_la_pmode', planMode); } catch (e) {}
     applyFilters();
   }
@@ -1635,6 +1637,27 @@
     var n = new Date(+m[1], +m[2], 0).getDate(), out = [];
     for (var d = 1; d <= n; d++) out.push(ym + '-' + ('0' + d).slice(-2));
     return out;
+  }
+  /* 일정이 있는 달(YYYY-MM) 목록: 취소 제외, 입교·사이버·실습 기간의 시작·종료 달 포함 */
+  function calPlanMonths(){
+    var set = {};
+    plans.forEach(function(p){
+      if (isCancelled(p)) return;
+      [['입교 시작일', '입교 종료일'], ['사이버 시작일', '사이버 종료일'], ['실습(외부) 시작일', '실습(외부) 종료일']].forEach(function(k){
+        var a = normYmd(p[k[0]]), b = normYmd(p[k[1]]); if (!a && !b) return; a = a || b; b = b || a;
+        var y = +a.slice(0, 4), m = +a.slice(5, 7), end = b.slice(0, 7), n = 0;
+        while (n++ < 36) { var ym = y + '-' + ('0' + m).slice(-2); set[ym] = true; if (ym >= end) break; m++; if (m > 12) { m = 1; y++; } }
+      });
+    });
+    return Object.keys(set).sort();
+  }
+  /* 처음 열 때의 달: 선택한 연도에 일정이 있으면 이번 달 → 이번 달 이후 첫 달 → 마지막 달, 없으면 이번 달 */
+  function calDefaultMonth(){
+    var tm = ymd(new Date()).slice(0, 7), fy = $('fYear') ? $('fYear').value : '';
+    var ms = calPlanMonths().filter(function(m){ return !fy || m.slice(0, 4) === String(fy); });
+    if (!ms.length || ms.indexOf(tm) > -1) return tm;
+    for (var i = 0; i < ms.length; i++) if (ms[i] > tm) return ms[i];
+    return ms[ms.length - 1];
   }
   function typeCls(p){
     var t = String(p && p['구분'] || '');
@@ -1707,10 +1730,20 @@
     var cls = 'cc ' + typeCls(p) + (st.err ? ' err' : st.warn ? ' warn' : '') + (st.unas ? ' unas' : '') + (e.rows.length ? '' : ' pre');
     return '<span class="' + cls + '" data-cday="' + esc(d) + '" data-ckey="' + esc(e.key) + '" title="' + esc(name + ' · ' + sub) + '"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small></span>';
   }
+  /* 이 달에 표시할 과정이 없을 때: 일정이 있는 가까운 달로 바로 이동 */
+  function emptyMonthHint(byDate){
+    if (Object.keys(byDate).length) return '';
+    var all = calPlanMonths(), prev = '', next = '';
+    all.forEach(function(m){ if (m < calMonth) prev = m; else if (m > calMonth && !next) next = m; });
+    if (!prev && !next) return '';
+    var lab = function(ym){ return ym.slice(0, 4) + '년 ' + (+ym.slice(5, 7)) + '월'; };
+    var btn = function(ym, pre){ return '<button type="button" class="btn sm" data-cm="go:' + ym + '">' + pre + lab(ym) + '</button> '; };
+    return '<div class="hint" style="margin:6px 0 10px;"><b>이 달에는 표시할 과정이 없습니다.</b> 일정이 있는 달: ' + (prev ? btn(prev, '◀ ') : '') + (next ? btn(next, '') + '▶' : '') + '</div>';
+  }
   function renderPlanCal(){
     var box = $('planCal');
     var today = ymd(new Date());
-    if (!calMonth) calMonth = today.slice(0, 7);
+    if (!calMonth) calMonth = calDefaultMonth();
     var byDate = calCollect(calMonth), days = monthDays(calMonth);
     var wk = Object.keys(byDate).some(function(d){ var q = parseYmd(d); return (q.dow === 0 || q.dow === 6) && byDate[d] && Object.keys(byDate[d]).some(function(k){ return byDate[d][k].rows.length; }); });
     var cols = wk ? 7 : 5, names = ['월', '화', '수', '목', '금', '토', '일'];
@@ -1729,7 +1762,7 @@
       '<select id="calTypeSel" aria-label="구분"><option value="">구분 전체</option>' + types.map(function(t){ return '<option value="' + esc(t) + '"' + (calType === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>' +
       '<select id="calRoomSel" aria-label="강의실"><option value="">강의실 전체</option>' + Object.keys(roomSet).sort().map(function(r){ return '<option value="' + esc(r) + '"' + (calRoom === r ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('') + '</select>' +
       '<button type="button" class="btn sm" data-cm="print" style="margin-left:auto;">인쇄</button></div>' +
-      '<div class="pcalsum">이 달 과정·기수 ' + Object.keys(courseSet).length + '개 · 편성된 교과목 ' + nSubj + '건 · 강사 미지정 ' + nUnas + '건 · 겹침 경고 ' + nErr + '곳</div>';
+      '<div class="pcalsum">이 달 과정·기수 ' + Object.keys(courseSet).length + '개 · 편성된 교과목 ' + nSubj + '건 · 강사 미지정 ' + nUnas + '건 · 겹침 경고 ' + nErr + '곳</div>' + emptyMonthHint(byDate);
     var thead = '<tr>' + names.slice(0, cols).map(function(n){ return '<th>' + n + '</th>'; }).join('') + '</tr>';
     var body = '', agenda = '';
     for (var w = start; w <= end; w = addDays(w, 7)) {
@@ -1763,8 +1796,10 @@
       setTimeout(done, 1500);
       return;
     }
+    calManual = true;
     var q = parseYmd((calMonth || ymd(new Date()).slice(0, 7)) + '-01');
-    if (act === 'prev') calMonth = ymd(new Date(q.y, q.m - 2, 1)).slice(0, 7);
+    if (/^go:\d{4}-\d{2}$/.test(act)) calMonth = act.slice(3);
+    else if (act === 'prev') calMonth = ymd(new Date(q.y, q.m - 2, 1)).slice(0, 7);
     else if (act === 'next') calMonth = ymd(new Date(q.y, q.m, 1)).slice(0, 7);
     else if (act === 'today') calMonth = ymd(new Date()).slice(0, 7);
     renderPlanCal();
@@ -3117,7 +3152,7 @@
     var t = ev.target; if (!t || !t.id) return;
     if (t.id === 'calTypeSel') { calType = t.value; renderPlanCal(); }
     else if (t.id === 'calRoomSel') { calRoom = t.value; renderPlanCal(); }
-    else if (t.id === 'calMonthIn' && /^\d{4}-\d{2}$/.test(t.value)) { calMonth = t.value; renderPlanCal(); }
+    else if (t.id === 'calMonthIn' && /^\d{4}-\d{2}$/.test(t.value)) { calMonth = t.value; calManual = true; renderPlanCal(); }
   });
   document.addEventListener('keydown', function(ev){
     if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.getAttribute && ev.target.getAttribute('data-doc')) { ev.preventDefault(); openDocInfo(ev.target.getAttribute('data-doc'), ev.target.getAttribute('data-sid') || ''); }
