@@ -655,6 +655,7 @@
 
   <div id="loading">불러오는 중입니다. 처음에는 몇 초 걸릴 수 있습니다.</div>
   <div id="weekNote" class="hint" style="display:none;margin:0 2px 8px 2px;"></div>
+  <div id="listHint" class="hint" style="display:none;margin:0 2px 8px 2px;"></div>
   <div id="count"></div>
   <div class="tw" id="tableWrap" style="display:none;">
     <table>
@@ -696,7 +697,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 17</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 18</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -882,7 +883,14 @@
     var end = addDays(mon, 6);
     return planRanges(p).some(function(r){ return r[0] <= end && r[1] >= mon; });
   }
+  function updateListHint(){
+    var h = $('listHint'); if (!h) return;
+    var on = (weekFilter || $('fType').value || $('fMonth').value) && shown.length;
+    h.style.display = on ? '' : 'none';
+    h.innerHTML = on ? '<b>아래 과정을 선택하고 교과목을 지정할 수 있습니다.</b> 과정명을 누르면 교과목 편성 화면이 열립니다.' : '';
+  }
   function updateWeekNote(){
+    updateListHint();
     var el = $('weekNote'); if (!el) return;
     if (!weekFilter) { el.style.display = 'none'; el.innerHTML = ''; return; }
     var n = shown.length;
@@ -1916,6 +1924,13 @@
     });
   }
   function setPlanMode(m){
+    if (m === 'cal' && planMode === 'table') {   // 표에서 보던 조건(구분·월·주)을 월 캘린더에도 그대로 적용
+      calType = $('fType').value || '';
+      var fy0 = $('fYear').value, fm0 = $('fMonth').value;
+      if (weekFilter) { calMonth = weekFilter.slice(0, 7); calManual = true; }
+      else if (fy0 && fm0) { calMonth = fy0 + '-' + ('0' + fm0).slice(-2); calManual = true; }
+      else { calMonth = ''; calManual = false; }
+    }
     planMode = m === 'cal' ? 'cal' : m === 'room' ? 'room' : 'table';
     if (planMode === 'cal' && !calManual) calMonth = '';
     try { sessionStorage.setItem('jsfa_la_pmode', planMode); } catch (e) {}
@@ -1933,6 +1948,7 @@
     var set = {};
     plans.forEach(function(p){
       if (isCancelled(p)) return;
+      if (calType && String(p['구분'] || '') !== calType) return;   // 구분을 골랐으면 그 구분의 일정이 있는 달만
       [['입교 시작일', '입교 종료일'], ['사이버 시작일', '사이버 종료일'], ['실습(외부) 시작일', '실습(외부) 종료일']].forEach(function(k){
         var a = normYmd(p[k[0]]), b = normYmd(p[k[1]]); if (!a && !b) return; a = a || b; b = b || a;
         var y = +a.slice(0, 4), m = +a.slice(5, 7), end = b.slice(0, 7), n = 0;
