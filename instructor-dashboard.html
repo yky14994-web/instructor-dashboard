@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>전남소방학교 외부강사 조회</title>
+<title>전남소방학교 강사관리</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
@@ -317,6 +317,11 @@
   #boot{display:none;}
   html.autologin #loginScreen{display:none !important;}
   html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:#5b6575;font-size:14px;}
+
+  .crumb{font-size:12.5px;color:#767F8C;margin:0 0 8px;}
+  .crumb a{color:#1B3A5F;text-decoration:none;font-weight:700;}
+  .crumb a:hover{text-decoration:underline;}
+  .crumb .sep{margin:0 6px;color:#B5BBC4;}
 </style>
 </head>
 <body>
@@ -342,11 +347,12 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i on" aria-current="page" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" href="lecture-assignment.html">강의배정</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i on" aria-current="page" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
+  <div class="crumb"><a href="home.html">홈</a><span class="sep">›</span>강사관리<span class="sep">›</span>강사 조회·검색</div>
 
   <header>
-    <div class="title">전남소방학교 외부강사 조회</div>
+    <div class="title">강사관리 · 강사 조회·검색</div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button id="inviteOpenBtn" class="badge" style="border:none;cursor:pointer;font-family:'Nanum Gothic',sans-serif;background:#1B3A5F;color:#fff;">강사 초대</button>
       <button id="copyPublicLinkBtn" class="badge" style="border:none;cursor:pointer;font-family:'Nanum Gothic',sans-serif;">강사등록 링크</button>
@@ -964,7 +970,7 @@
           ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#FCEBEB;color:#A32D2D;margin-left:6px;">계획서 미제출</span>'
           : '';
         var when = (h.교시 ? h.교시 : '') + (h.시간 ? (h.교시 ? ' (' + h.시간 + ')' : h.시간) : '');
-        var openUrl = 'lecture-assignment.html#c=' + encodeURIComponent(h.강의명 || '');
+        var openUrl = 'lecture-assignment.html#c=' + encodeURIComponent(h.강의명 || '') + '&from=dash';
         return '<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(20,20,19,0.06);' + (isCancelled ? 'opacity:0.55;' : '') + '">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
             '<div style="font-size:14px;color:var(--text);font-weight:700;">' + escapeAttr(h.강의명||'') + roleBadge + '</div>' +

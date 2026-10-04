@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>전남소방학교 강의배정 · 연간계획</title>
+<title>전남소방학교 강의배정</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <style>
   :root{
@@ -509,7 +509,7 @@
   }
   .gprinthead{display:none;}
   @media print{
-    .pmbar,#verStamp{display:none !important;}
+    .pmbar,#verStamp,#crumb{display:none !important;}
     body.ppt .tw table{font-size:8.5px;} body.ppt .tw th,body.ppt .tw td{padding:3px 4px;} body.ppt .tw .tag{font-size:8.5px;padding:1px 4px;}
     body.pcal.ppt table.calt{font-size:8.5px;} body.pcal.ppt table.calt td{height:64px;} body.pcal.ppt .cc{font-size:8.5px;padding:1px 3px;}
     body.pgrid.ppt table.g{font-size:9px;} body.pgrid.ppt .gc{font-size:9px;padding:3px 4px;} body.pgrid.ppt .gc .t{display:none;} body.pgrid.ppt table.g th.pc{width:52px;}
@@ -547,6 +547,11 @@
   #boot{display:none;}
   html.autologin #loginScreen{display:none !important;}
   html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:#5b6575;font-size:14px;}
+
+  .crumb{font-size:12.5px;color:#767F8C;margin:0 0 8px;}
+  .crumb a{color:#1B3A5F;text-decoration:none;font-weight:700;}
+  .crumb a:hover{text-decoration:underline;}
+  .crumb .sep{margin:0 6px;color:#B5BBC4;}
 </style>
 </head>
 <body>
@@ -572,8 +577,9 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i on" aria-current="page" href="lecture-assignment.html">강의배정</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i on" aria-current="page" href="lecture-assignment.html#v=table">강의배정</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
+  <div class="crumb" id="crumb"></div>
   <header>
     <div>
       <div class="title" id="hTitle">강의배정 · 연간계획</div>
@@ -666,7 +672,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 홈 3</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 홈 4</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1263,17 +1269,18 @@
     location.hash = '#c=' + encodeURIComponent(key);
   }
   function hashKey(){
-    var m = /^#c=(.+)$/.exec(location.hash || '');
+    var m = /^#c=([^&]+)/.exec(location.hash || '');
     if (!m) return '';
     try { return decodeURIComponent(m[1]); } catch (e) { return ''; }
   }
   function route(){
     if ($('app').style.display === 'none') return;
     var key = hashKey();
-    var vm = /^#v=(table|cal|room)$/.exec(location.hash || '');
+    var vm = /^#v=(table|cal|room)(?:&d=(\d{4}-\d{2}-\d{2}))?$/.exec(location.hash || '');
     if (vm) {
       try { window.history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {}
       planMode = vm[1]; if (planMode === 'cal' && !calManual) calMonth = '';
+      if (vm[2] && normYmd(vm[2])) { if (planMode === 'room') roomDate = vm[2]; else if (planMode === 'cal') { calMonth = vm[2].slice(0, 7); calManual = true; } }
       try { sessionStorage.setItem('jsfa_la_pmode', planMode); } catch (e) {}
       showPlan(); return;
     }
@@ -1287,9 +1294,31 @@
     closeBrowse(); closeInstructor(); closeChange(); closeCopy(); closeFormModal();
     $('editView').style.display = 'none';
     $('planView').style.display = '';
-    $('hTitle').textContent = '강의배정 · 연간계획';
-    $('hSub').textContent = '연간 교육훈련계획의 과정·기수별 현황입니다. 과정명이나 강사 배정 현황을 누르면 교과목 편성 화면이 열립니다.';
+    cameFrom = '';
+    applyPlanHead();
     applyFilters();
+  }
+  /* 화면 이동 출발지(홈·강사관리에서 링크로 들어온 경우만), 현재 위치 표시 */
+  var cameFrom = (/[#&]from=(home|dash)(?:&|$)/.exec(location.hash || '') || [])[1] || '';   // 주소의 &from= 값으로 출발지 전달(저장소 미사용)
+  var PLAN_HEAD = {
+    table: ['강의배정 · 연간계획', '연간 교육훈련계획의 과정·기수별 현황입니다. 과정명이나 강사 배정 현황을 누르면 교과목 편성 화면이 열립니다.'],
+    cal: ['강의배정 · 월 캘린더', '월별 과정 일정을 달력으로 봅니다.'],
+    room: ['강의배정 · 빈 강의실 조회', '날짜와 교시를 정해 비어 있는 강의실을 찾습니다.']
+  };
+  function applyPlanHead(){
+    var h = PLAN_HEAD[planMode] || PLAN_HEAD.table;
+    $('hTitle').textContent = h[0]; $('hSub').textContent = h[1];
+    renderCrumb();
+  }
+  function renderCrumb(){
+    var sep = '<span class="sep">›</span>', out = '<a href="home.html">홈</a>' + sep;
+    if (currentKey) {
+      var p = planByKey(currentKey);
+      out += '<a href="lecture-assignment.html#v=table">강의배정</a>' + sep + '교과목 편성' + (p ? ' · ' + esc(String(p['과정명'] || '') + ' ' + String(p['기수'] || '')) : '');
+    } else {
+      out += '강의배정' + sep + esc((PLAN_HEAD[planMode] || PLAN_HEAD.table)[0].replace('강의배정 · ', ''));
+    }
+    $('crumb').innerHTML = out;
   }
   function showEdit(key){
     var p = planByKey(key);
@@ -1300,6 +1329,8 @@
     $('editView').style.display = 'block';
     $('hTitle').textContent = '강의배정 · 교과목 편성';
     $('hSub').textContent = '과정을 선택하면 교시 단위로 교과목·강사·강의실을 편성합니다.';
+    renderCrumb();
+    $('backBtn').textContent = cameFrom === 'home' ? '← 홈으로' : cameFrom === 'dash' ? '← 강사관리로' : planMode === 'cal' ? '← 월 캘린더로' : planMode === 'room' ? '← 빈 강의실 조회로' : '← 연간계획으로';
     $('viewerNote').style.display = isViewer() ? 'block' : 'none';
     var blk = $('sBlock');
     if (!sessionsOk) { blk.style.display = 'block'; blk.textContent = '교과목 편성 목록을 불러오지 못해 저장할 수 없습니다. 새로고침 후 다시 시도해 주세요.'; }
@@ -1745,6 +1776,7 @@
     planMode = m === 'cal' ? 'cal' : m === 'room' ? 'room' : 'table';
     if (planMode === 'cal' && !calManual) calMonth = '';
     try { sessionStorage.setItem('jsfa_la_pmode', planMode); } catch (e) {}
+    applyPlanHead();
     applyFilters();
   }
   function monthDays(ym){
@@ -3650,7 +3682,11 @@
     else if ($('bOverlay').style.display === 'flex') closeBrowse();
     else closeFormModal();
   });
-  $('backBtn').addEventListener('click', function(){ location.hash = ''; });
+  $('backBtn').addEventListener('click', function(){
+    if (cameFrom === 'home') { location.href = 'home.html'; return; }
+    if (cameFrom === 'dash') { location.href = 'instructor-dashboard.html'; return; }
+    location.hash = '';
+  });
   $('fBackdrop').addEventListener('click', closeFormModal);
   $('vList').addEventListener('click', function(){ setView('list'); });
   $('vGrid').addEventListener('click', function(){ setView('grid'); });

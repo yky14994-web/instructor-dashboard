@@ -145,6 +145,8 @@
   #boot{display:none;}
   html.autologin #loginScreen{display:none !important;}
   html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:#5b6575;font-size:14px;}
+  .cdesc{font-size:12.5px;color:var(--text-muted);margin:-2px 0 10px;}
+  .go{font-weight:400;font-size:11.5px;color:var(--text-muted);margin-left:6px;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -170,7 +172,7 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" href="lecture-assignment.html">강의배정</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
   <header>
     <div>
@@ -181,10 +183,10 @@
   </header>
 
   <div class="quick">
-    <a class="btn primary" href="lecture-assignment.html#v=table">연간계획 보기</a>
-    <a class="btn" href="lecture-assignment.html#v=cal">월 캘린더</a>
-    <a class="btn" href="lecture-assignment.html#v=room">빈 강의실 조회</a>
-    <a class="btn" href="instructor-dashboard.html">강사 조회·검색</a>
+    <a class="btn primary" href="lecture-assignment.html#v=table">강의배정 ▸ 연간계획</a>
+    <a class="btn" data-v="cal" href="lecture-assignment.html#v=cal">강의배정 ▸ 월 캘린더</a>
+    <a class="btn" data-v="room" href="lecture-assignment.html#v=room">강의배정 ▸ 빈 강의실 조회</a>
+    <a class="btn" href="instructor-dashboard.html">강사관리 ▸ 강사 조회·검색</a>
   </div>
 
   <div id="msg"></div>
@@ -200,7 +202,7 @@
       <section class="card" id="cYear"></section>
     </div>
   </div>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 3</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 4</div>
 </div>
 </div>
 
@@ -282,7 +284,7 @@
       .filter(Boolean);
   }
   function typeCls(t){ t = String(t || ''); return 'ct-' + (['기본', '전문', '특별', '민관'].indexOf(t) > -1 ? t : '기타'); }
-  function courseLink(key, label){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '">' + esc(label) + '</a>'; }
+  function courseLink(key, label){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '&from=home">' + esc(label) + '<span class="go">편성 화면 →</span></a>'; }
 
   /* ---------- 오늘 수업 ---------- */
   function sessionsOn(date){
@@ -316,7 +318,7 @@
     var today = todayStr(), q = parseYmd(today);
     var list = sessionsOn(today);
     var now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
-    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건</span></div>';
+    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건</span></div><div class="cdesc">오늘 편성된 교과목입니다. 과정명을 누르면 해당 과정의 교과목 편성 화면이 열립니다.</div>';
     if (!sessionsOk) html += '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>';
     else if (!list.length) html += '<div class="empty">오늘 예정된 수업이 없습니다.</div>';
     else html += '<ul class="tl">' + list.map(function(o){
@@ -363,7 +365,7 @@
     var isThis = weekOffset === 0;
     var html = '<div class="chead"><h2>이번 주 과정</h2><div class="wknav"><span class="meta">' + md(base) + ' ~ ' + md(end) + (isThis ? '' : ' · ' + (weekOffset > 0 ? weekOffset + '주 뒤' : -weekOffset + '주 전')) + '</span>' +
       '<button type="button" class="btn sm" data-w="-1" aria-label="지난주">◀</button>' + (isThis ? '' : '<button type="button" class="btn sm" data-w="0">이번 주</button>') +
-      '<button type="button" class="btn sm" data-w="1" aria-label="다음주">▶</button></div></div>';
+      '<button type="button" class="btn sm" data-w="1" aria-label="다음주">▶</button></div></div><div class="cdesc">이번 주에 진행되는 과정입니다(입교·사이버·실습 기간 포함). 과정명을 누르면 교과목 편성 화면이 열립니다.</div>';
     if (!items.length) html += '<div class="empty">이 주에 진행되는 과정이 없습니다.</div>';
     else html += '<ul class="wk">' + items.map(function(o){
       var seg = o.hit.map(function(r){ return r.kind + ' ' + (r.a === r.b ? md(r.a) : md(r.a) + '~' + md(r.b)); }).join(' · ');
@@ -371,7 +373,7 @@
       var st = '';
       if (o.subj) st += '<span class="tag t-none">이번 주 교과목 ' + o.subj + '개</span>' + (o.un ? '<span class="tag t-warn">강사 미지정 ' + o.un + '</span>' : '<span class="tag t-ok">강사 모두 배정</span>');
       else st += '<span class="tag t-none">교과목 미편성</span>';
-      return '<li><div><span class="tag ' + typeCls(o.p['구분']) + '">' + esc(o.p['구분'] || '기타') + '</span> <a class="cn" href="lecture-assignment.html#c=' + encodeURIComponent(o.key) + '">' + esc(nameOf(o.key)) + '</a>' +
+      return '<li><div><span class="tag ' + typeCls(o.p['구분']) + '">' + esc(o.p['구분'] || '기타') + '</span> <a class="cn" href="lecture-assignment.html#c=' + encodeURIComponent(o.key) + '&from=home">' + esc(nameOf(o.key)) + '<span class="go">편성 화면 →</span></a>' +
         '<div class="ds">' + esc(seg) + (rm ? ' · ' + esc(rm) : '') + '</div></div><div class="st">' + st + '</div></li>';
     }).join('') + '</ul>';
     $('cWeek').innerHTML = html;
@@ -416,7 +418,7 @@
   }
   function renderRoom(){
     var today = todayStr(), q = parseYmd(today);
-    var html = '<div class="chead"><h2>오늘 빈 강의실</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ')</span></div>';
+    var html = '<div class="chead"><h2>오늘 빈 강의실</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ')</span></div><div class="cdesc">오늘 비어 있는 강의실입니다. 교시별로 보려면 아래 버튼을 누르세요.</div>';
     var target = rooms.filter(function(r){ return !roomSkip[r]; });
     if (!target.length) {
       $('cRoom').innerHTML = html + '<div class="empty">강의실 목록(강의배정DB 강의실 시트)이 비어 있어 계산할 수 없습니다.</div>';
@@ -437,7 +439,7 @@
     var busy = target.filter(function(r){ return usedBy[r]; });
     html += '<div class="rl"><span class="k">종일 비어 있음</span>' + (whole.length ? whole.map(function(r){ return '<span class="tag t-ok">' + esc(r) + '</span>'; }).join('') : '<span class="meta">없음</span>') + '</div>' +
       (busy.length ? '<div class="rl"><span class="k">사용 중</span>' + busy.map(function(r){ return '<span class="tag t-none">' + esc(r) + ' <small>' + ranges(usedBy[r]) + '</small></span>'; }).join('') + '</div>' : '') +
-      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=room">교시별 빈 강의실 조회</a></div>';
+      '<div style="margin-top:10px;"><a class="btn sm" data-v="room" href="lecture-assignment.html#v=room&d=' + today + '">강의배정 ▸ 빈 강의실 조회</a></div>';
     $('cRoom').innerHTML = html;
   }
 
@@ -457,7 +459,7 @@
   function renderYear(){
     var years = planYears(), ys = Object.keys(years).sort();
     if (!yearSel || !years[yearSel]) yearSel = pickYear(years);
-    var html = '<div class="chead"><h2>연간 교육훈련 계획</h2>' + (ys.length ? '<select id="yearSel" aria-label="연도">' + ys.map(function(y){ return '<option value="' + y + '"' + (y === yearSel ? ' selected' : '') + '>' + y + '년</option>'; }).join('') + '</select>' : '') + '</div>';
+    var html = '<div class="chead"><h2>연간 교육훈련 계획</h2>' + (ys.length ? '<select id="yearSel" aria-label="연도">' + ys.map(function(y){ return '<option value="' + y + '"' + (y === yearSel ? ' selected' : '') + '>' + y + '년</option>'; }).join('') + '</select>' : '') + '</div><div class="cdesc">연간 교육훈련계획 기준 과정·기수·인원입니다.</div>';
     if (!ys.length) { $('cYear').innerHTML = html + '<div class="empty">연간계획 데이터가 없습니다.</div>'; return; }
     var names = {}, byType = {}, cancelled = 0, total = { c: 0, n: 0, p: 0 };
     plans.forEach(function(p){
@@ -476,7 +478,7 @@
       '</tbody><tfoot><tr><td>합계</td><td>' + total.c + '</td><td>' + total.n + '</td><td>' + total.p.toLocaleString('ko-KR') + '</td></tr></tfoot></table>' +
       '<div class="hint" style="margin-top:8px;">과정 = 과정명 종류, 회 = 기수 수, 인원 = 계획인원 합계(입교 시작일이 ' + yearSel + '년인 기수 기준). ' +
       (cancelled ? '취소된 기수 ' + cancelled + '회는 제외했습니다. ' : '') + '</div>' +
-      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table">연간계획 보기</a></div>';
+      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table">강의배정 ▸ 연간계획</a></div>';
     $('cYear').innerHTML = html;
   }
 
@@ -490,9 +492,13 @@
     var n = new Date();
     $('clock').textContent = n.getFullYear() + '년 ' + (n.getMonth() + 1) + '월 ' + n.getDate() + '일 (' + DOW[n.getDay()] + ') ' + ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2) + (lastLoad ? ' · 마지막 새로고침 ' + lastLoad : '');
   }
-  tickClock();
+  function updateQuickLinks(){
+    var t = todayStr();
+    Array.prototype.forEach.call(document.querySelectorAll('a[data-v]'), function(a){ a.setAttribute('href', 'lecture-assignment.html#v=' + a.getAttribute('data-v') + '&d=' + t); });
+  }
+  tickClock(); updateQuickLinks();
   setInterval(function(){
-    tickClock();
+    tickClock(); updateQuickLinks();
     if ($('main').style.display !== 'none') renderToday();   // 진행 중·종료 표시 갱신
   }, 60000);
 
