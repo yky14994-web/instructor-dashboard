@@ -611,7 +611,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 빈 강의실 1</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 빈 강의실 3</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1829,12 +1829,13 @@
     allSessions.forEach(function(r){
       if (normYmd(r['일자']) !== date) return;
       var key = String(r['개설키'] || ''), p = planByKey(key); if (p && isCancelled(p)) return;
-      var rm = String(r['강의실'] || '').trim(); if (!rm) return;
+      var rmTxt = String(r['강의실'] || '').trim(); if (!rmTxt) return;
       hasRoomSess[key] = true;
       var a = Number(r['시작교시']), b = Number(r['끝교시']);
       if (!isFinite(a) || !isFinite(b)) { a = 0; b = 99; }
       if (b < s || a > e) return;
-      add(rm, { type: 'sess', key: key, label: nameOf(key), subj: String(r['교과목'] || ''), s: a, e: b });
+      // 강의실 이름이 목록의 정식 이름과 조금 달라도(공백·짧은 이름) 목록의 강의실로 맞춰서 계산
+      planRoomNames(rmTxt).forEach(function(rm){ add(rm, { type: 'sess', key: key, label: nameOf(key), subj: String(r['교과목'] || ''), s: a, e: b }); });
     });
     var q = parseYmd(date), wk = q && q.dow !== 0 && q.dow !== 6;
     if (wk) plans.forEach(function(p){
@@ -1895,7 +1896,9 @@
         return '<tr><td style="white-space:nowrap;font-weight:700;">' + (i ? '' : esc(r)) + '</td><td><span class="nmk" data-cday="' + esc(roomDate) + '" data-ckey="' + esc(u.key) + '" style="cursor:pointer;text-decoration:underline;">' + esc(u.label) + '</span><br>' + when + '</td></tr>';
       }).join('');
     }).join('');
-    var used = usedRooms.length ? '<details class="rmuse"><summary>사용 중인 강의실 ' + usedRooms.length + '곳 (누르면 과정·교시 확인)</summary><table><tbody>' + rows + '</tbody></table></details>' : '';
+    var nSess = 0, nPlan = 0;
+    usedRooms.forEach(function(r){ var t = (use[r] || []).some(function(u){ return u.type === 'sess'; }); if (t) nSess++; else nPlan++; });
+    var used = usedRooms.length ? '<details class="rmuse" open><summary>사용 중인 강의실 ' + usedRooms.length + '곳 (편성 ' + nSess + ' · 연간계획 예정 ' + nPlan + ')</summary><table><tbody>' + rows + '</tbody></table></details>' : '';
     var skip = skipRooms.length ? '<div class="hint" style="margin-top:10px;">겹침 검사 제외 장소(동시 사용 가능): ' + esc(skipRooms.join(', ')) + '</div>' : '';
     box.innerHTML = head + sum + body + used + skip +
       '<div class="hint" style="margin-top:10px;">편성된 교과목의 강의실과, 편성 전이라도 연간계획에 예정 강의실이 적힌 과정(입교 기간 평일)을 사용 중으로 계산합니다. 취소된 기수는 제외합니다.</div></div>';
