@@ -434,6 +434,20 @@
   #sFormPanel.fmodal{position:fixed;z-index:85;top:50%;left:50%;transform:translate(-50%,-50%);width:min(760px,94vw);max-height:92vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);margin:0;}
   #sFormPanel.fmodal .fclose{display:block;position:absolute;top:10px;right:12px;width:30px;height:30px;border:1px solid var(--border-input);border-radius:6px;background:#fff;font-size:14px;cursor:pointer;color:var(--text-sub);}
   .gbox{max-width:960px;margin:0 auto;}
+  .gbox.wide{max-width:none;}
+  .gscope{display:inline-flex;}
+  .gscope button{height:32px;padding:0 12px;border:1px solid var(--border-input);background:#fff;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-sub);cursor:pointer;white-space:nowrap;}
+  .gscope button:first-child{border-radius:6px 0 0 6px;} .gscope button:last-child{border-radius:0 6px 6px 0;border-left:none;}
+  .gscope button.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .gcourses{margin:4px 0 10px;overflow-x:auto;}
+  .gcourses table{border-collapse:collapse;width:100%;font-size:12.5px;}
+  .gcourses th,.gcourses td{border:1px solid var(--border);padding:5px 8px;text-align:left;vertical-align:middle;}
+  .gcourses th{background:#F7F8FA;color:var(--navy);font-size:12px;}
+  .gcourses .sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;}
+  .gcourses tr.off td{opacity:.45;}
+  .gcourses small{color:var(--text-muted);margin-left:4px;}
+  .gc .gcn{font-size:11px;font-weight:800;margin-bottom:1px;word-break:keep-all;}
+  .gbox.wide .gc{font-size:12px;}
   .gnavbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
   .gnavbar .wk{font-weight:800;color:var(--navy);font-size:14px;}
   .gnavbar select{height:32px;border:1px solid var(--border-input);border-radius:6px;padding:0 8px;font-family:inherit;font-size:13px;background:#fff;}
@@ -494,6 +508,13 @@
     body.pgrid .gprinthead h2{margin:0 0 4px;font-size:16px;color:#000;}
     body.pgrid .gprinthead .gpm{display:flex;flex-wrap:wrap;gap:2px 18px;font-size:11.5px;color:#000;}
     body.pgrid .gprinthead .gpm b{margin-right:4px;}
+    body.pgrid .gcourses{overflow:visible;margin:0 0 8px;} body.pgrid .gcourses table{font-size:10.5px;} body.pgrid .gcourses th,body.pgrid .gcourses td{padding:3px 6px;border-color:#888;}
+    body.pgrid .gcourses .noprint,body.pgrid .gcourses tr.off,body.pgrid .gscope{display:none !important;}
+    body.pgrid .gcourses .sw{border:1px solid #666;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body.pgrid .gbox.wide table.g{font-size:9.5px;} body.pgrid .gbox.wide .gc{font-size:9.5px;padding:3px 4px;}
+    body.pgrid .gbox.wide table.g td.c{height:30px;padding:2px;} body.pgrid .gbox.wide .gc{line-height:1.25;} body.pgrid .gbox.wide .gc .t{display:none;} body.pgrid .gbox.wide table.g thead th{padding:4px 2px;} body.pgrid .gbox.wide .glegend{margin:2px 0 6px;}
+    body.pgrid .gbox.wide .gcourses table{font-size:9.5px;} body.pgrid header{display:none !important;}
+    body.pgrid .gc[style*="border-left"]{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     body.pgrid .gnavbar,body.pgrid .gnp,body.pgrid #verStamp,body.pgrid #sEmpty,body.pgrid #sTableWrap,body.pgrid #sCards,body.pgrid #fBackdrop,body.pgrid .eb{display:none !important;}
     body.pgrid .wrap{padding:0;}
     body.pgrid #sListPanel h3{display:none !important;}
@@ -618,7 +639,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 운영팀 교시·월 엑셀 1</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 격자 전체 과정 1</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1214,7 +1235,7 @@
   function showEdit(key){
     var p = planByKey(key);
     currentKey = key;
-    closeFormModal(); gridWeek = ''; gridDay = -1;
+    closeFormModal(); gridWeek = gridKeepWeek; gridKeepWeek = ''; gridDay = -1;
     $('vList').className = viewMode === 'list' ? 'on' : ''; $('vGrid').className = viewMode === 'grid' ? 'on' : '';
     $('planView').style.display = 'none';
     $('editView').style.display = 'block';
@@ -2335,6 +2356,9 @@
 
   /* --- 격자 보기(주 단위, 날짜×교시) --- */
   var viewMode = 'list', gridWeek = '', gridDay = -1;
+  var gridScope = 'one', gridHide = {}, gridKeepWeek = '';   // gridScope: 'one'=이 과정만, 'all'=같은 주에 진행되는 과정 전체
+  var GCOL = ['#2F6DB5', '#2E8B57', '#8A4FBF', '#D9822B', '#C2477A', '#2A9DA8', '#7A7F2A', '#5D6B7A'];
+  try { if (sessionStorage.getItem('jsfa_la_gscope') === 'all') gridScope = 'all'; } catch (e) {}
   try { if (sessionStorage.getItem('jsfa_la_view') === 'grid') viewMode = 'grid'; } catch (e) {}
   function ymd(dt){ return dt.getFullYear() + '-' + ('0' + (dt.getMonth() + 1)).slice(-2) + '-' + ('0' + dt.getDate()).slice(-2); }
   function addDays(s, n){ var q = parseYmd(s); return ymd(new Date(q.y, q.m - 1, q.d + n)); }
@@ -2408,7 +2432,34 @@
       });
     return lanes.length ? lanes : [[]];
   }
-  function gridCell(u, cont, canEdit, p){
+  /* 같은 주에 진행되는 모든 과정 보기: 주 목록(모든 과정의 주 합집합)과 그 주에 진행되는 과정 목록 */
+  function gridAllWeeks(p){
+    var byKey = {}, set = {};
+    allSessions.forEach(function(r){ var k = String(r['개설키'] || ''); if (k) (byKey[k] = byKey[k] || []).push(r); });
+    plans.forEach(function(q){
+      var k = String(q['과정+기수'] || '');
+      if (isCancelled(q) && q !== p) return;
+      gridWeeksOf(q, byKey[k] || []).forEach(function(w){ set[w] = 1; });
+    });
+    return Object.keys(set).sort();
+  }
+  function gridWeekCourses(p, mon, sun){
+    var has = {}, pk = String(p['과정+기수'] || '');
+    allSessions.forEach(function(r){ var d = String(r['일자'] || ''); if (d >= mon && d <= sun) has[String(r['개설키'] || '')] = true; });
+    var out = plans.filter(function(q){
+      var k = String(q['과정+기수'] || '');
+      if (k === pk) return true;
+      if (isCancelled(q)) return false;
+      return has[k] || planRanges(q).some(function(r){ return r[0] <= sun && r[1] >= mon; });
+    });
+    out.sort(function(a, b){
+      if (a === p) return -1; if (b === p) return 1;
+      var x = String(a['입교 시작일'] || ''), y = String(b['입교 시작일'] || '');
+      return x < y ? -1 : x > y ? 1 : (String(a['과정+기수']) < String(b['과정+기수']) ? -1 : 1);
+    });
+    return out;
+  }
+  function gridCell(u, cont, canEdit, p, cx){
     var r = u[0], gid = groupId(r), cl = cflByGid[gid] || [];
     var open = cl.filter(function(c){ return !c.conf; });
     var cls = '', flag = '';
@@ -2434,15 +2485,17 @@
       var eb = (multi && canEdit) ? '<button type="button" class="eb" data-act="edit" data-id="' + esc(x['편성ID']) + '" title="이 강사 줄 수정">✎</button>' : '';
       return '<div class="i">' + roleTag(x) + nm + eb + '</div>';
     }).join('');
-    var body = '<div class="s">' + klass + esc(r['교과목']) + (warns.length ? ' <span title="' + esc(warns.join(' / ')) + '">⚠</span>' : '') + flag + '</div>' +
+    var body = (cx ? '<div class="gcn" style="color:' + cx.color + '">' + esc(cx.label) + '</div>' : '') + '<div class="s">' + klass + esc(r['교과목']) + (warns.length ? ' <span title="' + esc(warns.join(' / ')) + '">⚠</span>' : '') + flag + '</div>' +
       '<div class="t">' + esc(pt.txt) + '</div>' + ins + '<div class="r">' + esc(r['강의실'] || '강의실 미정') + '</div>';
-    var act = canEdit ? ' data-act="edit" data-id="' + esc(r['편성ID']) + '"' : '';
-    return '<div class="gc' + cls + (canEdit ? ' ed' : '') + '"' + act + '>' + body + '</div>';
+    var other = cx && !cx.own;
+    var act = canEdit ? ' data-act="edit" data-id="' + esc(r['편성ID']) + '"' : (other ? ' data-gopen="' + esc(cx.key) + '" title="누르면 이 과정의 편성 화면으로 이동합니다"' : '');
+    return '<div class="gc' + cls + ((canEdit || other) ? ' ed' : '') + '"' + act + (cx ? ' style="border-left:5px solid ' + cx.color + ';"' : '') + '>' + body + '</div>';
   }
   function renderGrid(p, list){
     var box = $('sGridWrap');
     var canEdit = formState === 'ok';
-    var weeks = gridWeeksOf(p, list);
+    var all = gridScope === 'all';
+    var weeks = all ? gridAllWeeks(p) : gridWeeksOf(p, list);
     if (!weeks.length) { box.innerHTML = '<div class="empty">표시할 기간이 없습니다. 연간계획에 입교 기간이 입력되면 격자가 표시됩니다.</div>'; return; }
     var today = ymd(new Date());
     if (weeks.indexOf(gridWeek) < 0) {
@@ -2450,7 +2503,7 @@
       gridWeek = weeks.indexOf(tw) > -1 ? tw : (function(){
         for (var i = 0; i < weeks.length; i++) {
           var e = addDays(weeks[i], 6);
-          if (list.some(function(r){ return r['일자'] >= weeks[i] && r['일자'] <= e; })) return weeks[i];
+          if ((all ? allSessions : list).some(function(r){ return r['일자'] >= weeks[i] && r['일자'] <= e; })) return weeks[i];
         }
         return weeks[0];
       })();
@@ -2458,7 +2511,10 @@
     }
     var wi = weeks.indexOf(gridWeek), mon = gridWeek, sun = addDays(mon, 6);
     var days = [0, 1, 2, 3, 4, 5, 6].map(function(i){ return addDays(mon, i); });
-    var wkList = list.filter(function(r){ return r['일자'] >= mon && r['일자'] <= sun; });
+    var courses = all ? gridWeekCourses(p, mon, sun) : [p], cidx = {};
+    courses.forEach(function(q, i){ cidx[String(q['과정+기수'])] = i; });
+    var srcList = all ? allSessions.filter(function(r){ var k = String(r['개설키'] || ''); return cidx[k] !== undefined && !gridHide[k]; }) : list;
+    var wkList = srcList.filter(function(r){ return r['일자'] >= mon && r['일자'] <= sun; });
     var byDay = {};
     wkList.forEach(function(r){ (byDay[r['일자']] = byDay[r['일자']] || []).push(r); });
     days = days.filter(function(d, i){ return i < 5 || byDay[d]; });
@@ -2500,8 +2556,15 @@
           var sh = (di === gridDay ? ' dshow' : '');
           if (lay[di].cover[li][n]) continue;
           var st = lay[di].starts[li][n];
-          if (st) body += '<td class="c' + sh + '" data-d="' + di + '" rowspan="' + st.rs + '">' + gridCell(st.u, st.cont, canEdit, p) + '</td>';
-          else if (li === 0 && canEdit) body += '<td class="c empty' + sh + '" data-d="' + di + '" data-new="' + d + '|' + n + '"></td>';
+          if (st) {
+            var cx = null, ce = canEdit, cp0 = p;
+            if (all) {
+              var rk = String(st.u[0]['개설키'] || '');
+              cx = { key: rk, color: GCOL[(cidx[rk] || 0) % GCOL.length], label: courseLabel(rk), own: rk === currentKey };
+              ce = canEdit && cx.own; cp0 = planByKey(rk) || p;
+            }
+            body += '<td class="c' + sh + '" data-d="' + di + '" rowspan="' + st.rs + '">' + gridCell(st.u, st.cont, ce, cp0, cx) + '</td>';
+          } else if (li === 0 && canEdit && !all) body += '<td class="c empty' + sh + '" data-d="' + di + '" data-new="' + d + '|' + n + '"></td>';
           else body += '<td class="c' + sh + '" data-d="' + di + '"></td>';
         }
       });
@@ -2513,28 +2576,40 @@
     }).join('');
     var dtabs = days.map(function(d, i){ return '<button type="button" data-gd="' + i + '" class="' + (i === gridDay ? 'on' : '') + '">' + esc(DOW[parseYmd(d).dow]) + ' ' + parseYmd(d).d + '</button>'; }).join('');
     var empty = !wkList.length ? '<div class="hint" style="margin:0 0 8px;">' + (canEdit ? '이 주에 편성된 교과목이 없습니다. 빈 칸을 눌러 추가하세요.' : '이 주에 편성된 교과목이 없습니다.') + '</div>' : '';
-    var pHead = '<div class="gprinthead"><h2>' + esc(p['과정명'] || '') + ' ' + esc(p['기수'] || '') + '</h2><div class="gpm">' +
+    var wkCnt = {};
+    if (all) allSessions.forEach(function(r){ var k = String(r['개설키'] || ''), d = String(r['일자'] || ''); if (cidx[k] !== undefined && d >= mon && d <= sun) wkCnt[k] = (wkCnt[k] || 0) + 1; });
+    var ctab = !all ? '' : '<div class="gcourses"><table><thead><tr><th class="noprint">표시</th><th></th><th>과정 · 기수</th><th>구분</th><th>입교</th><th>계획인원</th><th>예정 강의실</th><th>이 주 교과목</th></tr></thead><tbody>' +
+      courses.map(function(q, i){
+        var k = String(q['과정+기수'] || ''), off = !!gridHide[k];
+        return '<tr class="' + (off ? 'off' : '') + '"><td class="noprint"><input type="checkbox" data-gh="' + esc(k) + '"' + (off ? '' : ' checked') + ' aria-label="' + esc(courseLabel(k)) + ' 표시"></td>' +
+          '<td><i class="sw" style="background:' + GCOL[i % GCOL.length] + '"></i></td><td><b>' + esc(courseLabel(k)) + '</b>' + (k === currentKey ? '<small>현재 화면</small>' : '') + '</td>' +
+          '<td>' + esc([q['구분'], q['세부구분']].filter(Boolean).join(' · ') || '-') + '</td><td>' + esc(ipgyo(q)) + '</td>' +
+          '<td>' + esc(q['계획인원'] === '' || q['계획인원'] == null ? '-' : q['계획인원']) + '명</td><td>' + esc(q['예정 강의실'] || '-') + '</td><td>' + (wkCnt[k] ? wkCnt[k] + '건' : '편성 전') + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    var pHead = all ? '<div class="gprinthead"><h2>주간 교과목 시간표</h2><div class="gpm"><span><b>기간</b> ' + (wi + 1) + '주차 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span><span><b>진행 과정</b> ' + courses.length + '개</span></div></div>' :
+      '<div class="gprinthead"><h2>' + esc(p['과정명'] || '') + ' ' + esc(p['기수'] || '') + '</h2><div class="gpm">' +
       '<span><b>구분</b> ' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ') || '-') + '</span>' +
       '<span><b>입교</b> ' + esc(ipgyo(p)) + (p['교육기간'] ? ' · ' + esc(p['교육기간']) : '') + '</span>' +
       '<span><b>계획인원</b> ' + esc(p['계획인원'] === '' || p['계획인원'] == null ? '-' : p['계획인원']) + '명</span>' +
       '<span><b>예정 강의실</b> ' + esc(p['예정 강의실'] || '-') + '</span>' +
       '<span><b>교과목 시간표</b> ' + (wi + 1) + '주차 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span></div></div>';
-    box.innerHTML = '<div class="gbox">' + pHead + '<div class="gnavbar"><button type="button" class="btn sm" data-gw="prev"' + (wi === 0 ? ' disabled' : '') + '>◀ 이전 주</button>' +
+    var scopeBar = '<span class="gscope" role="group" aria-label="격자 범위"><button type="button" data-gs="one" class="' + (all ? '' : 'on') + '">이 과정만</button><button type="button" data-gs="all" class="' + (all ? 'on' : '') + '">같은 주 전체 과정</button></span>';
+    box.innerHTML = '<div class="gbox' + (all ? ' wide' : '') + '">' + pHead + '<div class="gnavbar">' + scopeBar + '<button type="button" class="btn sm" data-gw="prev"' + (wi === 0 ? ' disabled' : '') + '>◀ 이전 주</button>' +
       '<select id="gWeek" aria-label="주 선택">' + opts + '</select>' +
       '<button type="button" class="btn sm" data-gw="next"' + (wi === weeks.length - 1 ? ' disabled' : '') + '>다음 주 ▶</button>' +
       '<button type="button" class="btn sm" data-gw="today">이번 주</button>' +
       '<span class="wk">' + (wi + 1) + '주차 / ' + weeks.length + '주 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span>' +
-      '<button type="button" class="btn sm" data-gw="print" style="margin-left:auto;">인쇄</button></div>' +
+      '<button type="button" class="btn sm" data-gw="print" style="margin-left:auto;">인쇄</button></div>' + ctab +
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:#FBE0DD;border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span>' +
       '<span><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
       empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
-      '<div class="hint gnp" style="margin-top:8px;">' + (canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div></div>';
+      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div></div>';
   }
   function gridNav(act){
     var p = planByKey(currentKey);
-    var weeks = gridWeeksOf(p, sessionsOf(currentKey));
+    var weeks = gridScope === 'all' ? gridAllWeeks(p) : gridWeeksOf(p, sessionsOf(currentKey));
     var wi = weeks.indexOf(gridWeek);
     if (act === 'print') {
       document.body.classList.add('pgrid');
@@ -3458,7 +3533,7 @@
 
   function onListClick(ev){
     var t = ev.target;
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign')))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
@@ -3496,6 +3571,12 @@
     if (gw) { gridNav(gw); return; }
     var gd = t.getAttribute('data-gd');
     if (gd) { gridDay = Number(gd); renderSessionList(); return; }
+    var gs = t.getAttribute('data-gs');
+    if (gs) { gridScope = gs === 'all' ? 'all' : 'one'; try { sessionStorage.setItem('jsfa_la_gscope', gridScope); } catch (e) {} closeFormModal(); gridDay = -1; renderSessionList(); return; }
+    var gh = t.getAttribute('data-gh');
+    if (gh) { gridHide[gh] = !gridHide[gh]; renderSessionList(); return; }
+    var go = t.getAttribute('data-gopen');
+    if (go) { if (go !== currentKey) { gridKeepWeek = gridWeek; openCourse(go); } return; }
     var bp = t.getAttribute('data-bpick');
     if (bp) { pickInstructor(bp); return; }
     var det = t.getAttribute('data-detail');
