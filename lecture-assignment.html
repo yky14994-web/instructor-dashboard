@@ -395,12 +395,9 @@
   .rmgrp small{font-weight:600;color:var(--text-muted);margin-left:6px;}
   .rmlist{display:flex;gap:6px;flex-wrap:wrap;}
   .rmchip{display:inline-flex;flex-direction:column;padding:7px 12px;border-radius:8px;background:#E3F1E4;color:#1F6B2B;font-size:13.5px;font-weight:800;line-height:1.3;}
+  .rmchip.use{background:#FBE0DC;color:#9B1C12;cursor:pointer;} .rmchip.plan{background:#FFF1BF;color:#7A5B00;cursor:pointer;}
+  .rmchip.use:hover,.rmchip.plan:hover{filter:brightness(.96);}
   .rmchip small{font-weight:600;font-size:11.5px;opacity:.85;}
-  .rmuse{margin-top:14px;border-top:1px solid var(--border);padding-top:8px;}
-  .rmuse summary{cursor:pointer;font-weight:800;font-size:13px;color:var(--text-sub);}
-  .rmuse table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px;}
-  .rmuse td{padding:6px 6px;border-top:1px solid var(--border);vertical-align:top;}
-  .rmuse .pl{color:#8A6D00;font-weight:700;}
   .dday h4{margin:14px 0 6px;font-size:13.5px;}
   .dday table{width:100%;border-collapse:collapse;font-size:12.5px;}
   .dday th,.dday td{padding:6px 6px;border-top:1px solid var(--border);text-align:left;vertical-align:top;}
@@ -611,7 +608,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 빈 강의실 4</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 빈 강의실 5</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1908,31 +1905,34 @@
     });
     Object.keys(use).forEach(function(r){ if (rooms.indexOf(r) < 0 && !roomSkip[r]) usedRooms.push(r); });   // 목록에 없는 이름으로 사용 중인 곳
     var grp = {}, order = [];
-    freeRooms.forEach(function(r){
-      var inf = roomInfo[r] || {}, g = inf.bld || '기타';
+    var allRooms = freeRooms.concat(usedRooms);
+    // 강의실 시트 순서를 유지하고, 목록에 없는 이름은 '목록 외'로 뒤에 붙임
+    var seq = rooms.filter(function(r){ return allRooms.indexOf(r) > -1; }).concat(allRooms.filter(function(r){ return rooms.indexOf(r) < 0; }));
+    seq.forEach(function(r){
+      var inf = roomInfo[r] || {}, g = rooms.indexOf(r) < 0 ? '목록 외' : (inf.bld || '기타');
       if (!grp[g]) { grp[g] = []; order.push(g); }
       grp[g].push(r);
     });
     var span = periodSpan(roomS, roomE), dq = parseYmd(roomDate);
     var wkNote = dq && (dq.dow === 0 || dq.dow === 6) ? ' · 주말이라 연간계획 예정 강의실은 반영하지 않았습니다(편성된 교과목만 반영)' : '';
-    var sum = '<div class="pcalsum"><b>' + esc(dq ? dq.y + '년 ' + md(roomDate) : roomDate) + ' ' + roomS + '~' + roomE + '교시' + (span ? '(' + esc(span) + ')' : '') + '</b> · 빈 강의실 ' + freeRooms.length + '곳 / 전체 ' + (rooms.length - skipRooms.length) + '곳' + esc(wkNote) + '</div>';
+    var sum = '<div class="pcalsum"><b>' + esc(dq ? dq.y + '년 ' + md(roomDate) : roomDate) + ' ' + roomS + '~' + roomE + '교시' + (span ? '(' + esc(span) + ')' : '') + '</b> · 빈 강의실 ' + freeRooms.length + '곳 / 전체 ' + (rooms.length - skipRooms.length) + '곳 · 사용 중 ' + usedRooms.length + '곳' + esc(wkNote) + '</div>';
+    var chipOf = function(r){
+      var inf = roomInfo[r] || {}, sub = [inf.floor, inf.kind].filter(Boolean).join(' · '), us = use[r] || [];
+      if (!us.length) return '<span class="rmchip free">' + esc(r) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>';
+      var sess = us.some(function(u){ return u.type === 'sess'; });
+      var lines = us.slice(0, 2).map(function(u){
+        return '<small>' + esc(u.label) + ' · ' + (u.type === 'plan' ? '연간계획 예정(편성 전)' : u.s + '~' + u.e + '교시' + (u.subj ? ' ' + esc(u.subj) : '')) + '</small>';
+      }).join('') + (us.length > 2 ? '<small>외 ' + (us.length - 2) + '건</small>' : '');
+      return '<span class="rmchip ' + (sess ? 'use' : 'plan') + '" data-cday="' + esc(roomDate) + '" data-ckey="' + esc(us[0].key) + '" title="누르면 그날 일정이 열립니다">' + esc(r) + lines + '</span>';
+    };
     var body = order.length ? order.map(function(g){
-      return '<div class="rmgrp">' + esc(g) + '<small>' + grp[g].length + '곳</small></div><div class="rmlist">' + grp[g].map(function(r){
-        var inf = roomInfo[r] || {}, sub = [inf.floor, inf.kind].filter(Boolean).join(' · ');
-        return '<span class="rmchip">' + esc(r) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>';
-      }).join('') + '</div>';
-    }).join('') : '<div class="tnone" style="padding:10px 0;">이 시간에 비어 있는 강의실이 없습니다.</div>';
-    var rows = usedRooms.map(function(r){
-      return (use[r] || []).map(function(u, i){
-        var when = u.type === 'plan' ? '<span class="pl">연간계획 예정(편성 전·하루 종일)</span>' : u.s + '~' + u.e + '교시' + (u.subj ? ' · ' + esc(u.subj) : '');
-        return '<tr><td style="white-space:nowrap;font-weight:700;">' + (i ? '' : esc(r)) + '</td><td><span class="nmk" data-cday="' + esc(roomDate) + '" data-ckey="' + esc(u.key) + '" style="cursor:pointer;text-decoration:underline;">' + esc(u.label) + '</span><br>' + when + '</td></tr>';
-      }).join('');
-    }).join('');
-    var nSess = 0, nPlan = 0;
-    usedRooms.forEach(function(r){ var t = (use[r] || []).some(function(u){ return u.type === 'sess'; }); if (t) nSess++; else nPlan++; });
-    var used = usedRooms.length ? '<details class="rmuse" open><summary>사용 중인 강의실 ' + usedRooms.length + '곳 (편성 ' + nSess + ' · 연간계획 예정 ' + nPlan + ')</summary><table><tbody>' + rows + '</tbody></table></details>' : '';
+      var nf = grp[g].filter(function(r){ return !(use[r] && use[r].length); }).length;
+      return '<div class="rmgrp">' + esc(g) + '<small>빈 곳 ' + nf + ' / ' + grp[g].length + '곳</small></div><div class="rmlist">' + grp[g].map(chipOf).join('') + '</div>';
+    }).join('') : '<div class="tnone" style="padding:10px 0;">표시할 강의실이 없습니다.</div>';
+    var leg = '<div class="calleg" style="margin:4px 0 2px;"><span><i style="background:#E3F1E4"></i>빈 강의실</span><span><i style="background:#FBE0DC"></i>사용 중(편성된 교과목)</span><span><i style="background:#FFF1BF"></i>연간계획 예정(편성 전)</span></div>';
+    var used = '';
     var skip = skipRooms.length ? '<div class="hint" style="margin-top:10px;">겹침 검사 제외 장소(동시 사용 가능): ' + esc(skipRooms.join(', ')) + '</div>' : '';
-    box.innerHTML = head + sum + emptyDayHint(roomActiveDates()) + body + used + skip +
+    box.innerHTML = head + sum + emptyDayHint(roomActiveDates()) + leg + body + used + skip +
       '<div class="hint" style="margin-top:10px;">편성된 교과목의 강의실과, 편성 전이라도 연간계획에 예정 강의실이 적힌 과정(입교 기간 평일)을 사용 중으로 계산합니다. 취소된 기수는 제외합니다.</div></div>';
   }
   function roomNav(act){
