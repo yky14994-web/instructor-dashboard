@@ -597,7 +597,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 캘린더 4</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 캘린더 5</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1624,7 +1624,7 @@
     ['planBar', 'planLegend', 'count', 'tableWrap', 'cardList', 'emptyBox'].forEach(function(id){
       var e = $(id); if (!e) return;
       if (cal) e.style.display = 'none';
-      else if (id === 'planBar' || id === 'planLegend' || id === 'count') e.style.display = '';
+      else if (id === 'planBar' || id === 'planLegend' || id === 'count' || id === 'cardList') e.style.display = '';   // cardList: 모바일 카드 목록(캘린더에서 숨긴 것을 되돌림)
     });
   }
   function setPlanMode(m){
