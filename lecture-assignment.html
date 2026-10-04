@@ -611,7 +611,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 빈 강의실 3</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 빈 강의실 4</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1847,6 +1847,38 @@
     });
     return use;
   }
+  /* 일정이 있는 날짜(YYYY-MM-DD) 목록: 취소 제외 과정의 입교 기간 평일 + 편성된 교과목 일자 */
+  function roomActiveDates(){
+    var set = {};
+    plans.forEach(function(p){
+      if (isCancelled(p)) return;
+      var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']); if (!a && !b) return; a = a || b; b = b || a;
+      var n = 0;
+      for (var d = a; d <= b && n < 400; d = addDays(d, 1), n++) { var q = parseYmd(d); if (q.dow !== 0 && q.dow !== 6) set[d] = true; }
+    });
+    allSessions.forEach(function(r){
+      var d = normYmd(r['일자']); if (!d) return;
+      var p = planByKey(String(r['개설키'] || '')); if (p && isCancelled(p)) return;
+      set[d] = true;
+    });
+    return Object.keys(set).sort();
+  }
+  /* 처음 열 때의 날짜: 오늘에 일정이 있으면 오늘 → 선택한 연도에서 오늘 이후 첫 일정 날짜 → 마지막 일정 날짜, 없으면 오늘 */
+  function roomDefaultDate(){
+    var today = ymd(new Date()), fy = $('fYear') ? $('fYear').value : '';
+    var ds = roomActiveDates().filter(function(d){ return !fy || d.slice(0, 4) === String(fy); });
+    if (!ds.length || ds.indexOf(today) > -1) return today;
+    for (var i = 0; i < ds.length; i++) if (ds[i] > today) return ds[i];
+    return ds[ds.length - 1];
+  }
+  function emptyDayHint(active){
+    if (!active.length || active.indexOf(roomDate) > -1) return '';
+    var prev = '', next = '';
+    active.forEach(function(d){ if (d < roomDate) prev = d; else if (d > roomDate && !next) next = d; });
+    var q = parseYmd(roomDate);
+    var btn = function(d, pre, post){ var x = parseYmd(d); return '<button type="button" class="btn sm" data-cm="rm:go:' + d + '">' + pre + x.y + '년 ' + md(d) + post + '</button> '; };
+    return '<div class="hint" style="margin:6px 0 10px;"><b>' + (q ? q.y + '년 ' + md(roomDate) : esc(roomDate)) + '에는 편성된 과정이 없습니다.</b> 일정이 있는 가까운 날짜: ' + (prev ? btn(prev, '◀ ', '') : '') + (next ? btn(next, '', ' ▶') : '') + '</div>';
+  }
   function periodSpan(s, e){
     var a = periodInfo(s), b = periodInfo(e);
     return a && b && a.start && b.end ? a.start + '~' + b.end : '';
@@ -1854,7 +1886,7 @@
   function renderRoomFree(){
     var box = $('planRoom'), today = ymd(new Date());
     var pn = periods.length ? periods.map(function(x){ return x.n; }) : [1, 2, 3, 4, 5, 6, 7];
-    if (!roomDate) roomDate = today;
+    if (!roomDate) roomDate = roomDefaultDate();
     if (!roomS || pn.indexOf(roomS) < 0) roomS = pn[0];
     if (!roomE || pn.indexOf(roomE) < 0) roomE = pn[pn.length - 1];
     if (roomE < roomS) roomE = roomS;
@@ -1883,7 +1915,7 @@
     });
     var span = periodSpan(roomS, roomE), dq = parseYmd(roomDate);
     var wkNote = dq && (dq.dow === 0 || dq.dow === 6) ? ' · 주말이라 연간계획 예정 강의실은 반영하지 않았습니다(편성된 교과목만 반영)' : '';
-    var sum = '<div class="pcalsum"><b>' + esc(dq ? md(roomDate) : roomDate) + ' ' + roomS + '~' + roomE + '교시' + (span ? '(' + esc(span) + ')' : '') + '</b> · 빈 강의실 ' + freeRooms.length + '곳 / 전체 ' + (rooms.length - skipRooms.length) + '곳' + esc(wkNote) + '</div>';
+    var sum = '<div class="pcalsum"><b>' + esc(dq ? dq.y + '년 ' + md(roomDate) : roomDate) + ' ' + roomS + '~' + roomE + '교시' + (span ? '(' + esc(span) + ')' : '') + '</b> · 빈 강의실 ' + freeRooms.length + '곳 / 전체 ' + (rooms.length - skipRooms.length) + '곳' + esc(wkNote) + '</div>';
     var body = order.length ? order.map(function(g){
       return '<div class="rmgrp">' + esc(g) + '<small>' + grp[g].length + '곳</small></div><div class="rmlist">' + grp[g].map(function(r){
         var inf = roomInfo[r] || {}, sub = [inf.floor, inf.kind].filter(Boolean).join(' · ');
@@ -1900,13 +1932,14 @@
     usedRooms.forEach(function(r){ var t = (use[r] || []).some(function(u){ return u.type === 'sess'; }); if (t) nSess++; else nPlan++; });
     var used = usedRooms.length ? '<details class="rmuse" open><summary>사용 중인 강의실 ' + usedRooms.length + '곳 (편성 ' + nSess + ' · 연간계획 예정 ' + nPlan + ')</summary><table><tbody>' + rows + '</tbody></table></details>' : '';
     var skip = skipRooms.length ? '<div class="hint" style="margin-top:10px;">겹침 검사 제외 장소(동시 사용 가능): ' + esc(skipRooms.join(', ')) + '</div>' : '';
-    box.innerHTML = head + sum + body + used + skip +
+    box.innerHTML = head + sum + emptyDayHint(roomActiveDates()) + body + used + skip +
       '<div class="hint" style="margin-top:10px;">편성된 교과목의 강의실과, 편성 전이라도 연간계획에 예정 강의실이 적힌 과정(입교 기간 평일)을 사용 중으로 계산합니다. 취소된 기수는 제외합니다.</div></div>';
   }
   function roomNav(act){
     var d = parseYmd(roomDate || ymd(new Date())); if (!d) d = parseYmd(ymd(new Date()));
     if (act === 'rm:prev') roomDate = addDays(ymd(new Date(d.y, d.m - 1, d.d)), -1);
     else if (act === 'rm:next') roomDate = addDays(ymd(new Date(d.y, d.m - 1, d.d)), 1);
+    else if (/^rm:go:\d{4}-\d{2}-\d{2}$/.test(act)) roomDate = act.slice(6);
     else roomDate = ymd(new Date());
     renderRoomFree();
   }
