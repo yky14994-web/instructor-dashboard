@@ -188,6 +188,7 @@
   .route-badge{font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:6px;vertical-align:middle;}
   .route-badge.self{background:var(--border);color:var(--text-sub);}
   .route-badge.invite{background:#DCE8F5;color:#1B3A5F;}
+  .route-badge.newbie{background:#FDE8E8;color:#A32D2D;}
   .pending-badge{font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;white-space:nowrap;}
   .badge-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
   .pending-badge.assigned{background:#EDE4F7;color:#5B2A9E;}
@@ -353,7 +354,8 @@
 
   <header>
     <div class="title">강사관리 · 강사 조회·검색</div>
-    <div style="display:flex;gap:8px;align-items:center;">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button id="reloadListBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:'Nanum Gothic',sans-serif;">새로고침</button>
       <button id="inviteOpenBtn" class="badge" style="border:none;cursor:pointer;font-family:'Nanum Gothic',sans-serif;background:#1B3A5F;color:#fff;">강사 초대</button>
       <button id="copyPublicLinkBtn" class="badge" style="border:none;cursor:pointer;font-family:'Nanum Gothic',sans-serif;">강사등록 링크</button>
       <button id="pageLinksOpenBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:'Nanum Gothic',sans-serif;">페이지 링크 모음</button>
@@ -592,6 +594,12 @@
     return html ? '<div class="badge-row">' + html + '</div>' : '';
   }
 
+  // 최근 7일 이내 등록한 강사에 '신규' 표시(목록 맨 아래에 추가되어 놓치기 쉬워서)
+  function newBadge(d){
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d.등록일 || '')); if (!m) return '';
+    var days = (new Date().setHours(0,0,0,0) - new Date(+m[1], +m[2] - 1, +m[3]).getTime()) / 86400000;
+    return days >= 0 && days <= 7 ? '<span class="route-badge newbie">신규</span>' : '';
+  }
   function routeBadge(routeVal){
     var v = routeVal || '자진등록';
     var cls = v === '자진등록' ? 'self' : 'invite';
@@ -608,12 +616,15 @@
   }
 
   function populateFilter(selectEl, values){
+    var cur = selectEl.value;
+    while (selectEl.options.length > 1) selectEl.remove(1);   // 다시 불러올 때 항목이 중복되지 않도록 첫 항목(전체)만 남김
     values.forEach(function(v){
       var opt = document.createElement('option');
       opt.value = v;
       opt.textContent = v;
       selectEl.appendChild(opt);
     });
+    if (cur && values.indexOf(cur) > -1) selectEl.value = cur;
   }
 
   function render(){
@@ -652,7 +663,7 @@
       tr.innerHTML =
         '<td>' + (d.소속||'') + '</td>' +
         '<td>' + thumb + '</td>' +
-        '<td>' + (d.성명||'') + routeBadge(d.등록경로) +
+        '<td>' + (d.성명||'') + routeBadge(d.등록경로) + newBadge(d) +
           pendingBadgesHtml(d) +
         '</td>' +
         '<td>' + (d.연락처||'') + '</td>' +
@@ -705,7 +716,7 @@
       return '<div class="mcard" data-idx="' + (start + pageItems.indexOf(d)) + '" style="display:flex;gap:12px;align-items:flex-start;">' +
         '<div>' + mThumb + '</div>' +
         '<div style="flex:1;min-width:0;">' +
-          '<div class="mname">' + (d.성명||'') + routeBadge(d.등록경로) + ' <span class="status ' + statusClass(d.상태) + '" style="vertical-align:middle;">' + (d.상태||'') + '</span>' +
+          '<div class="mname">' + (d.성명||'') + routeBadge(d.등록경로) + newBadge(d) + ' <span class="status ' + statusClass(d.상태) + '" style="vertical-align:middle;">' + (d.상태||'') + '</span>' +
           '</div>' +
           '<div class="mmeta">' + (d.소속||'') + '</div>' +
           '<div class="mmeta" style="white-space:nowrap;">' + (d.연락처||'') + '</div>' +
@@ -1444,7 +1455,27 @@
       }).finally(function(){ b.disabled = false; b.textContent = '다시 불러오기'; });
     });
     autoLoad().then(window.__autoDone, window.__autoDone);
+    window.__showLoadError = showLoadError;
   }
+
+  // 목록 새로고침: 버튼을 누르거나, 다른 화면에 있다가 돌아왔을 때(1분 이상 지난 경우) 최신 강사 목록을 다시 읽음
+  var lastListLoad = Date.now();
+  function refreshList(manual){
+    var pw = sessionStorage.getItem('jsfa_dash_pw');
+    if (!pw || document.getElementById('app').style.display === 'none') return;
+    var btn = document.getElementById('reloadListBtn');
+    if (manual) { btn.disabled = true; btn.textContent = '불러오는 중...'; }
+    loadData(pw).then(function(){ lastListLoad = Date.now(); })
+      .catch(function(err){
+        if (err && err.auth) { sessionStorage.removeItem('jsfa_dash_pw'); sessionStorage.removeItem('jsfa_dash_role'); location.reload(); return; }
+        if (manual && window.__showLoadError) window.__showLoadError(err);
+      })
+      .finally(function(){ if (manual) { btn.disabled = false; btn.textContent = '새로고침'; } });
+  }
+  document.getElementById('reloadListBtn').addEventListener('click', function(){ refreshList(true); });
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'visible' && Date.now() - lastListLoad > 60000) refreshList(false);
+  });
 </script>
 
 </body>

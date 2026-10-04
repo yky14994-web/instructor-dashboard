@@ -341,7 +341,7 @@
     })
     .then(function(data){
       if (data.status === 'ok') {
-        msg.textContent = '등록이 완료되었습니다. 감사합니다.';
+        msg.textContent = data.기존등록 ? '이미 등록된 연락처입니다. 새로 등록하지 않았습니다. 정보 변경은 담당자에게 문의해 주세요.' : '등록이 완료되었습니다. 감사합니다.';
         msg.className = 'ok'; msg.style.display = 'block';
         document.getElementById('inviteForm').reset();
       } else {
