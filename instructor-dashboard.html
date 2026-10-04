@@ -1361,7 +1361,19 @@
       populateFilter(document.getElementById('filterRegion'), uniqueValues(allData, '활동지역'));
 
       render();
+      openFromHash();
     });
+  }
+
+  // 강의배정 화면의 "강사관리에서 보기"에서 넘어온 경우(#i=강사ID): 목록을 불러온 뒤 해당 강사 상세를 연다
+  function openFromHash(){
+    var m = /^#i=([^&]+)/.exec(location.hash || '');
+    if (!m) return;
+    var id = ''; try { id = decodeURIComponent(m[1]); } catch (e) { return; }
+    try { window.history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {}
+    var d = allData.filter(function(x){ return String(x.강사ID) === id; })[0];
+    if (d) openDetail(d);
+    else window.alert('해당 강사를 강사관리 목록에서 찾지 못했습니다. (강사ID: ' + id + ')');
   }
 
   function updateSummaryStats(){

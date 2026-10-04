@@ -674,7 +674,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 홈 8</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 홈 9</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1270,6 +1270,14 @@
   function openCourse(key){
     location.hash = '#c=' + encodeURIComponent(key);
   }
+  function hashParams(s){
+    var o = {};
+    String(s || '').split('&').forEach(function(kv){
+      var i = kv.indexOf('='); if (i < 1) return;
+      try { o[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1)); } catch (e) {}
+    });
+    return o;
+  }
   function hashKey(){
     var m = /^#c=([^&]+)/.exec(location.hash || '');
     if (!m) return '';
@@ -1278,16 +1286,26 @@
   function route(){
     if ($('app').style.display === 'none') return;
     var key = hashKey();
-    var vm = /^#v=(table|cal|room)(?:&d=(\d{4}-\d{2}-\d{2}))?$/.exec(location.hash || '');
+    var vm = /^#v=(table|cal|room)((?:&(?:d|y|t)=[^&]*)*)$/.exec(location.hash || '');
     if (vm) {
       try { window.history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {}
+      var vp = hashParams(vm[2]);
       planMode = vm[1]; if (planMode === 'cal' && !calManual) calMonth = '';
-      if (vm[2] && normYmd(vm[2])) { if (planMode === 'room') roomDate = vm[2]; else if (planMode === 'cal') { calMonth = vm[2].slice(0, 7); calManual = true; } }
+      if (vp.d && /^\d{4}-\d{2}-\d{2}$/.test(vp.d) && normYmd(vp.d)) { if (planMode === 'room') roomDate = vp.d; else if (planMode === 'cal') { calMonth = vp.d.slice(0, 7); calManual = true; } }
+      if (planMode === 'table' && (vp.y || vp.t)) {   // 홈의 연간 통계에서 넘어온 경우: 연도·구분만 적용하고 나머지 조건은 비움
+        $('fMonth').value = ''; $('fCheck').value = ''; $('fStatus').value = ''; $('fText').value = '';
+        $('fYear').value = vp.y || ''; $('fType').value = vp.t || '';
+      }
       try { sessionStorage.setItem('jsfa_la_pmode', planMode); } catch (e) {}
       showPlan(); return;
     }
     var p = key ? planByKey(key) : null;
     if (!p) { showPlan(); return; }
+    var dm = /[#&]d=(\d{4}-\d{2}-\d{2})(?:&|$)/.exec(location.hash || '');   // 홈 '오늘 수업'에서 온 경우: 그 날짜가 있는 주의 격자 보기로 연다
+    if (dm && normYmd(dm[1]) && currentKey !== key) {
+      viewMode = 'grid'; try { sessionStorage.setItem('jsfa_la_view', 'grid'); } catch (e) {}
+      gridKeepWeek = mondayOf(dm[1]); gridWantDate = dm[1];
+    }
     if (currentKey === key && $('editView').style.display === 'block') { refreshEditList(); return; }
     showEdit(key);
   }
@@ -1766,6 +1784,8 @@
   function planViewSync(){
     var cal = planMode === 'cal', rm = planMode === 'room', other = cal || rm;
     $('pmTable').className = other ? '' : 'on'; $('pmCal').className = cal ? 'on' : ''; $('pmRoom').className = rm ? 'on' : '';
+    var cardsBox = document.querySelector('#planView .cards'); if (cardsBox) cardsBox.style.display = other ? 'none' : '';   // 숫자 카드: 표 보기에서만 표시
+    if (other && $('todo')) $('todo').style.display = 'none';   // 처리할 일: 표 보기에서만 표시
     $('planCal').style.display = cal ? '' : 'none';
     $('planRoom').style.display = rm ? '' : 'none';
     ['planBar', 'planLegend', 'count', 'tableWrap', 'cardList', 'emptyBox'].forEach(function(id){
@@ -2300,7 +2320,7 @@
   function renderTodo(){
     var box = $('todo');
     if (!box) return;
-    if (!sessionsOk) { box.style.display = 'none'; return; }
+    if (!sessionsOk || planMode !== 'table') { box.style.display = 'none'; return; }
     if (instructors === null) ensureInstructors();
     var D = todoData();
     box.style.display = '';
@@ -2443,7 +2463,7 @@
 
   /* --- 격자 보기(주 단위, 날짜×교시) --- */
   var viewMode = 'list', gridWeek = '', gridDay = -1;
-  var gridScope = 'one', gridHide = {}, gridKeepWeek = '';   // gridScope: 'one'=이 과정만, 'all'=같은 주에 진행되는 과정 전체
+  var gridScope = 'one', gridHide = {}, gridKeepWeek = '', gridWantDate = '';   // gridScope: 'one'=이 과정만, 'all'=같은 주에 진행되는 과정 전체
   var GCOL = ['#2F6DB5', '#2E8B57', '#8A4FBF', '#D9822B', '#C2477A', '#2A9DA8', '#7A7F2A', '#5D6B7A'];
   try { if (sessionStorage.getItem('jsfa_la_gscope') === 'all') gridScope = 'all'; } catch (e) {}
   try { if (sessionStorage.getItem('jsfa_la_view') === 'grid') viewMode = 'grid'; } catch (e) {}
@@ -2605,6 +2625,7 @@
     var byDay = {};
     wkList.forEach(function(r){ (byDay[r['일자']] = byDay[r['일자']] || []).push(r); });
     days = days.filter(function(d, i){ return i < 5 || byDay[d]; });
+    if (gridWantDate) { var wi2 = days.indexOf(gridWantDate); if (wi2 > -1) gridDay = wi2; gridWantDate = ''; }
     if (gridDay < 0 || gridDay >= days.length) {
       var ti = days.indexOf(today);
       if (ti > -1) gridDay = ti;
@@ -2813,6 +2834,7 @@
       planSecHtml(id, mine, viewer) +
       '<div class="sec">강의 이력 <span class="hint">(강의배정DB 편성 내역)</span></div><div class="hbox">' + sumHtml + mineHtml + '</div>' +
       '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button>' +
+      '<a class="btn" id="iToDash" href="instructor-dashboard.html#i=' + encodeURIComponent(id) + '" style="display:inline-flex;align-items:center;text-decoration:none;" title="강사관리 화면에서 이 강사의 상세 정보(서류·이력 등)를 엽니다">강사관리에서 보기</a>' +
       (canPick ? '<button type="button" class="btn primary" id="iPick" data-pick="' + esc(id) + '">이 강사 선택</button>' : '') + '</div>';
     $('iOverlay').style.display = 'flex';
     $('iClose').addEventListener('click', closeInstructor);
