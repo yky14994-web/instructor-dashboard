@@ -206,7 +206,7 @@
       <section class="card" id="cRoom"></section>
     </div>
   </div>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 15</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 16</div>
 </div>
 </div>
 
@@ -286,6 +286,18 @@
     return [['입교', '입교 시작일', '입교 종료일'], ['사이버', '사이버 시작일', '사이버 종료일'], ['실습(외부)', '실습(외부) 시작일', '실습(외부) 종료일']]
       .map(function(k){ var a = normYmd(p[k[1]]), b = normYmd(p[k[2]]); if (!a && !b) return null; a = a || b; b = b || a; return { kind: k[0], a: a, b: b }; })
       .filter(Boolean);
+  }
+  /* 강의배정 월 캘린더와 같은 과정명별 색(입교 시작일이 빠른 과정부터 황금각으로 색상 배정) */
+  var courseRank = null;
+  function courseColor(name){
+    if (!courseRank) {
+      courseRank = {}; var first = {};
+      plans.forEach(function(p){ var n = String(p['과정명'] || ''), d = normYmd(p['입교 시작일']) || '9999'; if (!(n in first) || d < first[n]) first[n] = d; });
+      Object.keys(first).sort(function(x, y){ return first[x] < first[y] ? -1 : first[x] > first[y] ? 1 : x < y ? -1 : 1; }).forEach(function(n, i){ courseRank[n] = i; });
+    }
+    var i = courseRank[name]; if (i == null) { var h = 0; for (var k = 0; k < name.length; k++) h = (h * 31 + name.charCodeAt(k)) % 997; i = h; }
+    var hue = Math.round((i * 137.508 + 20) % 360);
+    return 'hsl(' + hue + ',55%,55%)';
   }
   function typeCls(t){ t = String(t || ''); return 'ct-' + (['기본', '전문', '특별', '민관'].indexOf(t) > -1 ? t : '기타'); }
   function courseLink(key, label, date){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + (date ? '&d=' + date : '') + '&from=home">' + esc(label) + '<span class="go">교과목 편성 →</span></a>'; }
@@ -377,7 +389,7 @@
       var st = '';
       if (o.subj) st += '<span class="tag t-none">이번 주 교과목 ' + o.subj + '개</span>' + (o.un ? '<span class="tag t-warn">강사 미지정 ' + o.un + '</span>' : '<span class="tag t-ok">강사 모두 배정</span>');
       else st += '<span class="tag t-none">교과목 미편성</span>';
-      return '<li><div><span class="tag ' + typeCls(o.p['구분']) + '">' + esc(o.p['구분'] || '기타') + '</span> <a class="cn" href="lecture-assignment.html#c=' + encodeURIComponent(o.key) + '&from=home">' + esc(nameOf(o.key)) + '<span class="go">교과목 편성 →</span></a>' +
+      return '<li style="border-left:5px solid ' + courseColor(String(o.p['과정명'] || '')) + ';padding-left:10px;"><div><span class="tag ' + typeCls(o.p['구분']) + '">' + esc(o.p['구분'] || '기타') + '</span> <a class="cn" href="lecture-assignment.html#c=' + encodeURIComponent(o.key) + '&from=home">' + esc(nameOf(o.key)) + '<span class="go">교과목 편성 →</span></a>' +
         '<div class="ds">' + esc(seg) + (rm ? ' · ' + esc(rm) : '') + '</div></div><div class="st">' + st + '</div></li>';
     }).join('') + '</ul>' +
       '<div style="margin-top:10px;"><a class="btn sm primary" href="lecture-assignment.html#v=table&w=' + base + '">교과목 편성하기</a></div>';
@@ -532,7 +544,7 @@
       setSess(KEY_PW, pw);
       if (lg && lg.role) setSess(KEY_ROLE, lg.role);
       (function(){ var n = new Date(); lastLoad = ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2); tickClock(); })();
-      plans = a['연간계획'] || [];
+      plans = a['연간계획'] || []; courseRank = null;
       periods = (a['교시표'] || []).map(function(r){
         return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || '') };
       }).filter(function(x){ return isFinite(x.n); }).sort(function(x, y){ return x.n - y.n; });

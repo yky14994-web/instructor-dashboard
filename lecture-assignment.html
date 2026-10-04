@@ -605,7 +605,7 @@
   <div class="crumb" id="crumb"></div>
   <header>
     <div>
-      <div class="title" id="hTitle">강의배정 · 연간계획</div>
+      <div class="title" id="hTitle">연간 교육훈련계획</div>
       <div class="sub" id="hSub">연간 교육훈련계획의 과정·기수별 현황입니다. 과정명이나 강사 배정 현황을 누르면 교과목 편성 화면이 열립니다.</div>
     </div>
     <div class="hbtns">
@@ -696,7 +696,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 16</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 17</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -892,6 +892,7 @@
     var b = $('weekClear'); if (b) b.onclick = function(){ weekFilter = ''; applyFilters(); };
   }
   function applyFilters(){
+    if (!currentKey && planMode === 'table') applyPlanHead();
     var fy = $('fYear').value, fm = $('fMonth').value, ft = $('fType').value, fc = $('fCheck').value, fs = $('fStatus').value;
     var q = $('fText').value.trim().toLowerCase();
     shown = plans.filter(function(p){
@@ -1078,7 +1079,7 @@
       setSess(KEY_PW, pw);
       if (lg && lg.role) setSess(KEY_ROLE, lg.role);
 
-      plans = sortPlans(a['연간계획'] || []);
+      plans = sortPlans(a['연간계획'] || []); courseRank = null;
       history = a['변경이력'] || [];
       periods = (a['교시표'] || []).map(function(r){
         return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || '') };
@@ -1369,23 +1370,35 @@
   }
   /* 화면 이동 출발지(홈·강사관리에서 링크로 들어온 경우만), 현재 위치 표시 */
   var cameFrom = (/[#&]from=(home|dash)(?:&|$)/.exec(location.hash || '') || [])[1] || '';   // 주소의 &from= 값으로 출발지 전달(저장소 미사용)
-  var PLAN_HEAD = {
-    table: ['강의배정 · 연간계획', '연간 교육훈련계획의 과정·기수별 현황입니다. 과정명이나 강사 배정 현황을 누르면 교과목 편성 화면이 열립니다.'],
-    cal: ['강의배정 · 월 캘린더', '월별 과정 일정을 달력으로 봅니다.'],
-    room: ['강의배정 · 빈 강의실 조회', '날짜와 교시를 정해 비어 있는 강의실을 찾습니다.']
-  };
+  var listShown = false;   // 이 화면에서 목록(표·캘린더·빈 강의실)을 한 번이라도 보여준 뒤에만 경로에 목록 단계를 넣음
+  /* 현재 목록 화면의 제목·안내·되돌아갈 주소 */
+  function headInfo(){
+    if (planMode === 'cal') return { t: '월 캘린더', s: '월별 과정 일정을 달력으로 봅니다. 과정마다 색이 다르며, 칸을 누르면 그날의 교과목·강사·강의실이 열립니다.', h: '#v=cal' };
+    if (planMode === 'room') return { t: '빈 강의실 조회', s: '날짜와 교시를 정해 비어 있는 강의실을 찾고, 월별 강의실 현황을 봅니다.', h: '#v=room' };
+    if (weekFilter) {
+      var tm = mondayOf(ymd(new Date())), a = weekFilter, b = addDays(weekFilter, 6), rg = md(a).replace(/\(.\)/, '') + '~' + md(b).replace(/\(.\)/, '');
+      return { t: (a === tm ? '이번주(' + rg + ')' : rg) + ' 교육과정', s: '이 기간에 진행되는 과정입니다. 과정을 보고 교과목을 편성하세요.', h: '#v=table&w=' + a };
+    }
+    var fy = $('fYear').value, fm = $('fMonth').value, ft = $('fType').value;
+    var lab = (fm ? fm + '월' : '연간') + ' ' + (ft ? ft + '교육과정' : fm ? '교육과정' : '교육훈련계획');
+    var h = '#v=table' + (fy ? '&y=' + encodeURIComponent(fy) : '') + (ft ? '&t=' + encodeURIComponent(ft) : '');
+    return { t: lab, s: (fy ? fy + '년 · ' : '') + '과정명이나 강사 배정 현황을 누르면 교과목 편성 화면이 열립니다.', h: h };
+  }
   function applyPlanHead(){
-    var h = PLAN_HEAD[planMode] || PLAN_HEAD.table;
-    $('hTitle').textContent = h[0]; $('hSub').textContent = h[1];
+    var h = headInfo();
+    $('hTitle').textContent = h.t; $('hSub').textContent = h.s;
     renderCrumb();
   }
+  var lastList = null;
   function renderCrumb(){
-    var sep = '<span class="sep">›</span>', out = '<a href="home.html">홈</a>' + sep;
+    var sep = '<span class="sep">›</span>', out = '<a href="home.html">홈</a>' + sep + '<a href="lecture-assignment.html#v=table">강의배정</a>' + sep;
     if (currentKey) {
       var p = planByKey(currentKey);
-      out += '<a href="lecture-assignment.html#v=table">강의배정</a>' + sep + '<span class="cur">교과목 편성' + (p ? ' · ' + esc(String(p['과정명'] || '') + ' ' + String(p['기수'] || '')) : '') + '</span>';
+      if (listShown && lastList) out += '<a href="lecture-assignment.html' + lastList.h + '">' + esc(lastList.t) + '</a>' + sep;
+      out += '<span class="cur">교과목 편성' + (p ? ' · ' + esc(String(p['과정명'] || '') + ' ' + String(p['기수'] || '')) : '') + '</span>';
     } else {
-      out += '<a href="lecture-assignment.html#v=table">강의배정</a>' + sep + '<span class="cur">' + esc((PLAN_HEAD[planMode] || PLAN_HEAD.table)[0].replace('강의배정 · ', '')) + '</span>';
+      var h = headInfo(); lastList = h; listShown = true;
+      out += '<span class="cur">' + esc(h.t) + '</span>';
     }
     $('crumb').innerHTML = out;
   }
@@ -1396,7 +1409,7 @@
     $('vList').className = viewMode === 'list' ? 'on' : ''; $('vGrid').className = viewMode === 'grid' ? 'on' : '';
     $('planView').style.display = 'none';
     $('editView').style.display = 'block';
-    $('hTitle').textContent = '강의배정 · 교과목 편성';
+    $('hTitle').textContent = '교과목 편성';
     $('hSub').textContent = '과정을 선택하면 교시 단위로 교과목·강사·강의실을 편성합니다.';
     renderCrumb();
     $('backBtn').textContent = cameFrom === 'home' ? '← 홈으로' : cameFrom === 'dash' ? '← 강사관리로' : planMode === 'cal' ? '← 월 캘린더로' : planMode === 'room' ? '← 빈 강의실 조회로' : '← 연간계획으로';
@@ -1936,6 +1949,22 @@
     for (var i = 0; i < ms.length; i++) if (ms[i] > tm) return ms[i];
     return ms[ms.length - 1];
   }
+  /* 과정명별 색: 입교 시작일이 빠른 과정부터 황금각(137.5°)씩 색상을 돌려 가까운 시기의 과정이 서로 다른 색이 되게 함 */
+  var courseRank = null;
+  function courseColor(name){
+    if (!courseRank) {
+      courseRank = {}; var first = {};
+      plans.forEach(function(p){
+        var n = String(p['과정명'] || ''), d = normYmd(p['입교 시작일']) || '9999';
+        if (!(n in first) || d < first[n]) first[n] = d;
+      });
+      Object.keys(first).sort(function(a, b){ return first[a] < first[b] ? -1 : first[a] > first[b] ? 1 : a < b ? -1 : 1; }).forEach(function(n, i){ courseRank[n] = i; });
+    }
+    var i = courseRank[name]; if (i == null) { var h = 0; for (var k = 0; k < name.length; k++) h = (h * 31 + name.charCodeAt(k)) % 997; i = h; }
+    var hue = Math.round((i * 137.508 + 20) % 360);
+    return { bg: 'hsl(' + hue + ',58%,89%)', fg: 'hsl(' + hue + ',62%,22%)', bd: 'hsl(' + hue + ',55%,55%)' };
+  }
+  function courseStyle(p, key){ var c = courseColor(p ? String(p['과정명'] || '') : String(key || '')); return 'background:' + c.bg + ';color:' + c.fg + ';'; }
   function typeCls(p){
     var t = String(p && p['구분'] || '');
     return ['기본', '전문', '특별', '민관'].indexOf(t) > -1 ? 'ct-' + t : 'ct-기타';
@@ -1999,13 +2028,15 @@
   function entChip(d, e){
     var st = entState(e), p = e.plan;
     var name = p ? String(p['과정명'] || '') + ' ' + String(p['기수'] || '') : e.key;
+    var typ = p ? String(p['구분'] || '') : '';
     var sub = e.rows.length ? '교과목 ' + st.n : (e.tags['사이버'] ? '사이버' : e.tags['실습'] ? '실습' : '교과목 편성 전');
     if (e.rows.length && e.tags['사이버']) sub += ' · 사이버';
     if (st.unas) sub += ' · 강사 미지정 ' + st.unas;
     if (st.err) sub += ' · 겹침';
     if (e.span && (e.span.a.slice(0, 7) !== e.span.b.slice(0, 7)) && e.span.a !== e.span.b) sub += ' · ' + md(e.span.a).replace(/\(.\)/, '') + '~' + md(e.span.b).replace(/\(.\)/, '');
-    var cls = 'cc ' + typeCls(p) + (st.err ? ' err' : st.warn ? ' warn' : '') + (st.unas ? ' unas' : '') + (e.rows.length ? '' : ' pre');
-    return '<span class="' + cls + '" data-cday="' + esc(d) + '" data-ckey="' + esc(e.key) + '" title="' + esc(name + ' · ' + sub) + '"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small></span>';
+    if (typ) sub = typ + ' · ' + sub;
+    var cls = 'cc' + (st.err ? ' err' : st.warn ? ' warn' : '') + (st.unas ? ' unas' : '') + (e.rows.length ? '' : ' pre');
+    return '<span class="' + cls + '" style="' + courseStyle(p, e.key) + '" data-cday="' + esc(d) + '" data-ckey="' + esc(e.key) + '" title="' + esc(name + ' · ' + sub) + '"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small></span>';
   }
   /* 이 달에 표시할 과정이 없을 때: 일정이 있는 가까운 달로 바로 이동 */
   function emptyMonthHint(byDate){
@@ -2058,8 +2089,10 @@
       list.sort(function(a, b){ return String(a.key) < String(b.key) ? -1 : 1; });
       agenda += '<div class="ag"><div class="dh' + (d === today ? ' tod' : '') + '" data-cday="' + esc(d) + '">' + esc(md(d)) + (d === today ? ' · 오늘' : '') + '</div>' + list.map(function(e){ return entChip(d, e); }).join('') + '</div>';
     });
-    var leg = '<div class="calleg"><span><i class="ct-기본"></i>기본</span><span><i class="ct-전문"></i>전문</span><span><i class="ct-특별"></i>특별</span><span><i class="ct-민관"></i>민관</span>' +
-      '<span><i style="border-color:#D8574B"></i>겹침 경고(강사·강의실)</span><span><i style="border-color:#D9B100"></i>같은 반 겹침</span><span><i style="border:1.5px dashed #C9A400"></i>강사 미지정 있음</span><span><i class="ct-기타" style="opacity:.78"></i>교과목 편성 전(연간계획 기간만)</span></div>';
+    var seenC = {}, courseLeg = '';
+    Object.keys(byDate).forEach(function(d){ Object.keys(byDate[d]).forEach(function(k){ var pp = byDate[d][k].plan, nm = pp ? String(pp['과정명'] || '') : k; if (!seenC[nm]) { seenC[nm] = 1; courseLeg += '<span><i style="background:' + courseColor(nm).bg + ';border-color:' + courseColor(nm).bd + '"></i>' + esc(nm) + '</span>'; } }); });
+    var leg = '<div class="calleg">' + courseLeg + '</div><div class="calleg" style="margin-top:4px;">' +
+      '<span><i style="border-color:#D8574B"></i>겹침 경고(강사·강의실)</span><span><i style="border-color:#D9B100"></i>같은 반 겹침</span><span><i style="border:1.5px dashed #C9A400"></i>강사 미지정 있음</span><span><i style="background:#ECEEF1;opacity:.78"></i>흐리게 표시 = 교과목 편성 전(연간계획 기간만)</span></div>';
     box.innerHTML = '<div class="pcalbox">' + head + '<table class="calt"><thead>' + thead + '</thead><tbody>' + body + '</tbody></table>' +
       '<div class="cagenda">' + (agenda || '<div class="tnone" style="padding:10px 0;">이 달에 표시할 과정이 없습니다.</div>') + '</div>' + leg +
       '<div class="hint" style="margin-top:8px;">과정 칩이나 날짜를 누르면 그날의 교과목·강사·강의실이 열립니다. 입교·사이버·실습 기간의 평일은 교과목 편성 전에도 표시됩니다.</div></div>';
@@ -2365,7 +2398,7 @@
         var edit = viewer ? '' : '<button type="button" class="btn sm" data-cassign="' + esc(r['편성ID']) + '">수정</button>';
         return '<tr' + (e.key === hlKey ? ' class="hl"' : '') + '><td class="nw">' + esc(pt.txt) + (pt.time ? '<br><span class="hint">' + esc(pt.time) + '</span>' : '') + '</td><td>' + esc(r['교과목']) + '</td><td>' + dayInstr(r, viewer, cx) + '</td><td>' + esc(r['강의실'] || '미정') + '</td><td>' + edit + '</td></tr>';
       }).join('') + '</tbody></table>' : '<div class="hint">편성된 교과목이 없습니다. ' + (e.tags['사이버'] ? '(사이버 기간)' : e.tags['실습'] ? '(실습 기간)' : '(입교 기간)') + '</div>';
-      return '<h4><span class="tpill ' + typeCls(p) + '">' + esc(name) + '</span> <button type="button" class="btn sm" data-copen="' + esc(e.key) + '">교과목 편성 화면 열기</button></h4>' + tb;
+      return '<h4><span class="tpill" style="' + courseStyle(p, e.key) + '">' + esc(name) + '</span> <button type="button" class="btn sm" data-copen="' + esc(e.key) + '">교과목 편성 화면 열기</button></h4>' + tb;
     }).join('');
     $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(md(date)) + ' <span class="hint" style="font-weight:600;">일정</span></h2><div class="sub">과정 ' + list.length + '개</div></div></div>' +
       '<div class="dday">' + (secs || '<div class="hint">표시할 과정이 없습니다.</div>') + '</div>' +
