@@ -1429,7 +1429,7 @@
       html += '<optgroup label="빈 강의실 (' + fr.length + '곳)">' + fr.map(function(r){ return one(r); }).join('') + '</optgroup>';
       if (us.length) html += '<optgroup label="사용 중·예정 (' + us.length + '곳)">' + us.map(function(r){
         var u = ctx.use[r][0];
-        return one(r, (u.type === 'plan' ? '예정(편성 전) ' : '사용 중 ') + u.label + (ctx.use[r].length > 1 ? ' 외 ' + (ctx.use[r].length - 1) + '건' : ''));
+        return one(r, (u.type === 'plan' ? '예정(교과목 편성 전) ' : '사용 중 ') + u.label + (ctx.use[r].length > 1 ? ' 외 ' + (ctx.use[r].length - 1) + '건' : ''));
       }).join('') + '</optgroup>';
     }
     html += '<option value="__other"' + (selected && !found ? ' selected' : '') + '>(직접 입력)</option>';
@@ -1463,7 +1463,7 @@
     }).join('') + '</div>' : '<div class="hint warn">이 시간에 비어 있는 강의실이 없습니다.</div>';
     var used = us.length ? '<div class="hint" style="margin-top:8px;">사용 중·예정: ' + us.map(function(r){
       var u = ctx.use[r][0];
-      return esc(r) + '(' + esc(u.label) + (u.type === 'plan' ? ', 편성 전 예정' : ', ' + u.s + '~' + u.e + '교시') + ')';
+      return esc(r) + '(' + esc(u.label) + (u.type === 'plan' ? ', 교과목 편성 전 예정' : ', ' + u.s + '~' + u.e + '교시') + ')';
     }).join(' / ') + '</div>' : '';
     box.innerHTML = head + chips + used + '<div class="hint" style="margin-top:6px;">강의실 이름을 누르면 아래 강의실 칸에 입력됩니다.</div>';
   }
@@ -1955,7 +1955,7 @@
   function entChip(d, e){
     var st = entState(e), p = e.plan;
     var name = p ? String(p['과정명'] || '') + ' ' + String(p['기수'] || '') : e.key;
-    var sub = e.rows.length ? '교과목 ' + st.n : (e.tags['사이버'] ? '사이버' : e.tags['실습'] ? '실습' : '편성 전');
+    var sub = e.rows.length ? '교과목 ' + st.n : (e.tags['사이버'] ? '사이버' : e.tags['실습'] ? '실습' : '교과목 편성 전');
     if (e.rows.length && e.tags['사이버']) sub += ' · 사이버';
     if (st.unas) sub += ' · 강사 미지정 ' + st.unas;
     if (st.err) sub += ' · 겹침';
@@ -2015,10 +2015,10 @@
       agenda += '<div class="ag"><div class="dh' + (d === today ? ' tod' : '') + '" data-cday="' + esc(d) + '">' + esc(md(d)) + (d === today ? ' · 오늘' : '') + '</div>' + list.map(function(e){ return entChip(d, e); }).join('') + '</div>';
     });
     var leg = '<div class="calleg"><span><i class="ct-기본"></i>기본</span><span><i class="ct-전문"></i>전문</span><span><i class="ct-특별"></i>특별</span><span><i class="ct-민관"></i>민관</span>' +
-      '<span><i style="border-color:#D8574B"></i>겹침 경고(강사·강의실)</span><span><i style="border-color:#D9B100"></i>같은 반 겹침</span><span><i style="border:1.5px dashed #C9A400"></i>강사 미지정 있음</span><span><i class="ct-기타" style="opacity:.78"></i>편성 전(연간계획 기간만)</span></div>';
+      '<span><i style="border-color:#D8574B"></i>겹침 경고(강사·강의실)</span><span><i style="border-color:#D9B100"></i>같은 반 겹침</span><span><i style="border:1.5px dashed #C9A400"></i>강사 미지정 있음</span><span><i class="ct-기타" style="opacity:.78"></i>교과목 편성 전(연간계획 기간만)</span></div>';
     box.innerHTML = '<div class="pcalbox">' + head + '<table class="calt"><thead>' + thead + '</thead><tbody>' + body + '</tbody></table>' +
       '<div class="cagenda">' + (agenda || '<div class="tnone" style="padding:10px 0;">이 달에 표시할 과정이 없습니다.</div>') + '</div>' + leg +
-      '<div class="hint" style="margin-top:8px;">과정 칩이나 날짜를 누르면 그날의 교과목·강사·강의실이 열립니다. 입교·사이버·실습 기간의 평일은 편성 전에도 표시됩니다.</div></div>';
+      '<div class="hint" style="margin-top:8px;">과정 칩이나 날짜를 누르면 그날의 교과목·강사·강의실이 열립니다. 입교·사이버·실습 기간의 평일은 교과목 편성 전에도 표시됩니다.</div></div>';
   }
   /* ---------- 빈 강의실 조회 ---------- */
   var roomDate = '', roomS = 0, roomE = 0, roomMonth = '';
@@ -2045,7 +2045,7 @@
       if (opt && opt.skipSid && String(r['편성ID']) === opt.skipSid) return;   // 편성 입력 중 수정하는 줄 자신은 제외
       var key = String(r['개설키'] || ''), p = planByKey(key); if (p && isCancelled(p)) return;
       var rmTxt = String(r['강의실'] || '').trim(); if (!rmTxt) return;
-      if (!isOps(r)) hasRoomSess[key] = true;   // 교육운영팀 교시(입교안내·성과측정)만 있는 날은 아직 편성 전으로 보고 연간계획 예정 강의실도 계속 반영
+      if (!isOps(r)) hasRoomSess[key] = true;   // 교육운영팀 교시(입교안내·성과측정)만 있는 날은 아직 교과목 편성 전으로 보고 연간계획 예정 강의실도 계속 반영
       var a = Number(r['시작교시']), b = Number(r['끝교시']);
       if (!isFinite(a) || !isFinite(b)) { a = 0; b = 99; }
       if (b < s || a > e) return;
@@ -2141,7 +2141,7 @@
       if (!us.length) return '<span class="rmchip free">' + esc(r) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>';
       var sess = us.some(function(u){ return u.type === 'sess'; });
       var lines = us.slice(0, 2).map(function(u){
-        return '<small>' + esc(u.label) + ' · ' + (u.type === 'plan' ? '연간계획 예정(편성 전)' : u.s + '~' + u.e + '교시' + (u.subj ? ' ' + esc(u.subj) : '')) + '</small>';
+        return '<small>' + esc(u.label) + ' · ' + (u.type === 'plan' ? '연간계획 예정(교과목 편성 전)' : u.s + '~' + u.e + '교시' + (u.subj ? ' ' + esc(u.subj) : '')) + '</small>';
       }).join('') + (us.length > 2 ? '<small>외 ' + (us.length - 2) + '건</small>' : '');
       return '<span class="rmchip ' + (sess ? 'use' : 'plan') + '" data-cday="' + esc(roomDate) + '" data-ckey="' + esc(us[0].key) + '" title="누르면 그날 일정이 열립니다">' + esc(r) + lines + '</span>';
     };
@@ -2149,11 +2149,11 @@
       var nf = grp[g].filter(function(r){ return !(use[r] && use[r].length); }).length;
       return '<div class="rmgrp">' + esc(g) + '<small>빈 곳 ' + nf + ' / ' + grp[g].length + '곳</small></div><div class="rmlist">' + grp[g].map(chipOf).join('') + '</div>';
     }).join('') : '<div class="tnone" style="padding:10px 0;">표시할 강의실이 없습니다.</div>';
-    var leg = '<div class="calleg" style="margin:4px 0 2px;"><span><i style="background:#E3F1E4"></i>빈 강의실</span><span><i style="background:#FBE0DC"></i>사용 중(편성된 교과목)</span><span><i style="background:#FFF1BF"></i>연간계획 예정(편성 전)</span></div>';
+    var leg = '<div class="calleg" style="margin:4px 0 2px;"><span><i style="background:#E3F1E4"></i>빈 강의실</span><span><i style="background:#FBE0DC"></i>사용 중(편성된 교과목)</span><span><i style="background:#FFF1BF"></i>연간계획 예정(교과목 편성 전)</span></div>';
     var used = '';
     var skip = skipRooms.length ? '<div class="hint" style="margin-top:10px;">겹침 검사 제외 장소(동시 사용 가능): ' + esc(skipRooms.join(', ')) + '</div>' : '';
     box.innerHTML = head + sum + emptyDayHint(roomActiveDates()) + leg + body + used + skip +
-      '<div class="hint" style="margin-top:10px;">편성된 교과목의 강의실과, 편성 전이라도 연간계획에 예정 강의실이 적힌 과정(입교 기간 평일)을 사용 중으로 계산합니다. 취소된 기수는 제외합니다.</div></div>';
+      '<div class="hint" style="margin-top:10px;">편성된 교과목의 강의실과, 교과목 편성 전이라도 연간계획에 예정 강의실이 적힌 과정(입교 기간 평일)을 사용 중으로 계산합니다. 취소된 기수는 제외합니다.</div></div>';
   }
   function roomNav(act){
     if (act === 'rm:xlsx') { doRoomExcel(); return; }
@@ -2173,7 +2173,7 @@
     });
     return order.map(function(k){
       var o = byKey[k];
-      if (!o.sess.length) return o.label + ' 예정(편성 전)';
+      if (!o.sess.length) return o.label + ' 예정(교과목 편성 전)';
       var sp = o.sess.slice().sort(function(x, y){ return x[0] - y[0]; }), mg = [];
       sp.forEach(function(x){ var l = mg[mg.length - 1]; if (l && x[0] <= l[1] + 1) l[1] = Math.max(l[1], x[1]); else mg.push([x[0], x[1]]); });
       var unk = mg.some(function(m){ return m[0] === 0 && m[1] === 99; });
@@ -2186,7 +2186,7 @@
     var base = rooms.filter(function(r){ return !roomSkip[r]; }), extra = {};
     usage.forEach(function(u){ Object.keys(u).forEach(function(r){ if (rooms.indexOf(r) < 0 && !roomSkip[r]) extra[r] = true; }); });
     var all = base.concat(Object.keys(extra).sort());
-    var head = ['건물', '강의실', '층·용도'].concat(days.map(function(d){ return md(d); })).concat(['편성 사용일수', '예정일수(편성 전)']);
+    var head = ['건물', '강의실', '층·용도'].concat(days.map(function(d){ return md(d); })).concat(['편성 사용일수', '예정일수(교과목 편성 전)']);
     var aoa = [head], cntUse = days.map(function(){ return 0; }), cntPlan = days.map(function(){ return 0; });
     all.forEach(function(r){
       var inf = roomInfo[r] || {}, row = [rooms.indexOf(r) < 0 ? '목록 외' : (inf.bld || '기타'), r, [inf.floor, inf.kind].filter(Boolean).join(' · ')], nu = 0, np = 0;
@@ -2200,12 +2200,12 @@
     });
     var tot = all.length;
     aoa.push(['', '편성 사용 강의실 수', ''].concat(cntUse).concat(['', '']));
-    aoa.push(['', '예정(편성 전) 강의실 수', ''].concat(cntPlan).concat(['', '']));
+    aoa.push(['', '예정(교과목 편성 전) 강의실 수', ''].concat(cntPlan).concat(['', '']));
     aoa.push(['', '빈 강의실 수', ''].concat(cntUse.map(function(n, i){ return tot - n - cntPlan[i]; })).concat(['', '']));
     var notes = [['강의실 현황 ' + ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월'], [''],
       ['내려받은 시각', new Date().toLocaleString('ko-KR')],
       ['셀 표시', '과정명 기수 + 사용 교시. 같은 과정의 연속 교시는 하나로 묶어 표시(입교안내·성과측정 등 교육운영팀 교시 포함)'],
-      ['예정(편성 전)', '교과목이 편성되지 않았지만 연간계획에 예정 강의실이 적힌 과정의 입교 기간 평일(교시 구분 없이 종일로 계산)'],
+      ['예정(교과목 편성 전)', '교과목이 편성되지 않았지만 연간계획에 예정 강의실이 적힌 과정의 입교 기간 평일(교시 구분 없이 종일로 계산)'],
       ['제외', '취소된 기수, 겹침 검사 제외 장소(' + (Object.keys(roomSkip).filter(function(k){ return roomSkip[k]; }).join(', ') || '없음') + ')'],
       ['하단 합계', '편성 사용·예정·빈 강의실 수는 위 표에 나온 강의실 ' + tot + '곳 기준']];
     return { aoa: aoa, notes: notes, ncol: head.length };
@@ -2260,7 +2260,7 @@
     if (r['강사명']) return roleTag(r) + '<span class="tag t-info">' + esc(r['강사명']) + ' (직접 입력)</span>';
     return (viewer || cx) ? '<span class="tag t-none">미지정</span>' : '<button type="button" class="btn sm" data-cassign="' + esc(r['편성ID']) + '">강사 지정</button>';
   }
-  /* 날짜(또는 칩)를 누르면 그날의 교과목을 보여 주고, 강사 지정·수정은 해당 과정 편성 화면으로 이어 줌 */
+  /* 날짜(또는 칩)를 누르면 그날의 교과목을 보여 주고, 강사 지정·수정은 해당 교과목 편성 화면으로 이어 줌 */
   function openDayDetail(date, hlKey){
     var byDate = calCollect(date.slice(0, 7)), m = byDate[date] || {}, viewer = isViewer();
     var list = Object.keys(m).map(function(k){ return m[k]; }).sort(function(a, b){ return String(a.key) < String(b.key) ? -1 : 1; });
@@ -2272,7 +2272,7 @@
         var edit = viewer ? '' : '<button type="button" class="btn sm" data-cassign="' + esc(r['편성ID']) + '">수정</button>';
         return '<tr' + (e.key === hlKey ? ' class="hl"' : '') + '><td class="nw">' + esc(pt.txt) + (pt.time ? '<br><span class="hint">' + esc(pt.time) + '</span>' : '') + '</td><td>' + esc(r['교과목']) + '</td><td>' + dayInstr(r, viewer, cx) + '</td><td>' + esc(r['강의실'] || '미정') + '</td><td>' + edit + '</td></tr>';
       }).join('') + '</tbody></table>' : '<div class="hint">편성된 교과목이 없습니다. ' + (e.tags['사이버'] ? '(사이버 기간)' : e.tags['실습'] ? '(실습 기간)' : '(입교 기간)') + '</div>';
-      return '<h4><span class="tpill ' + typeCls(p) + '">' + esc(name) + '</span> <button type="button" class="btn sm" data-copen="' + esc(e.key) + '">과정 편성 화면 열기</button></h4>' + tb;
+      return '<h4><span class="tpill ' + typeCls(p) + '">' + esc(name) + '</span> <button type="button" class="btn sm" data-copen="' + esc(e.key) + '">교과목 편성 화면 열기</button></h4>' + tb;
     }).join('');
     $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(md(date)) + ' <span class="hint" style="font-weight:600;">일정</span></h2><div class="sub">과정 ' + list.length + '개</div></div></div>' +
       '<div class="dday">' + (secs || '<div class="hint">표시할 과정이 없습니다.</div>') + '</div>' +
@@ -2360,7 +2360,7 @@
         return { key: c.a.key, cells: [pill, '<span class="nw">' + esc(md(c.date)) + '</span>', keys.map(function(k){ return esc(courseLabel(k)); }).join('<br>'), pt.body],
           title: pill + ' ' + esc(md(c.date)), sub: keys.map(function(k){ return esc(courseLabel(k)); }).join(' · '), extra: pt.body };
       }),
-      note: '행을 누르면 해당 과정 편성 화면으로 이동합니다. 확인 후 "확인했음, 그대로 진행"을 누르면 목록에서 빠집니다.' };
+      note: '행을 누르면 해당 교과목 편성 화면으로 이동합니다. 확인 후 "확인했음, 그대로 진행"을 누르면 목록에서 빠집니다.' };
     // ④ 강사 서류(미비·보유 만료)
     var seen = {}, dc = [];
     if (instructors !== null) up.forEach(function(o){
@@ -2378,7 +2378,7 @@
         return { key: r['개설키'], cells: [pill, esc(x.ins.name) + ' ' + docBadge(x.ins), esc(x.d.miss.join(', ')), esc(r['교과목']) + ' (' + esc(md(r['일자'])) + ', ' + esc(dLabel(x.o.d)) + ')', esc(r['개설키'])],
           title: pill + ' ' + esc(x.ins.name), sub: esc(x.d.miss.join(', ')) + ' · ' + esc(r['교과목']) + ' ' + esc(md(r['일자'])), extra: docBadge(x.ins) + ' ' + esc(r['개설키']) };
       }),
-      note: '배지를 누르면 서류 현황이 열리고, 행을 누르면 가장 가까운 강의의 과정 편성 화면으로 이동합니다. 강사 안내는 자동으로 가지 않습니다.' };
+      note: '배지를 누르면 서류 현황이 열리고, 행을 누르면 가장 가까운 강의의 교과목 편성 화면으로 이동합니다. 강사 안내는 자동으로 가지 않습니다.' };
     return D;
   }
   var TODO_ORDER = ['plan', 'unas', 'cfl', 'docs'];
@@ -2660,7 +2660,7 @@
     var body = (cx ? '<div class="gcn" style="color:' + cx.color + '">' + esc(cx.label) + '</div>' : '') + '<div class="s">' + klass + esc(r['교과목']) + (warns.length ? ' <span title="' + esc(warns.join(' / ')) + '">⚠</span>' : '') + flag + '</div>' +
       '<div class="t">' + esc(pt.txt) + '</div>' + ins + '<div class="r">' + esc(r['강의실'] || '강의실 미정') + '</div>';
     var other = cx && !cx.own;
-    var act = canEdit ? ' data-act="edit" data-id="' + esc(r['편성ID']) + '"' : (other ? ' data-gopen="' + esc(cx.key) + '" title="누르면 이 과정의 편성 화면으로 이동합니다"' : '');
+    var act = canEdit ? ' data-act="edit" data-id="' + esc(r['편성ID']) + '"' : (other ? ' data-gopen="' + esc(cx.key) + '" title="누르면 이 과정의 교과목 편성 화면으로 이동합니다"' : '');
     return '<div class="gc' + cls + ((canEdit || other) ? ' ed' : '') + '"' + act + (cx ? ' style="border-left:5px solid ' + cx.color + ';"' : '') + '>' + body + '</div>';
   }
   function renderGrid(p, list){
@@ -2757,7 +2757,7 @@
         return '<tr class="' + (off ? 'off' : '') + '"><td class="noprint"><input type="checkbox" data-gh="' + esc(k) + '"' + (off ? '' : ' checked') + ' aria-label="' + esc(courseLabel(k)) + ' 표시"></td>' +
           '<td><i class="sw" style="background:' + GCOL[i % GCOL.length] + '"></i></td><td><b>' + esc(courseLabel(k)) + '</b>' + (k === currentKey ? '<small>현재 화면</small>' : '') + '</td>' +
           '<td>' + esc([q['구분'], q['세부구분']].filter(Boolean).join(' · ') || '-') + '</td><td>' + esc(ipgyo(q)) + '</td>' +
-          '<td>' + esc(q['계획인원'] === '' || q['계획인원'] == null ? '-' : q['계획인원']) + '명</td><td>' + esc(q['예정 강의실'] || '-') + '</td><td>' + (wkCnt[k] ? wkCnt[k] + '건' : '편성 전') + '</td></tr>';
+          '<td>' + esc(q['계획인원'] === '' || q['계획인원'] == null ? '-' : q['계획인원']) + '명</td><td>' + esc(q['예정 강의실'] || '-') + '</td><td>' + (wkCnt[k] ? wkCnt[k] + '건' : '교과목 편성 전') + '</td></tr>';
       }).join('') + '</tbody></table></div>';
     var pHead = all ? '<div class="gprinthead"><h2>주간 교과목 시간표</h2><div class="gpm"><span><b>기간</b> ' + (wi + 1) + '주차 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span><span><b>진행 과정</b> ' + courses.length + '개</span></div></div>' :
       '<div class="gprinthead"><h2>' + esc(p['과정명'] || '') + ' ' + esc(p['기수'] || '') + '</h2><div class="gpm">' +
@@ -2778,7 +2778,7 @@
       '<span><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
       empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
-      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div></div>';
+      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div></div>';
   }
   function gridNav(act){
     var p = planByKey(currentKey);
@@ -3024,7 +3024,7 @@
       else if (!sess.length) items.push('이 기수에는 편성된 교과목이 없어 편성 영향은 없습니다.');
       else {
         var out = sess.filter(function(r){ return !dateInRanges(tmp, r['일자']); });
-        items.push('이미 편성한 교과목 <b>' + sess.length + '건</b> 중 <b>' + out.length + '건</b>이 새 기간 밖이 됩니다' + (out.length ? '(편성은 지워지지 않으며, 편성 화면에서 날짜를 고쳐야 합니다)' : '') + '.');
+        items.push('이미 편성한 교과목 <b>' + sess.length + '건</b> 중 <b>' + out.length + '건</b>이 새 기간 밖이 됩니다' + (out.length ? '(편성은 지워지지 않으며, 교과목 편성 화면에서 날짜를 고쳐야 합니다)' : '') + '.');
         var withI = out.filter(hasInstr), tally = {}, order = [];
         withI.forEach(function(r){ var nm = nameOfInstr(r); if (!tally[nm]) { tally[nm] = 0; order.push(nm); } tally[nm]++; });
         if (withI.length) items.push('강사 지정이 된 <b>' + withI.length + '건</b>: ' + order.map(function(nm){ return esc(nm) + ' ' + tally[nm] + '건'; }).join(', ') + ' → 변경 안내가 필요한 강사입니다.');
@@ -3350,7 +3350,7 @@
       '<div class="sumline"><b>추가 ' + nAdd + '건</b>' + (nCv ? ' · 전환 ' + nCv + '건' : '') + ' · 이미 등록 ' + nDone + '건 · 제외 ' + nSkip + '건</div>' +
       (ops.msg || '') + note +
       '<div class="pwrap"><table><thead><tr><th></th><th>과정 · 기수</th><th>구분</th><th>일자</th><th>교시</th><th>강의실</th><th>처리</th></tr></thead><tbody>' + trs + '</tbody></table></div>' +
-      '<div class="box i">강의실은 연간계획의 예정 강의실 첫 번째 이름을 넣습니다. 저장 후 편성 화면의 "수정"에서 일자·교시·강의실을 바꾸거나 삭제할 수 있습니다.</div>' +
+      '<div class="box i">강의실은 연간계획의 예정 강의실 첫 번째 이름을 넣습니다. 저장 후 교과목 편성 화면의 "수정"에서 일자·교시·강의실을 바꾸거나 삭제할 수 있습니다.</div>' +
       '<div class="btns"><button type="button" class="btn" id="oClose">닫기</button><button type="button" class="btn primary" id="oSave"' + ((nAdd + nCv) ? '' : ' disabled') + '>' + (nAdd + nCv) + '건 저장</button></div>';
     $('oClose').addEventListener('click', closeCopy);
     $('oSave').addEventListener('click', saveOps);
@@ -3510,7 +3510,7 @@
     var cf = good.length ? copyConflicts(rows) : [];
     var cfHtml = '';
     if (cf.length) {
-      cfHtml = '<div class="box e"><b>겹침 경고 ' + cf.length + '건이 생깁니다</b>(저장은 되며, 편성 화면에서 확인·조정할 수 있습니다)<ul style="margin:6px 0 0;padding-left:18px;">' +
+      cfHtml = '<div class="box e"><b>겹침 경고 ' + cf.length + '건이 생깁니다</b>(저장은 되며, 교과목 편성 화면에서 확인·조정할 수 있습니다)<ul style="margin:6px 0 0;padding-left:18px;">' +
         cf.slice(0, 8).map(function(c){
           var me = c.a.ids.some(function(id){ return id.indexOf('NEW') === 0; }) ? c.a : c.b, pt = conflictParts(c, me);
           return '<li>' + esc(md(c.date)) + ' · <b>' + esc(pt.label) + '</b> ' + pt.body + '</li>';
@@ -3525,7 +3525,7 @@
       '<b>복사 ' + good.length + '줄</b>' + (bad ? ' · <span style="color:var(--err-fg);font-weight:700;">제외 ' + bad + '줄(아래 표 확인)</span>' : '') + '</div>' +
       '<div class="pwrap"><table><thead><tr><th>원본 일자</th><th>새 일자</th><th>교시</th><th>교과목</th><th>반</th><th>강사</th><th>강의실</th><th>결과</th></tr></thead><tbody>' + trs + '</tbody></table></div>' +
       cfHtml +
-      '<div class="box w">원본 내용을 그대로 가져옵니다. 저장 후 편성 화면의 "수정"에서 <b>날짜·교시·교과목·반·강의실·강사·비고를 모두 바꿀 수 있고</b>, 필요 없는 줄은 삭제할 수 있습니다. <b>강사에게 안내는 자동으로 가지 않으니</b> 수동으로 진행해 주세요.' + (cp.instr ? ' 강사가 달라지는 기수라면 "강사도 복사"를 해제해 비워 둘 수 있습니다.' : ' 강사는 비어 있는 상태("미지정")로 저장됩니다.') + '</div>' +
+      '<div class="box w">원본 내용을 그대로 가져옵니다. 저장 후 교과목 편성 화면의 "수정"에서 <b>날짜·교시·교과목·반·강의실·강사·비고를 모두 바꿀 수 있고</b>, 필요 없는 줄은 삭제할 수 있습니다. <b>강사에게 안내는 자동으로 가지 않으니</b> 수동으로 진행해 주세요.' + (cp.instr ? ' 강사가 달라지는 기수라면 "강사도 복사"를 해제해 비워 둘 수 있습니다.' : ' 강사는 비어 있는 상태("미지정")로 저장됩니다.') + '</div>' +
       '<div class="msg" id="pMsg"></div>' +
       '<div class="btns"><button type="button" class="btn" id="pClose">닫기</button><button type="button" class="btn primary" id="pSave"' + (good.length ? '' : ' disabled') + '>' + good.length + '줄 복사해 저장</button></div>';
     $('pClose').addEventListener('click', closeCopy);

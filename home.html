@@ -186,7 +186,7 @@
   </header>
 
   <div class="quick">
-    <a class="btn primary" href="lecture-assignment.html#v=table">과정 편성하기</a>
+    <a class="btn primary" href="lecture-assignment.html#v=table">교과목 편성하기</a>
     <a class="btn" data-v="cal" href="lecture-assignment.html#v=cal">월 일정 보기</a>
     <a class="btn" data-v="room" href="lecture-assignment.html#v=room">빈 강의실 찾기</a>
     <a class="btn" href="instructor-dashboard.html">강사 검색하기</a>
@@ -206,7 +206,7 @@
       <section class="card" id="cRoom"></section>
     </div>
   </div>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 13</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 14</div>
 </div>
 </div>
 
@@ -288,7 +288,7 @@
       .filter(Boolean);
   }
   function typeCls(t){ t = String(t || ''); return 'ct-' + (['기본', '전문', '특별', '민관'].indexOf(t) > -1 ? t : '기타'); }
-  function courseLink(key, label, date){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + (date ? '&d=' + date : '') + '&from=home">' + esc(label) + '<span class="go">편성 화면 →</span></a>'; }
+  function courseLink(key, label, date){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + (date ? '&d=' + date : '') + '&from=home">' + esc(label) + '<span class="go">교과목 편성 →</span></a>'; }
 
   /* ---------- 오늘 수업 ---------- */
   function sessionsOn(date){
@@ -377,7 +377,7 @@
       var st = '';
       if (o.subj) st += '<span class="tag t-none">이번 주 교과목 ' + o.subj + '개</span>' + (o.un ? '<span class="tag t-warn">강사 미지정 ' + o.un + '</span>' : '<span class="tag t-ok">강사 모두 배정</span>');
       else st += '<span class="tag t-none">교과목 미편성</span>';
-      return '<li><div><span class="tag ' + typeCls(o.p['구분']) + '">' + esc(o.p['구분'] || '기타') + '</span> <a class="cn" href="lecture-assignment.html#c=' + encodeURIComponent(o.key) + '&from=home">' + esc(nameOf(o.key)) + '<span class="go">편성 화면 →</span></a>' +
+      return '<li><div><span class="tag ' + typeCls(o.p['구분']) + '">' + esc(o.p['구분'] || '기타') + '</span> <a class="cn" href="lecture-assignment.html#c=' + encodeURIComponent(o.key) + '&from=home">' + esc(nameOf(o.key)) + '<span class="go">교과목 편성 →</span></a>' +
         '<div class="ds">' + esc(seg) + (rm ? ' · ' + esc(rm) : '') + '</div></div><div class="st">' + st + '</div></li>';
     }).join('') + '</ul>';
     $('cWeek').innerHTML = html;
@@ -397,7 +397,7 @@
     });
     return Object.keys(out);
   }
-  /* 날짜·교시 범위에서 사용 중인 강의실 집합 (편성된 교과목 + 편성 전 과정의 연간계획 예정 강의실) */
+  /* 날짜·교시 범위에서 사용 중인 강의실 집합 (편성된 교과목 + 교과목 편성 전 과정의 연간계획 예정 강의실) */
   function roomsUsed(date, s, e){
     var use = {}, hasRoomSess = {};
     allSessions.forEach(function(r){
@@ -482,7 +482,7 @@
       '</tbody><tfoot><tr class="rowlink" data-href="lecture-assignment.html#v=table&y=' + encodeURIComponent(yearSel) + '" title="' + yearSel + '년 전체 과정 목록 보기"><td><a href="lecture-assignment.html#v=table&y=' + encodeURIComponent(yearSel) + '">합계</a><span class="go">전체 보기 →</span></td><td>' + total.c + '</td><td>' + total.n + '</td><td>' + total.p.toLocaleString('ko-KR') + '</td></tr></tfoot></table>' +
       '<div class="hint" style="margin-top:8px;">과정 = 과정명 종류, 회 = 기수 수, 인원 = 계획인원 합계(입교 시작일이 ' + yearSel + '년인 기수 기준). 구분 행을 누르면 해당 과정 목록이 열립니다. ' +
       (cancelled ? '취소된 기수 ' + cancelled + '회는 제외했습니다. ' : '') + '</div>' +
-      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table">과정 편성하기</a></div>';
+      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table">교과목 편성하기</a></div>';
     $('cYear').innerHTML = html; $('cYear').style.display = '';
   }
 
