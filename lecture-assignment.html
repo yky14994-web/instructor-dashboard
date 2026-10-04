@@ -548,10 +548,12 @@
   html.autologin #loginScreen{display:none !important;}
   html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:#5b6575;font-size:14px;}
 
-  .crumb{font-size:12.5px;color:#767F8C;margin:0 0 8px;}
-  .crumb a{color:#1B3A5F;text-decoration:none;font-weight:700;}
-  .crumb a:hover{text-decoration:underline;}
-  .crumb .sep{margin:0 6px;color:#B5BBC4;}
+  .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;font-size:16px;color:#5B6575;margin:2px 0 12px;font-weight:600;}
+  .crumb a{color:#1B3A5F;text-decoration:none;font-weight:800;padding:5px 9px;border-radius:8px;}
+  .crumb a:hover{background:#E4ECF5;text-decoration:none;}
+  .crumb .sep{margin:0 2px;color:#8A93A0;font-size:18px;font-weight:700;}
+  .crumb .cur{color:#fff;background:#1B3A5F;font-weight:800;padding:5px 12px;border-radius:8px;}
+  @media (max-width:640px){ .crumb{font-size:14.5px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} }
 </style>
 </head>
 <body>
@@ -672,7 +674,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 홈 7</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 홈 8</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1314,9 +1316,9 @@
     var sep = '<span class="sep">›</span>', out = '<a href="home.html">홈</a>' + sep;
     if (currentKey) {
       var p = planByKey(currentKey);
-      out += '<a href="lecture-assignment.html#v=table">강의배정</a>' + sep + '교과목 편성' + (p ? ' · ' + esc(String(p['과정명'] || '') + ' ' + String(p['기수'] || '')) : '');
+      out += '<a href="lecture-assignment.html#v=table">강의배정</a>' + sep + '<span class="cur">교과목 편성' + (p ? ' · ' + esc(String(p['과정명'] || '') + ' ' + String(p['기수'] || '')) : '') + '</span>';
     } else {
-      out += '강의배정' + sep + esc((PLAN_HEAD[planMode] || PLAN_HEAD.table)[0].replace('강의배정 · ', ''));
+      out += '<a href="lecture-assignment.html#v=table">강의배정</a>' + sep + '<span class="cur">' + esc((PLAN_HEAD[planMode] || PLAN_HEAD.table)[0].replace('강의배정 · ', '')) + '</span>';
     }
     $('crumb').innerHTML = out;
   }

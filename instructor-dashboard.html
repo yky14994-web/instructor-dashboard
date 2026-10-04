@@ -319,10 +319,12 @@
   html.autologin #loginScreen{display:none !important;}
   html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:#5b6575;font-size:14px;}
 
-  .crumb{font-size:12.5px;color:#767F8C;margin:0 0 8px;}
-  .crumb a{color:#1B3A5F;text-decoration:none;font-weight:700;}
-  .crumb a:hover{text-decoration:underline;}
-  .crumb .sep{margin:0 6px;color:#B5BBC4;}
+  .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;font-size:16px;color:#5B6575;margin:2px 0 12px;font-weight:600;}
+  .crumb a{color:#1B3A5F;text-decoration:none;font-weight:800;padding:5px 9px;border-radius:8px;}
+  .crumb a:hover{background:#E4ECF5;text-decoration:none;}
+  .crumb .sep{margin:0 2px;color:#8A93A0;font-size:18px;font-weight:700;}
+  .crumb .cur{color:#fff;background:#1B3A5F;font-weight:800;padding:5px 12px;border-radius:8px;}
+  @media (max-width:640px){ .crumb{font-size:14.5px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} }
 </style>
 </head>
 <body>
@@ -350,7 +352,7 @@
 <div id="app" style="display:none;">
 <nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i on" aria-current="page" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
-  <div class="crumb"><a href="home.html">홈</a><span class="sep">›</span>강사관리<span class="sep">›</span>강사 조회·검색</div>
+  <div class="crumb"><a href="home.html">홈</a><span class="sep">›</span><a href="instructor-dashboard.html">강사관리</a><span class="sep">›</span><span class="cur">강사 조회·검색</span></div>
 
   <header>
     <div class="title">강사관리 · 강사 조회·검색</div>
