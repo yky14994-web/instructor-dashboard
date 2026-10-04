@@ -1085,7 +1085,9 @@
     { label: '학교소개', file: 'school-intro.html' },
     { label: '강의자료 제출', file: 'lecture-submission.html' },
     { label: '강사 등록신청', file: 'instructor-registration.html' },
-    { label: '외부강사 조회 대시보드 (현재 페이지)', file: 'instructor-dashboard.html' }
+    { label: '담당자 홈 (로그인 필요)', file: 'home.html' },
+    { label: '강사관리 (현재 페이지, 로그인 필요)', file: 'instructor-dashboard.html' },
+    { label: '강의배정 (로그인 필요)', file: 'lecture-assignment.html' }
   ];
 
   function renderPageLinksList(){
@@ -1169,7 +1171,7 @@
     .then(function(res){ return res.json(); })
     .then(function(json){
       if (json.status === 'ok') {
-        msg.textContent = '초대 링크를 발송했습니다.';
+        msg.textContent = (json.받는주소 ? json.받는주소 + ' 주소로 ' : '') + '초대 링크를 발송했습니다. 메일이 보이지 않으면 스팸함을 확인해 주세요.';
         msg.style.color = '#27500A'; msg.style.display = 'block';
         document.getElementById('inviteCancelBtn').textContent = '닫기';
       } else {
