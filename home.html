@@ -150,8 +150,6 @@
   html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:#5b6575;font-size:14px;}
   .cdesc{font-size:12.5px;color:var(--text-muted);margin:-2px 0 10px;}
   .go{font-weight:400;font-size:11.5px;color:var(--text-muted);margin-left:6px;white-space:nowrap;}
-  .ysum{display:block;margin:0 0 12px;padding:10px 14px;background:#fff;border:1px solid var(--border,#E3E6EA);border-radius:10px;color:#1B3A63;font-size:14px;text-decoration:none;box-shadow:0 1px 3px rgba(20,40,70,.06);}
-  .ysum b{margin-right:6px;} .ysum .go{margin-left:6px;color:#6B7785;font-size:12.5px;}
 </style>
 </head>
 <body>
@@ -197,7 +195,7 @@
   <div id="msg"></div>
   <div id="loading">불러오는 중...</div>
 
-  <a class="ysum" id="ySum" href="#cYear" style="display:none;"></a>
+  <section class="card" id="cYear" style="display:none;margin-bottom:16px;"></section>
 
   <div class="grid" id="main" style="display:none;">
     <div class="col">
@@ -206,10 +204,9 @@
     </div>
     <div class="col">
       <section class="card" id="cRoom"></section>
-      <section class="card" id="cYear"></section>
     </div>
   </div>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 12</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 13</div>
 </div>
 </div>
 
@@ -467,7 +464,7 @@
     var years = planYears(), ys = Object.keys(years).sort();
     if (!yearSel || !years[yearSel]) yearSel = pickYear(years);
     var html = '<div class="chead"><h2>연간 교육훈련 계획</h2>' + (ys.length ? '<select id="yearSel" aria-label="연도">' + ys.map(function(y){ return '<option value="' + y + '"' + (y === yearSel ? ' selected' : '') + '>' + y + '년</option>'; }).join('') + '</select>' : '') + '</div><div class="cdesc">연간 교육훈련계획 기준 과정·기수·인원입니다.</div>';
-    if (!ys.length) { $('cYear').innerHTML = html + '<div class="empty">연간계획 데이터가 없습니다.</div>'; return; }
+    if (!ys.length) { $('cYear').innerHTML = html + '<div class="empty">연간계획 데이터가 없습니다.</div>'; $('cYear').style.display = ''; return; }
     var names = {}, byType = {}, cancelled = 0, total = { c: 0, n: 0, p: 0 };
     plans.forEach(function(p){
       var d = normYmd(p['입교 시작일']); if (!d || d.slice(0, 4) !== yearSel) return;
@@ -486,17 +483,8 @@
       '<div class="hint" style="margin-top:8px;">과정 = 과정명 종류, 회 = 기수 수, 인원 = 계획인원 합계(입교 시작일이 ' + yearSel + '년인 기수 기준). 구분 행을 누르면 해당 과정 목록이 열립니다. ' +
       (cancelled ? '취소된 기수 ' + cancelled + '회는 제외했습니다. ' : '') + '</div>' +
       '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table">과정 편성하기</a></div>';
-    $('cYear').innerHTML = html;
-    var ys2 = $('ySum');
-    if (ys2) { ys2.style.display = ''; ys2.innerHTML = '<b>' + yearSel + '년 연간 계획</b> ' + total.c + '과정 ' + total.n + '회 ' + total.p.toLocaleString('ko-KR') + '명 <span class="go">자세히 ↓</span>'; }
+    $('cYear').innerHTML = html; $('cYear').style.display = '';
   }
-
-  document.addEventListener('click', function(e){
-    var a = e.target.closest && e.target.closest('#ySum');
-    if (!a) return;
-    e.preventDefault();
-    var t = $('cYear'); if (t && t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
 
   function renderAll(){
     renderToday(); renderWeek(); renderRoom(); renderYear();
