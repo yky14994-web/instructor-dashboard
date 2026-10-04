@@ -177,7 +177,7 @@
       <div class="title">홈</div>
       <div class="sub" id="clock"></div>
     </div>
-    <button type="button" class="btn" id="reloadBtn">새로 불러오기</button>
+    <button type="button" class="btn" id="reloadBtn">새로고침</button>
   </header>
 
   <div class="quick">
@@ -200,6 +200,7 @@
       <section class="card" id="cYear"></section>
     </div>
   </div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 3</div>
 </div>
 </div>
 
@@ -331,7 +332,7 @@
     $('cToday').innerHTML = html;
   }
 
-  /* ---------- 이번 주 일정 ---------- */
+  /* ---------- 이번 주 과정 ---------- */
   function renderWeek(){
     var base = addDays(mondayOf(todayStr()), weekOffset * 7);
     var end = addDays(base, 6);
@@ -360,7 +361,7 @@
       return a < b ? -1 : a > b ? 1 : String(x.p['과정명'] || '').localeCompare(String(y.p['과정명'] || ''), 'ko');
     });
     var isThis = weekOffset === 0;
-    var html = '<div class="chead"><h2>이번 주 일정</h2><div class="wknav"><span class="meta">' + md(base) + ' ~ ' + md(end) + (isThis ? '' : ' · ' + (weekOffset > 0 ? weekOffset + '주 뒤' : -weekOffset + '주 전')) + '</span>' +
+    var html = '<div class="chead"><h2>이번 주 과정</h2><div class="wknav"><span class="meta">' + md(base) + ' ~ ' + md(end) + (isThis ? '' : ' · ' + (weekOffset > 0 ? weekOffset + '주 뒤' : -weekOffset + '주 전')) + '</span>' +
       '<button type="button" class="btn sm" data-w="-1" aria-label="지난주">◀</button>' + (isThis ? '' : '<button type="button" class="btn sm" data-w="0">이번 주</button>') +
       '<button type="button" class="btn sm" data-w="1" aria-label="다음주">▶</button></div></div>';
     if (!items.length) html += '<div class="empty">이 주에 진행되는 과정이 없습니다.</div>';
@@ -484,9 +485,10 @@
   }
 
   /* ---------- 시계 ---------- */
+  var lastLoad = '';
   function tickClock(){
     var n = new Date();
-    $('clock').textContent = n.getFullYear() + '년 ' + (n.getMonth() + 1) + '월 ' + n.getDate() + '일 (' + DOW[n.getDay()] + ') ' + ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2);
+    $('clock').textContent = n.getFullYear() + '년 ' + (n.getMonth() + 1) + '월 ' + n.getDate() + '일 (' + DOW[n.getDay()] + ') ' + ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2) + (lastLoad ? ' · 마지막 새로고침 ' + lastLoad : '');
   }
   tickClock();
   setInterval(function(){
@@ -518,6 +520,7 @@
       $('app').style.display = 'block';
       setSess(KEY_PW, pw);
       if (lg && lg.role) setSess(KEY_ROLE, lg.role);
+      (function(){ var n = new Date(); lastLoad = ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2); tickClock(); })();
       plans = a['연간계획'] || [];
       periods = (a['교시표'] || []).map(function(r){
         return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || '') };
@@ -553,8 +556,8 @@
     if (e.target && e.target.id === 'yearSel') { yearSel = e.target.value; renderYear(); }
   });
   $('reloadBtn').addEventListener('click', function(){
-    var b = this; b.disabled = true;
-    loadAll(getPw(), true).catch(function(err){ showMsg('err', err.message || '불러오지 못했습니다'); }).finally(function(){ b.disabled = false; });
+    var b = this; b.disabled = true; b.textContent = '불러오는 중...';
+    loadAll(getPw(), true).catch(function(err){ showMsg('err', err.message || '불러오지 못했습니다'); }).finally(function(){ b.disabled = false; b.textContent = '새로고침'; });
   });
 
   /* ---------- 로그인 ---------- */
