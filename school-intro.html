@@ -137,6 +137,31 @@
         .org-container::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         .org-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
+        /* 모든 화면: 팀 박스가 폭에 맞춰 줄어들고 글이 줄바꿈되도록(옆 스크롤 방지) */
+        .tree ul { min-width: 0; }
+        .tree ul ul { width: 100%; }
+        .tree ul ul > li { flex: 1 1 0; min-width: 0; }
+        .tree li .node-box { min-width: 0; width: 100%; box-sizing: border-box; padding: 12px 14px; }
+        .tree li .root-node { width: auto; }
+
+        /* 좁은 화면(639px 이하): 조직도를 세로로 쌓아 한 화면 안에 표시 (옆 스크롤 없음) */
+        @media (max-width: 639px) {
+            .org-container { overflow-x: visible; padding: 10px 0 20px 0; }
+            .tree ul { min-width: 0; flex-direction: column; align-items: center; }
+            .tree ul ul { padding-top: 24px; width: 100%; }
+            .tree li { float: none; padding: 20px 0 0 0; width: 100%; max-width: 360px; }
+            .tree li::before, .tree li::after { display: none; }
+            .tree li:first-child { padding-top: 0; }
+            .tree ul ul > li { position: relative; }
+            .tree ul ul > li:not(:first-child)::before {
+                display: block; content: ''; position: absolute; top: 0; left: 50%; right: auto;
+                width: 0; height: 20px; border-top: 0; border-left: 2px solid #cbd5e1;
+                transform: translateX(-50%); border-radius: 0;
+            }
+            .tree li .node-box { min-width: 0; width: 100%; box-sizing: border-box; padding: 12px 16px; }
+            .tree li .root-node { width: auto; padding: 14px 32px; }
+        }
+
         /* 사진 자동 슬라이더 (강의동용) */
         @keyframes slide6 {
             0%, 12% { transform: translateX(0); }
