@@ -399,6 +399,22 @@
   .rmchip.use{background:#FBE0DC;color:#9B1C12;cursor:pointer;} .rmchip.plan{background:#FFF1BF;color:#7A5B00;cursor:pointer;}
   .rmchip.use:hover,.rmchip.plan:hover{filter:brightness(.96);}
   .rmchip small{font-weight:600;font-size:11.5px;opacity:.85;}
+  .rmm{overflow:auto;max-height:70vh;border:1px solid var(--border-input);border-radius:8px;margin-top:6px;}
+  table.rmmt{border-collapse:separate;border-spacing:0;font-size:11.5px;min-width:100%;}
+  .rmmt th,.rmmt td{border-right:1px solid #E5E8EC;border-bottom:1px solid #E5E8EC;padding:3px 4px;text-align:center;white-space:nowrap;background:#fff;}
+  .rmmt thead th{position:sticky;top:0;background:#F1F4F8;z-index:2;font-weight:800;color:var(--navy);}
+  .rmmt .rn{position:sticky;left:0;z-index:3;text-align:left;font-weight:800;min-width:104px;background:#F7F9FB;}
+  .rmmt thead .rn{z-index:4;background:#F1F4F8;}
+  .rmmt .we{background:#F3F4F6;min-width:20px;}
+  .rmmt thead .we{color:#9AA3AF;}
+  .rmmt td.dc{min-width:64px;max-width:84px;overflow:hidden;text-overflow:ellipsis;}
+  .rmmt td.dc.we{min-width:20px;max-width:20px;}
+  .rmmt td.u{background:#DCE8F8;color:#173E73;font-weight:700;cursor:pointer;}
+  .rmmt td.pl{background:#FFF1BF;color:#7A5B00;font-weight:700;cursor:pointer;}
+  .rmmt td.ov{outline:2px solid #D8574B;outline-offset:-2px;cursor:pointer;}
+  .rmmt td.tt,.rmmt th.tt{font-weight:800;background:#F7F9FB;min-width:48px;}
+  .rmmt tfoot td{position:static;font-weight:800;background:#F7F9FB;}
+  .rmmt tfoot td.rn{position:sticky;left:0;}
   .rfpanel{border:1px solid var(--border-input);border-radius:8px;background:#FAFCFA;padding:10px 12px;margin-bottom:8px;font-size:13px;}
   .rfpanel .rfhead{margin-bottom:8px;}
   .rfc{display:inline-flex;flex-direction:column;align-items:flex-start;padding:6px 11px;border:1px solid #BFDCC2;border-radius:8px;background:#E3F1E4;color:#1F6B2B;font-family:inherit;font-size:13px;font-weight:800;line-height:1.3;cursor:pointer;}
@@ -680,7 +696,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 홈 14</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 16</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2049,7 +2065,7 @@
       '<div class="hint" style="margin-top:8px;">과정 칩이나 날짜를 누르면 그날의 교과목·강사·강의실이 열립니다. 입교·사이버·실습 기간의 평일은 교과목 편성 전에도 표시됩니다.</div></div>';
   }
   /* ---------- 빈 강의실 조회 ---------- */
-  var roomDate = '', roomS = 0, roomE = 0, roomMonth = '';
+  var roomDate = '', roomS = 0, roomE = 0, roomMonth = '', roomMonthRoom = '';
   function roomNorm(x){ return String(x || '').replace(/\s+/g, ''); }
   /* 연간계획 '예정 강의실' 글자에서 강의실 목록 이름 찾기: 이름이 같으면 그것만, 없으면 끝부분이 같은 이름 전부 */
   function planRoomNames(txt){
@@ -2140,8 +2156,8 @@
       '<input type="date" id="roomDateIn" value="' + esc(roomDate) + '" aria-label="날짜">' +
       '<button type="button" class="btn sm" data-cm="rm:next">다음날 ▶</button><button type="button" class="btn sm" data-cm="rm:today">오늘</button>' +
       '<select id="roomSSel" aria-label="시작 교시">' + opt(roomS) + '</select><span class="lb">~</span><select id="roomESel" aria-label="끝 교시">' + opt(roomE) + '</select></div>' +
-      '<div class="rmq"><span class="lb">월별 엑셀</span><input type="month" id="roomMonthIn" value="' + esc(roomMonth || roomDate.slice(0, 7)) + '" aria-label="내려받을 월">' +
-      '<button type="button" class="btn sm" data-cm="rm:xlsx">이 달 강의실 현황 엑셀 내려받기</button></div>';
+      '<div class="rmq"><span class="lb">월별 현황</span><input type="month" id="roomMonthIn" value="' + esc(roomMonth || roomDate.slice(0, 7)) + '" aria-label="조회·내려받을 월">' +
+      '<button type="button" class="btn sm" data-cm="rm:xlsx">이 달 전체 강의실 엑셀 내려받기</button></div>';
     if (!rooms.length) {
       box.innerHTML = head + '<div class="hint">강의실 목록(강의배정DB 강의실 시트)이 비어 있어 빈 강의실을 계산할 수 없습니다.</div></div>';
       return;
@@ -2181,7 +2197,56 @@
     var used = '';
     var skip = skipRooms.length ? '<div class="hint" style="margin-top:10px;">겹침 검사 제외 장소(동시 사용 가능): ' + esc(skipRooms.join(', ')) + '</div>' : '';
     box.innerHTML = head + sum + emptyDayHint(roomActiveDates()) + leg + body + used + skip +
-      '<div class="hint" style="margin-top:10px;">편성된 교과목의 강의실과, 교과목 편성 전이라도 연간계획에 예정 강의실이 적힌 과정(입교 기간 평일)을 사용 중으로 계산합니다. 취소된 기수는 제외합니다.</div></div>';
+      '<div class="hint" style="margin-top:10px;">편성된 교과목의 강의실과, 교과목 편성 전이라도 연간계획에 예정 강의실이 적힌 과정(입교 기간 평일)을 사용 중으로 계산합니다. 취소된 기수는 제외합니다.</div>' +
+      renderRoomMonth(roomMonth || roomDate.slice(0, 7)) + '</div>';
+  }
+  /* 월별 강의실 현황(화면): 강의실 × 날짜 표. 엑셀은 필터와 관계없이 전체 강의실 */
+  function renderRoomMonth(ym){
+    if (!/^\d{4}-\d{2}$/.test(ym) || !rooms.length) return '';
+    var days = monthDays(ym), usage = days.map(function(d){ return roomUsage(d, 0, 99); });
+    var base = rooms.filter(function(r){ return !roomSkip[r]; }), extra = {};
+    usage.forEach(function(u){ Object.keys(u).forEach(function(r){ if (rooms.indexOf(r) < 0 && !roomSkip[r]) extra[r] = true; }); });
+    var all = base.concat(Object.keys(extra).sort());
+    var wk = days.map(function(d){ var q = parseYmd(d); return q.dow === 0 || q.dow === 6; });
+    var nwk = wk.filter(function(x){ return !x; }).length;
+    var sel = roomMonthRoom && all.indexOf(roomMonthRoom) > -1 ? roomMonthRoom : '';
+    var show = sel ? [sel] : all;
+    var q0 = parseYmd(ym + '-01'), DOW = ['일', '월', '화', '수', '목', '금', '토'];
+    var th = '<tr><th class="rn">강의실</th>' + days.map(function(d, i){ var q = parseYmd(d); return '<th class="' + (wk[i] ? 'we' : '') + '" title="' + esc(md(d)) + '">' + q.d + '<br><small>' + DOW[q.dow] + '</small></th>'; }).join('') +
+      '<th class="tt">편성<br>일수</th><th class="tt">예정<br>일수</th><th class="tt">가동률</th></tr>';
+    var cntU = days.map(function(){ return 0; }), cntP = days.map(function(){ return 0; });
+    var rowsHtml = show.map(function(r){
+      var nu = 0, np = 0;
+      var tds = usage.map(function(u, i){
+        var l = u[r] || [];
+        if (!l.length) return '<td class="dc' + (wk[i] ? ' we' : '') + '"></td>';
+        var hasS = l.some(function(x){ return x.type !== 'plan'; });
+        var keys = {}; l.forEach(function(x){ keys[x.key] = 1; });
+        var ov = false;
+        for (var a = 0; a < l.length && !ov; a++) for (var b = a + 1; b < l.length; b++) if (l[a].key !== l[b].key && l[a].s <= l[b].e && l[b].s <= l[a].e) { ov = true; break; }
+        if (!wk[i]) { if (hasS) { nu++; } else { np++; } } 
+        if (hasS) cntU[i]++; else cntP[i]++;
+        var txt = roomCellText(l), first = l[0];
+        var short = esc(first.label.replace(/과정|\s+/g, ' ').trim()) + (Object.keys(keys).length > 1 ? ' 외' + (Object.keys(keys).length - 1) : '');
+        return '<td class="dc ' + (hasS ? 'u' : 'pl') + (ov ? ' ov' : '') + (wk[i] ? ' we' : '') + '" data-cday="' + esc(days[i]) + '" data-ckey="' + esc(first.key) + '" title="' + esc(r + ' · ' + md(days[i]) + ' · ' + txt + (ov ? ' · 겹침' : '')) + '">' + (wk[i] ? '·' : short) + '</td>';
+      }).join('');
+      var inf = roomInfo[r] || {}, sub = [inf.floor, inf.kind].filter(Boolean).join(' · ');
+      return '<tr><td class="rn" title="' + esc(sub) + '">' + esc(r) + '</td>' + tds + '<td class="tt">' + nu + '</td><td class="tt">' + np + '</td><td class="tt">' + (nwk ? Math.round((nu + np) / nwk * 100) : 0) + '%</td></tr>';
+    }).join('');
+    var tot = all.length;
+    var foot = '<tr><td class="rn">편성 사용 강의실 수</td>' + cntU.map(function(n, i){ return '<td class="' + (wk[i] ? 'we' : '') + '">' + (n || '') + '</td>'; }).join('') + '<td colspan="3"></td></tr>' +
+      '<tr><td class="rn">예정(편성 전) 강의실 수</td>' + cntP.map(function(n, i){ return '<td class="' + (wk[i] ? 'we' : '') + '">' + (n || '') + '</td>'; }).join('') + '<td colspan="3"></td></tr>' +
+      '<tr><td class="rn">빈 강의실 수</td>' + cntU.map(function(n, i){ return '<td class="' + (wk[i] ? 'we' : '') + '">' + (wk[i] ? '' : tot - n - cntP[i]) + '</td>'; }).join('') + '<td colspan="3"></td></tr>';
+    var ropts = '<option value="">전체 강의실</option>' + all.map(function(r){ return '<option value="' + esc(r) + '"' + (r === sel ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('');
+    var allU = 0, allP = 0;
+    all.forEach(function(r){ usage.forEach(function(u, i){ if (wk[i]) return; var l = u[r] || []; if (l.some(function(x){ return x.type !== 'plan'; })) allU++; else if (l.length) allP++; }); });
+    var rate = nwk && tot ? Math.round((allU + allP) / (nwk * tot) * 1000) / 10 : 0;
+    return '<div class="rmgrp" style="margin-top:22px;">' + q0.y + '년 ' + q0.m + '월 강의실 현황<small>강의실 ' + tot + '곳 · 평일 ' + nwk + '일</small></div>' +
+      '<div class="rmq"><span class="lb">화면 표시</span><select id="roomMonthRoomSel" aria-label="표시할 강의실">' + ropts + '</select><span class="lb">엑셀은 항상 전체 강의실</span></div>' +
+      '<div class="pcalsum">전체 평균 가동률 <b>' + rate + '%</b> · 편성 사용 ' + allU + '강의실·일 + 예정 ' + allP + '강의실·일 ÷ (평일 ' + nwk + '일 × ' + tot + '곳) <small>(가동률 = 하루라도 사용·예정이 있는 평일 수 ÷ 그 달 평일 수, 교시 단위 아님)</small></div>' +
+      '<div class="calleg" style="margin:4px 0 2px;"><span><i style="background:#DCE8F8"></i>편성된 교과목 사용</span><span><i style="background:#FFF1BF"></i>연간계획 예정(편성 전)</span><span><i style="border-color:#D8574B"></i>같은 날 겹침</span><span><i style="background:#F3F4F6"></i>주말</span></div>' +
+      '<div class="rmm"><table class="rmmt"><thead>' + th + '</thead><tbody>' + rowsHtml + '</tbody><tfoot>' + foot + '</tfoot></table></div>' +
+      '<div class="hint" style="margin-top:6px;">칸을 누르면 그날 일정이 열립니다. 표 하단 합계는 전체 강의실 기준이며, 야외·실습장(겹침 검사 제외)은 제외합니다.</div>';
   }
   function roomNav(act){
     if (act === 'rm:xlsx') { doRoomExcel(); return; }
@@ -3775,7 +3840,8 @@
     if (t.id === 'calTypeSel') { calType = t.value; renderPlanCal(); }
     else if (t.id === 'calRoomSel') { calRoom = t.value; renderPlanCal(); }
     else if (t.id === 'calMonthIn' && /^\d{4}-\d{2}$/.test(t.value)) { calMonth = t.value; calManual = true; renderPlanCal(); }
-    else if (t.id === 'roomMonthIn') { roomMonth = /^\d{4}-\d{2}$/.test(t.value) ? t.value : ''; }
+    else if (t.id === 'roomMonthIn') { roomMonth = /^\d{4}-\d{2}$/.test(t.value) ? t.value : ''; renderRoomFree(); }
+    else if (t.id === 'roomMonthRoomSel') { roomMonthRoom = t.value; renderRoomFree(); }
     else if (t.id === 'roomDateIn') { if (normYmd(t.value)) { roomDate = normYmd(t.value); renderRoomFree(); } }
     else if (t.id === 'roomSSel') { roomS = Number(t.value); if (roomE < roomS) roomE = roomS; renderRoomFree(); }
     else if (t.id === 'roomESel') { roomE = Number(t.value); if (roomE < roomS) roomS = roomE; renderRoomFree(); }
