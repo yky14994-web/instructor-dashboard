@@ -564,7 +564,7 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><span class="gnav-i off" aria-disabled="true">홈<small>준비 중</small></span><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i on" aria-current="page" href="lecture-assignment.html">강의배정</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i on" aria-current="page" href="lecture-assignment.html">강의배정</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
   <header>
     <div>
@@ -1262,6 +1262,13 @@
   function route(){
     if ($('app').style.display === 'none') return;
     var key = hashKey();
+    var vm = /^#v=(table|cal|room)$/.exec(location.hash || '');
+    if (vm) {
+      try { window.history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {}
+      planMode = vm[1]; if (planMode === 'cal' && !calManual) calMonth = '';
+      try { sessionStorage.setItem('jsfa_la_pmode', planMode); } catch (e) {}
+      showPlan(); return;
+    }
     var p = key ? planByKey(key) : null;
     if (!p) { showPlan(); return; }
     if (currentKey === key && $('editView').style.display === 'block') { refreshEditList(); return; }
