@@ -336,6 +336,11 @@
   .todo tr.trow{cursor:pointer;} .todo tr.trow:hover{background:#F7F9FB;}
   .tpill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:800;white-space:nowrap;}
   .tpill.bad{background:var(--err-bg);color:var(--err-fg);} .tpill.wn{background:var(--warn-bg);color:var(--warn-fg);}
+  .todo .chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .todo .chip{height:30px;font-size:12.5px;}
+  .todo .chip.has{border-color:#D9B100;}
+  .todo .chip.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .todo .th2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 6px;}
   .todo .tabs{display:flex;gap:6px;margin-left:auto;}
   .todo .tabs .btn{height:30px;font-size:12.5px;}
   .todo .tabs .btn.on{background:var(--navy);color:#fff;border-color:var(--navy);}
@@ -348,7 +353,7 @@
     .todo table{display:none;} .todo .mcards{display:block;} .todo .tabs{margin-left:0;}
     .todo .mc{border-top:1px solid var(--border);padding:10px 0;cursor:pointer;}
     .todo .mc .t{font-weight:800;font-size:13.5px;} .todo .mc .s{font-size:12.5px;color:var(--text-sub);margin-top:2px;}
-    .todo .mc .a{margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+    .todo .mc .a{margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;line-height:1.5;}
   }
   @media print{ .todo{display:none !important;} }
 
@@ -1534,8 +1539,10 @@
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
   }
-  /* 연간계획 첫 화면 '처리할 일': 강의계획서 미제출 중 기한이 지났거나 7일 이내인 교과목(과정 필터와 무관, 취소 기수·종료된 강의 제외) */
-  var todoTab = 'all', todoMore = false;
+  /* 연간계획 첫 화면 '처리할 일'(과정 필터와 무관, 취소 기수·지난 강의 제외)
+     ① 강의계획서: 미제출 중 기한 지남·7일 이내  ② 강사 미지정: 강의일 14일 이내  ③ 겹침 경고: 미확인 전체  ④ 강사 서류: 강의일 14일 이내 배정 강사 중 미비·보유 만료 */
+  var todoCat = '', todoTab = 'all', todoMore = false;
+  var TODO_DAYS = 14;
   function todoItems(){
     var out = [];
     allSessions.forEach(function(r){
@@ -1549,45 +1556,127 @@
     });
     return out;
   }
+  function upcomingRows(){
+    var today = ymd(new Date()), out = [];
+    allSessions.forEach(function(r){
+      var pp = planByKey(String(r['개설키'] || ''));
+      if (pp && isCancelled(pp)) return;
+      var d = dayDiff(today, String(r['일자'] || ''));
+      if (d === null || d < 0 || d > TODO_DAYS) return;
+      out.push({ r: r, d: d });
+    });
+    out.sort(function(a, b){
+      if (a.r['일자'] !== b.r['일자']) return String(a.r['일자']) < String(b.r['일자']) ? -1 : 1;
+      return Number(a.r['시작교시']) - Number(b.r['시작교시']);
+    });
+    return out;
+  }
   function todoPill(st){
     var txt = st.left < 0 ? Math.abs(st.left) + '일 지남' : st.left === 0 ? '오늘' : st.left + '일 남음';
     return '<span class="tpill ' + (st.left < 0 ? 'bad' : 'wn') + '">' + txt + '</span>';
   }
+  function pillHtml(cls, txt){ return '<span class="tpill ' + cls + '">' + esc(txt) + '</span>'; }
+  function dLabel(d){ return d === 0 ? '오늘' : d + '일 후'; }
+  function todoData(){
+    var viewer = isViewer();
+    function nameOf(r, rowForBadge){
+      var ins = instrById[r['강사ID']];
+      return esc((ins && ins.name) || r['강사명'] || r['강사ID']) + (ins ? ' ' + docBadge(ins, rowForBadge) : '');
+    }
+    var D = {};
+    // ① 강의계획서
+    var pl = todoItems(), nOver = pl.filter(function(o){ return o.st.left < 0; }).length;
+    var plList = pl.filter(function(o){ return todoTab === 'over' ? o.st.left < 0 : todoTab === 'soon' ? o.st.left >= 0 : true; });
+    function copyBtn(o){ return viewer ? '' : '<button type="button" class="btn sm" data-tplink="' + esc(o.st.sid) + '|' + esc(o.st.iid) + '">링크 복사</button>'; }
+    D.plan = { label: '강의계획서', n: pl.length, nOver: nOver, nSoon: pl.length - nOver,
+      sum: '기한 지남 <b style="color:var(--err-fg)">' + nOver + '건</b> · 7일 이내 임박 <b style="color:var(--warn-fg)">' + (pl.length - nOver) + '건</b> · 기한은 강의일 7일 전',
+      cols: ['상태', '기한', '과정 · 기수', '교과목 (강의일)', '강사', ''],
+      items: plList.map(function(o){
+        return { key: o.r['개설키'], cells: [todoPill(o.st), '<span class="nw">' + esc(md(o.st.due)) + '</span>', esc(o.r['개설키']), esc(o.st.subj) + ' (' + esc(md(o.st.date)) + ')', nameOf(o.r, o.r), copyBtn(o)],
+          title: todoPill(o.st) + ' ' + esc(o.st.subj), sub: esc(o.r['개설키']) + ' · 강의 ' + esc(md(o.st.date)) + ' · 기한 ' + esc(md(o.st.due)), extra: nameOf(o.r, o.r) + ' ' + copyBtn(o) };
+      }),
+      note: '행을 누르면 해당 과정의 교과목 편성 화면으로 이동합니다' + (viewer ? '.' : '. 링크 복사는 강사에게 직접 전달해 주세요(자동 발송 없음).') };
+    var up = upcomingRows();
+    // ② 강사 미지정
+    var un = up.filter(function(o){ return !hasInstr(o.r); });
+    D.unas = { label: '강사 미지정', n: un.length,
+      sum: '강의일이 ' + TODO_DAYS + '일 이내인데 강사가 정해지지 않은 교과목 <b>' + un.length + '건</b>',
+      cols: ['강의일까지', '강의일', '과정 · 기수', '교과목 (교시)', '강의실'],
+      items: un.map(function(o){
+        var r = o.r, pill = pillHtml(o.d <= 3 ? 'bad' : 'wn', dLabel(o.d)), pt = periodText(r);
+        return { key: r['개설키'], cells: [pill, '<span class="nw">' + esc(md(r['일자'])) + '</span>', esc(r['개설키']), esc(r['교과목']) + ' (' + esc(pt.txt) + ')', esc(r['강의실'] || '미정')],
+          title: pill + ' ' + esc(r['교과목']), sub: esc(r['개설키']) + ' · ' + esc(md(r['일자'])) + ' ' + esc(pt.txt), extra: esc(r['강의실'] || '강의실 미정') };
+      }),
+      note: '행을 누르면 해당 과정의 교과목 편성 화면에서 강사를 지정할 수 있습니다.' };
+    // ③ 겹침 경고(미확인)
+    var cf = cfl.filter(function(c){ return !c.conf; }).sort(function(a, b){ return String(a.date) < String(b.date) ? -1 : String(a.date) > String(b.date) ? 1 : 0; });
+    D.cfl = { label: '겹침 경고', n: cf.length,
+      sum: '확인하지 않은 겹침 <b>' + cf.length + '건</b> (강사·강의실·같은 반)',
+      cols: ['구분', '일자', '과정', '내용'],
+      items: cf.map(function(c){
+        var pt = conflictParts(c, c.a), keys = c.keys.filter(function(k, i, arr){ return arr.indexOf(k) === i; });
+        var pill = pillHtml(c.type === 'class' ? 'wn' : 'bad', pt.label);
+        return { key: c.a.key, cells: [pill, '<span class="nw">' + esc(md(c.date)) + '</span>', keys.map(function(k){ return esc(courseLabel(k)); }).join('<br>'), pt.body],
+          title: pill + ' ' + esc(md(c.date)), sub: keys.map(function(k){ return esc(courseLabel(k)); }).join(' · '), extra: pt.body };
+      }),
+      note: '행을 누르면 해당 과정 편성 화면으로 이동합니다. 확인 후 "확인했음, 그대로 진행"을 누르면 목록에서 빠집니다.' };
+    // ④ 강사 서류(미비·보유 만료)
+    var seen = {}, dc = [];
+    if (instructors !== null) up.forEach(function(o){
+      var id = String(o.r['강사ID'] || ''), ins = id ? instrById[id] : null;
+      if (!ins || seen[id]) return;
+      var d = docState(ins);
+      if (!d.miss.length) return;
+      seen[id] = true; dc.push({ ins: ins, d: d, o: o });
+    });
+    D.docs = { label: '강사 서류', n: instructors === null ? null : dc.length,
+      sum: instructors === null ? '강사 정보를 불러오는 중입니다.' : '강의일이 ' + TODO_DAYS + '일 이내인 강사 중 서류가 미비하거나 보유기간이 만료된 강사 <b>' + dc.length + '명</b>',
+      cols: ['미비', '강사', '미비 항목', '가장 가까운 강의', '과정 · 기수'],
+      items: dc.map(function(x){
+        var r = x.o.r, pill = pillHtml('bad', '미비 ' + x.d.miss.length);
+        return { key: r['개설키'], cells: [pill, esc(x.ins.name) + ' ' + docBadge(x.ins), esc(x.d.miss.join(', ')), esc(r['교과목']) + ' (' + esc(md(r['일자'])) + ', ' + esc(dLabel(x.o.d)) + ')', esc(r['개설키'])],
+          title: pill + ' ' + esc(x.ins.name), sub: esc(x.d.miss.join(', ')) + ' · ' + esc(r['교과목']) + ' ' + esc(md(r['일자'])), extra: docBadge(x.ins) + ' ' + esc(r['개설키']) };
+      }),
+      note: '배지를 누르면 서류 현황이 열리고, 행을 누르면 가장 가까운 강의의 과정 편성 화면으로 이동합니다. 강사 안내는 자동으로 가지 않습니다.' };
+    return D;
+  }
+  var TODO_ORDER = ['plan', 'unas', 'cfl', 'docs'];
   function renderTodo(){
     var box = $('todo');
     if (!box) return;
     if (!sessionsOk) { box.style.display = 'none'; return; }
-    var all = todoItems();
-    var nOver = all.filter(function(o){ return o.st.left < 0; }).length, nSoon = all.length - nOver;
+    if (instructors === null) ensureInstructors();
+    var D = todoData();
     box.style.display = '';
-    if (!all.length) {
-      box.innerHTML = '<div class="th"><h3>처리할 일 · 강의계획서</h3></div><div class="tnone">처리할 일이 없습니다. 기한이 지났거나 7일 이내로 남은 강의계획서 미제출이 없습니다.</div>';
+    var total = TODO_ORDER.reduce(function(a, k){ return a + (D[k].n || 0); }, 0);
+    if (!total && instructors !== null) {
+      box.innerHTML = '<div class="th"><h3>처리할 일</h3></div><div class="tnone">처리할 일이 없습니다. 강의계획서 기한, 강사 미지정(' + TODO_DAYS + '일 이내), 겹침 경고, 강사 서류에 해당하는 항목이 없습니다.</div>';
       return;
     }
-    if (instructors === null) ensureInstructors();
-    var list = all.filter(function(o){ return todoTab === 'over' ? o.st.left < 0 : todoTab === 'soon' ? o.st.left >= 0 : true; });
-    var viewer = isViewer();
-    var shownList = todoMore ? list : list.slice(0, 5);
-    function nameOf(o){
-      var ins = instrById[o.st.iid];
-      return esc((ins && ins.name) || o.r['강사명'] || o.st.iid) + (ins ? ' ' + docBadge(ins, o.r) : '');
+    if (!todoCat || !D[todoCat]) todoCat = '';
+    var cat = todoCat || TODO_ORDER.filter(function(k){ return D[k].n; })[0] || 'plan';
+    var c = D[cat];
+    var chips = TODO_ORDER.map(function(k){
+      var n = D[k].n;
+      return '<button type="button" class="btn chip' + (k === cat ? ' on' : '') + (n ? ' has' : '') + '" data-tcat="' + k + '">' + esc(D[k].label) + ' ' + (n === null ? '…' : n) + '</button>';
+    }).join('');
+    var sub = '';
+    if (cat === 'plan') {
+      sub = '<div class="tabs">' + [['all', '전체', c.n], ['over', '기한 지남', c.nOver], ['soon', '임박', c.nSoon]].map(function(t){
+        return '<button type="button" class="btn' + (todoTab === t[0] ? ' on' : '') + '" data-ttab="' + t[0] + '">' + t[1] + ' ' + t[2] + '</button>';
+      }).join('') + '</div>';
     }
-    function copyBtn(o){ return viewer ? '' : '<button type="button" class="btn sm" data-tplink="' + esc(o.st.sid) + '|' + esc(o.st.iid) + '">링크 복사</button>'; }
-    var rows = shownList.map(function(o){
-      return '<tr class="trow" data-todo="' + esc(o.r['개설키']) + '"><td>' + todoPill(o.st) + '</td><td class="nw">' + esc(md(o.st.due)) + '</td><td>' + esc(o.r['개설키']) + '</td>' +
-        '<td>' + esc(o.st.subj) + ' (' + esc(md(o.st.date)) + ')</td><td>' + nameOf(o) + '</td><td>' + copyBtn(o) + '</td></tr>';
+    var list = c.items, shownList = todoMore ? list : list.slice(0, 5);
+    var rows = shownList.map(function(it){
+      return '<tr class="trow" data-todo="' + esc(it.key) + '">' + it.cells.map(function(h){ return '<td>' + h + '</td>'; }).join('') + '</tr>';
     }).join('');
-    var cards = shownList.map(function(o){
-      return '<div class="mc" data-todo="' + esc(o.r['개설키']) + '"><div class="t">' + todoPill(o.st) + ' ' + esc(o.st.subj) + '</div>' +
-        '<div class="s">' + esc(o.r['개설키']) + ' · 강의 ' + esc(md(o.st.date)) + ' · 기한 ' + esc(md(o.st.due)) + '</div>' +
-        '<div class="a">' + nameOf(o) + ' ' + copyBtn(o) + '</div></div>';
+    var cards = shownList.map(function(it){
+      return '<div class="mc" data-todo="' + esc(it.key) + '"><div class="t">' + it.title + '</div><div class="s">' + it.sub + '</div><div class="a">' + it.extra + '</div></div>';
     }).join('');
-    function tab(k, label, n){ return '<button type="button" class="btn' + (todoTab === k ? ' on' : '') + '" data-ttab="' + k + '">' + label + ' ' + n + '</button>'; }
-    box.innerHTML = '<div class="th"><h3>처리할 일 · 강의계획서</h3><span class="sum">기한 지남 <b style="color:var(--err-fg)">' + nOver + '건</b> · 7일 이내 임박 <b style="color:var(--warn-fg)">' + nSoon + '건</b> · 기한은 강의일 7일 전</span>' +
-      '<div class="tabs">' + tab('all', '전체', all.length) + tab('over', '기한 지남', nOver) + tab('soon', '임박', nSoon) + '</div></div>' +
-      (list.length ? '<table><thead><tr><th>상태</th><th>기한</th><th>과정 · 기수</th><th>교과목 (강의일)</th><th>강사</th><th></th></tr></thead><tbody>' + rows + '</tbody></table><div class="mcards">' + cards + '</div>' : '<div class="tnone">해당하는 항목이 없습니다.</div>') +
-      '<div class="more">' + (list.length > 5 ? '<a data-tmore="1">' + (todoMore ? '접기 ▴' : '나머지 ' + (list.length - 5) + '건 더 보기 ▾') + '</a> ' : '') +
-      '<span class="tnote">· 행을 누르면 해당 과정의 교과목 편성 화면으로 이동합니다' + (viewer ? '.' : '. 링크 복사는 강사에게 직접 전달해 주세요(자동 발송 없음).') + '</span></div>';
+    box.innerHTML = '<div class="th"><h3>처리할 일</h3><div class="chips">' + chips + '</div></div>' +
+      '<div class="th2"><span class="sum">' + c.sum + '</span>' + sub + '</div>' +
+      (list.length ? '<table><thead><tr>' + c.cols.map(function(h){ return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' + rows + '</tbody></table><div class="mcards">' + cards + '</div>' : '<div class="tnone">해당하는 항목이 없습니다.</div>') +
+      '<div class="more">' + (list.length > 5 ? '<a data-tmore="1">' + (todoMore ? '접기 ▴' : '나머지 ' + (list.length - 5) + '건 더 보기 ▾') + '</a> ' : '') + '<span class="tnote">· ' + c.note + '</span></div>';
   }
   function docBadge(x, row){
     if (!x) return '';
@@ -2697,11 +2786,13 @@
 
   function onListClick(ev){
     var t = ev.target;
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore')))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
     if (tpl) { var tp = tpl.split('|'); copyText(planLink(tp[1], tp[0]), t); return; }
+    var tcat = t.getAttribute('data-tcat');
+    if (tcat) { todoCat = tcat; todoMore = false; renderTodo(); return; }
     var ttab = t.getAttribute('data-ttab');
     if (ttab) { todoTab = ttab; todoMore = false; renderTodo(); return; }
     if (t.getAttribute('data-tmore')) { todoMore = !todoMore; renderTodo(); return; }
