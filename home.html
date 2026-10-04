@@ -97,6 +97,7 @@
   .tl .co a:hover,.wk a.cn:hover{text-decoration:underline;}
   .tl .ro{font-size:13px;color:var(--text-sub);}
   .tl .ins{font-size:13px;margin-top:2px;}
+  a.inm{color:var(--navy);font-weight:700;text-decoration:underline dotted;text-underline-offset:3px;} a.inm:hover{text-decoration:underline;}
   .ttwrap{overflow-x:auto;}
   table.tt{border-collapse:separate;border-spacing:3px;width:100%;table-layout:fixed;}
   .tt th.pn{width:78px;text-align:left;font-size:13px;font-weight:800;color:var(--navy);padding:6px 6px;vertical-align:top;}
@@ -225,7 +226,7 @@
       <section class="card" id="cRoom"></section>
     </div>
   </div>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 18</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 19</div>
 </div>
 </div>
 
@@ -348,14 +349,16 @@
     var seen = {};
     return named.filter(function(r){ var k = (r['강사ID'] || '') + '|' + (r['강사명'] || '') + '|' + (r['강사 역할'] || ''); if (seen[k]) return false; seen[k] = 1; return true; }).map(function(r){
       if (isOps(r)) return '<span class="tag t-ops">' + esc(OPS_NAME) + '</span>';
-      return esc(String(r['강사명'] || r['강사ID'])) + (multi && isSubRole(r) ? ' <span class="tag t-none">보조</span>' : '');
+      var nmTxt = esc(String(r['강사명'] || r['강사ID'])), iid = String(r['강사ID'] || '').trim();
+      if (iid) nmTxt = '<a class="inm" href="instructor-dashboard.html#i=' + encodeURIComponent(iid) + '" title="누르면 강사 정보 카드(상세)가 열립니다">' + nmTxt + '</a>';
+      return nmTxt + (multi && isSubRole(r) ? ' <span class="tag t-none">보조</span>' : '');
     }).join(', ');
   }
   function renderToday(){
     var today = todayStr(), q = parseYmd(today);
     var list = sessionsOn(today);
     var now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
-    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건</span></div><div class="cdesc">오늘 진행되는 수업을 교시별·과정별로 보여줍니다. 과정마다 색이 다릅니다. 과정명을 누르면 해당 과정의 오늘 날짜 주간 일정이 열립니다.</div>';
+    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건</span></div><div class="cdesc">오늘 진행되는 수업을 교시별·과정별로 보여줍니다. 과정마다 색이 다릅니다. 과정명을 누르면 해당 과정의 오늘 날짜 주간 일정이, <b>강사 이름을 누르면 강사 정보 카드(상세)</b>가 열립니다.</div>';
     if (!sessionsOk) { $('cToday').innerHTML = html + '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
     if (!list.length) { $('cToday').innerHTML = html + '<div class="empty">오늘 예정된 수업이 없습니다.</div>'; return; }
     // 행: 교시표의 교시 + 수업에 쓰인 교시
