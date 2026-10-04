@@ -399,6 +399,11 @@
   .rmchip.use{background:#FBE0DC;color:#9B1C12;cursor:pointer;} .rmchip.plan{background:#FFF1BF;color:#7A5B00;cursor:pointer;}
   .rmchip.use:hover,.rmchip.plan:hover{filter:brightness(.96);}
   .rmchip small{font-weight:600;font-size:11.5px;opacity:.85;}
+  .rfpanel{border:1px solid var(--border-input);border-radius:8px;background:#FAFCFA;padding:10px 12px;margin-bottom:8px;font-size:13px;}
+  .rfpanel .rfhead{margin-bottom:8px;}
+  .rfc{display:inline-flex;flex-direction:column;align-items:flex-start;padding:6px 11px;border:1px solid #BFDCC2;border-radius:8px;background:#E3F1E4;color:#1F6B2B;font-family:inherit;font-size:13px;font-weight:800;line-height:1.3;cursor:pointer;}
+  .rfc small{font-weight:600;font-size:11px;opacity:.85;}
+  .rfc:hover{filter:brightness(.96);} .rfc.sel{outline:2px solid #1F6B2B;}
   .dday h4{margin:14px 0 6px;font-size:13.5px;}
   .dday table{width:100%;border-collapse:collapse;font-size:12.5px;}
   .dday th,.dday td{padding:6px 6px;border-top:1px solid var(--border);text-align:left;vertical-align:top;}
@@ -674,7 +679,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 홈 9</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 홈 10</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1410,15 +1415,64 @@
   }
 
   /* --- 입력 폼 --- */
-  function roomOptions(selected){
+  function roomOptions(selected, ctx){
     var html = '<option value="">(미정)</option>';
     var found = false;
-    rooms.forEach(function(r){
+    var one = function(r, note){
       if (r === selected) found = true;
-      html += '<option value="' + esc(r) + '"' + (r === selected ? ' selected' : '') + '>' + esc(r) + '</option>';
-    });
+      return '<option value="' + esc(r) + '"' + (r === selected ? ' selected' : '') + '>' + esc(r) + (note ? ' — ' + esc(note) : '') + '</option>';
+    };
+    if (!ctx) rooms.forEach(function(r){ html += one(r); });
+    else {   // 입력한 일자·교시 기준: 빈 강의실을 위에, 사용 중·예정은 아래에 사용 내역과 함께 표시
+      var fr = [], us = [];
+      rooms.forEach(function(r){ if (roomSkip[r] || !(ctx.use[r] && ctx.use[r].length)) fr.push(r); else us.push(r); });
+      html += '<optgroup label="빈 강의실 (' + fr.length + '곳)">' + fr.map(function(r){ return one(r); }).join('') + '</optgroup>';
+      if (us.length) html += '<optgroup label="사용 중·예정 (' + us.length + '곳)">' + us.map(function(r){
+        var u = ctx.use[r][0];
+        return one(r, (u.type === 'plan' ? '예정(편성 전) ' : '사용 중 ') + u.label + (ctx.use[r].length > 1 ? ' 외 ' + (ctx.use[r].length - 1) + '건' : ''));
+      }).join('') + '</optgroup>';
+    }
     html += '<option value="__other"' + (selected && !found ? ' selected' : '') + '>(직접 입력)</option>';
     return html;
+  }
+  /* 편성 입력 칸의 일자·교시 기준 강의실 사용 현황 (입력 중인 줄 자신·자기 과정의 예정 강의실은 제외) */
+  function formRoomCtx(){
+    if (!$('sDate')) return null;
+    var d = normYmd($('sDate').value), a = Number($('sStart').value), b = Number($('sEnd').value);
+    if (!d || !isFinite(a) || !isFinite(b) || !rooms.length) return null;
+    return { date: d, s: a, e: b, use: roomUsage(d, a, b, { skipSid: form.id || '', skipPlanKey: currentKey }) };
+  }
+  function refreshRoomOptions(){
+    var sel = $('sRoom'); if (!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = roomOptions(cur, formRoomCtx());
+    sel.value = cur;
+    if ($('sRoomFree') && $('sRoomFree').style.display !== 'none') renderRoomFreePanel();
+  }
+  function renderRoomFreePanel(){
+    var box = $('sRoomFree'); if (!box) return;
+    var ctx = formRoomCtx();
+    if (!ctx) { box.innerHTML = '<div class="hint">일자와 교시를 먼저 입력하면 그 시간의 빈 강의실을 보여 드립니다.</div>'; return; }
+    var fr = [], us = [];
+    rooms.forEach(function(r){ if (roomSkip[r] || !(ctx.use[r] && ctx.use[r].length)) fr.push(r); else us.push(r); });
+    var q = parseYmd(ctx.date), span = periodSpan(ctx.s, ctx.e);
+    var head = '<div class="rfhead"><b>' + esc(q ? q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') ' : ctx.date) + ctx.s + '~' + ctx.e + '교시' + (span ? '(' + esc(span) + ')' : '') + '</b> · 빈 강의실 ' + fr.length + '곳 / 전체 ' + rooms.length + '곳</div>';
+    var chips = fr.length ? '<div class="rmlist">' + fr.map(function(r){
+      var inf = roomInfo[r] || {}, sub = [inf.bld, inf.floor, inf.kind].filter(Boolean).join(' · ');
+      return '<button type="button" class="rfc' + (r === $('sRoom').value ? ' sel' : '') + '" data-rfpick="' + esc(r) + '">' + esc(r) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</button>';
+    }).join('') + '</div>' : '<div class="hint warn">이 시간에 비어 있는 강의실이 없습니다.</div>';
+    var used = us.length ? '<div class="hint" style="margin-top:8px;">사용 중·예정: ' + us.map(function(r){
+      var u = ctx.use[r][0];
+      return esc(r) + '(' + esc(u.label) + (u.type === 'plan' ? ', 편성 전 예정' : ', ' + u.s + '~' + u.e + '교시') + ')';
+    }).join(' / ') + '</div>' : '';
+    box.innerHTML = head + chips + used + '<div class="hint" style="margin-top:6px;">강의실 이름을 누르면 아래 강의실 칸에 입력됩니다.</div>';
+  }
+  function toggleRoomFree(){
+    var box = $('sRoomFree'); if (!box) return;
+    var open = box.style.display === 'none';
+    box.style.display = open ? '' : 'none';
+    $('sRoomFreeBtn').textContent = open ? '빈 강의실 닫기' : '빈 강의실 보기';
+    if (open) renderRoomFreePanel();
   }
   function renderForm(p){
     var panel = $('sFormPanel');
@@ -1441,7 +1495,9 @@
       '<div><label for="sKlass">반</label><select id="sKlass">' +
         KLASSES.map(function(k){ return '<option' + (k === lastKlass ? ' selected' : '') + '>' + k + '</option>'; }).join('') +
         '</select><div class="hint" id="sKlassHint"></div></div>' +
-      '<div class="span2"><label for="sRoom">강의실</label><select id="sRoom">' + roomOptions(defRoom) + '</select>' +
+      '<div class="span2"><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin-bottom:3px;"><label for="sRoom" style="margin:0;">강의실</label>' +
+        '<button type="button" class="btn" id="sRoomFreeBtn" style="height:26px;padding:0 10px;font-size:12px;" title="위에 입력한 일자·교시에 비어 있는 강의실을 보여 줍니다">빈 강의실 보기</button></div>' +
+        '<div id="sRoomFree" class="rfpanel" style="display:none;"></div><select id="sRoom">' + roomOptions(defRoom) + '</select>' +
         '<input type="text" id="sRoomText" maxlength="100" placeholder="강의실 이름 직접 입력" style="display:none;margin-top:6px;"></div>' +
       '<div class="span2" style="position:relative;"><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin-bottom:3px;"><label for="sInstr" style="margin:0;">강사</label>' +
         '<span style="display:flex;gap:6px;"><button type="button" class="btn" id="sOps" style="height:26px;padding:0 10px;font-size:12px;" title="입교안내·성과측정처럼 강사 없이 학교(교육운영팀)가 운영하는 교시">교육운영팀 운영</button>' +
@@ -1462,17 +1518,24 @@
     var big = Number(p['계획인원']) > 120;
     $('sKlassHint').textContent = big ? '계획인원이 120명을 넘습니다. A·B 분반 운영을 검토해 보세요.' : '';
     updateDow();
+    refreshRoomOptions();
     $('sRole').value = form.role === '보조강사' ? '보조강사' : '주강사';
     $('sRole').addEventListener('change', function(){ form.role = $('sRole').value; });
     renderChip();
-    $('sDate').addEventListener('change', function(){ updateDow(); renderChip(); });
+    $('sDate').addEventListener('change', function(){ updateDow(); renderChip(); refreshRoomOptions(); });
     $('sStart').addEventListener('change', function(){
       if (Number($('sEnd').value) < Number($('sStart').value)) $('sEnd').value = $('sStart').value;
-      renderChip();
+      renderChip(); refreshRoomOptions();
     });
     $('sEnd').addEventListener('change', function(){
       if (Number($('sEnd').value) < Number($('sStart').value)) $('sStart').value = $('sEnd').value;
-      renderChip();
+      renderChip(); refreshRoomOptions();
+    });
+    $('sRoomFreeBtn').addEventListener('click', toggleRoomFree);
+    $('sRoomFree').addEventListener('click', function(ev){
+      var b = ev.target.closest ? ev.target.closest('[data-rfpick]') : null; if (!b) return;
+      $('sRoom').value = b.getAttribute('data-rfpick'); $('sRoomText').style.display = 'none';
+      renderRoomFreePanel();
     });
     $('sSubj').addEventListener('change', renderChip);
     $('sRoom').addEventListener('change', function(){
@@ -1599,6 +1662,7 @@
     renderForm(p);
     $('sStart').value = String(Number(r['시작교시']));
     $('sEnd').value = String(Number(r['끝교시']));
+    refreshRoomOptions();
     $('sSubj').value = String(r['교과목'] || '');
     $('sNote').value = String(r['비고'] || '');
     updateDow();
@@ -1972,12 +2036,13 @@
     return Object.keys(out);
   }
   /* 선택한 날짜·교시 범위에서 강의실별 사용 내역: {방이름: [{type:'sess'|'plan', key, label, s, e}]} */
-  function roomUsage(date, s, e){
+  function roomUsage(date, s, e, opt){
     var use = {}, hasRoomSess = {};
     function add(rm, o){ (use[rm] = use[rm] || []).push(o); }
     function nameOf(key){ var p = planByKey(key); return p ? String(p['과정명'] || '') + ' ' + String(p['기수'] || '') : key; }
     allSessions.forEach(function(r){
       if (normYmd(r['일자']) !== date) return;
+      if (opt && opt.skipSid && String(r['편성ID']) === opt.skipSid) return;   // 편성 입력 중 수정하는 줄 자신은 제외
       var key = String(r['개설키'] || ''), p = planByKey(key); if (p && isCancelled(p)) return;
       var rmTxt = String(r['강의실'] || '').trim(); if (!rmTxt) return;
       if (!isOps(r)) hasRoomSess[key] = true;   // 교육운영팀 교시(입교안내·성과측정)만 있는 날은 아직 편성 전으로 보고 연간계획 예정 강의실도 계속 반영
@@ -1990,7 +2055,7 @@
     var q = parseYmd(date), wk = q && q.dow !== 0 && q.dow !== 6;
     if (wk) plans.forEach(function(p){
       if (isCancelled(p)) return;
-      var key = String(p['과정+기수'] || ''); if (!key || hasRoomSess[key]) return;
+      var key = String(p['과정+기수'] || ''); if (!key || hasRoomSess[key] || (opt && opt.skipPlanKey === key)) return;   // 입력 중인 과정 자신의 예정 강의실은 제외
       var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']); if (!a && !b) return; a = a || b; b = b || a;
       if (date < a || date > b) return;
       planRoomNames(p['예정 강의실']).forEach(function(rm){ add(rm, { type: 'plan', key: key, label: nameOf(key), s: 0, e: 99 }); });
