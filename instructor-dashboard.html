@@ -312,9 +312,17 @@
     .gnav-i{padding:0 12px;font-size:13px;}
   }
   @media print{ .gnav{display:none !important;} }
+
+  /* 저장된 로그인이 있으면 로그인 화면(배경)을 보여주지 않고 바로 불러오기 */
+  #boot{display:none;}
+  html.autologin #loginScreen{display:none !important;}
+  html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:#5b6575;font-size:14px;}
 </style>
 </head>
 <body>
+<script>try{if(sessionStorage.getItem('jsfa_dash_pw'))document.documentElement.classList.add('autologin');}catch(e){}window.__autoDone=function(){document.documentElement.classList.remove('autologin');};</script>
+<div id="boot">불러오는 중...</div>
+
 
 <div id="loginScreen">
   <div id="loginCard">
@@ -1392,7 +1400,7 @@
   // 같은 브라우저 탭 세션 안에서는 다시 로그인하지 않도록 자동 시도
   var savedPw = sessionStorage.getItem('jsfa_dash_pw');
   if (savedPw) {
-    loadData(savedPw).catch(function(){ sessionStorage.removeItem('jsfa_dash_pw'); sessionStorage.removeItem('jsfa_dash_role'); });
+    loadData(savedPw).catch(function(){ sessionStorage.removeItem('jsfa_dash_pw'); sessionStorage.removeItem('jsfa_dash_role'); }).then(window.__autoDone, window.__autoDone);
   }
 </script>
 

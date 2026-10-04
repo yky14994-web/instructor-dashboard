@@ -542,9 +542,17 @@
     body.pgrid .gscroll{overflow:visible;}
     body.pgrid table.g{min-width:0;font-size:10.5px;}
   }
+
+  /* 저장된 로그인이 있으면 로그인 화면(배경)을 보여주지 않고 바로 불러오기 */
+  #boot{display:none;}
+  html.autologin #loginScreen{display:none !important;}
+  html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:#5b6575;font-size:14px;}
 </style>
 </head>
 <body>
+<script>try{if(sessionStorage.getItem('jsfa_dash_pw'))document.documentElement.classList.add('autologin');}catch(e){}window.__autoDone=function(){document.documentElement.classList.remove('autologin');};</script>
+<div id="boot">불러오는 중...</div>
+
 
 <div id="loginScreen">
   <div id="loginCard">
@@ -3710,7 +3718,7 @@
       $('app').style.display = 'block';
       $('loading').style.display = 'none';
       showMsg('err', err.message || '불러오지 못했습니다');
-    });
+    }).then(window.__autoDone, window.__autoDone);
   }
 })();
 </script>

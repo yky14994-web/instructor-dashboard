@@ -113,6 +113,9 @@
   .wknav{display:flex;gap:6px;align-items:center;}
 
   /* 빈 강의실 */
+  .rl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0;}
+  .rl .k{font-size:12.5px;font-weight:700;color:var(--text-sub);min-width:84px;}
+  .rl .tag small{font-size:11px;color:var(--text-muted);}
   .rp{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin:4px 0 10px;}
   .rp .c{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:#FAFBFC;}
   .rp .c b{display:block;font-size:12.5px;color:var(--navy);}
@@ -137,9 +140,17 @@
   #msg.err{display:block;background:var(--err-bg);color:var(--err-fg);}
   #loading{padding:30px;text-align:center;color:var(--text-muted);}
   @media print{ .gnav,.quick,.btn{display:none !important;} }
+
+  /* 저장된 로그인이 있으면 로그인 화면(배경)을 보여주지 않고 바로 불러오기 */
+  #boot{display:none;}
+  html.autologin #loginScreen{display:none !important;}
+  html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:#5b6575;font-size:14px;}
 </style>
 </head>
 <body>
+<script>try{if(sessionStorage.getItem('jsfa_dash_pw'))document.documentElement.classList.add('autologin');}catch(e){}window.__autoDone=function(){document.documentElement.classList.remove('autologin');};</script>
+<div id="boot">불러오는 중...</div>
+
 
 <div id="loginScreen">
   <div id="loginCard">
@@ -411,19 +422,21 @@
       return;
     }
     var pn = periods.length ? periods.map(function(x){ return x.n; }) : [1, 2, 3, 4, 5, 6, 7];
-    var cells = pn.map(function(n){
-      var use = roomsUsed(today, n, n), free = target.filter(function(r){ return !use[r]; }).length;
-      var pi = periodInfo(n);
-      return '<div class="c' + (free === 0 ? ' low' : '') + '"><b>' + n + '교시</b><span>' + esc(pi && validTime(pi.start) ? pi.start : '') + '</span><span class="n">' + free + ' / ' + target.length + '</span></div>';
-    }).join('');
-    var all = roomsUsed(today, pn[0], pn[pn.length - 1]);
-    var whole = target.filter(function(r){ return !all[r]; });
-    html += '<div class="rp">' + cells + '</div>' +
-      '<div class="hint">교시별 빈 강의실 수 / 대상 강의실 수</div>' +
-      '<div style="margin-top:10px;font-size:13px;font-weight:700;color:var(--text-sub);">하루 종일 비어 있는 강의실</div>' +
-      (whole.length ? '<div class="chips">' + whole.map(function(r){ return '<span class="tag">' + esc(r) + '</span>'; }).join('') + '</div>' : '<div class="empty" style="padding:6px 2px;">없음</div>') +
-      '<div class="hint">편성된 교과목의 강의실과, 교과목 편성 전인 과정의 연간계획 예정 강의실을 사용 중으로 봅니다. 야외·실습 장소(겹침 검사 제외)는 계산에서 뺍니다.</div>' +
-      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=room">빈 강의실 조회로 이동</a></div>';
+    var usedBy = {};   // 강의실 -> 사용 교시 목록
+    pn.forEach(function(n){ var use = roomsUsed(today, n, n); target.forEach(function(r){ if (use[r]) (usedBy[r] = usedBy[r] || []).push(n); }); });
+    function ranges(a){
+      var out = [], st = a[0], pv = a[0];
+      for (var k = 1; k <= a.length; k++) {
+        if (k < a.length && a[k] === pv + 1) { pv = a[k]; continue; }
+        out.push(st === pv ? st + '' : st + '~' + pv); if (k < a.length) { st = a[k]; pv = a[k]; }
+      }
+      return out.join(', ') + '교시';
+    }
+    var whole = target.filter(function(r){ return !usedBy[r]; });
+    var busy = target.filter(function(r){ return usedBy[r]; });
+    html += '<div class="rl"><span class="k">종일 비어 있음</span>' + (whole.length ? whole.map(function(r){ return '<span class="tag t-ok">' + esc(r) + '</span>'; }).join('') : '<span class="meta">없음</span>') + '</div>' +
+      (busy.length ? '<div class="rl"><span class="k">사용 중</span>' + busy.map(function(r){ return '<span class="tag t-none">' + esc(r) + ' <small>' + ranges(usedBy[r]) + '</small></span>'; }).join('') + '</div>' : '') +
+      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=room">교시별 빈 강의실 조회</a></div>';
     $('cRoom').innerHTML = html;
   }
 
@@ -588,7 +601,7 @@
       $('app').style.display = 'block';
       $('loading').style.display = 'none';
       showMsg('err', err.message || '불러오지 못했습니다');
-    });
+    }).then(window.__autoDone, window.__autoDone);
   }
 })();
 </script>
