@@ -648,6 +648,14 @@
     if (!p) return String(s || '');
     return p.m + '/' + p.d + '(' + DOW[p.dow] + ')';
   }
+  /* 날짜 표기가 조금 달라도(2027-3-30, 2027.03.30, 2027-03-30T00:00 등) YYYY-MM-DD로 맞춤. 해석할 수 없으면 '' */
+  function normYmd(v){
+    var s = String(v == null ? '' : v).trim(); if (!s) return '';
+    if (/^\d{4}-\d{2}-\d{2}T.*Z$/.test(s)) { var t = new Date(s); if (!isNaN(t)) { var k = new Date(t.getTime() + 9 * 3600000); return k.getUTCFullYear() + '-' + ('0' + (k.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + k.getUTCDate()).slice(-2); } }
+    var m = /^(\d{4})\s*[-./]\s*(\d{1,2})\s*[-./]\s*(\d{1,2})(?:$|[^\d].*$)/.exec(s); if (!m) return '';
+    var out = m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2), q = parseYmd(out);
+    return q && q.m === +m[2] && q.d === +m[3] ? out : '';
+  }
   function range(a, b){
     if (!a && !b) return '';
     if (a && !b) return md(a) + '~';
@@ -1644,17 +1652,21 @@
       if (isCancelled(p)) return;
       var key = String(p['과정+기수'] || ''); if (!key) return;
       [['입교 시작일', '입교 종료일', '입교'], ['사이버 시작일', '사이버 종료일', '사이버'], ['실습(외부) 시작일', '실습(외부) 종료일', '실습']].forEach(function(k){
-        var a = String(p[k[0]] || ''), b = String(p[k[1]] || '');
-        if (!parseYmd(a) || !parseYmd(b)) return;
+        var a = normYmd(p[k[0]]), b = normYmd(p[k[1]]);
+        if (!a && !b) return;
+        if (!a) a = b; if (!b) b = a;           // 한쪽만 있으면 그 하루로 표시
+        if (b < a) return;
+        if (b < first || a > last) return;
         var from = a < first ? first : a, to = b > last ? last : b;
         for (var d = from; d <= to; d = addDays(d, 1)) {
           var q = parseYmd(d); if (q.dow === 0 || q.dow === 6) continue;
-          ent(d, key).tags[k[2]] = true;
+          var e = ent(d, key); e.tags[k[2]] = true;
+          if (k[2] === '입교') e.span = { a: a, b: b };
         }
       });
     });
     allSessions.forEach(function(r){
-      var key = String(r['개설키'] || ''), d = String(r['일자'] || '');
+      var key = String(r['개설키'] || ''), d = normYmd(r['일자']);
       if (!key || d.slice(0, 7) !== month) return;
       var p = planByKey(key); if (p && isCancelled(p)) return;
       ent(d, key).rows.push(r);
@@ -1691,6 +1703,7 @@
     if (e.rows.length && e.tags['사이버']) sub += ' · 사이버';
     if (st.unas) sub += ' · 강사 미지정 ' + st.unas;
     if (st.err) sub += ' · 겹침';
+    if (e.span && (e.span.a.slice(0, 7) !== e.span.b.slice(0, 7)) && e.span.a !== e.span.b) sub += ' · ' + md(e.span.a).replace(/\(.\)/, '') + '~' + md(e.span.b).replace(/\(.\)/, '');
     var cls = 'cc ' + typeCls(p) + (st.err ? ' err' : st.warn ? ' warn' : '') + (st.unas ? ' unas' : '') + (e.rows.length ? '' : ' pre');
     return '<span class="' + cls + '" data-cday="' + esc(d) + '" data-ckey="' + esc(e.key) + '" title="' + esc(name + ' · ' + sub) + '"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small></span>';
   }
