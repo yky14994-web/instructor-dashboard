@@ -477,13 +477,8 @@
           payload.동의서base64 = consentBase64;
           payload.동의서타입 = consentFile.type || 'application/pdf';
         }
-        return fetch(WEBAPP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        });
+        return postWithRetry(JSON.stringify(payload), 0);
       })
-      .then(function(res){ return res.json(); })
       .then(function(data){
         if (data.status === 'ok') {
           msg.innerHTML = '등록 신청이 접수되었습니다.<br><b>승인 여부는 메일로 안내되니, 반드시 메일을 확인해 주시기 바랍니다.</b>';
@@ -509,6 +504,22 @@
         btn.textContent = '등록 신청하기';
       });
   });
+
+  // 접수가 몰려 서버가 'busy'로 답하면 3~6초 뒤 자동으로 다시 보냄(최대 6회). 신청자가 다시 누를 필요 없음
+  function postWithRetry(body, n){
+    return fetch(WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: body
+    }).then(function(res){ return res.json(); }).then(function(data){
+      if (data && data.status === 'busy' && n < 6) {
+        document.getElementById('submitBtn') && (document.getElementById('submitBtn').textContent = '접수 대기 중... 자동으로 다시 시도합니다 (' + (n + 1) + '/6)');
+        return new Promise(function(r){ setTimeout(r, 3000 + Math.random() * 3000); }).then(function(){ return postWithRetry(body, n + 1); });
+      }
+      if (data && data.status === 'busy') return { status: 'error', message: '접수가 많이 몰려 처리하지 못했습니다. 잠시 후 다시 신청해 주세요. 입력한 내용은 화면에 남아 있습니다.' };
+      return data;
+    });
+  }
 </script>
 
 </body>
