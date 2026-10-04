@@ -97,7 +97,26 @@
   .tl .co a:hover,.wk a.cn:hover{text-decoration:underline;}
   .tl .ro{font-size:13px;color:var(--text-sub);}
   .tl .ins{font-size:13px;margin-top:2px;}
+  .ttwrap{overflow-x:auto;}
+  table.tt{border-collapse:separate;border-spacing:3px;width:100%;table-layout:fixed;}
+  .tt th.pn{width:78px;text-align:left;font-size:13px;font-weight:800;color:var(--navy);padding:6px 6px;vertical-align:top;}
+  .tt th.pn small{display:block;font-size:11.5px;font-weight:600;color:var(--text-muted);}
+  .tt th.cn{padding:8px 8px;font-size:13.5px;border-radius:6px;text-align:left;}
+  .tt th.cn a{color:var(--navy);font-weight:800;text-decoration:none;} .tt th.cn a:hover{text-decoration:underline;}
+  .tt td.blk{padding:7px 9px;vertical-align:top;border-radius:6px;font-size:13px;}
+  .tt td.blk.done{opacity:.55;} .tt td.blk.now{box-shadow:0 0 0 2px #2F6FD6 inset;}
+  .tt .sj{font-size:14px;font-weight:800;color:#1F2D45;} .tt .ins{font-size:13px;margin-top:3px;} .tt .ro{font-size:12.5px;color:var(--text-sub);margin-top:2px;}
+  .tt td.emp{background:#FAFBFC;border-radius:6px;min-height:34px;height:34px;}
+  .tt td.emp.nowrow{background:#EAF2FF;} .tt th.pn.nowrow{background:#EAF2FF;border-radius:6px;}
+  .tcards{display:none;}
+  .tcard{border-radius:8px;padding:8px 10px;margin-top:8px;}
+  .tcard .tch a{font-weight:800;color:var(--navy);text-decoration:none;font-size:14.5px;}
+  .tcr{display:grid;grid-template-columns:96px minmax(0,1fr);gap:6px;padding:6px 0;border-top:1px solid rgba(0,0,0,.07);margin-top:6px;}
+  .tcr.done{opacity:.55;} .tcr.now{background:rgba(47,111,214,.10);border-radius:6px;}
+  .tcr .tm{font-size:12.5px;font-weight:800;color:var(--navy);} .tcr .tm small{display:block;font-weight:600;color:var(--text-muted);}
+  .tcr .sj{font-size:14px;font-weight:700;} .tcr .ro{font-size:12.5px;color:var(--text-sub);margin-top:2px;}
   @media (max-width:640px){
+    .ttwrap{display:none;} .tcards{display:block;}
     .tl li{grid-template-columns:minmax(0,1fr);gap:2px;}
     .tl .tm small{display:inline;margin-left:6px;}
   }
@@ -206,7 +225,7 @@
       <section class="card" id="cRoom"></section>
     </div>
   </div>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 17</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 18</div>
 </div>
 </div>
 
@@ -289,16 +308,18 @@
   }
   /* 강의배정 월 캘린더와 같은 과정명별 색(입교 시작일이 빠른 과정부터 황금각으로 색상 배정) */
   var courseRank = null;
-  function courseColor(name){
+  function courseHue(name){
     if (!courseRank) {
       courseRank = {}; var first = {};
       plans.forEach(function(p){ var n = String(p['과정명'] || ''), d = normYmd(p['입교 시작일']) || '9999'; if (!(n in first) || d < first[n]) first[n] = d; });
       Object.keys(first).sort(function(x, y){ return first[x] < first[y] ? -1 : first[x] > first[y] ? 1 : x < y ? -1 : 1; }).forEach(function(n, i){ courseRank[n] = i; });
     }
     var i = courseRank[name]; if (i == null) { var h = 0; for (var k = 0; k < name.length; k++) h = (h * 31 + name.charCodeAt(k)) % 997; i = h; }
-    var hue = Math.round((i * 137.508 + 20) % 360);
-    return 'hsl(' + hue + ',55%,55%)';
+    return Math.round((i * 137.508 + 20) % 360);
   }
+  function courseColor(name){ return 'hsl(' + courseHue(name) + ',55%,55%)'; }
+  function courseBg(name){ return 'hsl(' + courseHue(name) + ',58%,92%)'; }
+  function courseName(key){ var p = planByKey(key); return String(p && p['과정명'] || key); }
   function typeCls(t){ t = String(t || ''); return 'ct-' + (['기본', '전문', '특별', '민관'].indexOf(t) > -1 ? t : '기타'); }
   function courseLink(key, label, date){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + (date ? '&d=' + date : '') + '&from=home" title="누르면 이 과정의 교과목 편성 화면이 열립니다">' + esc(label) + '</a>'; }
 
@@ -334,20 +355,65 @@
     var today = todayStr(), q = parseYmd(today);
     var list = sessionsOn(today);
     var now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
-    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건</span></div><div class="cdesc">오늘 진행되는 수업입니다. 시간 순으로 표시하며, 과정마다 색이 다릅니다. 과정명을 누르면 해당 과정의 오늘 날짜 주간 일정이 열립니다.</div>';
-    if (!sessionsOk) html += '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>';
-    else if (!list.length) html += '<div class="empty">오늘 예정된 수업이 없습니다.</div>';
-    else html += '<ul class="tl">' + list.map(function(o){
+    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건</span></div><div class="cdesc">오늘 진행되는 수업을 교시별·과정별로 보여줍니다. 과정마다 색이 다릅니다. 과정명을 누르면 해당 과정의 오늘 날짜 주간 일정이 열립니다.</div>';
+    if (!sessionsOk) { $('cToday').innerHTML = html + '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
+    if (!list.length) { $('cToday').innerHTML = html + '<div class="empty">오늘 예정된 수업이 없습니다.</div>'; return; }
+    // 행: 교시표의 교시 + 수업에 쓰인 교시
+    var rowSet = {}; periods.forEach(function(x){ rowSet[x.n] = true; });
+    list.forEach(function(o){ for (var n = o.a; n <= o.b && n < o.a + 20; n++) rowSet[n] = true; });
+    var rows = Object.keys(rowSet).map(Number).sort(function(x, y){ return x - y; });
+    // 열: 과정별. 같은 과정의 수업이 같은 시간에 겹치면(분반 등) 열을 추가
+    var cols = [], colOf = {};
+    list.forEach(function(o){
+      var key = o.key; colOf[key] = colOf[key] || [];
+      var lane = -1;
+      for (var i = 0; i < colOf[key].length; i++) {
+        var c = colOf[key][i];
+        if (!c.blocks.some(function(b){ return !(o.b < b.a || o.a > b.b); })) { lane = i; break; }
+      }
+      if (lane < 0) { var nc = { key: key, lane: colOf[key].length, blocks: [], first: o.a }; colOf[key].push(nc); cols.push(nc); lane = nc.lane; }
+      colOf[key][lane].blocks.push(o);
+    });
+    cols.sort(function(x, y){ return x.first - y.first || (x.key < y.key ? -1 : x.key > y.key ? 1 : 0) || x.lane - y.lane; });
+    function stateOf(o){
       var pt = periodText(o.a, o.b);
-      var cls = '';
-      if (pt.s != null && pt.e != null) { if (nowMin >= pt.e) cls = 'done'; else if (nowMin >= pt.s) cls = 'now'; }
-      var state = cls === 'now' ? ' <span class="tag t-ok">진행 중</span>' : cls === 'done' ? ' <span class="tag t-none">종료</span>' : '';
-      return '<li class="' + cls + '" style="border-left:5px solid ' + courseColor(String((planByKey(o.key) || {})['과정명'] || o.key)) + ';padding-left:10px;"><div class="tm">' + esc(pt.txt) + '<small>' + esc(pt.time || '시간 미등록') + '</small></div>' +
-        '<div><div class="sj">' + esc(o.subj) + (o.klass && o.klass !== '전체' ? ' <span class="tag t-none">' + esc(o.klass) + '반</span>' : '') + state + '</div>' +
-        '<div class="co">' + courseLink(o.key, nameOf(o.key), today) + '</div></div>' +
-        '<div><div class="ro">' + (o.room ? esc(o.room) : '<span class="hint">강의실 미정</span>') + '</div><div class="ins">' + instrHtml(o.rows) + '</div></div></li>';
-    }).join('') + '</ul>';
-    $('cToday').innerHTML = html;
+      if (pt.s != null && pt.e != null) { if (nowMin >= pt.e) return 'done'; if (nowMin >= pt.s) return 'now'; }
+      return '';
+    }
+    function klassTag(o){ return o.klass && o.klass !== '전체' ? ' <span class="tag t-none">' + esc(o.klass) + '반</span>' : ''; }
+    function stateTag(st){ return st === 'now' ? ' <span class="tag t-ok">진행 중</span>' : st === 'done' ? ' <span class="tag t-none">종료</span>' : ''; }
+    var curRow = null;
+    rows.forEach(function(n){ var pi = periodInfo(n); if (pi && validTime(pi.start) && validTime(pi.end) && nowMin >= toMin(pi.start) && nowMin < toMin(pi.end)) curRow = n; });
+    var th = '<tr><th class="pn">교시</th>' + cols.map(function(c){
+      var nm = courseName(c.key);
+      return '<th class="cn" style="background:' + courseBg(nm) + ';border-top:4px solid ' + courseColor(nm) + ';">' + (c.lane === 0 ? courseLink(c.key, nameOf(c.key), today) : '<span class="hint">' + esc(nameOf(c.key)) + ' (동시 진행)</span>') + '</th>';
+    }).join('') + '</tr>';
+    var body = rows.map(function(n){
+      var pi = periodInfo(n), tm = pi && validTime(pi.start) ? pi.start + (validTime(pi.end) ? '~' + pi.end : '') : '';
+      var tds = cols.map(function(c){
+        var nm = courseName(c.key);
+        var blk = c.blocks.filter(function(b){ return b.a === n; })[0];
+        if (blk) {
+          var span = rows.filter(function(x){ return x >= blk.a && x <= blk.b; }).length, st = stateOf(blk);
+          return '<td class="blk ' + st + '" rowspan="' + span + '" style="background:' + courseBg(nm) + ';border-left:4px solid ' + courseColor(nm) + ';"><div class="sj">' + esc(blk.subj) + klassTag(blk) + stateTag(st) + '</div>' +
+            '<div class="ins">' + instrHtml(blk.rows) + '</div><div class="ro">' + (blk.room ? esc(blk.room) : '<span class="hint">강의실 미정</span>') + '</div></td>';
+        }
+        if (c.blocks.some(function(b){ return n > b.a && n <= b.b; })) return '';   // 위 칸이 이어짐(rowspan)
+        return '<td class="emp' + (n === curRow ? ' nowrow' : '') + '"></td>';
+      }).join('');
+      return '<tr class="' + (n === curRow ? 'nowrow' : '') + '"><th class="pn' + (n === curRow ? ' nowrow' : '') + '">' + n + '교시' + (tm ? '<small>' + esc(tm) + '</small>' : '') + '</th>' + tds + '</tr>';
+    }).join('');
+    // 모바일: 과정별 카드
+    var keys = []; cols.forEach(function(c){ if (keys.indexOf(c.key) < 0) keys.push(c.key); });
+    var cards = keys.map(function(k){
+      var nm = courseName(k), items = list.filter(function(o){ return o.key === k; });
+      return '<div class="tcard" style="border-left:5px solid ' + courseColor(nm) + ';background:' + courseBg(nm) + ';"><div class="tch">' + courseLink(k, nameOf(k), today) + '</div>' + items.map(function(o){
+        var pt = periodText(o.a, o.b), st = stateOf(o);
+        return '<div class="tcr ' + st + '"><div class="tm">' + esc(pt.txt) + (pt.time ? '<small>' + esc(pt.time) + '</small>' : '') + '</div><div><div class="sj">' + esc(o.subj) + klassTag(o) + stateTag(st) + '</div>' +
+          '<div class="ro">' + (o.room ? esc(o.room) : '<span class="hint">강의실 미정</span>') + ' · ' + instrHtml(o.rows) + '</div></div></div>';
+      }).join('') + '</div>';
+    }).join('');
+    $('cToday').innerHTML = html + '<div class="ttwrap"><table class="tt"><thead>' + th + '</thead><tbody>' + body + '</tbody></table></div><div class="tcards">' + cards + '</div>';
   }
 
   /* ---------- 이번 주 과정 ---------- */
