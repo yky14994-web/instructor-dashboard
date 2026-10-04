@@ -449,6 +449,7 @@
     <div id="loadErrorText" style="margin-bottom:8px;"></div>
     <button type="button" id="loadRetryBtn" style="border:1px solid #1B3A5F;background:#1B3A5F;color:#fff;border-radius:6px;height:34px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;">다시 불러오기</button>
   </div>
+  <div id="mailNotice" style="display:none;background:#FFF4E5;border:1px solid #F0C98A;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:13.5px;color:#7A4B00;line-height:1.6;"></div>
   <div id="empty" style="display:none;">조건에 맞는 강사가 없습니다.</div>
 
   <div id="instructorViewWrap">
@@ -910,7 +911,7 @@
       document.getElementById('approveBtn').addEventListener('click', function(){
         var adminPw = getAdminPw();
         if (adminPw === null) return;
-        if (!confirm('이 강사를 승인하시겠습니까? 승인 즉시 강사님께 안내메일이 발송됩니다.')) return;
+        if (!confirm('이 강사를 승인하시겠습니까? 승인하면 강사님께 안내메일이 발송됩니다(하루 메일 한도를 넘으면 대기 후 순서대로 발송됩니다).')) return;
         submitApproval(d.강사ID, '승인', null, adminPw);
       });
       document.getElementById('holdBtn').addEventListener('click', function(){
@@ -1059,6 +1060,8 @@
     .then(function(json){
       if (json.status === 'ok') {
         var doneMsg = decision === '승인' ? '승인 처리되었습니다.' : (decision === '보류' ? '보류 처리되었습니다.' : '반려 처리되었습니다.');
+        if (json.메일 === '발송완료') doneMsg += '\n안내 메일을 보냈습니다.';
+        else if (json.메일 === '대기') doneMsg += '\n오늘 메일 한도 때문에 안내 메일은 발송 대기 중입니다. 한도가 남으면 순서대로 자동 발송됩니다.';
         alert(doneMsg);
         document.getElementById('overlay').style.display = 'none';
         loadData(pw);
@@ -1361,8 +1364,20 @@
       populateFilter(document.getElementById('filterRegion'), uniqueValues(allData, '활동지역'));
 
       render();
+      showMailNotice(json.mail);
       openFromHash();
     });
+  }
+
+  // 승인·반려 안내 메일 발송 현황(관리자만): 한도 때문에 대기 중이거나 실패한 건이 있으면 안내
+  function showMailNotice(m){
+    var box = document.getElementById('mailNotice');
+    if (!box) return;
+    if (!m || (!m.대기 && !m.실패)) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    var t = [];
+    if (m.대기) t.push('<b>승인·반려 안내 메일 ' + m.대기 + '건이 발송 대기 중입니다.</b> 하루 메일 한도(약 100통) 안에서 순서대로 자동 발송됩니다(오늘 남은 한도 ' + m.남은한도 + '통).');
+    if (m.실패) t.push('<b>안내 메일 ' + m.실패 + '건은 발송에 실패했습니다.</b> 이메일 주소를 확인해 주세요(구글 시트 \'메일대기\' 탭의 상태·비고 열).');
+    box.innerHTML = t.join('<br>'); box.style.display = 'block';
   }
 
   // 강의배정 화면의 "강사관리에서 보기"에서 넘어온 경우(#i=강사ID): 목록을 불러온 뒤 해당 강사 상세를 연다
