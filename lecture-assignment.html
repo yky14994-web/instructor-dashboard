@@ -658,7 +658,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 인쇄 세로·과정명 열기 2</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 강사DB 정리 1</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2658,7 +2658,6 @@
   }
 
   /* --- 강사 카드(미리보기·상세 팝업) --- */
-  var histCache = {};
   function photoUrl(fileId, sz){ return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=' + sz; }
   function avatar(x, cls){
     var ini = String(x.name || '').replace(/[^가-힣A-Za-z]/g, '').slice(-2) || '?';
@@ -2763,8 +2762,7 @@
       '</div>' +
       '<div class="sec">서류 현황 ' + docBadge(x) + '</div>' + docTable(x) +
       planSecHtml(id, mine, viewer) +
-      '<div class="sec">강의 이력 <span class="hint">(강사DB 기록)</span></div><div class="hbox" id="iHist">불러오는 중...</div>' +
-      '<div class="sec">강의배정DB 편성 내역</div><div class="hbox">' + sumHtml + mineHtml + '</div>' +
+      '<div class="sec">강의 이력 <span class="hint">(강의배정DB 편성 내역)</span></div><div class="hbox">' + sumHtml + mineHtml + '</div>' +
       '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button>' +
       (canPick ? '<button type="button" class="btn primary" id="iPick" data-pick="' + esc(id) + '">이 강사 선택</button>' : '') + '</div>';
     $('iOverlay').style.display = 'flex';
@@ -2773,39 +2771,6 @@
       b.addEventListener('click', function(){ copyText(planLink(id, b.getAttribute('data-plink')), b); });
     });
     if ($('iPick')) $('iPick').addEventListener('click', function(){ pickInstructor(id); });
-    loadHistory(id);
-  }
-  function loadHistory(id){
-    var box = $('iHist');
-    if (histCache[id]) { renderHist(histCache[id]); return; }
-    if (!instrById[id] || !instrById[id].count) { renderHist([]); return; }
-    api({ action: 'getHistory', 강사ID: id, password: getPw() }).then(function(j){
-      if (j.status !== 'ok') throw new Error('fail');
-      histCache[id] = j.data || [];
-      renderHist(histCache[id]);
-    }).catch(function(){
-      var b = $('iHist'); if (b) b.textContent = '이력을 불러오지 못했습니다.';
-    });
-  }
-  function renderHist(all){
-    var box = $('iHist');
-    if (!box) return;
-    var list = all.filter(function(h){ return String(h['상태'] || '') !== '취소됨'; });
-    var cancelled = all.length - list.length;
-    if (!all.length) { box.textContent = '지난 강의 이력이 없습니다.'; return; }
-    var hours = 0;
-    list.forEach(function(h){
-      var pr = String(h['시간'] || '').split('~');
-      if (pr.length !== 2) return;
-      var a = parseInt(pr[0], 10), b = parseInt(pr[1], 10);
-      if (!isNaN(a) && !isNaN(b) && b > a) hours += (b - a);
-    });
-    box.innerHTML = '<div class="hs">총 ' + list.length + '회' + (hours ? ' · 누적 ' + hours + '시간' : '') + (cancelled ? ' <span class="hint">(취소 ' + cancelled + '건 제외)</span>' : '') + '</div>' +
-      all.slice(0, 15).map(function(h){
-        var st = String(h['상태'] || '');
-        return '<div class="hi">' + esc(h['일자'] || '') + ' · ' + esc(h['강의명'] || '') + (h['교과목'] ? ' · ' + esc(h['교과목']) : '') +
-          (st ? ' <span class="tag ' + (st === '취소됨' ? 't-err' : 't-none') + '">' + esc(st) + '</span>' : '') + '</div>';
-      }).join('') + (all.length > 15 ? '<div class="hint">최근 15건만 표시합니다.</div>' : '');
   }
   /* --- 연간계획 변경 창(일정 변경·기수 취소·취소 해제) --- */
   var CHG_FIELDS = [['입교 시작일', '입교 종료일', '입교'], ['사이버 시작일', '사이버 종료일', '사이버'], ['실습(외부) 시작일', '실습(외부) 종료일', '실습(외부)']];

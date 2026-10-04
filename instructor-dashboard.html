@@ -295,39 +295,6 @@
     margin-top:12px;font-size:13px;color:#A32D2D;
     display:none;
   }
-  #calMonthLabel{font-size:16px;font-weight:700;color:var(--navy);min-width:110px;text-align:center;}
-  .calNavBtn{border:1px solid var(--border-input);background:#fff;border-radius:6px;width:36px;height:36px;font-size:14px;cursor:pointer;color:var(--text);}
-  .calWeekHead{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:12px;font-weight:700;color:var(--text-sub);padding:6px 0;}
-  .calWeekHead span:first-child{color:#A32D2D;}
-  .calWeekHead span:last-child{color:#2A5B9C;}
-  #calendarGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border-input);border:1px solid var(--border-input);border-radius:8px;overflow:hidden;}
-  .calCell{background:#fff;min-height:90px;padding:6px;cursor:pointer;transition:background .1s;}
-  .calCell:hover{background:#F7F6F3;}
-  .calCell.calEmpty{background:#FAFAF8;cursor:default;}
-  .calCell.calSelected{background:#E3E9EE;}
-  .calDateNum{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;}
-  .calDateNum.calSun{color:#A32D2D;}
-  .calDateNum.calSat{color:#2A5B9C;}
-  .calDateNum.calToday{display:inline-block;background:var(--navy);color:#fff;border-radius:50%;width:20px;height:20px;line-height:20px;text-align:center;}
-  .calChip{font-size:11.5px;background:#E3E9EE;color:#243B53;border-radius:4px;padding:1px 5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .calMore{font-size:11px;color:var(--text-muted);}
-  @media (max-width:640px){
-    .calCell{min-height:64px;padding:4px;}
-    .calChip{font-size:9.5px;}
-  }
-  #ttTable{width:100%;border-collapse:collapse;table-layout:fixed;}
-  #ttTable th{position:sticky;top:0;background:#F8F9FA;font-size:12px;color:var(--text-sub);font-weight:700;padding:8px 4px;border:1px solid var(--border-input);text-align:center;white-space:nowrap;}
-  #ttTable th.ttSun{color:#A32D2D;}
-  #ttTable th.ttSat{color:#2A5B9C;}
-  #ttTable td.ttHourCell{font-size:11px;color:var(--text-muted);text-align:center;background:#F8F9FA;border:1px solid var(--border-input);white-space:nowrap;padding:4px;}
-  #ttTable td.ttSlot{border:1px solid var(--border-input);vertical-align:top;padding:2px;height:44px;}
-  .ttEntry{background:#E3E9EE;color:#243B53;border-radius:6px;padding:4px 6px;font-size:11px;line-height:1.4;cursor:pointer;height:100%;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
-  .ttEntry:hover{background:#D3DEE8;}
-  .ttEntry .ttSubject{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
-  .ttEntry .ttInstructor{color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
-  @media (max-width:640px){
-    #ttTable th, .ttEntry{font-size:10px;}
-  }
 
   /* 공통 상단 메뉴 (강사 조회·강의배정 페이지 동일) */
   .gnav{background:#1B3A5F;color:#fff;}
@@ -379,7 +346,7 @@
     </div>
   </header>
 
-  <div id="viewerModeBanner" style="display:none;background:#FAEEDA;color:#633806;font-size:12.5px;font-weight:700;border-radius:8px;padding:10px 14px;margin:-4px 0 16px 0;">조회 전용 계정입니다. 강사 정보 열람과 자료 다운로드만 가능하며, 배정·승인·삭제 등 변경 작업은 관리자 계정으로 로그인해야 합니다.</div>
+  <div id="viewerModeBanner" style="display:none;background:#FAEEDA;color:#633806;font-size:12.5px;font-weight:700;border-radius:8px;padding:10px 14px;margin:-4px 0 16px 0;">조회 전용 계정입니다. 강사 정보 열람과 자료 다운로드만 가능하며, 승인·삭제 등 변경 작업은 관리자 계정으로 로그인해야 합니다.</div>
 
   <!-- 강사 초대 모달 -->
   <div id="inviteOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,20,19,0.45);z-index:60;align-items:center;justify-content:center;padding:20px;">
@@ -405,41 +372,6 @@
       <div style="font-size:16px;font-weight:800;margin-bottom:4px;">페이지별 연결 주소</div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">각 페이지 주소를 복사해 필요한 곳에 안내해 주세요. 강사 초대 링크는 개별 강사마다 다르므로 "강사 초대" 기능으로 발송해야 합니다.</div>
       <div id="pageLinksList"></div>
-    </div>
-  </div>
-
-  <!-- 시간표 빈칸 클릭 강의배정 모달 -->
-  <div id="ttAssignOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,20,19,0.45);z-index:60;align-items:center;justify-content:center;padding:20px;">
-    <div style="background:#fff;border-radius:10px;max-width:420px;width:100%;padding:24px;position:relative;max-height:88vh;overflow-y:auto;">
-      <button id="ttAssignCloseX" style="position:absolute;top:14px;right:14px;border:none;background:none;font-size:18px;color:var(--text-muted);cursor:pointer;line-height:1;">×</button>
-      <div style="font-size:16px;font-weight:800;margin-bottom:4px;">강의 배정</div>
-      <div id="ttAssignDateLabel" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;"></div>
-
-      <div style="position:relative;margin-bottom:8px;">
-        <input type="text" id="ttAssignInstructorSearch" placeholder="강사명 검색 또는 목록에서 선택" autocomplete="off" style="width:100%;height:42px;border:1px solid #D9D6CF;border-radius:6px;padding:0 10px;box-sizing:border-box;">
-        <div id="ttAssignInstructorList" style="display:none;position:absolute;top:44px;left:0;right:0;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #D9D6CF;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:5;"></div>
-      </div>
-      <div id="ttAssignSelectedInstructor" style="display:none;font-size:12px;color:var(--navy);font-weight:700;margin-bottom:8px;"></div>
-
-      <input type="text" id="ttAssignLectureName" placeholder="과정명" style="width:100%;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 10px;margin-bottom:8px;box-sizing:border-box;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <select id="ttAssignStartHour" style="flex:1;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;"></select>
-        <span style="color:var(--text-sub);font-size:13px;">~</span>
-        <select id="ttAssignEndHour" style="flex:1;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;"></select>
-      </div>
-      <input type="text" id="ttAssignSubject" placeholder="교과목" style="width:100%;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 10px;margin-bottom:8px;box-sizing:border-box;">
-      <div id="ttAssignRoomWrap"></div>
-      <select id="ttAssignCategory" style="width:100%;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;margin-bottom:10px;">
-        <option value="" disabled selected>구분 선택</option>
-        <option value="직무교육">직무교육</option>
-        <option value="직무역량교육">직무역량교육</option>
-        <option value="소양교육">소양교육</option>
-      </select>
-      <div id="ttAssignMsg" style="font-size:13px;color:#A32D2D;margin-bottom:10px;display:none;"></div>
-      <div style="display:flex;gap:8px;">
-        <button id="ttAssignCancelBtn" style="flex:1;height:42px;border:1px solid #D9D6CF;border-radius:6px;background:#fff;font-family:'Nanum Gothic',sans-serif;cursor:pointer;">취소</button>
-        <button id="ttAssignSubmitBtn" style="flex:1;height:42px;border:none;border-radius:6px;background:#1B3A5F;color:#fff;font-weight:700;font-family:'Nanum Gothic',sans-serif;cursor:pointer;">배정 확정 및 메일 발송</button>
-      </div>
     </div>
   </div>
 
@@ -477,10 +409,9 @@
         <option value="반려">반려</option>
         <option value="휴면">휴면</option>
       </select>
-      <!-- 강의배정 메뉴로 옮겨 재사용 예정이라 숨김(체크 해제 상태 유지). 다시 쓰려면 display:none 제거 -->
-      <label style="display:none;align-items:center;gap:6px;font-size:13px;color:var(--text-sub);border:1px solid var(--border);border-radius:6px;padding:0 12px;height:40px;cursor:pointer;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-sub);border:1px solid var(--border);border-radius:6px;padding:0 12px;height:40px;cursor:pointer;">
         <input type="checkbox" id="filterPending" style="width:auto;height:auto;">
-        배정받은 사람만 보기
+        강의 예정 있는 강사만 보기
       </label>
       <label id="retentionFilterLabel" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-sub);border:1px solid var(--border);border-radius:6px;padding:0 12px;height:40px;cursor:pointer;">
         <input type="checkbox" id="filterRetention" style="width:auto;height:auto;">
@@ -497,14 +428,6 @@
 
   <div id="loading">불러오는 중...</div>
   <div id="empty" style="display:none;">조건에 맞는 강사가 없습니다.</div>
-
-  <!-- 일정별 표·캘린더·시간표 보기는 강의배정 메뉴로 옮겨 재사용할 예정이라 버튼만 숨김(코드는 유지). 다시 쓰려면 아래 display:none 제거 -->
-  <div style="display:none;gap:8px;margin-bottom:14px;" id="viewSwitchRow">
-    <button type="button" id="viewByInstructorBtn" class="badge" style="border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer;font-family:'Nanum Gothic',sans-serif;">강사별 보기</button>
-    <button type="button" id="viewByScheduleBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:'Nanum Gothic',sans-serif;">일정별 표 보기</button>
-    <button type="button" id="viewByCalendarBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:'Nanum Gothic',sans-serif;">캘린더 보기</button>
-    <button type="button" id="viewByTimetableBtn" class="badge" style="margin-left:auto;border:1px solid var(--border-input);cursor:pointer;font-family:'Nanum Gothic',sans-serif;">시간표 보기</button>
-  </div>
 
   <div id="instructorViewWrap">
   <div class="table-card">
@@ -526,63 +449,6 @@
     <span id="mobilePageLabel" style="font-size:13px;color:var(--text-sub);"></span>
     <button id="mobileNextBtn" style="border:1px solid var(--border);background:#fff;border-radius:6px;height:38px;padding:0 16px;font-family:'Nanum Gothic',sans-serif;cursor:pointer;">다음</button>
   </div>
-  </div>
-
-  <div id="scheduleViewWrap" style="display:none;">
-    <div class="table-card">
-    <div class="table-scroll">
-    <table id="scheduleTable">
-      <thead>
-        <tr>
-          <th>날짜</th><th>시간</th><th>강사명</th><th>과정명</th><th>과목</th><th>강의실</th><th>연락처</th><th>자료제출</th><th id="scheduleManageTh">관리</th>
-        </tr>
-      </thead>
-      <tbody id="scheduleTbody"></tbody>
-    </table>
-    </div>
-    </div>
-    <div id="scheduleEmpty" style="display:none;text-align:center;color:var(--text-muted);padding:24px;">예정된 강의가 없습니다.</div>
-  </div>
-
-  <div id="calendarViewWrap" style="display:none;">
-    <div class="table-card" style="padding:16px;">
-      <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px;">
-        <button type="button" id="calPrevBtn" class="calNavBtn">‹</button>
-        <span id="calMonthLabel"></span>
-        <button type="button" id="calNextBtn" class="calNavBtn">›</button>
-      </div>
-      <div class="calWeekHead"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
-      <div id="calendarGrid"></div>
-    </div>
-    <div id="calDayDetail" style="display:none;margin-top:14px;" class="table-card">
-      <div style="padding:14px;">
-        <div id="calDayDetailTitle" style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px;"></div>
-        <div id="calDayDetailBody"></div>
-      </div>
-    </div>
-    <div id="calendarEmpty" style="display:none;text-align:center;color:var(--text-muted);padding:24px;">예정된 강의가 없습니다.</div>
-  </div>
-
-  <div id="timetableViewWrap" style="display:none;">
-    <div class="table-card" style="padding:16px;">
-      <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px;">
-        <button type="button" id="ttPrevBtn" class="calNavBtn">‹</button>
-        <span id="ttWeekLabel" style="font-size:14px;font-weight:700;color:var(--navy);min-width:180px;text-align:center;"></span>
-        <button type="button" id="ttNextBtn" class="calNavBtn">›</button>
-      </div>
-      <div class="table-scroll">
-        <table id="ttTable" style="min-width:580px;">
-          <thead><tr id="ttHeadRow"></tr></thead>
-          <tbody id="ttBody"></tbody>
-        </table>
-      </div>
-    </div>
-    <div id="ttDayDetail" style="display:none;margin-top:14px;" class="table-card">
-      <div style="padding:14px;">
-        <div id="ttDayDetailTitle" style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px;"></div>
-        <div id="ttDayDetailBody"></div>
-      </div>
-    </div>
   </div>
 
 </div>
@@ -684,37 +550,6 @@
     return 'other';
   }
 
-  function updateDateDayLabel(dateInputId, labelId){
-    var val = document.getElementById(dateInputId).value;
-    var labelEl = document.getElementById(labelId);
-    if (!labelEl) return;
-    if (!val) { labelEl.textContent = ''; return; }
-    var parts = val.split('-');
-    var dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    var days = ['일','월','화','수','목','금','토'];
-    labelEl.textContent = '(' + days[dt.getDay()] + ')';
-  }
-
-  function submitStatusBadge(statusVal){
-    if (statusVal === '제출완료') {
-      return '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#EAF3DE;color:#27500A;">제출완료</span>';
-    }
-    if (statusVal === '배정됨') {
-      return '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#FCEBEB;color:#A32D2D;">자료 미제출</span>';
-    }
-    return '<span style="font-size:11px;color:var(--text-muted);">-</span>';
-  }
-
-  function getWeekdayLabel(dateStr){
-    if (!dateStr) return '';
-    var parts = String(dateStr).slice(0,10).split('-');
-    if (parts.length < 3) return '';
-    var dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    if (isNaN(dt.getTime())) return '';
-    var days = ['일','월','화','수','목','금','토'];
-    return '(' + days[dt.getDay()] + ')';
-  }
-
   function slashJoinLines(text){
     if (!text) return '';
     return String(text).split(/\r?\n/).map(function(s){ return s.trim(); }).filter(Boolean).join(' / ');
@@ -728,23 +563,10 @@
       .replace(/>/g, '&gt;');
   }
 
-  var ROOM_LIST = ['본관 1강의실','본관 대강당','인재관 1강의실','인재관 2강의실','인재관 전산실','인재관 대강당','인재관 구급실습실'];
-  function roomSelectHtml(idPrefix, currentVal){
-    var isKnown = ROOM_LIST.indexOf(currentVal) > -1;
-    var opts = '<option value="" ' + (!currentVal ? 'selected' : '') + '>강의실 선택 (선택사항)</option>';
-    ROOM_LIST.forEach(function(r){
-      opts += '<option value="' + r + '" ' + (currentVal === r ? 'selected' : '') + '>' + r + '</option>';
-    });
-    opts += '<option value="__custom__" ' + (currentVal && !isKnown ? 'selected' : '') + '>직접입력</option>';
-    var customStyle = (currentVal && !isKnown) ? 'display:block;' : 'display:none;';
-    return '<select id="' + idPrefix + '" onchange="document.getElementById(\'' + idPrefix + '-custom\').style.display = this.value===\'__custom__\'?\'block\':\'none\';" style="width:100%;height:38px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;margin-bottom:8px;">' + opts + '</select>' +
-      '<input type="text" id="' + idPrefix + '-custom" placeholder="강의실명 직접입력" value="' + ((currentVal && !isKnown) ? currentVal : '') + '" style="' + customStyle + 'width:100%;height:38px;border:1px solid #D9D6CF;border-radius:6px;padding:0 10px;margin-bottom:8px;">';
-  }
-
   function pendingBadgesHtml(d){
     var total = d.강의확정건수 || 0;
     var unsub = d.확정미제출건수 || 0;
-    var sub = total - unsub;
+    var sub = d.확정제출건수 !== undefined ? d.확정제출건수 : Math.max(0, total - unsub);
     var html = '';
     if (total > 0) html += '<span class="pending-badge assigned">강의확정' + (total > 1 ? ' ' + total + '건' : '') + '</span>';
     if (unsub > 0) html += '<span class="pending-badge unsubmitted">미제출' + (unsub > 1 ? ' ' + unsub + '건' : '') + '</span>';
@@ -861,7 +683,7 @@
         ? '<img src="' + photoUrl(d.사진링크,'thumb') + '" class="thumb" style="width:48px;height:48px;" alt="" onerror="this.parentNode.innerHTML=\'<div class=&quot;initials-avatar&quot;>' + initials + '</div>\';">'
         : '<div class="initials-avatar">' + initials + '</div>';
       var badgeRow = pendingBadgesHtml(d);
-      if (!badgeRow) badgeRow = '<div class="badge-row"><span class="pending-badge" style="background:#F2F1EC;color:var(--text-muted);">배정없음</span></div>';
+      if (!badgeRow) badgeRow = '<div class="badge-row"><span class="pending-badge" style="background:#F2F1EC;color:var(--text-muted);">예정 강의 없음</span></div>';
       return '<div class="mcard" data-idx="' + (start + pageItems.indexOf(d)) + '" style="display:flex;gap:12px;align-items:flex-start;">' +
         '<div>' + mThumb + '</div>' +
         '<div style="flex:1;min-width:0;">' +
@@ -949,47 +771,12 @@
         : '') +
       '<div style="font-size:13px;font-weight:700;color:var(--navy);margin-top:24px;margin-bottom:8px;">강의 이력</div>' +
       '<div id="historyBox" style="background:#F7F6F3;border-radius:10px;padding:14px;font-size:13px;color:var(--text);">불러오는 중...</div>' +
-      (!isViewer && d.상태 === '활성'
-        ? '<button id="assignBtn" style="width:100%;height:44px;margin-top:20px;border:none;border-radius:6px;background:#1B3A5F;color:#fff;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">강의 배정</button>' +
-          '<div id="assignForm" style="display:none;margin-top:14px;padding:16px;background:#F7F6F3;border-radius:8px;">' +
-            '<input type="text" id="assignLectureName" placeholder="과정명" style="width:100%;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 10px;margin-bottom:8px;">' +
-            '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">' +
-              '<input type="date" id="assignDate" min="' + new Date().toISOString().slice(0,10) + '" style="height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 10px;font-size:14px;box-sizing:border-box;">' +
-              '<span id="assignDateDay" style="font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;"></span>' +
-            '</div>' +
-            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
-              '<select id="assignStartHour" style="flex:1;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;"></select>' +
-              '<span style="color:var(--text-sub);font-size:13px;">~</span>' +
-              '<select id="assignEndHour" style="flex:1;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;"></select>' +
-            '</div>' +
-            '<input type="text" id="assignSubject" placeholder="교과목" style="width:100%;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 10px;margin-bottom:8px;">' +
-            '<select id="assignRoom" style="width:100%;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;margin-bottom:8px;">' +
-              '<option value="" selected>강의실 선택 (선택사항)</option>' +
-              '<option value="본관 1강의실">본관 1강의실</option>' +
-              '<option value="본관 대강당">본관 대강당</option>' +
-              '<option value="인재관 1강의실">인재관 1강의실</option>' +
-              '<option value="인재관 2강의실">인재관 2강의실</option>' +
-              '<option value="인재관 전산실">인재관 전산실</option>' +
-              '<option value="인재관 대강당">인재관 대강당</option>' +
-              '<option value="인재관 구급실습실">인재관 구급실습실</option>' +
-              '<option value="__custom__">직접입력</option>' +
-            '</select>' +
-            '<input type="text" id="assignRoomCustom" placeholder="강의실명 직접입력" style="display:none;width:100%;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 10px;margin-bottom:8px;">' +
-            '<select id="assignCategory" style="width:100%;height:40px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;margin-bottom:10px;">' +
-              '<option value="" disabled selected>구분 선택</option>' +
-              '<option value="직무교육">직무교육</option>' +
-              '<option value="직무역량교육">직무역량교육</option>' +
-              '<option value="소양교육">소양교육</option>' +
-            '</select>' +
-            '<button id="assignSubmitBtn" style="width:100%;height:42px;border:none;border-radius:6px;background:#1B3A5F;color:#fff;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">배정 확정 및 메일 발송</button>' +
-          '</div>'
-        : '') +
       '<div style="margin-top:28px;padding-top:16px;border-top:1px solid #F5F4F1;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
         '<div style="display:flex;gap:14px;align-items:center;">' +
           (isViewer ? '' :
             '<button id="dormantBtn" style="border:none;background:none;color:#5F5E5A;font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">휴면 처리 (관리자 전용)</button>' +
             '<button id="reconsentBtn" style="border:none;background:none;color:#1B3A5F;font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">재동의 확인 기록 (관리자 전용)</button>' +
-            (d.강의회차 > 0
+            ((d.이력있음 !== undefined ? d.이력있음 : d.강의회차 > 0)
               ? '<span style="font-size:11px;color:var(--text-muted);">강의 이력이 있는 강사는 삭제할 수 없습니다</span>'
               : '<button id="deleteBtn" style="border:none;background:none;color:#A32D2D;font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">강사카드 삭제 (관리자 전용)</button>')) +
         '</div>' +
@@ -1111,141 +898,36 @@
       });
     }
 
-    if (!isViewer && d.상태 === '활성') {
-      document.getElementById('assignBtn').addEventListener('click', function(){
-        var form = document.getElementById('assignForm');
-        var willShow = form.style.display === 'none';
-        form.style.display = willShow ? 'block' : 'none';
-        if (willShow) {
-          var startSel = document.getElementById('assignStartHour');
-          var endSel = document.getElementById('assignEndHour');
-          if (!startSel.options.length) {
-            startSel.innerHTML = '<option value="" disabled selected>시작 시간</option>';
-            endSel.innerHTML = '<option value="" disabled selected>종료 시간</option>';
-            for (var h = 8; h <= 22; h++){
-              var label = h + '시';
-              var val = (h < 10 ? '0' + h : h) + ':00';
-              startSel.insertAdjacentHTML('beforeend', '<option value="' + val + '">' + label + '</option>');
-              endSel.insertAdjacentHTML('beforeend', '<option value="' + val + '">' + label + '</option>');
-            }
-          }
-        }
-      });
-      document.getElementById('assignRoom').addEventListener('change', function(){
-        document.getElementById('assignRoomCustom').style.display = this.value === '__custom__' ? 'block' : 'none';
-      });
-      document.getElementById('assignDate').addEventListener('change', function(){
-        updateDateDayLabel('assignDate', 'assignDateDay');
-      });
-      document.getElementById('assignSubmitBtn').addEventListener('click', function(){
-        var lectureName = document.getElementById('assignLectureName').value.trim();
-        var date = document.getElementById('assignDate').value;
-        var startVal = document.getElementById('assignStartHour').value;
-        var endVal = document.getElementById('assignEndHour').value;
-        var subject = document.getElementById('assignSubject').value.trim();
-        var category = document.getElementById('assignCategory').value;
-        var roomSel = document.getElementById('assignRoom').value;
-        var room = roomSel === '__custom__' ? document.getElementById('assignRoomCustom').value.trim() : roomSel;
-
-        if (!lectureName || !date) {
-          alert('과정명과 일자는 필수입니다.');
-          return;
-        }
-        if (!startVal || !endVal) {
-          alert('시작·종료 시간을 선택해 주세요.');
-          return;
-        }
-        if (startVal >= endVal) {
-          alert('종료 시간은 시작 시간보다 늦어야 합니다.');
-          return;
-        }
-        if (!category) {
-          alert('구분을 선택해 주세요.');
-          return;
-        }
-        var time = startVal + '~' + endVal;
-        if (!confirm('이 내용으로 강사님께 배정 안내메일을 발송하시겠습니까?')) return;
-
-        var linkBase = location.href.replace(/instructor-dashboard\.html.*$/, '');
-        var pw = sessionStorage.getItem('jsfa_dash_pw');
-
-        fetch(WEBAPP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action: 'assignLecture',
-            강사ID: d.강사ID,
-            강의명: lectureName,
-            일자: date,
-            시간: time,
-            교과목: subject,
-            구분: category,
-            강의실: room,
-            linkBase: linkBase,
-            password: pw
-          })
-        })
-        .then(function(res){ return res.json(); })
-        .then(function(json){
-          if (json.status === 'ok') {
-            alert('배정 안내메일이 발송되었습니다.'); scheduleData = null; calendarData = null;
-            delete historyCache[d.강사ID];
-            d.강의회차 = (d.강의회차 || 0) + 1;
-            var todayStrLocal2 = new Date().toISOString().slice(0,10);
-            if (date >= todayStrLocal2) {
-              d.강의확정건수 = (d.강의확정건수 || 0) + 1;
-              d.확정미제출건수 = (d.확정미제출건수 || 0) + 1;
-              d.강의확정 = true;
-              d.확정미제출 = true;
-              d.배정대기 = (d.배정대기 || 0) + 1;
-            }
-            render();
-            document.getElementById('overlay').style.display = 'none';
-          } else {
-            alert('오류: ' + (json.message || ''));
-          }
-        })
-        .catch(function(){ alert('발송 중 오류가 발생했습니다.'); });
-      });
+    function localToday(){
+      var t = new Date();
+      return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
     }
-    function syncInstructorStats(d, list){
-      var todayStrLocal = new Date().toISOString().slice(0,10);
-      var count = 0, pending = 0, upcoming = 0, upcomingUnsubmitted = 0;
-      list.forEach(function(h){
-        var status = h.상태 || '';
-        if (status === '취소됨') return;
-        count++;
-        if (status === '배정됨') pending++;
-        if (h.일자 && String(h.일자) >= todayStrLocal) {
-          upcoming++;
-          if (status === '배정됨') upcomingUnsubmitted++;
-        }
-      });
-      d.강의회차 = count;
-      d.배정대기 = pending;
-      d.강의확정건수 = upcoming;
-      d.확정미제출건수 = upcomingUnsubmitted;
-      d.강의확정 = upcoming > 0;
-      d.확정미제출 = upcomingUnsubmitted > 0;
-      render();
+    function histHours(h){
+      if (h.시수 !== undefined) return Number(h.시수) || 0;
+      var parts = String(h.시간 || '').split('~');
+      if (parts.length !== 2) return 0;
+      var a = parseInt(parts[0], 10), b = parseInt(parts[1], 10);
+      return (!isNaN(a) && !isNaN(b) && b > a) ? b - a : 0;
     }
 
+    // 강의 이력: 강의배정DB(교과목시간표) 편성을 읽기 전용으로 표시. 배정·변경·취소는 강의배정 메뉴에서만 한다.
     function renderHistory(list){
       var box = document.getElementById('historyBox');
       if (!list.length) {
-        box.textContent = '지난 강의 이력이 없습니다.';
+        box.textContent = '강의배정DB에 편성된 강의가 없습니다.';
         return;
       }
+      var today = localToday();
+      var live = list.filter(function(h){ return h.상태 !== '취소됨'; });
+      var mainRows = live.filter(function(h){ return h.역할 !== '보조강사'; });
+      var cancelled = list.length - live.length;
       var totalHours = 0;
-      list.forEach(function(h){
-        if (!h.시간) return;
-        var parts = String(h.시간).split('~');
-        if (parts.length !== 2) return;
-        var start = parseInt(parts[0], 10);
-        var end = parseInt(parts[1], 10);
-        if (!isNaN(start) && !isNaN(end) && end > start) totalHours += (end - start);
-      });
-      var summary = '<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;">총 ' + list.length + '회 · 누적 ' + totalHours + '시간</div>' +
+      mainRows.forEach(function(h){ totalHours += histHours(h); });
+      var summary = '<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">주강사 ' + mainRows.length + '회 · 누적 ' + totalHours + '시간</div>' +
+        '<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:10px;">' +
+          '보조강사 ' + (live.length - mainRows.length) + '건' + (cancelled ? ' · 취소된 기수 ' + cancelled + '건 제외' : '') +
+          ' · 누적은 주강사만 집계(1교시=1시간) · 강의배정DB 기준, 배정·변경은 강의배정 메뉴에서 합니다.' +
+        '</div>' +
         '<button id="refreshHistoryBtn" style="border:none;background:none;color:var(--text-muted);font-size:11px;cursor:pointer;text-decoration:underline;padding:0;margin-bottom:10px;">새로고침</button>';
       box.innerHTML = summary + list.map(function(h){
         var links = '';
@@ -1255,57 +937,34 @@
           var mailSubjectText = '[전남소방학교] 강의계획서 - ' + (d.성명||'') + ' / ' + (h.강의명||'');
           var mailBodyText =
             '강사명: ' + (d.성명||'') + '\n' +
-            '강의명: ' + (h.강의명||'') + '\n' +
+            '강의명: ' + (h.강의명||'') + (h.교과목 ? ' / ' + h.교과목 : '') + '\n' +
             '일자: ' + (h.일자||'') + '\n\n' +
             '강의계획서 다운로드 링크:\n' + planDownloadUrl;
           links += '<a href="' + planPreviewUrl + '" target="_blank" style="color:var(--navy);font-weight:700;font-size:12px;margin-right:12px;">강의계획서 미리보기</a>' +
             '<a href="' + planDownloadUrl + '" target="_blank" style="color:var(--navy);font-weight:700;font-size:12px;margin-right:12px;">다운로드</a>' +
             '<button type="button" class="mailForwardBtn" data-subject="' + escapeAttr(mailSubjectText) + '" data-body="' + escapeAttr(mailBodyText) + '" style="border:none;background:none;color:var(--navy);font-weight:700;font-size:12px;margin-right:12px;cursor:pointer;text-decoration:underline;padding:0;font-family:\'Nanum Gothic\',sans-serif;">메일 내용 복사</button>';
         }
-        if (h.교안링크) links += '<a href="https://drive.google.com/file/d/' + h.교안링크 + '/preview" target="_blank" style="color:var(--navy);font-weight:700;font-size:12px;margin-right:12px;">교안 미리보기</a><a href="' + fileDownloadUrl(h.교안링크) + '" target="_blank" style="color:var(--navy);font-weight:700;font-size:12px;">다운로드</a>';
-        var statusVal = h.상태 || '';
-        var todayStrLocal = new Date().toISOString().slice(0,10);
-        var isUpcoming = h.일자 && String(h.일자) >= todayStrLocal;
-        var isPastDate = !isUpcoming;
-        var wasNeverSubmitted = statusVal === '배정됨';
-        var displayLabel = (isPastDate && statusVal !== '취소됨') ? '강의완료' : statusVal;
+        var isCancelled = h.상태 === '취소됨';
+        var isSubRole = h.역할 === '보조강사';
+        var isPast = !(h.일자 && String(h.일자) >= today);
+        var displayLabel = isCancelled ? '취소됨' : (isPast ? '강의완료' : '예정');
         var statusStyle = displayLabel === '강의완료' ? 'background:#E3E9EE;color:#243B53;'
-          : statusVal === '제출완료' ? 'background:#EAF3DE;color:#27500A;'
-          : statusVal === '취소됨' ? 'background:#FCEBEB;color:#A32D2D;'
+          : displayLabel === '취소됨' ? 'background:#FCEBEB;color:#A32D2D;'
           : 'background:#FAEEDA;color:#633806;';
-        var missedSubmitBadge = (wasNeverSubmitted && !links)
-          ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#FCEBEB;color:#A32D2D;margin-left:6px;">자료 미제출</span>'
+        var roleBadge = isSubRole ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#F2F1EC;color:#5F5E5A;margin-left:6px;">보조</span>' : '';
+        var missedSubmitBadge = (!isCancelled && !isSubRole && !h.계획서링크)
+          ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#FCEBEB;color:#A32D2D;margin-left:6px;">계획서 미제출</span>'
           : '';
-        var canManage = !isViewer && statusVal !== '취소됨';
-        var btnDisabled = isPastDate ? ' disabled' : '';
-        var btnDimStyle = isPastDate ? 'opacity:0.4;cursor:not-allowed;' : '';
-        var manageBtns = canManage
-          ? '<div style="margin-top:8px;display:flex;gap:10px;">' +
-              '<button class="editAssignBtn" data-hid="' + h.이력ID + '"' + btnDisabled + ' style="border:none;background:none;color:var(--navy);font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline;padding:0;' + btnDimStyle + '">일정 변경</button>' +
-              '<button class="cancelAssignBtn" data-hid="' + h.이력ID + '" data-name="' + (h.강의명||'').replace(/"/g,'&quot;') + '"' + btnDisabled + ' style="border:none;background:none;color:#A32D2D;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline;padding:0;' + btnDimStyle + '">배정 취소</button>' +
-            '</div>' +
-            '<div id="editForm-' + h.이력ID + '" style="display:none;margin-top:10px;padding:12px;background:#F7F6F3;border-radius:8px;">' +
-              '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">' +
-                '<input type="date" id="editDate-' + h.이력ID + '" min="' + new Date().toISOString().slice(0,10) + '" value="' + (h.일자||'') + '" style="height:38px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;font-size:14px;box-sizing:border-box;">' +
-                '<span id="editDateDay-' + h.이력ID + '" style="font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;"></span>' +
-              '</div>' +
-              '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
-                '<select id="editStart-' + h.이력ID + '" style="flex:1;height:38px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;"></select>' +
-                '<span style="color:var(--text-sub);font-size:13px;">~</span>' +
-                '<select id="editEnd-' + h.이력ID + '" style="flex:1;height:38px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;"></select>' +
-              '</div>' +
-              roomSelectHtml('editRoom-' + h.이력ID, h.강의실) +
-              '<button class="editSubmitBtn" data-hid="' + h.이력ID + '" style="width:100%;height:38px;border:none;border-radius:6px;background:#1B3A5F;color:#fff;font-size:13px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">변경 확정 및 메일 발송</button>' +
-            '</div>'
-          : '';
-        return '<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(20,20,19,0.06);' + (statusVal === '취소됨' ? 'opacity:0.55;' : '') + '">' +
+        var when = (h.교시 ? h.교시 : '') + (h.시간 ? (h.교시 ? ' (' + h.시간 + ')' : h.시간) : '');
+        var openUrl = 'lecture-assignment.html#c=' + encodeURIComponent(h.강의명 || '');
+        return '<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(20,20,19,0.06);' + (isCancelled ? 'opacity:0.55;' : '') + '">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
-            '<div style="font-size:14px;color:var(--text);font-weight:700;">' + (h.강의명||'') + '</div>' +
-            (displayLabel ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;' + statusStyle + '">' + displayLabel + '</span>' + missedSubmitBadge : '') +
+            '<div style="font-size:14px;color:var(--text);font-weight:700;">' + escapeAttr(h.강의명||'') + roleBadge + '</div>' +
+            '<div style="white-space:nowrap;"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;' + statusStyle + '">' + displayLabel + '</span>' + missedSubmitBadge + '</div>' +
           '</div>' +
-          '<div style="font-size:13px;color:var(--text-sub);margin:4px 0 8px 0;">' + (h.일자||'') + (h.시간 ? ' · ' + h.시간 : '') + (h.강의실 ? ' · ' + h.강의실 : '') + (h.교과목 ? ' · ' + h.교과목 : '') + (h.구분 ? ' · ' + h.구분 : '') + '</div>' +
-          (links ? '<div>' + links + '</div>' : (statusVal === '취소됨' ? '' : '<div style="font-size:12px;color:var(--text-muted);">첨부된 자료 없음</div>')) +
-          manageBtns +
+          '<div style="font-size:13px;color:var(--text-sub);margin:4px 0 8px 0;">' + escapeAttr((h.일자||'') + (when ? ' · ' + when : '') + (h.강의실 ? ' · ' + h.강의실 : '') + (h.교과목 ? ' · ' + h.교과목 : '') + (h.구분 ? ' · ' + h.구분 : '')) + '</div>' +
+          (links ? '<div>' + links + '</div>' : (isCancelled || isSubRole ? '' : '<div style="font-size:12px;color:var(--text-muted);">첨부된 자료 없음</div>')) +
+          (h.강의명 ? '<div style="margin-top:6px;"><a href="' + openUrl + '" style="color:var(--navy);font-size:12px;font-weight:700;">강의배정에서 보기</a></div>' : '') +
         '</div>';
       }).join('');
 
@@ -1331,93 +990,11 @@
           }
         });
       });
-
-      document.querySelectorAll('.cancelAssignBtn').forEach(function(btn){
-        btn.addEventListener('click', function(){
-          if (!confirm('"' + btn.dataset.name + '" 배정을 취소하시겠습니까?\n강사님께 취소 안내메일이 발송됩니다.')) return;
-          var pw = sessionStorage.getItem('jsfa_dash_pw');
-          fetch(WEBAPP_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'cancelAssignment', hid: btn.dataset.hid, password: pw })
-          })
-          .then(function(res){ return res.json(); })
-          .then(function(json){
-            if (json.status === 'ok') { alert('배정이 취소되었습니다.'); delete historyCache[d.강사ID]; openDetail(d); scheduleData = null; calendarData = null; }
-            else alert(json.message || '취소 중 오류가 발생했습니다.');
-          })
-          .catch(function(){ alert('취소 중 오류가 발생했습니다.'); });
-        });
-      });
-
-      document.querySelectorAll('.editAssignBtn').forEach(function(btn){
-        btn.addEventListener('click', function(){
-          var hid = btn.dataset.hid;
-          var formEl = document.getElementById('editForm-' + hid);
-          var willShow = formEl.style.display === 'none';
-          formEl.style.display = willShow ? 'block' : 'none';
-          if (willShow) {
-            updateDateDayLabel('editDate-' + hid, 'editDateDay-' + hid);
-            var startSel = document.getElementById('editStart-' + hid);
-            var endSel = document.getElementById('editEnd-' + hid);
-            if (!startSel.options.length) {
-              startSel.innerHTML = '<option value="" disabled selected>시작 시간</option>';
-              endSel.innerHTML = '<option value="" disabled selected>종료 시간</option>';
-              for (var h = 8; h <= 22; h++){
-                var label = h + '시';
-                var val = (h < 10 ? '0' + h : h) + ':00';
-                startSel.insertAdjacentHTML('beforeend', '<option value="' + val + '">' + label + '</option>');
-                endSel.insertAdjacentHTML('beforeend', '<option value="' + val + '">' + label + '</option>');
-              }
-              var histItem = list.filter(function(x){ return String(x.이력ID) === String(hid); })[0];
-              if (histItem && histItem.시간) {
-                var parts = String(histItem.시간).split('~');
-                if (parts[0]) startSel.value = parts[0];
-                if (parts[1]) endSel.value = parts[1];
-              }
-            }
-          }
-        });
-      });
-
-      document.querySelectorAll('[id^="editDate-"]').forEach(function(input){
-        var hid = input.id.replace('editDate-', '');
-        input.addEventListener('change', function(){
-          updateDateDayLabel('editDate-' + hid, 'editDateDay-' + hid);
-        });
-      });
-
-      document.querySelectorAll('.editSubmitBtn').forEach(function(btn){
-        btn.addEventListener('click', function(){
-          var hid = btn.dataset.hid;
-          var newDate = document.getElementById('editDate-' + hid).value;
-          var startVal = document.getElementById('editStart-' + hid).value;
-          var endVal = document.getElementById('editEnd-' + hid).value;
-          if (!newDate) { alert('강의 일자를 선택해 주세요.'); return; }
-          if (!startVal || !endVal) { alert('시작·종료 시간을 선택해 주세요.'); return; }
-          if (startVal >= endVal) { alert('종료 시간은 시작 시간보다 늦어야 합니다.'); return; }
-          var roomSel = document.getElementById('editRoom-' + hid).value;
-          var room = roomSel === '__custom__' ? document.getElementById('editRoom-' + hid + '-custom').value.trim() : roomSel;
-          if (!confirm('이 내용으로 일정을 변경하고 강사님께 안내메일을 발송하시겠습니까?')) return;
-          var pw = sessionStorage.getItem('jsfa_dash_pw');
-          fetch(WEBAPP_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'updateAssignment', hid: hid, 일자: newDate, 시간: startVal + '~' + endVal, 강의실: room, password: pw })
-          })
-          .then(function(res){ return res.json(); })
-          .then(function(json){
-            if (json.status === 'ok') { alert('일정이 변경되었습니다. 강사님께 안내메일이 발송되었습니다.'); delete historyCache[d.강사ID]; openDetail(d); scheduleData = null; calendarData = null; }
-            else alert(json.message || '변경 중 오류가 발생했습니다.');
-          })
-          .catch(function(){ alert('변경 중 오류가 발생했습니다.'); });
-        });
-      });
     }
 
     if (historyCache[d.강사ID]) {
       renderHistory(historyCache[d.강사ID]);
-    } else if (!d.강의회차) {
+    } else if ((d.편성건수 !== undefined ? d.편성건수 : d.강의회차) === 0) {
       renderHistory([]);
     } else {
       fetch(WEBAPP_URL, {
@@ -1429,7 +1006,6 @@
       .then(function(json){
         var list = json.data || [];
         historyCache[d.강사ID] = list;
-        syncInstructorStats(d, list);
         renderHistory(list);
       })
       .catch(function(){
@@ -1535,755 +1111,6 @@
   });
   document.getElementById('pageLinksCloseX').addEventListener('click', function(){
     document.getElementById('pageLinksOverlay').style.display = 'none';
-  });
-
-  var scheduleData = null;
-  function buildInlineEditFormHtml(idPrefix, hid, row){
-    return (
-      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">' +
-        '<input type="date" id="' + idPrefix + 'Date-' + hid + '" min="' + new Date().toISOString().slice(0,10) + '" value="' + (row.일자||'') + '" style="height:36px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;font-size:13px;box-sizing:border-box;">' +
-        '<span id="' + idPrefix + 'DateDay-' + hid + '" style="font-size:12px;font-weight:700;color:var(--navy);white-space:nowrap;"></span>' +
-      '</div>' +
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;max-width:420px;">' +
-        '<select id="' + idPrefix + 'Start-' + hid + '" style="flex:1;height:36px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;"></select>' +
-        '<span style="color:var(--text-sub);font-size:13px;">~</span>' +
-        '<select id="' + idPrefix + 'End-' + hid + '" style="flex:1;height:36px;border:1px solid #D9D6CF;border-radius:6px;padding:0 8px;background:#fff;"></select>' +
-      '</div>' +
-      '<div style="max-width:420px;">' + roomSelectHtml(idPrefix + 'Room-' + hid, row.강의실) + '</div>' +
-      '<div style="display:flex;gap:6px;max-width:420px;">' +
-        '<button type="button" class="inlineEditSubmitBtn" data-hid="' + hid + '" data-prefix="' + idPrefix + '" style="flex:1;height:36px;border:none;border-radius:6px;background:#1B3A5F;color:#fff;font-size:13px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">변경 확정 및 메일 발송</button>' +
-        '<button type="button" class="inlineEditCloseBtn" data-hid="' + hid + '" data-prefix="' + idPrefix + '" style="width:64px;height:36px;border:1px solid var(--border-input);border-radius:6px;background:#fff;color:var(--text-sub);font-size:13px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">닫기</button>' +
-      '</div>'
-    );
-  }
-
-  function initInlineEditForm(idPrefix, hid, row){
-    updateDateDayLabel(idPrefix + 'Date-' + hid, idPrefix + 'DateDay-' + hid);
-    var startSel = document.getElementById(idPrefix + 'Start-' + hid);
-    var endSel = document.getElementById(idPrefix + 'End-' + hid);
-    if (startSel && !startSel.options.length) {
-      startSel.innerHTML = '<option value="" disabled selected>시작 시간</option>';
-      endSel.innerHTML = '<option value="" disabled selected>종료 시간</option>';
-      for (var h = 8; h <= 22; h++){
-        var label = h + '시';
-        var val = (h < 10 ? '0' + h : h) + ':00';
-        startSel.insertAdjacentHTML('beforeend', '<option value="' + val + '">' + label + '</option>');
-        endSel.insertAdjacentHTML('beforeend', '<option value="' + val + '">' + label + '</option>');
-      }
-      if (row.시간) {
-        var parts = String(row.시간).split('~');
-        if (parts[0]) startSel.value = parts[0];
-        if (parts[1]) endSel.value = parts[1];
-      }
-    }
-    var dateInput = document.getElementById(idPrefix + 'Date-' + hid);
-    if (dateInput && !dateInput.dataset.dayBound) {
-      dateInput.dataset.dayBound = '1';
-      dateInput.addEventListener('change', function(){
-        updateDateDayLabel(idPrefix + 'Date-' + hid, idPrefix + 'DateDay-' + hid);
-      });
-    }
-  }
-
-  function submitInlineEdit(idPrefix, hid, onSuccess){
-    var newDate = document.getElementById(idPrefix + 'Date-' + hid).value;
-    var startVal = document.getElementById(idPrefix + 'Start-' + hid).value;
-    var endVal = document.getElementById(idPrefix + 'End-' + hid).value;
-    var roomSel = document.getElementById(idPrefix + 'Room-' + hid).value;
-    var room = roomSel === '__custom__' ? document.getElementById(idPrefix + 'Room-' + hid + '-custom').value.trim() : roomSel;
-    if (!newDate) { alert('일자를 선택해 주세요.'); return; }
-    if (!startVal || !endVal) { alert('시작·종료 시간을 선택해 주세요.'); return; }
-    if (startVal >= endVal) { alert('종료 시간은 시작 시간보다 늦어야 합니다.'); return; }
-    if (!confirm('이 내용으로 일정을 변경하고 강사님께 안내메일을 발송하시겠습니까?')) return;
-    var pw = sessionStorage.getItem('jsfa_dash_pw');
-    fetch(WEBAPP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'updateAssignment', hid: hid, 일자: newDate, 시간: startVal + '~' + endVal, 강의실: room, password: pw })
-    })
-    .then(function(res){ return res.json(); })
-    .then(function(json){
-      if (json.status === 'ok') {
-        alert('일정이 변경되었습니다. 강사님께 안내메일이 발송되었습니다.');
-        scheduleData = null; calendarData = null;
-        Object.keys(historyCache).forEach(function(k){ delete historyCache[k]; });
-        if (onSuccess) onSuccess();
-      } else {
-        alert(json.message || '일정 변경 중 오류가 발생했습니다.');
-      }
-    })
-    .catch(function(){ alert('일정 변경 중 오류가 발생했습니다.'); });
-  }
-
-  function cancelScheduleAssignment(hid, name, onSuccess){
-    if (!confirm('"' + (name||'') + '" 배정을 취소하시겠습니까?\n강사님께 취소 안내메일이 발송됩니다.')) return;
-    var pw = sessionStorage.getItem('jsfa_dash_pw');
-    fetch(WEBAPP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'cancelAssignment', hid: hid, password: pw })
-    })
-    .then(function(res){ return res.json(); })
-    .then(function(json){
-      if (json.status === 'ok') {
-        alert('배정이 취소되었습니다.');
-        scheduleData = null; calendarData = null;
-        Object.keys(historyCache).forEach(function(k){ delete historyCache[k]; });
-        if (onSuccess) onSuccess();
-      } else {
-        alert(json.message || '취소 중 오류가 발생했습니다.');
-      }
-    })
-    .catch(function(){ alert('취소 중 오류가 발생했습니다.'); });
-  }
-
-  function renderScheduleTable(list){
-    var tbody = document.getElementById('scheduleTbody');
-    var emptyEl = document.getElementById('scheduleEmpty');
-    var viewerMode = isViewerRole();
-    var manageTh = document.getElementById('scheduleManageTh');
-    if (manageTh) manageTh.style.display = viewerMode ? 'none' : '';
-    if (!list.length) {
-      tbody.innerHTML = '';
-      emptyEl.textContent = '예정된 강의가 없습니다.';
-      emptyEl.style.display = 'block';
-      return;
-    }
-    emptyEl.style.display = 'none';
-    tbody.innerHTML = list.map(function(r){
-      var hid = r.이력ID;
-      var manageCell = viewerMode ? '' :
-        '<td style="white-space:nowrap;">' +
-          '<button type="button" class="schedEditToggleBtn" data-hid="' + hid + '" style="border:none;background:none;color:var(--navy);font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline;padding:0;margin-right:10px;">일정변경</button>' +
-          '<button type="button" class="schedCancelBtn" data-hid="' + hid + '" data-name="' + (r.강의명||'').replace(/"/g,'&quot;') + '" style="border:none;background:none;color:#A32D2D;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline;padding:0;">배정취소</button>' +
-        '</td>';
-      var editRow = viewerMode ? '' :
-        '<tr id="schedEditRow-' + hid + '" style="display:none;">' +
-          '<td colspan="9" style="background:#F7F6F3;padding:14px;">' + buildInlineEditFormHtml('sched', hid, r) + '</td>' +
-        '</tr>';
-      return '<tr>' +
-        '<td>' + (r.일자||'') + (r.일자 ? ' <span style="color:var(--navy);font-weight:700;">' + getWeekdayLabel(r.일자) + '</span>' : '') + '</td>' +
-        '<td>' + (r.시간||'') + '</td>' +
-        '<td>' + (r.강사명||'') + '</td>' +
-        '<td>' + (r.강의명||'') + '</td>' +
-        '<td>' + (r.교과목||'') + '</td>' +
-        '<td>' + (r.강의실||'-') + '</td>' +
-        '<td>' + (r.연락처||'') + '</td>' +
-        '<td>' + submitStatusBadge(r.상태) + '</td>' +
-        manageCell +
-      '</tr>' + editRow;
-    }).join('');
-
-    if (viewerMode) return;
-
-    var byHid = {};
-    list.forEach(function(r){ byHid[r.이력ID] = r; });
-
-    document.querySelectorAll('.schedEditToggleBtn').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var hid = btn.dataset.hid;
-        var row = document.getElementById('schedEditRow-' + hid);
-        var willShow = row.style.display === 'none';
-        row.style.display = willShow ? 'table-row' : 'none';
-        if (willShow) initInlineEditForm('sched', hid, byHid[hid]);
-      });
-    });
-    document.querySelectorAll('.schedCancelBtn').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        cancelScheduleAssignment(btn.dataset.hid, btn.dataset.name, function(){
-          fetchScheduleData(function(data){ if (data) renderScheduleTable(data); });
-        });
-      });
-    });
-    document.querySelectorAll('#scheduleTbody .inlineEditSubmitBtn').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        submitInlineEdit(btn.dataset.prefix, btn.dataset.hid, function(){
-          fetchScheduleData(function(data){ if (data) renderScheduleTable(data); });
-        });
-      });
-    });
-    document.querySelectorAll('#scheduleTbody .inlineEditCloseBtn').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var row = document.getElementById(btn.dataset.prefix + 'EditRow-' + btn.dataset.hid);
-        if (row) row.style.display = 'none';
-      });
-    });
-  }
-
-  var VIEW_BUTTONS = {
-    instructor: { btn: 'viewByInstructorBtn', wrap: 'instructorViewWrap' },
-    schedule: { btn: 'viewByScheduleBtn', wrap: 'scheduleViewWrap' },
-    calendar: { btn: 'viewByCalendarBtn', wrap: 'calendarViewWrap' },
-    timetable: { btn: 'viewByTimetableBtn', wrap: 'timetableViewWrap' }
-  };
-  function setViewMode(mode){
-    Object.keys(VIEW_BUTTONS).forEach(function(key){
-      var cfg = VIEW_BUTTONS[key];
-      var btnEl = document.getElementById(cfg.btn);
-      var wrapEl = document.getElementById(cfg.wrap);
-      if (key === mode) {
-        btnEl.style.background = 'var(--navy)';
-        btnEl.style.color = '#fff';
-        btnEl.style.borderColor = 'var(--navy)';
-        wrapEl.style.display = 'block';
-      } else {
-        btnEl.style.background = '#fff';
-        btnEl.style.color = 'var(--text-sub)';
-        btnEl.style.borderColor = 'var(--border-input)';
-        wrapEl.style.display = 'none';
-      }
-    });
-  }
-
-  function fetchScheduleData(callback){
-    if (scheduleData) { callback(scheduleData); return; }
-    var pw = sessionStorage.getItem('jsfa_dash_pw');
-    fetch(WEBAPP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getUpcomingSchedule', password: pw })
-    })
-    .then(function(res){ return res.json(); })
-    .then(function(json){
-      if (json.status !== 'ok') throw new Error(json.message || 'server');
-      scheduleData = json.data || [];
-      callback(scheduleData);
-    })
-    .catch(function(){
-      callback(null);
-    });
-  }
-
-  var calendarData = null;
-  function fetchCalendarData(callback){
-    if (calendarData) { callback(calendarData); return; }
-    var pw = sessionStorage.getItem('jsfa_dash_pw');
-    fetch(WEBAPP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getUpcomingSchedule', scope: 'all', password: pw })
-    })
-    .then(function(res){ return res.json(); })
-    .then(function(json){
-      if (json.status !== 'ok') throw new Error(json.message || 'server');
-      calendarData = json.data || [];
-      callback(calendarData);
-    })
-    .catch(function(){
-      callback(null);
-    });
-  }
-
-  document.getElementById('viewByScheduleBtn').addEventListener('click', function(){
-    setViewMode('schedule');
-    if (scheduleData) { renderScheduleTable(scheduleData); return; }
-    document.getElementById('scheduleTbody').innerHTML = '';
-    document.getElementById('scheduleEmpty').style.display = 'block';
-    document.getElementById('scheduleEmpty').textContent = '불러오는 중...';
-    fetchScheduleData(function(data){
-      if (!data) { document.getElementById('scheduleEmpty').textContent = '불러오지 못했습니다.'; return; }
-      renderScheduleTable(data);
-    });
-  });
-
-  document.getElementById('viewByInstructorBtn').addEventListener('click', function(){
-    setViewMode('instructor');
-  });
-
-  var calCurrentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-  var calSelectedDate = null;
-
-  function renderCalendar(){
-    var list = calendarData || [];
-    var byDate = {};
-    list.forEach(function(r){
-      if (!r.일자) return;
-      var key = String(r.일자).slice(0,10);
-      if (!byDate[key]) byDate[key] = [];
-      byDate[key].push(r);
-    });
-
-    var calEmptyEl = document.getElementById('calendarEmpty');
-    calEmptyEl.textContent = '예정된 강의가 없습니다.';
-    calEmptyEl.style.display = list.length ? 'none' : 'block';
-
-    var year = calCurrentMonth.getFullYear();
-    var month = calCurrentMonth.getMonth();
-    document.getElementById('calMonthLabel').textContent = year + '년 ' + (month + 1) + '월';
-
-    var firstDayOfWeek = new Date(year, month, 1).getDay();
-    var daysInMonth = new Date(year, month + 1, 0).getDate();
-    var todayStr = new Date().toISOString().slice(0,10);
-
-    var html = '';
-    for (var i = 0; i < firstDayOfWeek; i++) {
-      html += '<div class="calCell calEmpty"></div>';
-    }
-    for (var day = 1; day <= daysInMonth; day++) {
-      var dateObj = new Date(year, month, day);
-      var dow = dateObj.getDay();
-      var dateStr = year + '-' + String(month + 1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-      var dayEntries = byDate[dateStr] || [];
-      var numClass = 'calDateNum' + (dow === 0 ? ' calSun' : dow === 6 ? ' calSat' : '') + (dateStr === todayStr ? ' calToday' : '');
-      var chipsHtml = dayEntries.slice(0, 3).map(function(r){
-        return '<div class="calChip">' + (r.강사명||'') + (r.강의명 ? ' · ' + r.강의명 : '') + '</div>';
-      }).join('');
-      var moreHtml = dayEntries.length > 3 ? '<div class="calMore">+' + (dayEntries.length - 3) + '건 더</div>' : '';
-      html += '<div class="calCell' + (dateStr === calSelectedDate ? ' calSelected' : '') + '" data-date="' + dateStr + '">' +
-        '<div class="' + numClass + '">' + day + '</div>' +
-        chipsHtml + moreHtml +
-      '</div>';
-    }
-    document.getElementById('calendarGrid').innerHTML = html;
-
-    document.querySelectorAll('#calendarGrid .calCell[data-date]').forEach(function(cell){
-      cell.addEventListener('click', function(){
-        var dateStr = this.dataset.date;
-        calSelectedDate = (calSelectedDate === dateStr) ? null : dateStr;
-        renderCalendar();
-        if (calSelectedDate) showCalDayDetail(calSelectedDate, byDate[calSelectedDate] || []);
-        else document.getElementById('calDayDetail').style.display = 'none';
-      });
-    });
-  }
-
-  function showCalDayDetail(dateStr, entries){
-    var detailEl = document.getElementById('calDayDetail');
-    var titleEl = document.getElementById('calDayDetailTitle');
-    var bodyEl = document.getElementById('calDayDetailBody');
-    var viewerMode = isViewerRole();
-    var dObj = new Date(dateStr.split('-')[0], dateStr.split('-')[1]-1, dateStr.split('-')[2]);
-    var days = ['일','월','화','수','목','금','토'];
-    titleEl.textContent = dateStr + ' (' + days[dObj.getDay()] + ') 강의 일정 ' + entries.length + '건';
-    if (!entries.length) {
-      bodyEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">해당 일자에 배정된 강의가 없습니다.</div>';
-    } else {
-      var todayStrCal = new Date().toISOString().slice(0,10);
-      bodyEl.innerHTML = entries.map(function(r){
-        var hid = r.이력ID;
-        var isPastDate = !(r.일자 && String(r.일자).slice(0,10) >= todayStrCal);
-        var btnDisabled = isPastDate ? ' disabled' : '';
-        var btnDimStyle = isPastDate ? 'opacity:0.4;cursor:not-allowed;' : '';
-        var manageBtns = viewerMode ? '' :
-          '<div style="margin-top:6px;">' +
-            '<button type="button" class="calEditToggleBtn" data-hid="' + hid + '"' + btnDisabled + ' style="border:none;background:none;color:var(--navy);font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline;padding:0;margin-right:10px;' + btnDimStyle + '">일정변경</button>' +
-            '<button type="button" class="calCancelBtn" data-hid="' + hid + '" data-name="' + (r.강의명||'').replace(/"/g,'&quot;') + '"' + btnDisabled + ' style="border:none;background:none;color:#A32D2D;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline;padding:0;' + btnDimStyle + '">배정취소</button>' +
-            (isPastDate ? '<span style="font-size:11px;color:var(--text-muted);margin-left:8px;">(지난 일정은 변경할 수 없습니다)</span>' : '') +
-          '</div>' +
-          (isPastDate ? '' : '<div id="calEditRow-' + hid + '" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">' + buildInlineEditFormHtml('cal', hid, r) + '</div>');
-        return '<div style="background:#F7F6F3;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:13px;">' +
-          '<div style="font-weight:700;color:var(--text);margin-bottom:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' + (r.강의명||'') + submitStatusBadge(r.상태) + '</div>' +
-          '<div style="color:var(--text-sub);">' + (r.시간||'') + (r.강사명 ? ' · ' + r.강사명 : '') + (r.교과목 ? ' · ' + r.교과목 : '') + (r.강의실 ? ' · ' + r.강의실 : '') + (r.연락처 ? ' · ' + r.연락처 : '') + '</div>' +
-          manageBtns +
-        '</div>';
-      }).join('');
-
-      if (!viewerMode) {
-        var byHid = {};
-        entries.forEach(function(r){ byHid[r.이력ID] = r; });
-
-        document.querySelectorAll('#calDayDetailBody .calEditToggleBtn').forEach(function(btn){
-          btn.addEventListener('click', function(){
-            var hid = btn.dataset.hid;
-            var row = document.getElementById('calEditRow-' + hid);
-            var willShow = row.style.display === 'none';
-            row.style.display = willShow ? 'block' : 'none';
-            if (willShow) initInlineEditForm('cal', hid, byHid[hid]);
-          });
-        });
-        document.querySelectorAll('#calDayDetailBody .calCancelBtn').forEach(function(btn){
-          btn.addEventListener('click', function(){
-            cancelScheduleAssignment(btn.dataset.hid, btn.dataset.name, function(){
-              fetchCalendarData(function(data){
-                if (data) { renderCalendar(); if (calSelectedDate) showCalDayDetail(calSelectedDate, (calendarData||[]).filter(function(x){ return String(x.일자).slice(0,10) === calSelectedDate; })); }
-              });
-            });
-          });
-        });
-        document.querySelectorAll('#calDayDetailBody .inlineEditSubmitBtn').forEach(function(btn){
-          btn.addEventListener('click', function(){
-            submitInlineEdit(btn.dataset.prefix, btn.dataset.hid, function(){
-              fetchCalendarData(function(data){
-                if (data) { renderCalendar(); if (calSelectedDate) showCalDayDetail(calSelectedDate, (calendarData||[]).filter(function(x){ return String(x.일자).slice(0,10) === calSelectedDate; })); }
-              });
-            });
-          });
-        });
-        document.querySelectorAll('#calDayDetailBody .inlineEditCloseBtn').forEach(function(btn){
-          btn.addEventListener('click', function(){
-            var row = document.getElementById(btn.dataset.prefix + 'EditRow-' + btn.dataset.hid);
-            if (row) row.style.display = 'none';
-          });
-        });
-      }
-    }
-    detailEl.style.display = 'block';
-  }
-
-  document.getElementById('viewByCalendarBtn').addEventListener('click', function(){
-    setViewMode('calendar');
-    calSelectedDate = null;
-    document.getElementById('calDayDetail').style.display = 'none';
-    if (calendarData) { renderCalendar(); return; }
-    document.getElementById('calendarEmpty').style.display = 'block';
-    document.getElementById('calendarEmpty').textContent = '불러오는 중...';
-    fetchCalendarData(function(data){
-      if (!data) { document.getElementById('calendarEmpty').textContent = '불러오지 못했습니다.'; return; }
-      renderCalendar();
-    });
-  });
-
-  document.getElementById('calPrevBtn').addEventListener('click', function(){
-    calCurrentMonth = new Date(calCurrentMonth.getFullYear(), calCurrentMonth.getMonth() - 1, 1);
-    calSelectedDate = null;
-    document.getElementById('calDayDetail').style.display = 'none';
-    renderCalendar();
-  });
-  document.getElementById('calNextBtn').addEventListener('click', function(){
-    calCurrentMonth = new Date(calCurrentMonth.getFullYear(), calCurrentMonth.getMonth() + 1, 1);
-    calSelectedDate = null;
-    document.getElementById('calDayDetail').style.display = 'none';
-    renderCalendar();
-  });
-
-  function getWeekStart(d){
-    var day = d.getDay();
-    var diff = (day === 0 ? -6 : 1 - day);
-    var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
-    return monday;
-  }
-  function fmtDateLocal(d){
-    var m = d.getMonth() + 1, day = d.getDate();
-    return d.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (day < 10 ? '0' + day : day);
-  }
-
-  var ttWeekStart = getWeekStart(new Date());
-  var ttWeekDays = ['월','화','수','목','금'];
-  var TT_DAY_COUNT = 5;
-  var TT_HOUR_START = 9, TT_HOUR_END = 17;
-
-  function renderTimetable(){
-    var list = calendarData || [];
-    var days = [];
-    for (var i = 0; i < TT_DAY_COUNT; i++){
-      var d = new Date(ttWeekStart.getFullYear(), ttWeekStart.getMonth(), ttWeekStart.getDate() + i);
-      days.push({ dateStr: fmtDateLocal(d), label: ttWeekDays[i], dateObj: d });
-    }
-    var startStr = days[0].dateStr, endStr = days[days.length - 1].dateStr;
-    document.getElementById('ttWeekLabel').textContent = startStr + ' ~ ' + endStr;
-
-    var hourCount = TT_HOUR_END - TT_HOUR_START + 1;
-    var headRow = document.getElementById('ttHeadRow');
-    headRow.innerHTML = '<th style="width:80px;">날짜</th>';
-    for (var h0 = 0; h0 < hourCount; h0++){
-      headRow.innerHTML += '<th style="width:56px;">' + (TT_HOUR_START + h0) + '시</th>';
-    }
-
-    var grid = [];
-    for (var di = 0; di < TT_DAY_COUNT; di++){
-      grid.push(new Array(hourCount).fill(null));
-    }
-    var byHid = {};
-    days.forEach(function(d, di){
-      var entries = list.filter(function(r){ return String(r.일자).slice(0,10) === d.dateStr; });
-      entries.forEach(function(r){
-        if (!r.시간) return;
-        var parts = String(r.시간).split('~');
-        if (parts.length !== 2) return;
-        var sh = parseInt(parts[0], 10), eh = parseInt(parts[1], 10);
-        if (isNaN(sh) || isNaN(eh) || eh <= sh) return;
-        sh = Math.max(sh, TT_HOUR_START);
-        eh = Math.min(eh, TT_HOUR_END + 1);
-        if (sh >= eh || sh > TT_HOUR_END) return;
-        var startIdx = sh - TT_HOUR_START;
-        var span = eh - sh;
-        if (grid[di][startIdx]) return;
-        grid[di][startIdx] = { entry: r, span: span };
-        byHid[r.이력ID] = r;
-        for (var k = 1; k < span; k++){
-          if (startIdx + k < hourCount) grid[di][startIdx + k] = 'covered';
-        }
-      });
-    });
-
-    var bodyHtml = '';
-    days.forEach(function(d, di){
-      var todayCls = (d.dateStr === new Date().toISOString().slice(0,10)) ? ' style="background:#F4F7FA;"' : '';
-      bodyHtml += '<tr' + todayCls + '>' + '<td class="ttHourCell">' + d.dateStr.slice(5) + ' (' + d.label + ')</td>';
-      for (var h = 0; h < hourCount; h++){
-        var cell = grid[di][h];
-        if (cell === 'covered') continue;
-        if (cell && cell.entry) {
-          var r = cell.entry;
-          bodyHtml += '<td class="ttSlot" colspan="' + cell.span + '">' +
-            '<div class="ttEntry" data-hid="' + r.이력ID + '">' +
-              '<div class="ttSubject">' + (r.교과목 || r.강의명 || '') + '</div>' +
-              '<div class="ttInstructor">' + [r.소속, r.강사명].filter(Boolean).join(' ') + '</div>' +
-            '</div>' +
-          '</td>';
-        } else {
-          var slotDateStr = d.dateStr;
-          var slotHour = TT_HOUR_START + h;
-          var slotToday = new Date().toISOString().slice(0,10);
-          var slotPast = slotDateStr < slotToday;
-          var slotClickable = !isViewerRole() && !slotPast;
-          var slotClass = slotClickable ? 'ttSlot ttEmptySlot' : 'ttSlot';
-          var slotStyle = slotClickable ? ' style="cursor:pointer;"' : '';
-          bodyHtml += '<td class="' + slotClass + '" data-date="' + slotDateStr + '" data-hour="' + slotHour + '"' + slotStyle + '></td>';
-        }
-      }
-      bodyHtml += '</tr>';
-    });
-    document.getElementById('ttBody').innerHTML = bodyHtml;
-
-    document.querySelectorAll('#ttBody .ttEntry').forEach(function(el){
-      el.addEventListener('click', function(){
-        showTtEntryDetail(byHid[el.dataset.hid]);
-      });
-    });
-    document.querySelectorAll('#ttBody .ttEmptySlot').forEach(function(el){
-      el.addEventListener('click', function(){
-        openTtAssignModal(el.dataset.date, parseInt(el.dataset.hour, 10));
-      });
-    });
-  }
-
-  function showTtEntryDetail(r){
-    if (!r) return;
-    var detailEl = document.getElementById('ttDayDetail');
-    var titleEl = document.getElementById('ttDayDetailTitle');
-    var bodyEl = document.getElementById('ttDayDetailBody');
-    var viewerMode = isViewerRole();
-    var hid = r.이력ID;
-    var todayStrTt = new Date().toISOString().slice(0,10);
-    var isPastDate = !(r.일자 && String(r.일자).slice(0,10) >= todayStrTt);
-    var btnDisabled = isPastDate ? ' disabled' : '';
-    var btnDimStyle = isPastDate ? 'opacity:0.4;cursor:not-allowed;' : '';
-    titleEl.textContent = (r.일자||'') + ' ' + getWeekdayLabel(r.일자) + ' · ' + (r.시간||'');
-    var manageBtns = viewerMode ? '' :
-      '<div style="margin-top:6px;">' +
-        '<button type="button" class="ttEditToggleBtn" data-hid="' + hid + '"' + btnDisabled + ' style="border:none;background:none;color:var(--navy);font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline;padding:0;margin-right:10px;' + btnDimStyle + '">일정변경</button>' +
-        '<button type="button" class="ttCancelBtn" data-hid="' + hid + '" data-name="' + (r.강의명||'').replace(/"/g,'&quot;') + '"' + btnDisabled + ' style="border:none;background:none;color:#A32D2D;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline;padding:0;' + btnDimStyle + '">배정취소</button>' +
-        (isPastDate ? '<span style="font-size:11px;color:var(--text-muted);margin-left:8px;">(지난 일정은 변경할 수 없습니다)</span>' : '') +
-      '</div>' +
-      (isPastDate ? '' : '<div id="ttEditRow-' + hid + '" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">' + buildInlineEditFormHtml('tt', hid, r) + '</div>');
-    bodyEl.innerHTML =
-      '<div style="background:#F7F6F3;border-radius:8px;padding:10px 12px;font-size:13px;">' +
-        '<div style="font-weight:700;color:var(--text);margin-bottom:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' + (r.강의명||'') + submitStatusBadge(r.상태) + '</div>' +
-        '<div style="color:var(--text-sub);">' + (r.강사명 ? '강사: ' + r.강사명 : '') + (r.교과목 ? ' · ' + r.교과목 : '') + (r.강의실 ? ' · ' + r.강의실 : '') + (r.연락처 ? ' · ' + r.연락처 : '') + '</div>' +
-        manageBtns +
-      '</div>';
-    if (!viewerMode) {
-      var toggleBtn = bodyEl.querySelector('.ttEditToggleBtn');
-      if (toggleBtn) toggleBtn.addEventListener('click', function(){
-        var row = document.getElementById('ttEditRow-' + hid);
-        var willShow = row.style.display === 'none';
-        row.style.display = willShow ? 'block' : 'none';
-        if (willShow) initInlineEditForm('tt', hid, r);
-      });
-      var cancelBtn = bodyEl.querySelector('.ttCancelBtn');
-      if (cancelBtn) cancelBtn.addEventListener('click', function(){
-        cancelScheduleAssignment(hid, r.강의명, function(){
-          fetchCalendarData(function(data){ if (data) { renderTimetable(); detailEl.style.display = 'none'; } });
-        });
-      });
-      var submitBtn = bodyEl.querySelector('.inlineEditSubmitBtn');
-      if (submitBtn) submitBtn.addEventListener('click', function(){
-        submitInlineEdit('tt', hid, function(){
-          fetchCalendarData(function(data){ if (data) { renderTimetable(); detailEl.style.display = 'none'; } });
-        });
-      });
-      var closeFormBtn = bodyEl.querySelector('.inlineEditCloseBtn');
-      if (closeFormBtn) closeFormBtn.addEventListener('click', function(){
-        var row = document.getElementById('ttEditRow-' + hid);
-        if (row) row.style.display = 'none';
-      });
-    }
-    detailEl.style.display = 'block';
-  }
-
-  var ttAssignState = { date: null, instructorId: null, instructorName: null };
-
-  function ttFillHourSelect(selectEl, minHour, maxHour, selectedVal){
-    selectEl.innerHTML = '';
-    for (var h = minHour; h <= maxHour; h++){
-      var val = (h < 10 ? '0' + h : h) + ':00';
-      var label = h + '시';
-      selectEl.insertAdjacentHTML('beforeend', '<option value="' + val + '"' + (val === selectedVal ? ' selected' : '') + '>' + label + '</option>');
-    }
-  }
-
-  function renderTtInstructorList(query){
-    var listEl = document.getElementById('ttAssignInstructorList');
-    var pool = (allData || []).filter(function(d){ return d.상태 === '활성'; });
-    var q = (query || '').trim();
-    var matches = q ? pool.filter(function(d){ return String(d.성명 || '').indexOf(q) > -1; }) : pool;
-    matches = matches.slice(0, 30);
-    if (!matches.length){
-      listEl.innerHTML = '<div style="padding:10px;font-size:13px;color:var(--text-muted);">일치하는 강사가 없습니다.</div>';
-      listEl.style.display = 'block';
-      return;
-    }
-    listEl.innerHTML = matches.map(function(d){
-      return '<div class="ttInstOption" data-id="' + d.강사ID + '" data-name="' + escapeAttr(d.성명 || '') + '" style="padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid #F0EEE9;">' +
-        (d.성명 || '') + (d.소속 ? ' <span style="color:var(--text-muted);font-size:12px;">(' + d.소속 + ')</span>' : '') +
-      '</div>';
-    }).join('');
-    listEl.style.display = 'block';
-    listEl.querySelectorAll('.ttInstOption').forEach(function(opt){
-      opt.addEventListener('mousedown', function(e){
-        e.preventDefault();
-        ttAssignState.instructorId = this.dataset.id;
-        ttAssignState.instructorName = this.dataset.name;
-        document.getElementById('ttAssignInstructorSearch').value = this.dataset.name;
-        var selEl = document.getElementById('ttAssignSelectedInstructor');
-        selEl.style.display = 'block';
-        selEl.textContent = '선택됨: ' + this.dataset.name;
-        listEl.style.display = 'none';
-      });
-    });
-  }
-
-  function openTtAssignModal(dateStr, hour){
-    ttAssignState = { date: dateStr, instructorId: null, instructorName: null };
-    var days = ['일','월','화','수','목','금','토'];
-    var dParts = dateStr.split('-');
-    var dObj = new Date(Number(dParts[0]), Number(dParts[1]) - 1, Number(dParts[2]));
-    document.getElementById('ttAssignDateLabel').textContent = dateStr + ' (' + days[dObj.getDay()] + ')';
-    document.getElementById('ttAssignInstructorSearch').value = '';
-    document.getElementById('ttAssignInstructorList').style.display = 'none';
-    document.getElementById('ttAssignSelectedInstructor').style.display = 'none';
-    document.getElementById('ttAssignLectureName').value = '';
-    document.getElementById('ttAssignSubject').value = '';
-    document.getElementById('ttAssignCategory').value = '';
-    document.getElementById('ttAssignMsg').style.display = 'none';
-    document.getElementById('ttAssignRoomWrap').innerHTML = roomSelectHtml('ttAssignRoom', '');
-    var startVal = (hour < 10 ? '0' + hour : hour) + ':00';
-    var endHour = Math.min(hour + 1, TT_HOUR_END + 1);
-    var endVal = (endHour < 10 ? '0' + endHour : endHour) + ':00';
-    ttFillHourSelect(document.getElementById('ttAssignStartHour'), TT_HOUR_START, TT_HOUR_END, startVal);
-    ttFillHourSelect(document.getElementById('ttAssignEndHour'), TT_HOUR_START + 1, TT_HOUR_END + 1, endVal);
-    document.getElementById('ttAssignOverlay').style.display = 'flex';
-  }
-
-  document.getElementById('ttAssignInstructorSearch').addEventListener('input', function(){
-    ttAssignState.instructorId = null;
-    ttAssignState.instructorName = null;
-    document.getElementById('ttAssignSelectedInstructor').style.display = 'none';
-    renderTtInstructorList(this.value);
-  });
-  document.getElementById('ttAssignInstructorSearch').addEventListener('focus', function(){
-    renderTtInstructorList(this.value);
-  });
-  document.getElementById('ttAssignInstructorSearch').addEventListener('blur', function(){
-    setTimeout(function(){ document.getElementById('ttAssignInstructorList').style.display = 'none'; }, 150);
-  });
-
-  function closeTtAssignModal(){
-    document.getElementById('ttAssignOverlay').style.display = 'none';
-  }
-  document.getElementById('ttAssignCloseX').addEventListener('click', closeTtAssignModal);
-  document.getElementById('ttAssignCancelBtn').addEventListener('click', closeTtAssignModal);
-  document.getElementById('ttAssignOverlay').addEventListener('click', function(e){
-    if (e.target.id === 'ttAssignOverlay') closeTtAssignModal();
-  });
-
-  document.getElementById('ttAssignSubmitBtn').addEventListener('click', function(){
-    var msgEl = document.getElementById('ttAssignMsg');
-    msgEl.style.display = 'none';
-    if (!ttAssignState.instructorId) {
-      msgEl.textContent = '강사를 검색하여 선택해 주세요.';
-      msgEl.style.display = 'block';
-      return;
-    }
-    var lectureName = document.getElementById('ttAssignLectureName').value.trim();
-    var startVal = document.getElementById('ttAssignStartHour').value;
-    var endVal = document.getElementById('ttAssignEndHour').value;
-    var subject = document.getElementById('ttAssignSubject').value.trim();
-    var category = document.getElementById('ttAssignCategory').value;
-    var roomSel = document.getElementById('ttAssignRoom').value;
-    var room = roomSel === '__custom__' ? document.getElementById('ttAssignRoom-custom').value.trim() : roomSel;
-
-    if (!lectureName) { msgEl.textContent = '과정명은 필수입니다.'; msgEl.style.display = 'block'; return; }
-    if (!startVal || !endVal || startVal >= endVal) { msgEl.textContent = '시작·종료 시간을 올바르게 선택해 주세요.'; msgEl.style.display = 'block'; return; }
-    if (!category) { msgEl.textContent = '구분을 선택해 주세요.'; msgEl.style.display = 'block'; return; }
-
-    var newStart = parseInt(startVal, 10), newEnd = parseInt(endVal, 10);
-    var overlap = (calendarData || []).some(function(r){
-      if (String(r.강사ID) !== String(ttAssignState.instructorId)) return false;
-      if (String(r.일자).slice(0,10) !== ttAssignState.date) return false;
-      var parts = String(r.시간 || '').split('~');
-      if (parts.length !== 2) return false;
-      var exSh = parseInt(parts[0], 10), exEh = parseInt(parts[1], 10);
-      if (isNaN(exSh) || isNaN(exEh)) return false;
-      return exSh < newEnd && newStart < exEh;
-    });
-    if (overlap) {
-      msgEl.textContent = '해당 강사는 같은 날짜/시간대에 이미 배정된 일정이 있습니다.';
-      msgEl.style.display = 'block';
-      return;
-    }
-
-    if (!confirm('이 내용으로 강사님께 배정 안내메일을 발송하시겠습니까?')) return;
-
-    var time = startVal + '~' + endVal;
-    var linkBase = location.href.replace(/instructor-dashboard\.html.*$/, '');
-    var pw = sessionStorage.getItem('jsfa_dash_pw');
-
-    fetch(WEBAPP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action: 'assignLecture',
-        강사ID: ttAssignState.instructorId,
-        강의명: lectureName,
-        일자: ttAssignState.date,
-        시간: time,
-        교과목: subject,
-        구분: category,
-        강의실: room,
-        linkBase: linkBase,
-        password: pw
-      })
-    })
-    .then(function(res){ return res.json(); })
-    .then(function(json){
-      if (json.status === 'ok') {
-        alert('배정 안내메일이 발송되었습니다.');
-        scheduleData = null; calendarData = null;
-        delete historyCache[ttAssignState.instructorId];
-        var inst = (allData || []).find(function(d){ return String(d.강사ID) === String(ttAssignState.instructorId); });
-        if (inst) inst.강의회차 = (inst.강의회차 || 0) + 1;
-        closeTtAssignModal();
-        fetchCalendarData(function(data){ if (data) renderTimetable(); });
-      } else {
-        msgEl.textContent = json.message || '배정 중 오류가 발생했습니다.';
-        msgEl.style.display = 'block';
-      }
-    })
-    .catch(function(){
-      msgEl.textContent = '배정 중 오류가 발생했습니다.';
-      msgEl.style.display = 'block';
-    });
-  });
-
-  document.getElementById('viewByTimetableBtn').addEventListener('click', function(){
-    setViewMode('timetable');
-    document.getElementById('ttDayDetail').style.display = 'none';
-    if (calendarData) { renderTimetable(); return; }
-    fetchCalendarData(function(data){
-      if (data) renderTimetable();
-    });
-  });
-  document.getElementById('ttPrevBtn').addEventListener('click', function(){
-    ttWeekStart = new Date(ttWeekStart.getFullYear(), ttWeekStart.getMonth(), ttWeekStart.getDate() - 7);
-    document.getElementById('ttDayDetail').style.display = 'none';
-    renderTimetable();
-  });
-  document.getElementById('ttNextBtn').addEventListener('click', function(){
-    ttWeekStart = new Date(ttWeekStart.getFullYear(), ttWeekStart.getMonth(), ttWeekStart.getDate() + 7);
-    document.getElementById('ttDayDetail').style.display = 'none';
-    renderTimetable();
   });
 
   document.getElementById('mobileFilterToggle').addEventListener('click', function(){
@@ -2428,7 +1255,7 @@
     loadXlsxLib(function(ok){
       if (!ok) { alert('엑셀 파일 생성 도구를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.'); return; }
 
-      var skip = { '강의확정': 1, '확정미제출': 1 };
+      var skip = { '강의확정': 1, '확정미제출': 1, '이력있음': 1 };
       var keys = [];
       list.forEach(function(d){
         Object.keys(d).forEach(function(k){ if (!skip[k] && keys.indexOf(k) === -1) keys.push(k); });
@@ -2441,7 +1268,7 @@
           var v = d[k];
           if (v === undefined || v === null) return '';
           if (driveKeys.indexOf(k) > -1 && v) return 'https://drive.google.com/file/d/' + v + '/view';
-          if (k === '강의회차' || k === '배정대기' || k === '강의확정건수' || k === '확정미제출건수') return Number(v) || 0;
+          if (k === '강의회차' || k === '강의확정건수' || k === '확정미제출건수' || k === '확정제출건수' || k === '편성건수') return Number(v) || 0;
           return String(v);
         }));
       });
