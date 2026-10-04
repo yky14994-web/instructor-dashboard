@@ -638,6 +638,7 @@
   <div class="legend" id="planLegend" style="margin:0 2px 8px 2px;">초록=이상 없음 · 노랑=확인 필요 · 빨강=오류(수정 필요) · 검사 결과는 강의배정DB 연간계획 시트의 값입니다.</div>
 
   <div id="loading">불러오는 중입니다. 처음에는 몇 초 걸릴 수 있습니다.</div>
+  <div id="weekNote" class="hint" style="display:none;margin:0 2px 8px 2px;"></div>
   <div id="count"></div>
   <div class="tw" id="tableWrap" style="display:none;">
     <table>
@@ -679,7 +680,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 홈 11</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 홈 14</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -859,6 +860,21 @@
     fillSelect($('fType'), Object.keys(types).map(function(t){ return { v: t, t: t }; }), '전체 구분', true);
   }
 
+  /* 홈 '이번 주 과정'에서 넘어온 경우: 그 주(월~일)에 입교·사이버·실습 기간이 걸치는 과정만 표시 */
+  var weekFilter = '';
+  function planOverlapsWeek(p, mon){
+    var end = addDays(mon, 6);
+    return planRanges(p).some(function(r){ return r[0] <= end && r[1] >= mon; });
+  }
+  function updateWeekNote(){
+    var el = $('weekNote'); if (!el) return;
+    if (!weekFilter) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    var n = shown.length;
+    el.style.display = '';
+    el.innerHTML = '<b>' + md(weekFilter) + ' ~ ' + md(addDays(weekFilter, 6)) + ' 주</b>에 진행되는 과정만 보고 있습니다(' + n + '개). 과정명을 누르면 교과목 편성 화면이 열립니다. ' +
+      '<button type="button" class="btn sm" id="weekClear">전체 과정 보기</button>';
+    var b = $('weekClear'); if (b) b.onclick = function(){ weekFilter = ''; applyFilters(); };
+  }
   function applyFilters(){
     var fy = $('fYear').value, fm = $('fMonth').value, ft = $('fType').value, fc = $('fCheck').value, fs = $('fStatus').value;
     var q = $('fText').value.trim().toLowerCase();
@@ -881,6 +897,7 @@
         if (fc === 'err' && c !== 'err') return false;
       }
       if (q && String(p['과정명'] || '').toLowerCase().indexOf(q) === -1) return false;
+      if (weekFilter && !planOverlapsWeek(p, weekFilter)) return false;
       return true;
     });
     render();
@@ -939,6 +956,7 @@
 
   function render(){
     $('loading').style.display = 'none';
+    updateWeekNote();
     renderTodo();
     var ppl = 0, check = 0, nosubj = 0, cxShown = 0, nActive = 0;
     shown.forEach(function(p){
@@ -1291,11 +1309,21 @@
   function route(){
     if ($('app').style.display === 'none') return;
     var key = hashKey();
-    var vm = /^#v=(table|cal|room)((?:&(?:d|y|t)=[^&]*)*)$/.exec(location.hash || '');
+    var vm = /^#v=(table|cal|room)((?:&(?:d|y|t|w)=[^&]*)*)$/.exec(location.hash || '');
     if (vm) {
       try { window.history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {}
       var vp = hashParams(vm[2]);
       planMode = vm[1]; if (planMode === 'cal' && !calManual) calMonth = '';
+      weekFilter = '';
+      if (planMode === 'table' && vp.w && /^\d{4}-\d{2}-\d{2}$/.test(vp.w) && normYmd(vp.w)) {   // 홈 '이번 주 과정' → 그 주 과정만 걸러서 표시, 1개면 바로 교과목 편성 화면
+        var mon = mondayOf(vp.w), hit = plans.filter(function(p){ return !isCancelled(p) && planOverlapsWeek(p, mon); });
+        if (hit.length === 1 && hit[0]['과정+기수']) {
+          var tdy = ymd(new Date()), dd = (tdy >= mon && tdy <= addDays(mon, 6)) ? tdy : mon;
+          location.hash = '#c=' + encodeURIComponent(hit[0]['과정+기수']) + '&d=' + dd; return;
+        }
+        $('fYear').value = ''; $('fMonth').value = ''; $('fType').value = ''; $('fCheck').value = ''; $('fStatus').value = ''; $('fText').value = '';
+        weekFilter = mon;
+      }
       if (vp.d && /^\d{4}-\d{2}-\d{2}$/.test(vp.d) && normYmd(vp.d)) { if (planMode === 'room') roomDate = vp.d; else if (planMode === 'cal') { calMonth = vp.d.slice(0, 7); calManual = true; } }
       if (planMode === 'table' && (vp.y || vp.t)) {   // 홈의 연간 통계에서 넘어온 경우: 연도·구분만 적용하고 나머지 조건은 비움
         $('fMonth').value = ''; $('fCheck').value = ''; $('fStatus').value = ''; $('fText').value = '';
@@ -3730,8 +3758,8 @@
   }
 
   /* ---------- 이벤트 ---------- */
-  ['fYear', 'fMonth', 'fType', 'fCheck', 'fStatus'].forEach(function(id){ $(id).addEventListener('change', applyFilters); });
-  $('fText').addEventListener('input', applyFilters);
+  ['fYear', 'fMonth', 'fType', 'fCheck', 'fStatus'].forEach(function(id){ $(id).addEventListener('change', function(){ weekFilter = ''; applyFilters(); }); });
+  $('fText').addEventListener('input', function(){ weekFilter = ''; applyFilters(); });
   $('reloadBtn').addEventListener('click', function(){
     var pw = getPw();
     if (!pw) return;
