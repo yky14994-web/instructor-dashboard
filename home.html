@@ -206,7 +206,7 @@
       <section class="card" id="cRoom"></section>
     </div>
   </div>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 16</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 17</div>
 </div>
 </div>
 
@@ -300,7 +300,7 @@
     return 'hsl(' + hue + ',55%,55%)';
   }
   function typeCls(t){ t = String(t || ''); return 'ct-' + (['기본', '전문', '특별', '민관'].indexOf(t) > -1 ? t : '기타'); }
-  function courseLink(key, label, date){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + (date ? '&d=' + date : '') + '&from=home">' + esc(label) + '<span class="go">교과목 편성 →</span></a>'; }
+  function courseLink(key, label, date){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + (date ? '&d=' + date : '') + '&from=home" title="누르면 이 과정의 교과목 편성 화면이 열립니다">' + esc(label) + '</a>'; }
 
   /* ---------- 오늘 수업 ---------- */
   function sessionsOn(date){
@@ -334,7 +334,7 @@
     var today = todayStr(), q = parseYmd(today);
     var list = sessionsOn(today);
     var now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
-    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건</span></div><div class="cdesc">오늘 편성된 교과목입니다. 과정명을 누르면 해당 과정의 교과목 편성 화면이 오늘 날짜 기준 주간 격자로 열립니다.</div>';
+    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건</span></div><div class="cdesc">오늘 진행되는 수업입니다. 시간 순으로 표시하며, 과정마다 색이 다릅니다. 과정명을 누르면 해당 과정의 오늘 날짜 주간 일정이 열립니다.</div>';
     if (!sessionsOk) html += '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>';
     else if (!list.length) html += '<div class="empty">오늘 예정된 수업이 없습니다.</div>';
     else html += '<ul class="tl">' + list.map(function(o){
@@ -342,7 +342,7 @@
       var cls = '';
       if (pt.s != null && pt.e != null) { if (nowMin >= pt.e) cls = 'done'; else if (nowMin >= pt.s) cls = 'now'; }
       var state = cls === 'now' ? ' <span class="tag t-ok">진행 중</span>' : cls === 'done' ? ' <span class="tag t-none">종료</span>' : '';
-      return '<li class="' + cls + '"><div class="tm">' + esc(pt.txt) + '<small>' + esc(pt.time || '시간 미등록') + '</small></div>' +
+      return '<li class="' + cls + '" style="border-left:5px solid ' + courseColor(String((planByKey(o.key) || {})['과정명'] || o.key)) + ';padding-left:10px;"><div class="tm">' + esc(pt.txt) + '<small>' + esc(pt.time || '시간 미등록') + '</small></div>' +
         '<div><div class="sj">' + esc(o.subj) + (o.klass && o.klass !== '전체' ? ' <span class="tag t-none">' + esc(o.klass) + '반</span>' : '') + state + '</div>' +
         '<div class="co">' + courseLink(o.key, nameOf(o.key), today) + '</div></div>' +
         '<div><div class="ro">' + (o.room ? esc(o.room) : '<span class="hint">강의실 미정</span>') + '</div><div class="ins">' + instrHtml(o.rows) + '</div></div></li>';
