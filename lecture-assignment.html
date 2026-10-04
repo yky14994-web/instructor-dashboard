@@ -357,6 +357,61 @@
   }
   @media print{ .todo{display:none !important;} }
 
+  /* 월 캘린더 보기(연간계획 화면) */
+  .pmbar{display:flex;justify-content:flex-end;margin:0 0 8px;}
+  .pmbar .vtabs{float:none;}
+  .pcalbox{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);padding:14px 16px;margin-bottom:14px;}
+  .pcalbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .pcalbar h3{margin:0 8px 0 0;font-size:17px;font-weight:800;color:var(--navy);}
+  .pcalbar select,.pcalbar input[type=month]{height:34px;border:1px solid var(--border-input);border-radius:6px;padding:0 8px;font-family:inherit;font-size:13px;background:#fff;}
+  .pcalsum{font-size:12.5px;color:var(--text-muted);margin:0 0 8px;}
+  table.calt{width:100%;border-collapse:collapse;table-layout:fixed;}
+  table.calt th{font-size:12px;color:var(--text-muted);font-weight:700;padding:6px 4px;border:1px solid var(--border);background:#F7F8FA;position:static;}
+  table.calt td{border:1px solid var(--border);vertical-align:top;padding:4px;height:104px;background:#fff;}
+  table.calt td.out{background:#FAFAF8;}
+  table.calt td.we{background:#FBFAF7;}
+  table.calt td.tod{box-shadow:inset 0 0 0 2px var(--navy);}
+  .cdn{display:inline-block;font-size:12px;font-weight:700;color:var(--text-sub);cursor:pointer;padding:0 3px;border-radius:4px;}
+  table.calt td.out .cdn{color:#c3c0b8;cursor:default;}
+  .cdn:hover{background:#EEF1F5;}
+  .cc{display:block;margin-top:3px;padding:3px 6px;border-radius:5px;font-size:12px;line-height:1.35;cursor:pointer;border:1.5px solid transparent;overflow:hidden;}
+  .cc b{display:block;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cc small{display:block;font-size:11px;font-weight:600;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cc:hover{filter:brightness(.95);}
+  .ct-기본{background:#E3EBF5;color:#1B3A5F;} .ct-전문{background:#E3F1E4;color:#1F6B2B;}
+  .ct-특별{background:#EDE3F5;color:#5B2A86;} .ct-민관{background:#FDEBD3;color:#8A4B00;} .ct-기타{background:#ECEEF1;color:#4A5360;}
+  .cc.err{border-color:#D8574B;box-shadow:0 0 0 1px #D8574B inset;} .cc.warn{border-color:#D9B100;}
+  .cc.unas{border-style:dashed;border-color:#C9A400;}
+  .cc.err.unas{border-style:solid;border-color:#D8574B;}
+  .cc.pre{opacity:.78;}
+  .cmore{display:block;margin-top:3px;font-size:11.5px;font-weight:700;color:var(--navy);cursor:pointer;padding:0 3px;}
+  .calleg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-sub);margin-top:8px;}
+  .calleg i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px;border:1.5px solid transparent;}
+  .cagenda{display:none;}
+  .dday h4{margin:14px 0 6px;font-size:13.5px;}
+  .dday table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .dday th,.dday td{padding:6px 6px;border-top:1px solid var(--border);text-align:left;vertical-align:top;}
+  .dday th{font-size:11.5px;color:var(--text-muted);border-top:none;position:static;background:none;}
+  .dday tr.hl td:first-child{box-shadow:inset 3px 0 0 var(--navy);}
+  @media (max-width:760px){
+    table.calt{display:none;} .cagenda{display:block;}
+    .cagenda .ag{border-top:1px solid var(--border);padding:8px 0;}
+    .cagenda .ag .dh{font-weight:800;font-size:13px;color:var(--navy);margin-bottom:2px;cursor:pointer;}
+    .cagenda .ag .dh.tod{color:#9B1C12;}
+    .pcalbar h3{width:100%;}
+  }
+  @page{size:A4 landscape;margin:10mm;}
+  @media print{
+    body.pcal header .hbtns,body.pcal .todo,body.pcal .cards,body.pcal .pmbar,body.pcal #msgBox,body.pcal .pcalbar select,body.pcal .pcalbar input,body.pcal .pcalbar button,body.pcal #editView,body.pcal #iOverlay{display:none !important;}
+    body.pcal .tw,body.pcal #count,body.pcal #planLegend,body.pcal #planBar,body.pcal #cardList,body.pcal #emptyBox,body.pcal #loading{display:none !important;}
+    body.pcal #planCal{display:block !important;}
+    body.pcal .pcalbox{box-shadow:none;padding:0;}
+    body.pcal table.calt{display:table !important;font-size:10px;} body.pcal .cagenda{display:none !important;}
+    body.pcal table.calt td{height:72px;}
+    body.pcal .cc{border:1px solid #888;background:#fff !important;color:#000 !important;} body.pcal .cc b{white-space:normal;}
+    body.pcal .cc.err{border:2px solid #000;}
+  }
+
   /* 보기 전환·격자 */
   .vtabs{float:right;display:inline-flex;gap:0;}
   .vtabs button{height:30px;padding:0 16px;border:1px solid var(--border-input);background:#fff;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-sub);cursor:pointer;}
@@ -476,7 +531,9 @@
 
   <div class="todo" id="todo" style="display:none;"></div>
 
-  <div class="bar">
+  <div class="pmbar"><span class="vtabs" role="tablist" aria-label="연간계획 보기 전환"><button type="button" id="pmTable" class="on" role="tab" data-pm="table">표</button><button type="button" id="pmCal" role="tab" data-pm="cal">월 캘린더</button></span></div>
+
+  <div class="bar" id="planBar">
     <select id="fYear" aria-label="연도"></select>
     <select id="fMonth" aria-label="월"></select>
     <select id="fType" aria-label="구분"></select>
@@ -497,7 +554,7 @@
     <button class="btn" id="excelBtn" type="button">엑셀 내려받기</button>
     <button class="btn" id="printBtn" type="button">인쇄</button>
   </div>
-  <div class="legend" style="margin:0 2px 8px 2px;">초록=이상 없음 · 노랑=확인 필요 · 빨강=오류(수정 필요) · 검사 결과는 강의배정DB 연간계획 시트의 값입니다.</div>
+  <div class="legend" id="planLegend" style="margin:0 2px 8px 2px;">초록=이상 없음 · 노랑=확인 필요 · 빨강=오류(수정 필요) · 검사 결과는 강의배정DB 연간계획 시트의 값입니다.</div>
 
   <div id="loading">불러오는 중입니다. 처음에는 몇 초 걸릴 수 있습니다.</div>
   <div id="count"></div>
@@ -514,6 +571,7 @@
   </div>
   <div id="cardList"></div>
   <div class="empty" id="emptyBox" style="display:none;"></div>
+  <div id="planCal" style="display:none;"></div>
   </div>
 
   <div id="editView">
@@ -813,6 +871,8 @@
     var cxAll = plans.filter(isCancelled).length;
     $('count').textContent = '전체 ' + plans.length + '개 중 ' + shown.length + '개 표시' + (cxAll && !$('fStatus').value ? ' (취소된 ' + cxAll + '건은 숨김 — 위 상태 선택에서 "취소 포함"으로 볼 수 있습니다)' : '');
     $('thChg').style.display = isViewer() ? 'none' : '';
+    planViewSync();
+    if (planMode === 'cal') { renderPlanCal(); return; }
 
     if (!shown.length) {
       $('tableWrap').style.display = 'none';
@@ -1084,7 +1144,7 @@
       instrFailed = true;
     }).then(function(){
       instrLoading = false;
-      if (currentKey) { renderSessionList(); renderChip(); } else renderTodo();
+      if (currentKey) { renderSessionList(); renderChip(); } else { renderTodo(); if (planMode === 'cal') renderPlanCal(); }
     });
   }
 
@@ -1133,6 +1193,11 @@
     renderSessionList();
     window.scrollTo(0, 0);
     ensureInstructors();
+    if (pendingEdit) {
+      var pe = pendingEdit; pendingEdit = '';
+      var prow = allSessions.filter(function(x){ return String(x['편성ID']) === pe; })[0];
+      if (prow && formState === 'ok') { fillForm(prow, 'edit'); if (!hasInstr(prow)) setTimeout(function(){ var i = $('sInstr'); if (i) i.focus(); }, 400); }
+    }
   }
   function refreshEditList(){
     var p = planByKey(currentKey);
@@ -1538,6 +1603,186 @@
       document.body.removeChild(ta);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
+  }
+  /* ---------- 연간계획 화면: [표 | 월 캘린더] 보기 ---------- */
+  var planMode = 'table', calMonth = '', calType = '', calRoom = '', pendingEdit = '';
+  try { if (sessionStorage.getItem('jsfa_la_pmode') === 'cal') planMode = 'cal'; } catch (e) {}
+  function planViewSync(){
+    var cal = planMode === 'cal';
+    $('pmTable').className = cal ? '' : 'on'; $('pmCal').className = cal ? 'on' : '';
+    $('planCal').style.display = cal ? '' : 'none';
+    ['planBar', 'planLegend', 'count', 'tableWrap', 'cardList', 'emptyBox'].forEach(function(id){
+      var e = $(id); if (!e) return;
+      if (cal) e.style.display = 'none';
+      else if (id === 'planBar' || id === 'planLegend' || id === 'count') e.style.display = '';
+    });
+  }
+  function setPlanMode(m){
+    planMode = m === 'cal' ? 'cal' : 'table';
+    try { sessionStorage.setItem('jsfa_la_pmode', planMode); } catch (e) {}
+    applyFilters();
+  }
+  function monthDays(ym){
+    var m = /^(\d{4})-(\d{2})$/.exec(ym); if (!m) return [];
+    var n = new Date(+m[1], +m[2], 0).getDate(), out = [];
+    for (var d = 1; d <= n; d++) out.push(ym + '-' + ('0' + d).slice(-2));
+    return out;
+  }
+  function typeCls(p){
+    var t = String(p && p['구분'] || '');
+    return ['기본', '전문', '특별', '민관'].indexOf(t) > -1 ? 'ct-' + t : 'ct-기타';
+  }
+  /* 선택한 달의 날짜별·과정별 항목: 연간계획 기간(입교·사이버·실습 평일) + 편성된 교과목(주말 포함) */
+  function calCollect(month){
+    var byDate = {};
+    function ent(date, key){
+      var m = byDate[date] || (byDate[date] = {});
+      return m[key] || (m[key] = { key: key, plan: planByKey(key), rows: [], tags: {} });
+    }
+    var days = monthDays(month), first = days[0], last = days[days.length - 1];
+    plans.forEach(function(p){
+      if (isCancelled(p)) return;
+      var key = String(p['과정+기수'] || ''); if (!key) return;
+      [['입교 시작일', '입교 종료일', '입교'], ['사이버 시작일', '사이버 종료일', '사이버'], ['실습(외부) 시작일', '실습(외부) 종료일', '실습']].forEach(function(k){
+        var a = String(p[k[0]] || ''), b = String(p[k[1]] || '');
+        if (!parseYmd(a) || !parseYmd(b)) return;
+        var from = a < first ? first : a, to = b > last ? last : b;
+        for (var d = from; d <= to; d = addDays(d, 1)) {
+          var q = parseYmd(d); if (q.dow === 0 || q.dow === 6) continue;
+          ent(d, key).tags[k[2]] = true;
+        }
+      });
+    });
+    allSessions.forEach(function(r){
+      var key = String(r['개설키'] || ''), d = String(r['일자'] || '');
+      if (!key || d.slice(0, 7) !== month) return;
+      var p = planByKey(key); if (p && isCancelled(p)) return;
+      ent(d, key).rows.push(r);
+    });
+    // 필터
+    Object.keys(byDate).forEach(function(d){
+      Object.keys(byDate[d]).forEach(function(k){
+        var e = byDate[d][k], p = e.plan;
+        var drop = false;
+        if (calType && String(p && p['구분'] || '') !== calType) drop = true;
+        if (!drop && calRoom) {
+          if (e.rows.length) drop = !e.rows.some(function(r){ return String(r['강의실'] || '') === calRoom; });
+          else drop = !(p && String(p['예정 강의실'] || '').indexOf(calRoom) > -1);
+        }
+        if (drop) delete byDate[d][k];
+      });
+      if (!Object.keys(byDate[d]).length) delete byDate[d];
+    });
+    return byDate;
+  }
+  function entState(e){
+    var err = false, warn = false, unas = 0, gids = {};
+    e.rows.forEach(function(r){
+      gids[groupId(r)] = true;
+      if (!hasInstr(r)) unas++;
+      (cflByGid[groupId(r)] || []).forEach(function(c){ if (c.conf) return; if (c.type === 'class') warn = true; else err = true; });
+    });
+    return { err: err, warn: warn, unas: unas, n: Object.keys(gids).length };
+  }
+  function entChip(d, e){
+    var st = entState(e), p = e.plan;
+    var name = p ? String(p['과정명'] || '') + ' ' + String(p['기수'] || '') : e.key;
+    var sub = e.rows.length ? '교과목 ' + st.n : (e.tags['사이버'] ? '사이버' : e.tags['실습'] ? '실습' : '편성 전');
+    if (e.rows.length && e.tags['사이버']) sub += ' · 사이버';
+    if (st.unas) sub += ' · 강사 미지정 ' + st.unas;
+    if (st.err) sub += ' · 겹침';
+    var cls = 'cc ' + typeCls(p) + (st.err ? ' err' : st.warn ? ' warn' : '') + (st.unas ? ' unas' : '') + (e.rows.length ? '' : ' pre');
+    return '<span class="' + cls + '" data-cday="' + esc(d) + '" data-ckey="' + esc(e.key) + '" title="' + esc(name + ' · ' + sub) + '"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small></span>';
+  }
+  function renderPlanCal(){
+    var box = $('planCal');
+    var today = ymd(new Date());
+    if (!calMonth) calMonth = today.slice(0, 7);
+    var byDate = calCollect(calMonth), days = monthDays(calMonth);
+    var wk = Object.keys(byDate).some(function(d){ var q = parseYmd(d); return (q.dow === 0 || q.dow === 6) && byDate[d] && Object.keys(byDate[d]).some(function(k){ return byDate[d][k].rows.length; }); });
+    var cols = wk ? 7 : 5, names = ['월', '화', '수', '목', '금', '토', '일'];
+    var q0 = parseYmd(days[0]);
+    var start = mondayOf(days[0]), end = days[days.length - 1];
+    var courseSet = {}, nSubj = 0, nUnas = 0, nErr = 0;
+    Object.keys(byDate).forEach(function(d){ Object.keys(byDate[d]).forEach(function(k){ var e = byDate[d][k]; courseSet[k] = true; var st = entState(e); nSubj += st.n; nUnas += st.unas; if (st.err) nErr++; }); });
+    // 필터 옵션
+    var roomSet = {}; rooms.forEach(function(r){ roomSet[r] = true; });
+    allSessions.forEach(function(r){ if (r['강의실']) roomSet[String(r['강의실'])] = true; });
+    var types = ['기본', '전문', '특별', '민관'];
+    plans.forEach(function(p){ var t = String(p['구분'] || ''); if (t && types.indexOf(t) < 0) types.push(t); });
+    var head = '<div class="pcalbar"><h3>' + q0.y + '년 ' + q0.m + '월</h3>' +
+      '<button type="button" class="btn sm" data-cm="prev">◀ 이전 달</button><button type="button" class="btn sm" data-cm="today">이번 달</button><button type="button" class="btn sm" data-cm="next">다음 달 ▶</button>' +
+      '<input type="month" id="calMonthIn" value="' + esc(calMonth) + '" aria-label="월 선택">' +
+      '<select id="calTypeSel" aria-label="구분"><option value="">구분 전체</option>' + types.map(function(t){ return '<option value="' + esc(t) + '"' + (calType === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>' +
+      '<select id="calRoomSel" aria-label="강의실"><option value="">강의실 전체</option>' + Object.keys(roomSet).sort().map(function(r){ return '<option value="' + esc(r) + '"' + (calRoom === r ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('') + '</select>' +
+      '<button type="button" class="btn sm" data-cm="print" style="margin-left:auto;">인쇄</button></div>' +
+      '<div class="pcalsum">이 달 과정·기수 ' + Object.keys(courseSet).length + '개 · 편성된 교과목 ' + nSubj + '건 · 강사 미지정 ' + nUnas + '건 · 겹침 경고 ' + nErr + '곳</div>';
+    var thead = '<tr>' + names.slice(0, cols).map(function(n){ return '<th>' + n + '</th>'; }).join('') + '</tr>';
+    var body = '', agenda = '';
+    for (var w = start; w <= end; w = addDays(w, 7)) {
+      body += '<tr>';
+      for (var c = 0; c < cols; c++) {
+        var d = addDays(w, c), inM = d.slice(0, 7) === calMonth, q = parseYmd(d);
+        var list = inM && byDate[d] ? Object.keys(byDate[d]).map(function(k){ return byDate[d][k]; }).sort(function(a, b){ return String(a.key) < String(b.key) ? -1 : 1; }) : [];
+        var chips = list.slice(0, 4).map(function(e){ return entChip(d, e); }).join('') + (list.length > 4 ? '<span class="cmore" data-cday="' + esc(d) + '">+' + (list.length - 4) + '개 더 보기</span>' : '');
+        body += '<td class="' + (inM ? '' : 'out') + (c >= 5 ? ' we' : '') + (d === today ? ' tod' : '') + '">' + (inM ? '<span class="cdn" data-cday="' + esc(d) + '">' + q.d + '</span>' : '<span class="cdn">' + q.d + '</span>') + chips + '</td>';
+      }
+      body += '</tr>';
+    }
+    days.forEach(function(d){
+      var list = byDate[d] ? Object.keys(byDate[d]).map(function(k){ return byDate[d][k]; }) : [];
+      if (!list.length) return;
+      list.sort(function(a, b){ return String(a.key) < String(b.key) ? -1 : 1; });
+      agenda += '<div class="ag"><div class="dh' + (d === today ? ' tod' : '') + '" data-cday="' + esc(d) + '">' + esc(md(d)) + (d === today ? ' · 오늘' : '') + '</div>' + list.map(function(e){ return entChip(d, e); }).join('') + '</div>';
+    });
+    var leg = '<div class="calleg"><span><i class="ct-기본"></i>기본</span><span><i class="ct-전문"></i>전문</span><span><i class="ct-특별"></i>특별</span><span><i class="ct-민관"></i>민관</span>' +
+      '<span><i style="border-color:#D8574B"></i>겹침 경고(강사·강의실)</span><span><i style="border-color:#D9B100"></i>같은 반 겹침</span><span><i style="border:1.5px dashed #C9A400"></i>강사 미지정 있음</span><span><i class="ct-기타" style="opacity:.78"></i>편성 전(연간계획 기간만)</span></div>';
+    box.innerHTML = '<div class="pcalbox">' + head + '<table class="calt"><thead>' + thead + '</thead><tbody>' + body + '</tbody></table>' +
+      '<div class="cagenda">' + (agenda || '<div class="tnone" style="padding:10px 0;">이 달에 표시할 과정이 없습니다.</div>') + '</div>' + leg +
+      '<div class="hint" style="margin-top:8px;">과정 칩이나 날짜를 누르면 그날의 교과목·강사·강의실이 열립니다. 입교·사이버·실습 기간의 평일은 편성 전에도 표시됩니다.</div></div>';
+  }
+  function calNav(act){
+    if (act === 'print') {
+      document.body.classList.add('pcal');
+      var done = function(){ document.body.classList.remove('pcal'); window.removeEventListener('afterprint', done); };
+      window.addEventListener('afterprint', done);
+      window.print();
+      setTimeout(done, 1500);
+      return;
+    }
+    var q = parseYmd((calMonth || ymd(new Date()).slice(0, 7)) + '-01');
+    if (act === 'prev') calMonth = ymd(new Date(q.y, q.m - 2, 1)).slice(0, 7);
+    else if (act === 'next') calMonth = ymd(new Date(q.y, q.m, 1)).slice(0, 7);
+    else if (act === 'today') calMonth = ymd(new Date()).slice(0, 7);
+    renderPlanCal();
+  }
+  function dayInstr(r, viewer, cx){
+    if (r['강사ID']) {
+      var ins = instrById[r['강사ID']];
+      return roleTag(r) + (ins ? '<span class="tag t-ok nmk" data-detail="' + esc(r['강사ID']) + '" title="강사 정보 보기">' + esc(ins.name) + '</span> ' + docBadge(ins, r) : '<span class="tag t-ok">' + esc(r['강사명'] || r['강사ID']) + '</span>');
+    }
+    if (r['강사명']) return roleTag(r) + '<span class="tag t-info">' + esc(r['강사명']) + ' (직접 입력)</span>';
+    return (viewer || cx) ? '<span class="tag t-none">미지정</span>' : '<button type="button" class="btn sm" data-cassign="' + esc(r['편성ID']) + '">강사 지정</button>';
+  }
+  /* 날짜(또는 칩)를 누르면 그날의 교과목을 보여 주고, 강사 지정·수정은 해당 과정 편성 화면으로 이어 줌 */
+  function openDayDetail(date, hlKey){
+    var byDate = calCollect(date.slice(0, 7)), m = byDate[date] || {}, viewer = isViewer();
+    var list = Object.keys(m).map(function(k){ return m[k]; }).sort(function(a, b){ return String(a.key) < String(b.key) ? -1 : 1; });
+    var secs = list.map(function(e){
+      var p = e.plan, cx = p && isCancelled(p), name = p ? String(p['과정명'] || '') + ' ' + String(p['기수'] || '') : e.key;
+      var rows = e.rows.slice().sort(function(a, b){ return Number(a['시작교시']) - Number(b['시작교시']); });
+      var tb = rows.length ? '<table><thead><tr><th>교시</th><th>교과목</th><th>강사</th><th>강의실</th><th></th></tr></thead><tbody>' + rows.map(function(r){
+        var pt = periodText(r);
+        var edit = viewer ? '' : '<button type="button" class="btn sm" data-cassign="' + esc(r['편성ID']) + '">수정</button>';
+        return '<tr' + (e.key === hlKey ? ' class="hl"' : '') + '><td class="nw">' + esc(pt.txt) + (pt.time ? '<br><span class="hint">' + esc(pt.time) + '</span>' : '') + '</td><td>' + esc(r['교과목']) + '</td><td>' + dayInstr(r, viewer, cx) + '</td><td>' + esc(r['강의실'] || '미정') + '</td><td>' + edit + '</td></tr>';
+      }).join('') + '</tbody></table>' : '<div class="hint">편성된 교과목이 없습니다. ' + (e.tags['사이버'] ? '(사이버 기간)' : e.tags['실습'] ? '(실습 기간)' : '(입교 기간)') + '</div>';
+      return '<h4><span class="tpill ' + typeCls(p) + '">' + esc(name) + '</span> <button type="button" class="btn sm" data-copen="' + esc(e.key) + '">과정 편성 화면 열기</button></h4>' + tb;
+    }).join('');
+    $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(md(date)) + ' <span class="hint" style="font-weight:600;">일정</span></h2><div class="sub">과정 ' + list.length + '개</div></div></div>' +
+      '<div class="dday">' + (secs || '<div class="hint">표시할 과정이 없습니다.</div>') + '</div>' +
+      '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button></div>';
+    $('iOverlay').style.display = 'flex';
+    $('iClose').addEventListener('click', closeInstructor);
   }
   /* 연간계획 첫 화면 '처리할 일'(과정 필터와 무관, 취소 기수·지난 강의 제외)
      ① 강의계획서: 미제출 중 기한 지남·7일 이내  ② 강사 미지정: 강의일 14일 이내  ③ 겹침 경고: 미확인 전체  ④ 강사 서류: 강의일 14일 이내 배정 강사 중 미비·보유 만료 */
@@ -2786,11 +3031,25 @@
 
   function onListClick(ev){
     var t = ev.target;
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat')))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
     if (tpl) { var tp = tpl.split('|'); copyText(planLink(tp[1], tp[0]), t); return; }
+    var pmv = t.getAttribute('data-pm');
+    if (pmv) { setPlanMode(pmv); return; }
+    var cmv = t.getAttribute('data-cm');
+    if (cmv) { calNav(cmv); return; }
+    var cday = t.getAttribute('data-cday');
+    if (cday) { openDayDetail(cday, t.getAttribute('data-ckey') || ''); return; }
+    var copen = t.getAttribute('data-copen');
+    if (copen) { closeInstructor(); openCourse(copen); return; }
+    var cas = t.getAttribute('data-cassign');
+    if (cas) {
+      var crow = allSessions.filter(function(x){ return String(x['편성ID']) === cas; })[0];
+      if (crow) { closeInstructor(); pendingEdit = cas; openCourse(String(crow['개설키'])); }
+      return;
+    }
     var tcat = t.getAttribute('data-tcat');
     if (tcat) { todoCat = tcat; todoMore = false; renderTodo(); return; }
     var ttab = t.getAttribute('data-ttab');
@@ -2841,6 +3100,12 @@
       .finally(function(){ b.disabled = false; b.textContent = '새로고침'; });
   });
   document.addEventListener('click', onListClick);
+  document.addEventListener('change', function(ev){
+    var t = ev.target; if (!t || !t.id) return;
+    if (t.id === 'calTypeSel') { calType = t.value; renderPlanCal(); }
+    else if (t.id === 'calRoomSel') { calRoom = t.value; renderPlanCal(); }
+    else if (t.id === 'calMonthIn' && /^\d{4}-\d{2}$/.test(t.value)) { calMonth = t.value; renderPlanCal(); }
+  });
   document.addEventListener('keydown', function(ev){
     if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.getAttribute && ev.target.getAttribute('data-doc')) { ev.preventDefault(); openDocInfo(ev.target.getAttribute('data-doc'), ev.target.getAttribute('data-sid') || ''); }
   });
