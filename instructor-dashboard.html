@@ -441,6 +441,10 @@
   </div>
 
   <div id="loading">불러오는 중...</div>
+  <div id="loadError" style="display:none;background:#FFF4E5;border:1px solid #F0C98A;border-radius:10px;padding:14px 16px;margin:10px 0;font-size:13.5px;color:#7A4B00;">
+    <div id="loadErrorText" style="margin-bottom:8px;"></div>
+    <button type="button" id="loadRetryBtn" style="border:1px solid #1B3A5F;background:#1B3A5F;color:#fff;border-radius:6px;height:34px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;">다시 불러오기</button>
+  </div>
   <div id="empty" style="display:none;">조건에 맞는 강사가 없습니다.</div>
 
   <div id="instructorViewWrap">
@@ -1320,7 +1324,12 @@
     })
     .then(function(res){ return res.json(); })
     .then(function(json){
-      if (json.status !== 'ok') throw new Error('auth');
+      if (json.status !== 'ok') {
+        var le = new Error(json.message || '목록을 불러오지 못했습니다');
+        le.auth = /인증|비밀번호/.test(json.message || '');
+        throw le;
+      }
+      document.getElementById('loadError').style.display = 'none';
 
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
@@ -1394,7 +1403,8 @@
     btn.textContent = '확인 중...';
 
     loadData(pw)
-      .catch(function(){
+      .catch(function(err){
+        msg.textContent = (err && err.auth === false) ? '서버에서 목록을 불러오지 못했습니다(' + err.message + '). 잠시 후 다시 시도해 주세요.' : (err && err.auth === undefined && err.name === 'TypeError') ? '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.' : '비밀번호가 올바르지 않습니다.';
         msg.style.display = 'block';
         sessionStorage.removeItem('jsfa_dash_pw'); sessionStorage.removeItem('jsfa_dash_role');
         clearPin();
@@ -1408,7 +1418,32 @@
   // 같은 브라우저 탭 세션 안에서는 다시 로그인하지 않도록 자동 시도
   var savedPw = sessionStorage.getItem('jsfa_dash_pw');
   if (savedPw) {
-    loadData(savedPw).catch(function(){ sessionStorage.removeItem('jsfa_dash_pw'); sessionStorage.removeItem('jsfa_dash_role'); }).then(window.__autoDone, window.__autoDone);
+    // 저장된 로그인으로 자동 불러오기: 비밀번호 오류일 때만 로그인 화면으로 돌아가고,
+    // 서버 지연·일시 오류는 한 번 자동 재시도한 뒤 로그인 상태를 유지한 채 '다시 불러오기' 안내를 표시
+    var autoTries = 0;
+    var autoLoad = function(){
+      autoTries++;
+      return loadData(savedPw).catch(function(err){
+        if (err && err.auth) { sessionStorage.removeItem('jsfa_dash_pw'); sessionStorage.removeItem('jsfa_dash_role'); return; }
+        if (autoTries < 2) return new Promise(function(r){ setTimeout(r, 2500); }).then(autoLoad);
+        showLoadError(err);
+      });
+    };
+    function showLoadError(err){
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('loadErrorText').textContent = '강사 목록을 불러오지 못했습니다' + (err && err.message ? ' (' + err.message + ')' : '') + '. 로그인은 유지되어 있습니다. 잠시 후 다시 불러오기를 눌러 주세요.';
+      document.getElementById('loadError').style.display = 'block';
+    }
+    document.getElementById('loadRetryBtn').addEventListener('click', function(){
+      var b = this; b.disabled = true; b.textContent = '불러오는 중...';
+      loadData(savedPw).catch(function(err){
+        if (err && err.auth) { sessionStorage.removeItem('jsfa_dash_pw'); sessionStorage.removeItem('jsfa_dash_role'); location.reload(); return; }
+        showLoadError(err);
+      }).finally(function(){ b.disabled = false; b.textContent = '다시 불러오기'; });
+    });
+    autoLoad().then(window.__autoDone, window.__autoDone);
   }
 </script>
 
