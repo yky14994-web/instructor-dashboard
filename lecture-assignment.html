@@ -293,7 +293,7 @@
   @media (max-width:640px){ #pCard .opt{grid-template-columns:1fr;} }
 
   /* 인쇄: A4 가로, 표만 */
-  @page{size:A4 landscape;margin:10mm;}
+  @page{size:A4 landscape;margin:20mm 10mm 10mm 10mm;}
   @media print{
     body{background:#fff;}
     .wrap{max-width:none;padding:0;}
@@ -411,7 +411,7 @@
     .cagenda .ag .dh.tod{color:#9B1C12;}
     .pcalbar h3{width:100%;}
   }
-  @page{size:A4 landscape;margin:10mm;}
+  @page{size:A4 landscape;margin:20mm 10mm 10mm 10mm;}
   @media print{
     body.pcal header .hbtns,body.pcal .todo,body.pcal .cards,body.pcal .pmbar,body.pcal #msgBox,body.pcal .pcalbar select,body.pcal .pcalbar input,body.pcal .pcalbar button,body.pcal #editView,body.pcal #iOverlay{display:none !important;}
     body.pcal .tw,body.pcal #count,body.pcal #planLegend,body.pcal #planBar,body.pcal #cardList,body.pcal #emptyBox,body.pcal #loading{display:none !important;}
@@ -658,7 +658,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 인쇄 세로·과정명 열기 1</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 인쇄 세로·과정명 열기 2</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1144,7 +1144,7 @@
   function printWith(sf, cls){
     var o = oriGet(sf), st = document.getElementById('pageOri');
     if (!st) { st = document.createElement('style'); st.id = 'pageOri'; document.head.appendChild(st); }
-    st.textContent = '@page{size:A4 ' + o + ';margin:10mm;}';
+    st.textContent = '@page{size:A4 ' + o + ';margin:20mm 10mm 10mm 10mm;}';
     document.body.classList.toggle('ppt', o === 'portrait');
     if (cls) document.body.classList.add(cls);
     var done = function(){ document.body.classList.remove('ppt'); if (cls) document.body.classList.remove(cls); window.removeEventListener('afterprint', done); };
