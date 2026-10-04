@@ -183,10 +183,10 @@
   </header>
 
   <div class="quick">
-    <a class="btn primary" href="lecture-assignment.html#v=table">강의배정 ▸ 연간계획</a>
-    <a class="btn" data-v="cal" href="lecture-assignment.html#v=cal">강의배정 ▸ 월 캘린더</a>
-    <a class="btn" data-v="room" href="lecture-assignment.html#v=room">강의배정 ▸ 빈 강의실 조회</a>
-    <a class="btn" href="instructor-dashboard.html">강사관리 ▸ 강사 조회·검색</a>
+    <a class="btn primary" href="lecture-assignment.html#v=table">과정 편성하기</a>
+    <a class="btn" data-v="cal" href="lecture-assignment.html#v=cal">월 일정 보기</a>
+    <a class="btn" data-v="room" href="lecture-assignment.html#v=room">빈 강의실 찾기</a>
+    <a class="btn" href="instructor-dashboard.html">강사 검색하기</a>
   </div>
 
   <div id="msg"></div>
@@ -202,7 +202,7 @@
       <section class="card" id="cYear"></section>
     </div>
   </div>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 5</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-04 홈 6</div>
 </div>
 </div>
 
@@ -439,7 +439,7 @@
     var busy = target.filter(function(r){ return usedBy[r]; });
     html += '<div class="rl"><span class="k">종일 비어 있음</span>' + (whole.length ? whole.map(function(r){ return '<span class="tag t-ok">' + esc(r) + '</span>'; }).join('') : '<span class="meta">없음</span>') + '</div>' +
       (busy.length ? '<div class="rl"><span class="k">사용 중</span>' + busy.map(function(r){ return '<span class="tag t-none">' + esc(r) + ' <small>' + ranges(usedBy[r]) + '</small></span>'; }).join('') + '</div>' : '') +
-      '<div style="margin-top:10px;"><a class="btn sm" data-v="room" href="lecture-assignment.html#v=room&d=' + today + '">강의배정 ▸ 빈 강의실 조회</a></div>';
+      '<div style="margin-top:10px;"><a class="btn sm" data-v="room" href="lecture-assignment.html#v=room&d=' + today + '">빈 강의실 찾기</a></div>';
     $('cRoom').innerHTML = html;
   }
 
@@ -478,7 +478,7 @@
       '</tbody><tfoot><tr><td>합계</td><td>' + total.c + '</td><td>' + total.n + '</td><td>' + total.p.toLocaleString('ko-KR') + '</td></tr></tfoot></table>' +
       '<div class="hint" style="margin-top:8px;">과정 = 과정명 종류, 회 = 기수 수, 인원 = 계획인원 합계(입교 시작일이 ' + yearSel + '년인 기수 기준). ' +
       (cancelled ? '취소된 기수 ' + cancelled + '회는 제외했습니다. ' : '') + '</div>' +
-      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table">강의배정 ▸ 연간계획</a></div>';
+      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table">과정 편성하기</a></div>';
     $('cYear').innerHTML = html;
   }
 
