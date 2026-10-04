@@ -325,6 +325,33 @@
   }
   @media print{ .gnav{display:none !important;} }
 
+  /* 처리할 일 패널(연간계획 첫 화면) */
+  .todo{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);padding:14px 18px;margin:0 0 14px;}
+  .todo .th{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+  .todo h3{margin:0;font-size:15px;font-weight:800;color:var(--navy);}
+  .todo .sum{font-size:12.5px;color:var(--text-muted);}
+  .todo table{width:100%;border-collapse:collapse;font-size:13px;}
+  .todo th,.todo td{padding:7px 8px;border-top:1px solid var(--border);text-align:left;vertical-align:middle;background:none;position:static;}
+  .todo thead th{border-top:none;font-size:12px;color:var(--text-muted);font-weight:700;}
+  .todo tr.trow{cursor:pointer;} .todo tr.trow:hover{background:#F7F9FB;}
+  .tpill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:800;white-space:nowrap;}
+  .tpill.bad{background:var(--err-bg);color:var(--err-fg);} .tpill.wn{background:var(--warn-bg);color:var(--warn-fg);}
+  .todo .tabs{display:flex;gap:6px;margin-left:auto;}
+  .todo .tabs .btn{height:30px;font-size:12.5px;}
+  .todo .tabs .btn.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .todo .more{margin-top:8px;font-size:12.5px;}
+  .todo .more a{color:var(--navy);font-weight:700;cursor:pointer;}
+  .todo .tnote{font-size:12px;color:var(--text-muted);margin-top:6px;}
+  .todo .tnone{font-size:13px;color:var(--text-sub);padding:2px 0;}
+  .todo .mcards{display:none;}
+  @media (max-width:760px){
+    .todo table{display:none;} .todo .mcards{display:block;} .todo .tabs{margin-left:0;}
+    .todo .mc{border-top:1px solid var(--border);padding:10px 0;cursor:pointer;}
+    .todo .mc .t{font-weight:800;font-size:13.5px;} .todo .mc .s{font-size:12.5px;color:var(--text-sub);margin-top:2px;}
+    .todo .mc .a{margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  }
+  @media print{ .todo{display:none !important;} }
+
   /* 보기 전환·격자 */
   .vtabs{float:right;display:inline-flex;gap:0;}
   .vtabs button{height:30px;padding:0 16px;border:1px solid var(--border-input);background:#fff;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-sub);cursor:pointer;}
@@ -441,6 +468,8 @@
     <div class="card none"><div class="n"><span id="cNoSubj">0</span><span class="u">건</span></div><div class="l"><b>교과목 미편성</b><br>아직 교과목이 없는 과정</div></div>
     <div class="card" id="cardOv"><div class="n"><span id="cOverlap">0</span><span class="u">건</span></div><div class="l"><b>겹침 경고 (미확인)</b><br><span id="cOverlapL">강사·강의실·같은 반</span></div></div>
   </div>
+
+  <div class="todo" id="todo" style="display:none;"></div>
 
   <div class="bar">
     <select id="fYear" aria-label="연도"></select>
@@ -750,6 +779,7 @@
 
   function render(){
     $('loading').style.display = 'none';
+    renderTodo();
     var ppl = 0, check = 0, nosubj = 0, cxShown = 0, nActive = 0;
     shown.forEach(function(p){
       if (isCancelled(p)) { cxShown++; return; }
@@ -1049,7 +1079,7 @@
       instrFailed = true;
     }).then(function(){
       instrLoading = false;
-      if (currentKey) { renderSessionList(); renderChip(); }
+      if (currentKey) { renderSessionList(); renderChip(); } else renderTodo();
     });
   }
 
@@ -1503,6 +1533,61 @@
       document.body.removeChild(ta);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
+  }
+  /* 연간계획 첫 화면 '처리할 일': 강의계획서 미제출 중 기한이 지났거나 7일 이내인 교과목(과정 필터와 무관, 취소 기수·종료된 강의 제외) */
+  var todoTab = 'all', todoMore = false;
+  function todoItems(){
+    var out = [];
+    allSessions.forEach(function(r){
+      var st = planState(r);
+      if (!st || st.done || st.ended || st.left === null || st.left > 7) return;
+      out.push({ r: r, st: st });
+    });
+    out.sort(function(a, b){
+      if (a.st.due !== b.st.due) return a.st.due < b.st.due ? -1 : 1;
+      return String(a.st.date) < String(b.st.date) ? -1 : String(a.st.date) > String(b.st.date) ? 1 : 0;
+    });
+    return out;
+  }
+  function todoPill(st){
+    var txt = st.left < 0 ? Math.abs(st.left) + '일 지남' : st.left === 0 ? '오늘' : st.left + '일 남음';
+    return '<span class="tpill ' + (st.left < 0 ? 'bad' : 'wn') + '">' + txt + '</span>';
+  }
+  function renderTodo(){
+    var box = $('todo');
+    if (!box) return;
+    if (!sessionsOk) { box.style.display = 'none'; return; }
+    var all = todoItems();
+    var nOver = all.filter(function(o){ return o.st.left < 0; }).length, nSoon = all.length - nOver;
+    box.style.display = '';
+    if (!all.length) {
+      box.innerHTML = '<div class="th"><h3>처리할 일 · 강의계획서</h3></div><div class="tnone">처리할 일이 없습니다. 기한이 지났거나 7일 이내로 남은 강의계획서 미제출이 없습니다.</div>';
+      return;
+    }
+    if (instructors === null) ensureInstructors();
+    var list = all.filter(function(o){ return todoTab === 'over' ? o.st.left < 0 : todoTab === 'soon' ? o.st.left >= 0 : true; });
+    var viewer = isViewer();
+    var shownList = todoMore ? list : list.slice(0, 5);
+    function nameOf(o){
+      var ins = instrById[o.st.iid];
+      return esc((ins && ins.name) || o.r['강사명'] || o.st.iid) + (ins ? ' ' + docBadge(ins, o.r) : '');
+    }
+    function copyBtn(o){ return viewer ? '' : '<button type="button" class="btn sm" data-tplink="' + esc(o.st.sid) + '|' + esc(o.st.iid) + '">링크 복사</button>'; }
+    var rows = shownList.map(function(o){
+      return '<tr class="trow" data-todo="' + esc(o.r['개설키']) + '"><td>' + todoPill(o.st) + '</td><td class="nw">' + esc(md(o.st.due)) + '</td><td>' + esc(o.r['개설키']) + '</td>' +
+        '<td>' + esc(o.st.subj) + ' (' + esc(md(o.st.date)) + ')</td><td>' + nameOf(o) + '</td><td>' + copyBtn(o) + '</td></tr>';
+    }).join('');
+    var cards = shownList.map(function(o){
+      return '<div class="mc" data-todo="' + esc(o.r['개설키']) + '"><div class="t">' + todoPill(o.st) + ' ' + esc(o.st.subj) + '</div>' +
+        '<div class="s">' + esc(o.r['개설키']) + ' · 강의 ' + esc(md(o.st.date)) + ' · 기한 ' + esc(md(o.st.due)) + '</div>' +
+        '<div class="a">' + nameOf(o) + ' ' + copyBtn(o) + '</div></div>';
+    }).join('');
+    function tab(k, label, n){ return '<button type="button" class="btn' + (todoTab === k ? ' on' : '') + '" data-ttab="' + k + '">' + label + ' ' + n + '</button>'; }
+    box.innerHTML = '<div class="th"><h3>처리할 일 · 강의계획서</h3><span class="sum">기한 지남 <b style="color:var(--err-fg)">' + nOver + '건</b> · 7일 이내 임박 <b style="color:var(--warn-fg)">' + nSoon + '건</b> · 기한은 강의일 7일 전</span>' +
+      '<div class="tabs">' + tab('all', '전체', all.length) + tab('over', '기한 지남', nOver) + tab('soon', '임박', nSoon) + '</div></div>' +
+      (list.length ? '<table><thead><tr><th>상태</th><th>기한</th><th>과정 · 기수</th><th>교과목 (강의일)</th><th>강사</th><th></th></tr></thead><tbody>' + rows + '</tbody></table><div class="mcards">' + cards + '</div>' : '<div class="tnone">해당하는 항목이 없습니다.</div>') +
+      '<div class="more">' + (list.length > 5 ? '<a data-tmore="1">' + (todoMore ? '접기 ▴' : '나머지 ' + (list.length - 5) + '건 더 보기 ▾') + '</a> ' : '') +
+      '<span class="tnote">· 행을 누르면 해당 과정의 교과목 편성 화면으로 이동합니다' + (viewer ? '.' : '. 링크 복사는 강사에게 직접 전달해 주세요(자동 발송 없음).') + '</span></div>';
   }
   function docBadge(x, row){
     if (!x) return '';
@@ -2612,9 +2697,16 @@
 
   function onListClick(ev){
     var t = ev.target;
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-manual') !== null))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
+    var tpl = t.getAttribute('data-tplink');
+    if (tpl) { var tp = tpl.split('|'); copyText(planLink(tp[1], tp[0]), t); return; }
+    var ttab = t.getAttribute('data-ttab');
+    if (ttab) { todoTab = ttab; todoMore = false; renderTodo(); return; }
+    if (t.getAttribute('data-tmore')) { todoMore = !todoMore; renderTodo(); return; }
+    var tdo = t.getAttribute('data-todo');
+    if (tdo) { openCourse(tdo); return; }
     var cfSig = t.getAttribute('data-cf');
     if (cfSig) { doConfirm(cfSig, t.getAttribute('data-cfk') || 'confirm', t); return; }
     var chgKey = t.getAttribute('data-chg');
