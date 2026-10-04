@@ -385,6 +385,9 @@
   .cc.unas{border-style:dashed;border-color:#C9A400;}
   .cc.err.unas{border-style:solid;border-color:#D8574B;}
   .cc.pre{opacity:.78;}
+  .cc.ph{visibility:hidden;cursor:default;}
+  .lhint{margin:6px 2px 10px;padding:12px 16px;border-radius:8px;background:#FFF6D6;border:1.5px solid #E0B400;border-left:6px solid #E0B400;color:#3D2F00;font-size:15.5px;line-height:1.5;}
+  .lhint b{font-weight:800;font-size:16.5px;color:#1F2D45;}
   .cmore{display:block;margin-top:3px;font-size:11.5px;font-weight:700;color:var(--navy);cursor:pointer;padding:0 3px;}
   .calleg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-sub);margin-top:8px;}
   .calleg i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px;border:1.5px solid transparent;}
@@ -655,7 +658,7 @@
 
   <div id="loading">불러오는 중입니다. 처음에는 몇 초 걸릴 수 있습니다.</div>
   <div id="weekNote" class="hint" style="display:none;margin:0 2px 8px 2px;"></div>
-  <div id="listHint" class="hint" style="display:none;margin:0 2px 8px 2px;"></div>
+  <div id="listHint" class="lhint" style="display:none;"></div>
   <div id="count"></div>
   <div class="tw" id="tableWrap" style="display:none;">
     <table>
@@ -697,7 +700,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 18</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 19</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -885,9 +888,9 @@
   }
   function updateListHint(){
     var h = $('listHint'); if (!h) return;
-    var on = (weekFilter || $('fType').value || $('fMonth').value) && shown.length;
+    var on = shown.length > 0 && planMode === 'table';
     h.style.display = on ? '' : 'none';
-    h.innerHTML = on ? '<b>아래 과정을 선택하고 교과목을 지정할 수 있습니다.</b> 과정명을 누르면 교과목 편성 화면이 열립니다.' : '';
+    h.innerHTML = on ? '<b>아래 과정을 선택하고 교과목을 지정할 수 있습니다.</b><br>과정명을 누르면 교과목 편성 화면이 열립니다.' : '';
   }
   function updateWeekNote(){
     updateListHint();
@@ -1363,6 +1366,7 @@
     if (dm && normYmd(dm[1]) && currentKey !== key) {
       viewMode = 'grid'; try { sessionStorage.setItem('jsfa_la_view', 'grid'); } catch (e) {}
       gridKeepWeek = mondayOf(dm[1]); gridWantDate = dm[1];
+      lastDate = dm[1];   // 교과목 추가 칸의 일자 기본값을 누른 날짜로
     }
     if (currentKey === key && $('editView').style.display === 'block') { refreshEditList(); return; }
     showEdit(key);
@@ -1554,6 +1558,7 @@
       '<div><label for="sDate">일자</label><input type="date" id="sDate" value="' + esc(defDate) + '"><div class="hint" id="sDow"></div></div>' +
       '<div><label for="sStart">시작 교시</label><select id="sStart">' + periodOptions('start', p1) + '</select></div>' +
       '<div><label for="sEnd">끝 교시</label><select id="sEnd">' + periodOptions('end', p1) + '</select></div>' +
+      '<div class="span3" style="margin-top:-4px;"><div class="hint" id="sPerHint"></div></div>' +
       '<div class="span3"><label for="sSubj">교과목</label><input type="text" id="sSubj" maxlength="100" placeholder="예: 소방기본법"></div>' +
       '<div><label for="sCat">교과목 구분</label><select id="sCat"><option value="">(선택 안 함)</option>' +
         CATS.map(function(c){ return '<option value="' + c + '"' + (c === lastCat ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></div>' +
@@ -1585,7 +1590,8 @@
     updateDow();
     refreshRoomOptions();
     $('sRole').value = form.role === '보조강사' ? '보조강사' : '주강사';
-    $('sRole').addEventListener('change', function(){ form.role = $('sRole').value; });
+    $('sRole').addEventListener('change', function(){ form.role = $('sRole').value; renderChip(); });
+    $('sKlass').addEventListener('change', function(){ renderChip(); });
     renderChip();
     $('sDate').addEventListener('change', function(){ updateDow(); renderChip(); refreshRoomOptions(); });
     $('sStart').addEventListener('change', function(){
@@ -1617,6 +1623,44 @@
     $('sClose').addEventListener('click', closeFormModal);
     $('sOpsAuto').addEventListener('click', function(){ openOps([currentKey]); });
   }
+  /* 같은 날 이미 편성된 교시는 선택할 수 없게 표시(같은 과정·같은 반(또는 전체반). 보조강사 추가 때는 풀림) */
+  function occupiedPeriods(){
+    var occ = {}, date = normYmd($('sDate').value), klass = $('sKlass').value || '전체';
+    if (!date) return occ;
+    allSessions.forEach(function(r){
+      if (String(r['개설키'] || '') !== currentKey || normYmd(r['일자']) !== date || String(r['편성ID']) === form.id) return;
+      var k = String(r['반'] || '전체');
+      if (!(k === '전체' || klass === '전체' || k === klass)) return;
+      var a = Number(r['시작교시']), b = Number(r['끝교시']); if (!isFinite(a) || !isFinite(b)) return;
+      for (var n = a; n <= b; n++) occ[n] = true;
+    });
+    return occ;
+  }
+  function refreshPeriodLock(){
+    var ss = $('sStart'), se = $('sEnd'); if (!ss || !se) return;
+    var co = !!(form.iid || form.iname) && $('sRole') && $('sRole').value === '보조강사';
+    var occ = co ? {} : occupiedPeriods(), any = Object.keys(occ).length > 0;
+    var s0 = Number(ss.value), limit = 999;
+    var free = [];
+    Array.prototype.forEach.call(ss.options, function(o){ var n = Number(o.value); if (!occ[n]) free.push(n); });
+    if (occ[s0] && free.length) { s0 = free.filter(function(n){ return n > s0; })[0] || free[0]; ss.value = String(s0); }
+    Object.keys(occ).forEach(function(k){ k = Number(k); if (k > s0 && k - 1 < limit) limit = k - 1; });
+    var e0 = Number(se.value); if (e0 > limit) { e0 = limit; se.value = String(e0); }
+    if (e0 < s0) { se.value = String(s0); }
+    function mark(sel, bad){
+      Array.prototype.forEach.call(sel.options, function(o){
+        if (o.getAttribute('data-l') == null) o.setAttribute('data-l', o.textContent);
+        var n = Number(o.value), off = bad(n);
+        o.disabled = off;
+        o.textContent = o.getAttribute('data-l') + (occ[n] ? ' · 편성됨' : '');
+      });
+    }
+    mark(ss, function(n){ return !!occ[n]; });
+    mark(se, function(n){ return !!occ[n] || n > limit; });
+    var h = $('sPerHint');
+    if (h) h.textContent = any ? (co ? '' : '같은 날 이미 편성된 교시(' + Object.keys(occ).map(Number).sort(function(a, b){ return a - b; }).join('·') + '교시)는 선택할 수 없습니다. 같은 교시에 보조강사를 추가하려면 역할을 "보조강사"로 바꾸세요.') : '';
+    if (h) h.className = 'hint';
+  }
   function updateDow(){
     var p = planByKey(currentKey);
     var d = $('sDate').value;
@@ -1642,6 +1686,7 @@
   function renderChip(){
     var box = $('sChip');
     if (!box) return;
+    refreshPeriodLock();
     if (form.iid) {
       var ins = instrById[form.iid];
       var label = ins ? ins.name + (ins.org ? ' · ' + ins.org : '') : (form.iname || form.iid);
@@ -1730,6 +1775,7 @@
     refreshRoomOptions();
     $('sSubj').value = String(r['교과목'] || '');
     $('sNote').value = String(r['비고'] || '');
+    refreshPeriodLock();
     updateDow();
     $('sFormTitle').textContent = mode === 'edit' ? '교과목 수정' : '교과목 추가 (복사한 내용)';
     $('sSave').textContent = mode === 'edit' ? '수정 저장' : '저장';
@@ -1768,6 +1814,11 @@
     if (!parseYmd(date)) { showFormMsg('note-err', '일자를 선택해 주세요.'); return; }
     if (!subj) { showFormMsg('note-err', '교과목을 입력해 주세요.'); return; }
     if (s > e) { showFormMsg('note-err', '시작 교시가 끝 교시보다 클 수 없습니다.'); return; }
+    if (!((form.iid || form.iname) && $('sRole').value === '보조강사')) {
+      var occS = occupiedPeriods(), hitP = [];
+      for (var pn = s; pn <= e; pn++) if (occS[pn]) hitP.push(pn);
+      if (hitP.length) { showFormMsg('note-err', '같은 날 ' + hitP.join('·') + '교시는 이미 편성되어 있습니다. 다른 교시를 선택하거나, 보조강사로 추가하려면 역할을 "보조강사"로 바꾸세요.'); return; }
+    }
     var pending = $('sInstr').value.trim();
     if (pending && !form.iid && !form.iname) {
       if (!confirm('"' + pending + '"을(를) 강사 목록에 없는 강사 이름으로 저장할까요?\n(강사 정보 카드와 연결되지 않습니다)')) return;
@@ -1799,7 +1850,7 @@
       form = { id: '', iid: '', iname: '' };
       renderForm(planByKey(currentKey));
       var nx = periodInfo(next) ? next : e;
-      $('sStart').value = String(nx); $('sEnd').value = String(nx);
+      $('sStart').value = String(nx); $('sEnd').value = String(nx); refreshPeriodLock();
       var html = '✓ ' + (wasEdit ? '수정했습니다.' : '저장했습니다.');
       var box = $('sMsg');
       box.innerHTML = '<div class="note-ok">' + html + '</div>' +
@@ -2089,12 +2140,28 @@
       '<div class="pcalsum">이 달 과정·기수 ' + Object.keys(courseSet).length + '개 · 편성된 교과목 ' + nSubj + '건 · 강사 미지정 ' + nUnas + '건 · 겹침 경고 ' + nErr + '곳</div>' + emptyMonthHint(byDate);
     var thead = '<tr>' + names.slice(0, cols).map(function(n){ return '<th>' + n + '</th>'; }).join('') + '</tr>';
     var body = '', agenda = '';
+    var MAXLANE = 5;
     for (var w = start; w <= end; w = addDays(w, 7)) {
       body += '<tr>';
+      // 그 주에 나온 과정마다 줄(레인)을 하나씩 정해, 며칠 동안 같은 줄에 같은 색이 이어지게 함(기간이 다른 과정이 섞여도 줄이 바뀌지 않음)
+      var span = {}, laneOf = {}, laneEnd = [], nl = 0;
+      for (var c0 = 0; c0 < cols; c0++) {
+        var d0 = addDays(w, c0);
+        if (d0.slice(0, 7) !== calMonth || !byDate[d0]) continue;
+        Object.keys(byDate[d0]).forEach(function(k){ if (!span[k]) span[k] = { a: c0, b: c0 }; span[k].b = c0; });
+      }
+      Object.keys(span).sort(function(x, y){ return span[x].a - span[y].a || (x < y ? -1 : 1); }).forEach(function(k){
+        var l = 0; while (l < laneEnd.length && laneEnd[l] >= span[k].a) l++;
+        laneEnd[l] = span[k].b; laneOf[k] = l; if (l + 1 > nl) nl = l + 1;
+      });
       for (var c = 0; c < cols; c++) {
         var d = addDays(w, c), inM = d.slice(0, 7) === calMonth, q = parseYmd(d);
-        var list = inM && byDate[d] ? Object.keys(byDate[d]).map(function(k){ return byDate[d][k]; }).sort(function(a, b){ return String(a.key) < String(b.key) ? -1 : 1; }) : [];
-        var chips = list.slice(0, 4).map(function(e){ return entChip(d, e); }).join('') + (list.length > 4 ? '<span class="cmore" data-cday="' + esc(d) + '">+' + (list.length - 4) + '개 더 보기</span>' : '');
+        var list = inM && byDate[d] ? Object.keys(byDate[d]).map(function(k){ return byDate[d][k]; }) : [];
+        var laneArr = [], hid = 0;
+        list.forEach(function(e){ var l = laneOf[e.key]; if (l < MAXLANE) laneArr[l] = e; else hid++; });
+        var chips = '';
+        for (var li = 0; li < Math.min(nl, MAXLANE); li++) chips += laneArr[li] ? entChip(d, laneArr[li]) : '<span class="cc ph" aria-hidden="true"><b>&nbsp;</b><small>&nbsp;</small></span>';
+        if (hid) chips += '<span class="cmore" data-cday="' + esc(d) + '">+' + hid + '개 더 보기</span>';
         body += '<td class="' + (inM ? '' : 'out') + (c >= 5 ? ' we' : '') + (d === today ? ' tod' : '') + '">' + (inM ? '<span class="cdn" data-cday="' + esc(d) + '">' + q.d + '</span>' : '<span class="cdn">' + q.d + '</span>') + chips + '</td>';
       }
       body += '</tr>';
@@ -2414,7 +2481,7 @@
         var edit = viewer ? '' : '<button type="button" class="btn sm" data-cassign="' + esc(r['편성ID']) + '">수정</button>';
         return '<tr' + (e.key === hlKey ? ' class="hl"' : '') + '><td class="nw">' + esc(pt.txt) + (pt.time ? '<br><span class="hint">' + esc(pt.time) + '</span>' : '') + '</td><td>' + esc(r['교과목']) + '</td><td>' + dayInstr(r, viewer, cx) + '</td><td>' + esc(r['강의실'] || '미정') + '</td><td>' + edit + '</td></tr>';
       }).join('') + '</tbody></table>' : '<div class="hint">편성된 교과목이 없습니다. ' + (e.tags['사이버'] ? '(사이버 기간)' : e.tags['실습'] ? '(실습 기간)' : '(입교 기간)') + '</div>';
-      return '<h4><span class="tpill" style="' + courseStyle(p, e.key) + '">' + esc(name) + '</span> <button type="button" class="btn sm" data-copen="' + esc(e.key) + '">교과목 편성 화면 열기</button></h4>' + tb;
+      return '<h4><span class="tpill" style="' + courseStyle(p, e.key) + '">' + esc(name) + '</span> <button type="button" class="btn sm" data-copen="' + esc(e.key) + '" data-cdate="' + esc(date) + '">' + (viewer ? '교과목 편성 화면 열기' : esc(md(date)) + ' 교과목 편성하기') + '</button></h4>' + tb;
     }).join('');
     $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(md(date)) + ' <span class="hint" style="font-weight:600;">일정</span></h2><div class="sub">과정 ' + list.length + '개</div></div></div>' +
       '<div class="dday">' + (secs || '<div class="hint">표시할 과정이 없습니다.</div>') + '</div>' +
@@ -3819,7 +3886,12 @@
     var cday = t.getAttribute('data-cday');
     if (cday) { openDayDetail(cday, t.getAttribute('data-ckey') || ''); return; }
     var copen = t.getAttribute('data-copen');
-    if (copen) { closeInstructor(); openCourse(copen); return; }
+    if (copen) {
+      closeInstructor();
+      var cdt = t.getAttribute('data-cdate');
+      if (cdt && normYmd(cdt)) location.hash = '#c=' + encodeURIComponent(copen) + '&d=' + normYmd(cdt); else openCourse(copen);
+      return;
+    }
     var cas = t.getAttribute('data-cassign');
     if (cas) {
       var crow = allSessions.filter(function(x){ return String(x['편성ID']) === cas; })[0];
