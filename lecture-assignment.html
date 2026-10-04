@@ -429,6 +429,11 @@
   .vtabs button:first-child{border-radius:6px 0 0 6px;} .vtabs button:last-child{border-radius:0 6px 6px 0;border-left:none;}
   .vtabs button.on{background:var(--navy);color:#fff;border-color:var(--navy);}
   .vtabs button{white-space:nowrap;}
+  .porient{height:32px;border:1px solid var(--border-input);border-radius:6px;padding:0 6px;font-family:inherit;font-size:13px;background:#fff;color:var(--text);}
+  .clink{border:none;background:none;padding:0;font:inherit;font-weight:800;color:var(--navy);cursor:pointer;text-align:left;text-decoration:underline;text-decoration-color:rgba(27,58,95,.35);text-underline-offset:3px;}
+  .clink:hover{text-decoration-color:var(--navy);}
+  .rc .nm .clink{font-size:inherit;}
+  @media print{ .clink{text-decoration:none;color:#000;} }
   #fBackdrop{display:none;position:fixed;inset:0;background:rgba(20,20,19,.45);z-index:80;}
   #sFormPanel .fclose{display:none;}
   #sFormPanel.fmodal{position:fixed;z-index:85;top:50%;left:50%;transform:translate(-50%,-50%);width:min(760px,94vw);max-height:92vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);margin:0;}
@@ -504,6 +509,18 @@
   }
   .gprinthead{display:none;}
   @media print{
+    .pmbar,#verStamp{display:none !important;}
+    body.ppt .tw table{font-size:8.5px;} body.ppt .tw th,body.ppt .tw td{padding:3px 4px;} body.ppt .tw .tag{font-size:8.5px;padding:1px 4px;}
+    body.pcal.ppt table.calt{font-size:8.5px;} body.pcal.ppt table.calt td{height:64px;} body.pcal.ppt .cc{font-size:8.5px;padding:1px 3px;}
+    body.pgrid.ppt table.g{font-size:9px;} body.pgrid.ppt .gc{font-size:9px;padding:3px 4px;} body.pgrid.ppt .gc .t{display:none;} body.pgrid.ppt table.g th.pc{width:52px;}
+    body.pgrid .db,body.plist .db{display:none !important;}
+    body.plist #planView,body.plist header .hbtns,body.plist #backBtn,body.plist #viewerNote,body.plist #sBlock,body.plist #sFormPanel,body.plist .vtabs,body.plist #sReload,body.plist #sPrintBox,body.plist #sHead .act,body.plist #sHead .sum,body.plist #sCards,body.plist #sGridWrap,body.plist #verStamp,body.plist #fBackdrop,body.plist #sEmpty,body.plist .sact,body.plist #sListPanel h3 .hint{display:none !important;}
+    body.plist #editView{display:block !important;}
+    body.plist #sTableWrap{display:block !important;}
+    body.plist .panel{box-shadow:none;padding:6px 0;}
+    body.plist table{font-size:10.5px;} body.plist.ppt table{font-size:9.5px;}
+  }
+  @media print{
     body.pgrid .gprinthead{display:block !important;margin:0 0 8px;padding-bottom:6px;border-bottom:2px solid #000;}
     body.pgrid .gprinthead h2{margin:0 0 4px;font-size:16px;color:#000;}
     body.pgrid .gprinthead .gpm{display:flex;flex-wrap:wrap;gap:2px 18px;font-size:11.5px;color:#000;}
@@ -552,7 +569,7 @@
   <header>
     <div>
       <div class="title" id="hTitle">강의배정 · 연간계획</div>
-      <div class="sub" id="hSub">연간 교육훈련계획의 과정·기수별 현황입니다. 강사 배정 현황을 누르면 교과목 편성 화면이 열립니다.</div>
+      <div class="sub" id="hSub">연간 교육훈련계획의 과정·기수별 현황입니다. 과정명이나 강사 배정 현황을 누르면 교과목 편성 화면이 열립니다.</div>
     </div>
     <div class="hbtns">
       <button class="btn" id="logoutBtn" type="button">로그아웃</button>
@@ -594,6 +611,7 @@
     <button class="btn" id="reloadBtn" type="button">새로고침</button>
     <button class="btn" id="opsBtn" type="button" title="표시 중인 과정에 입교안내(첫날 1교시)·성과측정(마지막 날 마지막 교시)을 교육운영팀 운영으로 추가">운영팀 교시 추가</button>
     <button class="btn" id="excelBtn" type="button">엑셀 내려받기</button>
+    <select class="porient" id="oriTable" data-ori="table" aria-label="인쇄 용지 방향"></select>
     <button class="btn" id="printBtn" type="button">인쇄</button>
   </div>
   <div class="legend" id="planLegend" style="margin:0 2px 8px 2px;">초록=이상 없음 · 노랑=확인 필요 · 빨강=오류(수정 필요) · 검사 결과는 강의배정DB 연간계획 시트의 값입니다.</div>
@@ -625,6 +643,7 @@
     <div class="panel" id="sFormPanel"></div>
     <div class="panel" id="sListPanel">
       <h3>교과목 목록 <span class="hint">(날짜별)</span> <button class="btn sm" id="sReload" type="button" style="margin-left:8px;">새로고침</button>
+        <span id="sPrintBox" style="margin-left:6px;white-space:nowrap;"><select class="porient" id="oriList" data-ori="list" aria-label="인쇄 용지 방향" style="height:30px;"></select> <button class="btn sm" id="sPrint" type="button">인쇄</button></span>
         <span class="vtabs" role="tablist" aria-label="보기 전환"><button type="button" id="vList" class="on" role="tab">목록</button><button type="button" id="vGrid" role="tab">격자</button></span></h3>
       <div id="sGridWrap" style="display:none;"></div>
       <div id="sTableWrap" class="tw"></div>
@@ -639,7 +658,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 격자 전체 과정 1</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-04 인쇄 세로·과정명 열기 1</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -857,7 +876,7 @@
     var ci = changeInfo(p['과정+기수']);
     var tagHtml = isCancelled(p) ? ' <span class="tag t-err">취소됨</span>' : (ci.changed ? ' <span class="tag t-warn">일정 변경됨</span>' : '');
     var sub = isCancelled(p) && ci.cancelReason ? '취소 사유: ' + ci.cancelReason : (p['비고'] || '');
-    return '<span class="course">' + esc(p['과정명']) + ' ' + esc(gisu) + '</span>' + tagHtml +
+    return '<button type="button" class="course clink" data-open="' + esc(p['과정+기수']) + '" title="교과목 편성 화면 열기">' + esc(p['과정명']) + ' ' + esc(gisu) + '</button>' + tagHtml +
       (sub ? '<small>' + esc(sub) + '</small>' : '');
   }
   function origText(p){
@@ -893,7 +912,8 @@
       return '<button type="button" class="tag tagbtn t-none" data-open="' + esc(p['과정+기수']) + '" title="남아 있는 편성 보기">남은 교과목 ' + st0.total + '개 ›</button>';
     }
     var cls = s.kind === 'none' ? 't-none' : s.kind === 'ok' ? 't-ok' : 't-info';
-    return '<button type="button" class="tag tagbtn ' + cls + '" data-open="' + esc(p['과정+기수']) + '" title="교과목 편성 화면 열기">' + esc(s.text) + ' ›</button>' + cflTag(p);
+    var stx = s.kind === 'ok' ? '교과목 ' + (sessionsByKey[p['과정+기수']] || {}).total + '개 · 배정 완료' : s.text;
+    return '<button type="button" class="tag tagbtn ' + cls + '" data-open="' + esc(p['과정+기수']) + '" title="교과목 편성 화면 열기">' + esc(stx) + ' ›</button>' + cflTag(p);
   }
 
   function render(){
@@ -960,7 +980,7 @@
         '<td>' + checkCell(p) + '</td>' +
         (isViewer() ? '' : '<td class="nw chg">' + chgCell(p) + '</td>') +
         '</tr>';
-      cards += '<div class="rc' + (cx ? ' cx' : '') + '"><div class="top"><div><div class="nm">' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') +
+      cards += '<div class="rc' + (cx ? ' cx' : '') + '"><div class="top"><div><div class="nm"><button type="button" class="clink" data-open="' + esc(p['과정+기수']) + '">' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') + '</button>' +
         (cx ? ' <span class="tag t-err">취소됨</span>' : (changeInfo(p['과정+기수']).changed ? ' <span class="tag t-warn">일정 변경됨</span>' : '')) + '</div>' +
         '<div class="meta">' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ')) + '</div></div>' +
         '<div>' + subjCell(p) + '</div></div>' +
@@ -1111,9 +1131,33 @@
       XLSX.writeFile(wb, name + '.xlsx');
     });
   }
+  /* 인쇄 용지 방향(A4 세로/가로): 화면별로 선택하고 접속 중 기억. 기본은 연간계획 표·월 캘린더·교과목 목록=세로(공문 첨부용), 격자=가로 */
+  var ORI_DEF = { table: 'portrait', cal: 'portrait', list: 'portrait', grid: 'landscape' };
+  function oriGet(sf){
+    try { var v = sessionStorage.getItem('jsfa_la_ori_' + sf); if (v === 'portrait' || v === 'landscape') return v; } catch (e) {}
+    return ORI_DEF[sf] || 'portrait';
+  }
+  function oriSelect(sf){
+    var o = oriGet(sf);
+    return '<select class="porient" data-ori="' + sf + '" aria-label="인쇄 용지 방향"><option value="portrait"' + (o === 'portrait' ? ' selected' : '') + '>A4 세로</option><option value="landscape"' + (o === 'landscape' ? ' selected' : '') + '>A4 가로</option></select>';
+  }
+  function printWith(sf, cls){
+    var o = oriGet(sf), st = document.getElementById('pageOri');
+    if (!st) { st = document.createElement('style'); st.id = 'pageOri'; document.head.appendChild(st); }
+    st.textContent = '@page{size:A4 ' + o + ';margin:10mm;}';
+    document.body.classList.toggle('ppt', o === 'portrait');
+    if (cls) document.body.classList.add(cls);
+    var done = function(){ document.body.classList.remove('ppt'); if (cls) document.body.classList.remove(cls); window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    window.print();
+    setTimeout(done, 1500);
+  }
+  function oriInit(){
+    Array.prototype.forEach.call(document.querySelectorAll('select.porient[data-ori]'), function(e){ if (!e.options.length) e.innerHTML = '<option value="portrait">A4 세로</option><option value="landscape">A4 가로</option>'; e.value = oriGet(e.getAttribute('data-ori')); });
+  }
   function doPrint(){
     if (!shown.length) { alert('인쇄할 과정이 없습니다.'); return; }
-    window.print();
+    printWith('table', '');
   }
 
   /* ---------- 교과목 편성 화면 ---------- */
@@ -1229,7 +1273,7 @@
     $('editView').style.display = 'none';
     $('planView').style.display = '';
     $('hTitle').textContent = '강의배정 · 연간계획';
-    $('hSub').textContent = '연간 교육훈련계획의 과정·기수별 현황입니다. 강사 배정 현황을 누르면 교과목 편성 화면이 열립니다.';
+    $('hSub').textContent = '연간 교육훈련계획의 과정·기수별 현황입니다. 과정명이나 강사 배정 현황을 누르면 교과목 편성 화면이 열립니다.';
     applyFilters();
   }
   function showEdit(key){
@@ -1817,7 +1861,7 @@
       '<input type="month" id="calMonthIn" value="' + esc(calMonth) + '" aria-label="월 선택">' +
       '<select id="calTypeSel" aria-label="구분"><option value="">구분 전체</option>' + types.map(function(t){ return '<option value="' + esc(t) + '"' + (calType === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>' +
       '<select id="calRoomSel" aria-label="강의실"><option value="">강의실 전체</option>' + Object.keys(roomSet).sort().map(function(r){ return '<option value="' + esc(r) + '"' + (calRoom === r ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('') + '</select>' +
-      '<button type="button" class="btn sm" data-cm="print" style="margin-left:auto;">인쇄</button></div>' +
+      '<span style="margin-left:auto;display:inline-flex;gap:6px;">' + oriSelect('cal') + '<button type="button" class="btn sm" data-cm="print">인쇄</button></span></div>' +
       '<div class="pcalsum">이 달 과정·기수 ' + Object.keys(courseSet).length + '개 · 편성된 교과목 ' + nSubj + '건 · 강사 미지정 ' + nUnas + '건 · 겹침 경고 ' + nErr + '곳</div>' + emptyMonthHint(byDate);
     var thead = '<tr>' + names.slice(0, cols).map(function(n){ return '<th>' + n + '</th>'; }).join('') + '</tr>';
     var body = '', agenda = '';
@@ -2064,14 +2108,7 @@
 
   function calNav(act){
     if (act.indexOf('rm:') === 0) { roomNav(act); return; }
-    if (act === 'print') {
-      document.body.classList.add('pcal');
-      var done = function(){ document.body.classList.remove('pcal'); window.removeEventListener('afterprint', done); };
-      window.addEventListener('afterprint', done);
-      window.print();
-      setTimeout(done, 1500);
-      return;
-    }
+    if (act === 'print') { printWith('cal', 'pcal'); return; }
     calManual = true;
     var q = parseYmd((calMonth || ymd(new Date()).slice(0, 7)) + '-01');
     if (/^go:\d{4}-\d{2}$/.test(act)) calMonth = act.slice(3);
@@ -2299,6 +2336,7 @@
     $('sGridWrap').style.display = gridOn ? '' : 'none';
     $('sTableWrap').style.display = gridOn ? 'none' : '';
     $('sCards').style.display = gridOn ? 'none' : '';
+    $('sPrintBox').style.display = gridOn ? 'none' : '';
     if (gridOn) renderGrid(p, list);
     if (!list.length) {
       $('sTableWrap').innerHTML = ''; $('sCards').innerHTML = '';
@@ -2339,7 +2377,7 @@
         '<td>' + insHtml + '</td>' +
         '<td>' + esc(r['강의실'] || '-') + '</td>' +
         '<td>' + esc(r['비고'] || '') + '</td>' +
-        (viewer ? '' : '<td>' + actHtml + '</td>') + '</tr>';
+        (viewer ? '' : '<td class="sact">' + actHtml + '</td>') + '</tr>';
       var cardActs = viewer ? '' : (multi ? '' : '<div style="margin-top:8px;">' + actCell(r) + '</div>');
       var cardIns = multi
         ? '<div style="margin-top:8px;">' + u.map(function(x){ return '<div class="ins" style="justify-content:space-between;"><span>' + instrCell(x) + '</span>' + (viewer ? '' : actCell(x)) + '</div>'; }).join('') + '</div>'
@@ -2349,7 +2387,7 @@
         '<br>' + esc(r['강의실'] || '강의실 미정') + (r['비고'] ? ' · ' + esc(r['비고']) : '') + '</div>' + cardIns + wHtml + cardActs + '</div>';
     });
     $('sTableWrap').innerHTML = '<table><thead><tr><th>교시</th><th>교과목</th><th>구분</th><th>반</th><th>강사</th><th>강의실</th><th>비고</th>' +
-      (viewer ? '' : '<th>작업</th>') + '</tr></thead><tbody>' + rows + '</tbody></table>';
+      (viewer ? '' : '<th class="sact">작업</th>') + '</tr></thead><tbody>' + rows + '</tbody></table>';
     $('sCards').innerHTML = cards;
   }
 
@@ -2599,7 +2637,7 @@
       '<button type="button" class="btn sm" data-gw="next"' + (wi === weeks.length - 1 ? ' disabled' : '') + '>다음 주 ▶</button>' +
       '<button type="button" class="btn sm" data-gw="today">이번 주</button>' +
       '<span class="wk">' + (wi + 1) + '주차 / ' + weeks.length + '주 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span>' +
-      '<button type="button" class="btn sm" data-gw="print" style="margin-left:auto;">인쇄</button></div>' + ctab +
+      '<span style="margin-left:auto;display:inline-flex;gap:6px;">' + oriSelect('grid') + '<button type="button" class="btn sm" data-gw="print">인쇄</button></span></div>' + ctab +
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:#FBE0DD;border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span>' +
       '<span><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
@@ -2611,14 +2649,7 @@
     var p = planByKey(currentKey);
     var weeks = gridScope === 'all' ? gridAllWeeks(p) : gridWeeksOf(p, sessionsOf(currentKey));
     var wi = weeks.indexOf(gridWeek);
-    if (act === 'print') {
-      document.body.classList.add('pgrid');
-      var done = function(){ document.body.classList.remove('pgrid'); window.removeEventListener('afterprint', done); };
-      window.addEventListener('afterprint', done);
-      window.print();
-      setTimeout(done, 1500);
-      return;
-    }
+    if (act === 'print') { printWith('grid', 'pgrid'); return; }
     if (act === 'prev' && wi > 0) gridWeek = weeks[wi - 1];
     else if (act === 'next' && wi > -1 && wi < weeks.length - 1) gridWeek = weeks[wi + 1];
     else if (act === 'today') { var tw = mondayOf(ymd(new Date())); gridWeek = weeks.indexOf(tw) > -1 ? tw : gridWeek; }
@@ -3609,7 +3640,9 @@
   });
   document.addEventListener('click', onListClick);
   document.addEventListener('change', function(ev){
-    var t = ev.target; if (!t || !t.id) return;
+    var t = ev.target;
+    if (t && t.getAttribute && t.getAttribute('data-ori')) { try { sessionStorage.setItem('jsfa_la_ori_' + t.getAttribute('data-ori'), t.value); } catch (e) {} return; }
+    if (!t || !t.id) return;
     if (t.id === 'calTypeSel') { calType = t.value; renderPlanCal(); }
     else if (t.id === 'calRoomSel') { calRoom = t.value; renderPlanCal(); }
     else if (t.id === 'calMonthIn' && /^\d{4}-\d{2}$/.test(t.value)) { calMonth = t.value; calManual = true; renderPlanCal(); }
@@ -3653,6 +3686,8 @@
   $('excelBtn').addEventListener('click', doExcel);
   $('opsBtn').addEventListener('click', function(){ openOps(shown.map(function(p){ return String(p['과정+기수'] || ''); })); });
   $('printBtn').addEventListener('click', doPrint);
+  $('sPrint').addEventListener('click', function(){ if (!planByKey(currentKey)) return; printWith('list', 'plist'); });
+  oriInit();
   $('logoutBtn').addEventListener('click', function(){
     delSess(KEY_PW); delSess(KEY_ROLE);
     location.reload();
