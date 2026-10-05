@@ -65,6 +65,8 @@
 
   /* 카드 */
   .grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:start;}
+  .grid2{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:start;}
+  @media (max-width:980px){ .grid2{grid-template-columns:minmax(0,1fr);} .grid2 #cRoom{grid-column:auto !important;} }
   .col{display:flex;flex-direction:column;gap:16px;min-width:0;}
   @media (max-width:980px){ .grid{grid-template-columns:minmax(0,1fr);} }
   .card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);padding:16px 18px;}
@@ -249,14 +251,10 @@
 
   <section class="card" id="cYear" style="display:none;margin-bottom:16px;"></section>
 
-  <div class="grid" id="main" style="display:none;">
-    <div class="col">
-      <section class="card" id="cToday"></section>
-      <section class="card" id="cWeek"></section>
-    </div>
-    <div class="col">
-      <section class="card" id="cRoom"></section>
-    </div>
+  <div class="grid2" id="main" style="display:none;">
+    <section class="card" id="cToday"></section>
+    <section class="card" id="cWeek"></section>
+    <section class="card" id="cRoom" style="grid-column:1 / -1;"></section>
   </div>
   <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 24</div>
 </div>
