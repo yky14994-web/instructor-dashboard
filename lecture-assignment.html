@@ -726,7 +726,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 22</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 23</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -795,6 +795,18 @@
     if (a === b) return md(a);
     return md(a) + '~' + md(b);
   }
+
+  /* 교육일수: 입교 기간의 평일(월~금) 수. 5일 단위는 주로 환산 → 3일 / 1주(5일) / 2주(10일) / 12일 (공휴일은 빼지 않음) */
+  function eduLen(a, b){
+    var x = parseYmd(a), y = parseYmd(b); if (!x || !y) return '';
+    var d1 = new Date(x.y, x.m - 1, x.d), d2 = new Date(y.y, y.m - 1, y.d);
+    if (d2 < d1) return '';
+    var n = 0;
+    for (var t = new Date(d1); t <= d2; t.setDate(t.getDate() + 1)) { var w = t.getDay(); if (w !== 0 && w !== 6) n++; }
+    if (!n) return '';
+    return n % 5 === 0 ? (n / 5) + '주(' + n + '일)' : n + '일';
+  }
+  function ipgyoLen(p){ var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']); return a && b ? eduLen(a, b) : ''; }
 
   /* ---------- 검사 결과 분류 ---------- */
   function checkClass(v){
@@ -985,7 +997,7 @@
       : '<button type="button" class="btn sm" data-chg="' + k + '" data-ck="dates">변경</button>';
   }
   function cyber(p){ return range(p['사이버 시작일'], p['사이버 종료일']) || '-'; }
-  function ipgyo(p){ return range(p['입교 시작일'], p['입교 종료일']) || '날짜 미입력'; }
+  function ipgyo(p){ var r = range(p['입교 시작일'], p['입교 종료일']); if (!r) return '날짜 미입력'; var l = ipgyoLen(p); return l ? r + ' · ' + l : r; }
   function camp(p){ var v = String(p['합숙여부'] || ''); return v || '-'; }
   function checkCell(p){
     if (isCancelled(p)) return '<span class="legend">-</span>';
@@ -1063,8 +1075,8 @@
         '<td class="nw">' + typeCell(p) + '</td>' +
         '<td>' + courseCell(p) + '</td>' +
         '<td class="nw">' + esc(cyber(p)) + '</td>' +
-        '<td class="nw">' + esc(ipgyo(p)) + (og ? '<span class="orig">(' + esc(og) + ')</span>' : '') + '</td>' +
-        '<td class="nw">' + esc(p['교육기간'] || '-') + '</td>' +
+        '<td class="nw">' + esc(range(p['입교 시작일'], p['입교 종료일']) || '날짜 미입력') + (og ? '<span class="orig">(' + esc(og) + ')</span>' : '') + '</td>' +
+        '<td class="nw">' + esc(ipgyoLen(p) || p['교육기간'] || '-') + '</td>' +
         '<td class="num nw">' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '</td>' +
         '<td>' + esc(p['예정 강의실'] || '-') + '</td>' +
         '<td class="nw">' + esc(camp(p)) + '</td>' +
@@ -1077,7 +1089,7 @@
         (cx ? ' <span class="tag t-err">취소됨</span>' : (changeInfo(p['과정+기수']).changed ? ' <span class="tag t-warn">일정 변경됨</span>' : '')) + '</div>' +
         '<div class="meta">' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ')) + '</div></div>' +
         '<div>' + subjCell(p) + '</div></div>' +
-        '<dl><dt>입교</dt><dd>' + esc(ipgyo(p)) + (p['교육기간'] ? ' (' + esc(p['교육기간']) + ')' : '') + (og ? '<span class="orig">(' + esc(og) + ')</span>' : '') + '</dd>' +
+        '<dl><dt>입교</dt><dd>' + esc(ipgyo(p)) + (og ? '<span class="orig">(' + esc(og) + ')</span>' : '') + '</dd>' +
         '<dt>사이버</dt><dd>' + esc(cyber(p)) + '</dd>' +
         '<dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd>' +
         '<dt>강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd>' +
@@ -1170,6 +1182,7 @@
       aoa.push(EXPORT_HEAD.map(function(k){
         if (k === '상태') return isCancelled(p) ? '취소됨' : '';
         if (k === '강사 배정 현황') return subjState(p).text;
+        if (k === '교육기간') return ipgyoLen(p) || (p[k] || '');
         var v = p[k];
         if (v === undefined || v === null) return '';
         if (k === '계획인원' || k === '입교 시수') { var n = Number(v); return isNaN(n) || v === '' ? String(v) : n; }
@@ -1501,7 +1514,7 @@
       (cxd ? '<div class="note-err" style="margin-top:10px;">취소된 기수입니다' + (ci.cancelReason ? ' (사유: ' + esc(ci.cancelReason) + ')' : '') + '. 새 교과목은 추가할 수 없고, 남아 있는 편성은 삭제만 할 수 있습니다.</div>' : '') +
       '<dl class="meta">' +
       '<div><dt>구분</dt><dd>' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ') || '-') + '</dd></div>' +
-      '<div><dt>입교</dt><dd>' + esc(ipgyo(p)) + (p['교육기간'] ? ' · ' + esc(p['교육기간']) : '') + (og ? '<span class="orig" style="font-weight:500;">(' + esc(og) + ')</span>' : '') + '</dd></div>' +
+      '<div><dt>입교</dt><dd>' + esc(ipgyo(p)) + (og ? '<span class="orig" style="font-weight:500;">(' + esc(og) + ')</span>' : '') + '</dd></div>' +
       (cy ? '<div><dt>사이버</dt><dd>' + esc(cy) + '</dd></div>' : '') +
       '<div><dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd></div>' +
       '<div><dt>예정 강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd></div>' +
@@ -2525,8 +2538,8 @@
   function planPeriodHtml(p){
     if (!p) return '';
     var parts = [];
-    var ip = range(p['입교 시작일'], p['입교 종료일']);
-    if (ip) parts.push('<span><b>입교</b> ' + esc(ip) + (p['교육기간'] ? ' (' + esc(p['교육기간']) + ')' : '') + '</span>');
+    var ip = range(p['입교 시작일'], p['입교 종료일']), il = ipgyoLen(p);
+    if (ip) parts.push('<span><b>입교</b> ' + esc(ip) + (il ? ' · ' + esc(il) : '') + '</span>');
     var cy = range(p['사이버 시작일'], p['사이버 종료일']); if (cy) parts.push('<span><b>사이버</b> ' + esc(cy) + '</span>');
     var sp = range(p['실습(외부) 시작일'], p['실습(외부) 종료일']); if (sp) parts.push('<span><b>실습</b> ' + esc(sp) + '</span>');
     return '<div class="dper"><span class="k">교육기간</span>' + (parts.join('') || '<span>날짜 미입력</span>') + '</div>';
@@ -3138,7 +3151,7 @@
     var pHead = all ? '<div class="gprinthead"><h2>주간 교과목 시간표</h2><div class="gpm"><span><b>기간</b> ' + (wi + 1) + '주차 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span><span><b>진행 과정</b> ' + courses.length + '개</span></div></div>' :
       '<div class="gprinthead"><h2>' + esc(p['과정명'] || '') + ' ' + esc(p['기수'] || '') + '</h2><div class="gpm">' +
       '<span><b>구분</b> ' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ') || '-') + '</span>' +
-      '<span><b>입교</b> ' + esc(ipgyo(p)) + (p['교육기간'] ? ' · ' + esc(p['교육기간']) : '') + '</span>' +
+      '<span><b>입교</b> ' + esc(ipgyo(p)) + '</span>' +
       '<span><b>계획인원</b> ' + esc(p['계획인원'] === '' || p['계획인원'] == null ? '-' : p['계획인원']) + '명</span>' +
       '<span><b>예정 강의실</b> ' + esc(p['예정 강의실'] || '-') + '</span>' +
       '<span><b>교과목 시간표</b> ' + (wi + 1) + '주차 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span></div></div>';
@@ -3326,7 +3339,7 @@
   function renderChange(p){
     var mode = chg.mode;
     var title = mode === 'dates' ? '일정 변경' : mode === 'cancel' ? '기수 취소' : '취소 해제';
-    var cur = '입교 <b>' + esc(ipgyo(p)) + '</b>' + (p['교육기간'] ? ' · ' + esc(p['교육기간']) : '') + ' · ' + esc(p['예정 강의실'] || '강의실 미정') +
+    var cur = '입교 <b>' + esc(ipgyo(p)) + '</b>' + ' · ' + esc(p['예정 강의실'] || '강의실 미정') +
       ' · ' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명';
     var h = '<div class="top"><h2>' + title + '</h2><span class="hint">' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') + '</span></div>' +
       '<div class="old">현재: ' + cur + '</div>';

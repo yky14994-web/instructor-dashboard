@@ -111,6 +111,7 @@
   .tt td.emp.nowrow{background:#EAF2FF;} .tt th.pn.nowrow{background:#EAF2FF;border-radius:6px;}
   .tcards{display:none;}
   .tcard{border-radius:8px;padding:8px 10px;margin-top:8px;}
+  .ipl{display:block;font-weight:500;font-size:11.5px;color:#5B6676;margin-top:2px;}
   .tcard .tch a{font-weight:800;color:var(--navy);text-decoration:none;font-size:14.5px;}
   .tcr{display:grid;grid-template-columns:96px minmax(0,1fr);gap:6px;padding:6px 0;border-top:1px solid rgba(0,0,0,.07);margin-top:6px;}
   .tcr.done{opacity:.55;} .tcr.now{background:rgba(47,111,214,.10);border-radius:6px;}
@@ -226,7 +227,7 @@
       <section class="card" id="cRoom"></section>
     </div>
   </div>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 22</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 23</div>
 </div>
 </div>
 
@@ -264,6 +265,18 @@
     return { y: +m[1], m: +m[2], d: +m[3], dow: new Date(+m[1], +m[2] - 1, +m[3]).getDay() };
   }
   function md(s){ var p = parseYmd(s); return p ? p.m + '/' + p.d + '(' + DOW[p.dow] + ')' : String(s || ''); }
+
+  /* 교육일수: 입교 기간의 평일(월~금) 수. 5일 단위는 주로 환산 → 3일 / 1주(5일) / 2주(10일) / 12일 */
+  function eduLen(a, b){
+    var x = parseYmd(a), y = parseYmd(b); if (!x || !y) return '';
+    var d1 = new Date(x.y, x.m - 1, x.d), d2 = new Date(y.y, y.m - 1, y.d);
+    if (d2 < d1) return '';
+    var n = 0;
+    for (var t = new Date(d1); t <= d2; t.setDate(t.getDate() + 1)) { var w = t.getDay(); if (w !== 0 && w !== 6) n++; }
+    if (!n) return '';
+    return n % 5 === 0 ? (n / 5) + '주(' + n + '일)' : n + '일';
+  }
+  function ipgyoLine(p){ if (!p) return ''; var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']); if (!a || !b) return ''; return '입교 ' + md(a) + '~' + md(b) + ' · ' + eduLen(a, b); }
   function ymd(dt){ return dt.getFullYear() + '-' + ('0' + (dt.getMonth() + 1)).slice(-2) + '-' + ('0' + dt.getDate()).slice(-2); }
   function addDays(s, n){ var q = parseYmd(s); return ymd(new Date(q.y, q.m - 1, q.d + n)); }
   function mondayOf(s){ var q = parseYmd(s); return addDays(s, -(q.dow === 0 ? 6 : q.dow - 1)); }
@@ -389,7 +402,7 @@
     rows.forEach(function(n){ var pi = periodInfo(n); if (pi && validTime(pi.start) && validTime(pi.end) && nowMin >= toMin(pi.start) && nowMin < toMin(pi.end)) curRow = n; });
     var th = '<tr><th class="pn">교시</th>' + cols.map(function(c){
       var nm = courseName(c.key);
-      return '<th class="cn" style="background:' + courseBg(nm) + ';border-top:4px solid ' + courseColor(nm) + ';">' + (c.lane === 0 ? courseLink(c.key, nameOf(c.key), today) : '<span class="hint">' + esc(nameOf(c.key)) + ' (동시 진행)</span>') + '</th>';
+      return '<th class="cn" style="background:' + courseBg(nm) + ';border-top:4px solid ' + courseColor(nm) + ';">' + (c.lane === 0 ? courseLink(c.key, nameOf(c.key), today) : '<span class="hint">' + esc(nameOf(c.key)) + ' (동시 진행)</span>') + (c.lane === 0 && ipgyoLine(planByKey(c.key)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(c.key))) + '</small>' : '') + '</th>';
     }).join('') + '</tr>';
     var body = rows.map(function(n){
       var pi = periodInfo(n), tm = pi && validTime(pi.start) ? pi.start + (validTime(pi.end) ? '~' + pi.end : '') : '';
@@ -410,7 +423,7 @@
     var keys = []; cols.forEach(function(c){ if (keys.indexOf(c.key) < 0) keys.push(c.key); });
     var cards = keys.map(function(k){
       var nm = courseName(k), items = list.filter(function(o){ return o.key === k; });
-      return '<div class="tcard" style="border-left:5px solid ' + courseColor(nm) + ';background:' + courseBg(nm) + ';"><div class="tch">' + courseLink(k, nameOf(k), today) + '</div>' + items.map(function(o){
+      return '<div class="tcard" style="border-left:5px solid ' + courseColor(nm) + ';background:' + courseBg(nm) + ';"><div class="tch">' + courseLink(k, nameOf(k), today) + (ipgyoLine(planByKey(k)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(k))) + '</small>' : '') + '</div>' + items.map(function(o){
         var pt = periodText(o.a, o.b), st = stateOf(o);
         return '<div class="tcr ' + st + '"><div class="tm">' + esc(pt.txt) + (pt.time ? '<small>' + esc(pt.time) + '</small>' : '') + '</div><div><div class="sj">' + esc(o.subj) + klassTag(o) + stateTag(st) + '</div>' +
           '<div class="ro">' + (o.room ? esc(o.room) : '<span class="hint">강의실 미정</span>') + ' · ' + instrHtml(o.rows) + '</div></div></div>';
@@ -453,7 +466,7 @@
       '<button type="button" class="btn sm" data-w="1" aria-label="다음주">▶</button></div></div><div class="cdesc">이번 주에 진행되는 과정입니다(입교·사이버·실습 기간 포함). 과정명을 누르면 교과목 편성 화면이 열립니다.</div>';
     if (!items.length) html += '<div class="empty">이 주에 진행되는 과정이 없습니다.</div>';
     else html += '<ul class="wk">' + items.map(function(o){
-      var seg = o.hit.map(function(r){ return r.kind + ' ' + (r.a === r.b ? md(r.a) : md(r.a) + '~' + md(r.b)); }).join(' · ');
+      var seg = o.hit.map(function(r){ return r.kind + ' ' + (r.a === r.b ? md(r.a) : md(r.a) + '~' + md(r.b)) + (r.kind === '입교' ? ' · ' + eduLen(r.a, r.b) : ''); }).join(' · ');
       var rm = String(o.p['예정 강의실'] || '').trim();
       var st = '';
       if (o.subj) st += '<span class="tag t-none">이번 주 교과목 ' + o.subj + '개</span>' + (o.un ? '<span class="tag t-warn">강사 미지정 ' + o.un + '</span>' : '<span class="tag t-ok">강사 모두 배정</span>');
