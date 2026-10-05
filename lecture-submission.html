@@ -204,21 +204,13 @@
       </div>
 
       <div class="card" id="consentSection">
-        <div class="card-title">개인정보 동의 및 정산정보</div>
+        <div class="card-title">개인정보 동의</div>
         <div class="field">
           <label class="required" for="consentFile">개인정보 수집·이용 동의서 (서명본, PDF)</label>
           <input type="file" id="consentFile" accept=".pdf,application/pdf">
           <a class="form-download" id="consentFormLink" href="#" target="_blank">↓ 동의서 양식 다운로드</a>
         </div>
-        <div class="row3">
-          <div class="field"><label for="bank">은행명</label><input type="text" id="bank"></div>
-          <div class="field">
-            <label for="account">계좌번호</label>
-            <input type="text" id="account" inputmode="numeric" placeholder="예: 123456789012 (숫자만)">
-          </div>
-          <div class="field"><label for="holder">예금주</label><input type="text" id="holder"></div>
-        </div>
-        <div class="hint">계좌번호는 담당자 화면에서 뒤 4자리만 안전하게 표시됩니다.</div>
+        <div class="hint">강사료 지급에 필요한 계좌 정보는 이 화면에서 따로 입력하지 않고, 강사카드에 기재해 주세요.</div>
       </div>
 
       <div id="assignedInfoBox" style="display:none;">
@@ -594,9 +586,6 @@
         payload.전문분야 = document.getElementById('specialty').value.trim();
         payload.활동지역 = document.getElementById('region').value.trim();
         payload.약력 = document.getElementById('bio').value.trim();
-        payload.은행명 = document.getElementById('bank').value.trim();
-        payload.계좌번호 = document.getElementById('account').value.replace(/[^0-9]/g, '');
-        payload.예금주 = document.getElementById('holder').value.trim();
         if (results[0]) { payload.사진base64 = results[0]; payload.사진타입 = photoFile.type; }
         if (results[1]) { payload.동의서base64 = results[1]; payload.동의서타입 = consentFile.type; }
         if (results[3]) { payload.프로필base64 = results[3]; payload.프로필타입 = profileFile.type; }

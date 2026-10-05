@@ -533,6 +533,36 @@
       : 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w80';
   }
 
+
+  /* 강사카드·동의서(비공개 폴더) 열람/내려받기: 백엔드가 담당자 권한으로 읽어 온 파일을 화면에서 바로 엽니다 */
+  function openPrivateFile(fid, mode, btn){
+    var w = null;
+    if (mode === 'view') { try { w = window.open('', '_blank'); if (w) w.document.write('<p style="font-family:sans-serif;padding:24px;">불러오는 중...</p>'); } catch (e) { w = null; } }
+    var label = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = '불러오는 중…'; }
+    fetch(WEBAPP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getPrivateFile', password: sessionStorage.getItem('jsfa_dash_pw') || '', 파일ID: fid }) })
+    .then(function(r){ return r.json(); }).then(function(res){
+      if (res.status !== 'ok') throw new Error(res.message || '파일을 불러오지 못했습니다');
+      var bin = atob(res.base64), arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([arr], { type: res.형식 || 'application/pdf' }));
+      if (mode === 'view' && w) { w.location.href = url; }
+      else {
+        if (w) w.close();
+        var a = document.createElement('a'); a.href = url; a.download = res.이름 || '강사서류.pdf';
+        document.body.appendChild(a); a.click(); a.remove();
+      }
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 120000);
+    }).catch(function(err){
+      if (w) w.close();
+      alert(err && err.message && !/Failed to fetch|NetworkError/i.test(err.message) ? err.message : '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    }).then(function(){ if (btn) { btn.disabled = false; btn.textContent = label; } });
+  }
+  document.addEventListener('click', function(ev){
+    var b = ev.target && ev.target.closest ? ev.target.closest('[data-pf]') : null;
+    if (b) openPrivateFile(b.getAttribute('data-pf'), b.getAttribute('data-pfm') || 'view', b);
+  });
   function fileDownloadUrl(fileId){
     return 'https://drive.google.com/uc?export=download&id=' + fileId;
   }
@@ -769,12 +799,12 @@
     var birthDisplay = d.생년월일 ? d.생년월일 + (age !== null ? ' (만 ' + age + '세)' : '') : '-';
     var consentKey = Object.keys(d).filter(function(k){ return /동의서/.test(k) && d[k]; })[0];
     var consentLinkHtml = consentKey
-      ? '<a href="https://drive.google.com/file/d/' + d[consentKey] + '/preview" target="_blank" style="color:var(--navy);font-weight:700;margin-right:14px;">미리보기</a>' +
-        '<a href="' + fileDownloadUrl(d[consentKey]) + '" target="_blank" style="color:var(--navy);font-weight:700;">다운로드</a>'
+      ? '<button type="button" data-pf="' + escapeAttr(d[consentKey]) + '" data-pfm="view" style="background:none;border:none;padding:0;color:var(--navy);font-weight:700;cursor:pointer;font-family:inherit;font-size:inherit;margin-right:14px;">미리보기</button>' +
+        '<button type="button" data-pf="' + escapeAttr(d[consentKey]) + '" data-pfm="dl" style="background:none;border:none;padding:0;color:var(--navy);font-weight:700;cursor:pointer;font-family:inherit;font-size:inherit;margin-right:14px;">다운로드</button>'
       : '-';
     var profileLinkHtml = d.프로필파일링크
-      ? '<a href="https://drive.google.com/file/d/' + d.프로필파일링크 + '/preview" target="_blank" style="color:var(--navy);font-weight:700;margin-right:14px;">미리보기</a>' +
-        '<a href="' + fileDownloadUrl(d.프로필파일링크) + '" target="_blank" style="color:var(--navy);font-weight:700;">다운로드</a>'
+      ? '<button type="button" data-pf="' + escapeAttr(d.프로필파일링크) + '" data-pfm="view" style="background:none;border:none;padding:0;color:var(--navy);font-weight:700;cursor:pointer;font-family:inherit;font-size:inherit;margin-right:14px;">미리보기</button>' +
+        '<button type="button" data-pf="' + escapeAttr(d.프로필파일링크) + '" data-pfm="dl" style="background:none;border:none;padding:0;color:var(--navy);font-weight:700;cursor:pointer;font-family:inherit;font-size:inherit;margin-right:14px;">다운로드</button>'
       : '-';
 
     body.innerHTML =

@@ -567,6 +567,8 @@
   .dtab td{border-bottom:1px solid var(--border);padding:6px 4px;font-size:12.5px;vertical-align:middle;}
   .dtab td:first-child{color:var(--text-sub);font-weight:700;width:112px;}
   .dtab a{color:var(--navy);font-weight:700;font-size:12px;margin-left:8px;}
+  .pfb{background:none;border:none;padding:0;margin-left:8px;color:var(--navy);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;}
+  .pfb:disabled{opacity:.6;cursor:wait;}
   @media (max-width:640px){
     .gdays{display:flex;}
     table.g{min-width:0;table-layout:auto;}
@@ -746,7 +748,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 29</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 30</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -3354,17 +3356,42 @@
       (x.photo ? '<img src="' + esc(photoUrl(x.photo, cls === 'lg' ? 'w220' : 'w80')) + '" alt="" onerror="this.style.display=\'none\'">' : '') + '</span>';
   }
   function joinLines(t){ return String(t || '').split(/\r?\n/).map(function(v){ return v.trim(); }).filter(Boolean).join(' / '); }
-  function fileLinks(fid){
+  function fileLinks(fid, priv){
+    if (priv) return ' <button type="button" class="pfb" data-pf="' + esc(fid) + '" data-pfm="view">미리보기</button><button type="button" class="pfb" data-pf="' + esc(fid) + '" data-pfm="dl">다운로드</button>';
     return ' <a href="https://drive.google.com/file/d/' + encodeURIComponent(fid) + '/preview" target="_blank" rel="noopener">미리보기</a>' +
       '<a href="https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fid) + '" target="_blank" rel="noopener">다운로드</a>';
   }
+
+  /* 강사카드·동의서(비공개 폴더) 열람/내려받기: 백엔드가 담당자 권한으로 읽어 온 파일을 화면에서 바로 엽니다 */
+  function openPrivateFile(fid, mode, btn){
+    var w = null;
+    if (mode === 'view') { try { w = window.open('', '_blank'); if (w) w.document.write('<p style="font-family:sans-serif;padding:24px;">불러오는 중...</p>'); } catch (e) { w = null; } }
+    var label = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = '불러오는 중…'; }
+    api({ action: 'getPrivateFile', password: getPw(), 파일ID: fid }).then(function(res){
+      if (res.status !== 'ok') throw new Error(res.message || '파일을 불러오지 못했습니다');
+      var bin = atob(res.base64), arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([arr], { type: res.형식 || 'application/pdf' }));
+      if (mode === 'view' && w) { w.location.href = url; }
+      else {
+        if (w) w.close();
+        var a = document.createElement('a'); a.href = url; a.download = res.이름 || '강사서류.pdf';
+        document.body.appendChild(a); a.click(); a.remove();
+      }
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 120000);
+    }).catch(function(err){
+      if (w) w.close();
+      alert(err && err.message && !/Failed to fetch|NetworkError/i.test(err.message) ? err.message : '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    }).then(function(){ if (btn) { btn.disabled = false; btn.textContent = label; } });
+  }
   function docTable(x){
     var d = docState(x), ret = d.ret;
-    var cardRow = '<tr><td>강사카드</td><td>' + (x.card ? '<span class="db ok">제출</span>' + fileLinks(x.card) : '<span class="db bad">미제출</span>') + '</td></tr>';
+    var cardRow = '<tr><td>강사카드</td><td>' + (x.card ? '<span class="db ok">제출</span>' + fileLinks(x.card, true) : '<span class="db bad">미제출</span>') + '</td></tr>';
     var cs;
     if (!x.consent) cs = '<span class="db bad">미제출</span>';
     else {
-      cs = '<span class="db ' + (ret.over ? 'bad' : d.due ? 'wn' : 'ok') + '">' + (ret.over ? '제출 · 보유기간 만료' : d.due ? '제출 · 보유기간 임박' : '제출') + '</span>' + fileLinks(x.consent) +
+      cs = '<span class="db ' + (ret.over ? 'bad' : d.due ? 'wn' : 'ok') + '">' + (ret.over ? '제출 · 보유기간 만료' : d.due ? '제출 · 보유기간 임박' : '제출') + '</span>' + fileLinks(x.consent, true) +
         (ret.expire ? '<div class="hint" style="margin-top:3px;">보유기간 ' + esc(ret.base) + ' ~ ' + esc(ret.expire) + (x.reconsent ? ' (재동의 확인 ' + esc(x.reconsent) + ' 기준)' : ' (등록일 기준 3년)') + '</div>' : '');
     }
     return '<table class="dtab" style="width:100%;border-collapse:collapse;margin-top:4px;">' + cardRow + '<tr><td>개인정보 동의서</td><td>' + cs + '</td></tr></table>';
@@ -3376,16 +3403,16 @@
     var d = docState(x), ret = d.ret, items = [];
     var srow = sid ? allSessions.filter(function(r){ return String(r['편성ID']) === String(sid); })[0] : null;
     var ps = srow ? planState(srow) : null;
-    items.push({ name: '강사카드', ok: !!x.card, text: x.card ? '제출' : '미제출', fid: x.card });
+    items.push({ priv: true, name: '강사카드', ok: !!x.card, text: x.card ? '제출' : '미제출', fid: x.card });
     if (!x.consent) items.push({ name: '개인정보 동의서', ok: false, text: '미제출', fid: '' });
-    else items.push({ name: '개인정보 동의서', ok: !ret.over, warn: d.due, text: ret.over ? '보유기간 만료(' + ret.expire + ')' : d.due ? '보유기간 임박(' + ret.expire + ' 만료)' : '제출 · 보유 ~' + ret.expire, fid: x.consent, hint: x.reconsent ? '재동의 확인 ' + x.reconsent + ' 기준' : '등록일 ' + (ret.base || '-') + ' 기준 3년' });
+    else items.push({ priv: true, name: '개인정보 동의서', ok: !ret.over, warn: d.due, text: ret.over ? '보유기간 만료(' + ret.expire + ')' : d.due ? '보유기간 임박(' + ret.expire + ' 만료)' : '제출 · 보유 ~' + ret.expire, fid: x.consent, hint: x.reconsent ? '재동의 확인 ' + x.reconsent + ' 기준' : '등록일 ' + (ret.base || '-') + ' 기준 3년' });
     if (ps) items.push({ name: '강의계획서 · ' + (ps.subj || '교과목') + ' (' + md(ps.date) + ')', ok: ps.done || ps.ended, warn: !ps.done && !ps.ended && !ps.over, text: planText(ps), fid: ps.fid,
       hint: '교과목별 제출 · 기한은 강의일 7일 전', neutral: !ps.done && ps.ended });
     items.sort(function(a, b){ return (a.ok && !a.warn ? 1 : 0) - (b.ok && !b.warn ? 1 : 0); });
     var need = items.filter(function(i){ return !i.ok || i.warn; });
     var rows = items.map(function(i){
       var cls = i.neutral ? '' : !i.ok ? 'bad' : i.warn ? 'wn' : 'ok';
-      return '<tr><td>' + esc(i.name) + '</td><td><span class="db ' + cls + '">' + esc(i.text) + '</span>' + (i.fid ? fileLinks(i.fid) : '') + (i.hint ? '<div class="hint" style="margin-top:3px;">' + esc(i.hint) + '</div>' : '') + '</td></tr>';
+      return '<tr><td>' + esc(i.name) + '</td><td><span class="db ' + cls + '">' + esc(i.text) + '</span>' + (i.fid ? fileLinks(i.fid, !!i.priv) : '') + (i.hint ? '<div class="hint" style="margin-top:3px;">' + esc(i.hint) + '</div>' : '') + '</td></tr>';
     }).join('');
     var head = need.length
       ? '<div class="note-warn" style="margin:0 0 10px;"><b>확인이 필요한 서류 ' + need.length + '건</b><br>' + need.map(function(i){ return '· ' + esc(i.name) + ' — ' + esc(i.text); }).join('<br>') + '<br><span class="hint">강사 안내는 자동으로 가지 않으니 담당자가 직접 요청해 주세요.</span></div>'
@@ -4223,7 +4250,7 @@
       var mt = ev.target.closest('[data-mvg],[data-mvto]');
       if (mt) { if (mt.getAttribute('data-mvg')) mvSwap(mt.getAttribute('data-mvg')); else { var q2 = mt.getAttribute('data-mvto').split('|'); mvTo(q2[0], Number(q2[1])); } return; }
     }
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel')))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel') || t.getAttribute('data-pf')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
@@ -4241,6 +4268,8 @@
       if (cdt && normYmd(cdt)) location.hash = '#c=' + encodeURIComponent(copen) + '&d=' + normYmd(cdt); else openCourse(copen);
       return;
     }
+    var pfid = t.getAttribute('data-pf');
+    if (pfid) { openPrivateFile(pfid, t.getAttribute('data-pfm') || 'view', t); return; }
     var mvs = t.getAttribute('data-mvsel');
     if (mvs) { ev.stopPropagation(); mvStart(mvs); return; }
     var mvg = t.getAttribute('data-mvg');
