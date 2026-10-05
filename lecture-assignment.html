@@ -445,6 +445,16 @@
     body.pcal table.calt td{height:72px;}
     body.pcal .cc{border:1px solid #888;background:#fff !important;color:#000 !important;} body.pcal .cc b{white-space:normal;}
     body.pcal .cc.err{border:2px solid #000;}
+    body.pcal .pcalbar,body.pcal .pcalsum{display:none !important;}
+    body.pcal .pprinthead{display:block !important;margin:0 0 8px;padding-bottom:6px;border-bottom:2px solid #000;}
+    body.pcal .pprinthead h2{margin:0 0 4px;font-size:16px;color:#000;}
+    body.pcal .pprinthead .gpm{display:flex;flex-wrap:wrap;gap:2px 18px;font-size:11.5px;color:#000;margin-bottom:6px;}
+    body.pcal .pprinthead .gpm b{margin-right:4px;}
+    body.pcal .pprinthead table.pcourses{width:100%;border-collapse:collapse;font-size:10px;}
+    body.pcal .pprinthead table.pcourses th,body.pcal .pprinthead table.pcourses td{padding:2px 6px;border:1px solid #888;text-align:left;color:#000;background:#fff;}
+    body.pcal .pprinthead table.pcourses tr{page-break-inside:avoid;}
+    body.pcal .pprinthead .sw{display:inline-block;width:12px;height:12px;border:1px solid #666;vertical-align:middle;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body.pcal.ppt .pprinthead table.pcourses{font-size:8.5px;}
   }
 
   /* 보기 전환·격자 */
@@ -532,6 +542,7 @@
     .vtabs button{flex:1;}
   }
   .gprinthead{display:none;}
+  .pprinthead{display:none;}
   @media print{
     .pmbar,#verStamp,#crumb{display:none !important;}
     body.ppt .tw table{font-size:8.5px;} body.ppt .tw th,body.ppt .tw td{padding:3px 4px;} body.ppt .tw .tag{font-size:8.5px;padding:1px 4px;}
@@ -700,7 +711,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 20</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 21</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2176,7 +2187,32 @@
     Object.keys(byDate).forEach(function(d){ Object.keys(byDate[d]).forEach(function(k){ var pp = byDate[d][k].plan, nm = pp ? String(pp['과정명'] || '') : k; if (!seenC[nm]) { seenC[nm] = 1; courseLeg += '<span><i style="background:' + courseColor(nm).bg + ';border-color:' + courseColor(nm).bd + '"></i>' + esc(nm) + '</span>'; } }); });
     var leg = '<div class="calleg">' + courseLeg + '</div><div class="calleg" style="margin-top:4px;">' +
       '<span><i style="border-color:#D8574B"></i>겹침 경고(강사·강의실)</span><span><i style="border-color:#D9B100"></i>같은 반 겹침</span><span><i style="border:1.5px dashed #C9A400"></i>강사 미지정 있음</span><span><i style="background:#ECEEF1;opacity:.78"></i>흐리게 표시 = 교과목 편성 전(연간계획 기간만)</span></div>';
-    box.innerHTML = '<div class="pcalbox">' + head + '<table class="calt"><thead>' + thead + '</thead><tbody>' + body + '</tbody></table>' +
+    // 인쇄 전용 상단: 월 제목 + 이 달 과정 개요(화면에는 보이지 않음)
+    var ovRows = {};
+    Object.keys(byDate).forEach(function(d){ Object.keys(byDate[d]).forEach(function(k){
+      var e = byDate[d][k], o = ovRows[k] || (ovRows[k] = { plan: e.plan, n: 0, unas: 0 });
+      var st = entState(e); o.n += st.n; o.unas += st.unas; if (!o.plan && e.plan) o.plan = e.plan;
+    }); });
+    var ovKeys = Object.keys(ovRows).sort(function(a, b){
+      var pa = ovRows[a].plan, pb = ovRows[b].plan;
+      var sa = pa ? String(pa['입교 시작일'] || '') : '', sb = pb ? String(pb['입교 시작일'] || '') : '';
+      return sa < sb ? -1 : sa > sb ? 1 : (a < b ? -1 : 1);
+    });
+    var pcHead = '<div class="pprinthead"><h2>' + q0.y + '년 ' + q0.m + '월 교육과정 일정</h2><div class="gpm">' +
+      '<span><b>구분</b> ' + esc(calType || '전체') + '</span><span><b>강의실</b> ' + esc(calRoom || '전체') + '</span>' +
+      '<span><b>진행 과정</b> ' + ovKeys.length + '개</span><span><b>편성된 교과목</b> ' + nSubj + '건</span><span><b>강사 미지정</b> ' + nUnas + '건</span></div>' +
+      (ovKeys.length ? '<table class="pcourses"><thead><tr><th></th><th>과정·기수</th><th>구분</th><th>입교 기간</th><th>인원</th><th>예정 강의실</th><th>교과목 편성</th></tr></thead><tbody>' +
+        ovKeys.map(function(k){
+          var o = ovRows[k], q = o.plan, nm = q ? String(q['과정명'] || '') : k;
+          return '<tr><td><i class="sw" style="background:' + courseColor(nm).bg + ';border-color:' + courseColor(nm).bd + '"></i></td>' +
+            '<td><b>' + esc(q ? nm + ' ' + (q['기수'] || '') : k) + '</b></td>' +
+            '<td>' + esc(q ? ([q['구분'], q['세부구분']].filter(Boolean).join(' · ') || '-') : '-') + '</td>' +
+            '<td>' + esc(q ? ipgyo(q) : '-') + '</td>' +
+            '<td>' + esc(q && q['계획인원'] !== '' && q['계획인원'] != null ? q['계획인원'] + '명' : '-') + '</td>' +
+            '<td>' + esc(q ? (q['예정 강의실'] || '-') : '-') + '</td>' +
+            '<td>' + (o.n ? o.n + '건' + (o.unas ? ' (강사 미지정 ' + o.unas + ')' : '') : '편성 전') + '</td></tr>';
+        }).join('') + '</tbody></table>' : '') + '</div>';
+    box.innerHTML = '<div class="pcalbox">' + head + pcHead + '<table class="calt"><thead>' + thead + '</thead><tbody>' + body + '</tbody></table>' +
       '<div class="cagenda">' + (agenda || '<div class="tnone" style="padding:10px 0;">이 달에 표시할 과정이 없습니다.</div>') + '</div>' + leg +
       '<div class="hint" style="margin-top:8px;">과정 칩이나 날짜를 누르면 그날의 교과목·강사·강의실이 열립니다. 입교·사이버·실습 기간의 평일은 교과목 편성 전에도 표시됩니다.</div></div>';
   }
