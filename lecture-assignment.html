@@ -541,6 +541,15 @@
   .nmk{cursor:pointer;color:var(--navy);text-decoration:underline;text-decoration-color:#9fb4cf;text-underline-offset:2px;font-weight:700;}
   .nmk:hover{background:#dbe7f6;}
   .gc .eb{border:none;background:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:0 2px;}
+  .gc .mvb{display:inline-block;margin-top:4px;border:1px solid #9fb4cf;background:#fff;color:var(--navy);border-radius:5px;font-size:11px;font-weight:700;padding:1px 7px;cursor:pointer;font-family:inherit;}
+  .gc .mvb:hover{background:#dbe7f6;}
+  .gc.mvsel{outline:3px solid #1F3A5F;outline-offset:-2px;cursor:default;}
+  .gc.mvt{cursor:pointer;} .gc.mvt:hover{outline:2px dashed #2F6DB5;outline-offset:-2px;}
+  td.c.empty.mvt{cursor:pointer;background:#F4F8FD;} td.c.empty.mvt:hover{background:#DCE9F8;outline:2px dashed #2F6DB5;outline-offset:-2px;}
+  .mvbar{border:1.5px solid #1F3A5F;background:#EAF1FA;border-radius:8px;padding:8px 10px;margin:0 0 8px;font-size:13px;line-height:1.55;display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;}
+  .mvbar .mvtx{flex:1;min-width:220px;}
+  .mvbar .mverr{color:#7A140D;font-weight:700;margin-top:2px;}
+  .mvnote{margin:0 0 8px;}
   .db{display:inline-block;font-size:10.5px;font-weight:800;border-radius:8px;padding:0 6px;line-height:1.6;vertical-align:1px;white-space:nowrap;}
   .db[data-doc]{cursor:pointer;}
   .db[data-doc]:hover{filter:brightness(.94);text-decoration:underline;}
@@ -586,7 +595,7 @@
     body.pgrid .gbox.wide table.g td.c{height:30px;padding:2px;} body.pgrid .gbox.wide .gc{line-height:1.25;} body.pgrid .gbox.wide .gc .t{display:none;} body.pgrid .gbox.wide table.g thead th{padding:4px 2px;} body.pgrid .gbox.wide .glegend{margin:2px 0 6px;}
     body.pgrid .gbox.wide .gcourses table{font-size:9.5px;} body.pgrid header{display:none !important;}
     body.pgrid .gc[style*="border-left"]{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    body.pgrid .gnavbar,body.pgrid .gnp,body.pgrid #verStamp,body.pgrid #sEmpty,body.pgrid #sTableWrap,body.pgrid #sCards,body.pgrid #fBackdrop,body.pgrid .eb{display:none !important;}
+    body.pgrid .gnavbar,body.pgrid .gnp,body.pgrid #verStamp,body.pgrid #sEmpty,body.pgrid #sTableWrap,body.pgrid #sCards,body.pgrid #fBackdrop,body.pgrid .eb,body.pgrid .mvb,body.pgrid .mvbar,body.pgrid .mvnote{display:none !important;}
     body.pgrid .wrap{padding:0;}
     body.pgrid #sListPanel h3{display:none !important;}
     body.pgrid #planView,body.pgrid header .hbtns,body.pgrid #backBtn,body.pgrid #viewerNote,body.pgrid #sBlock,body.pgrid #sHead,body.pgrid #sFormPanel,body.pgrid .vtabs,body.pgrid #sReload,body.pgrid .gnavbar button,body.pgrid .gnavbar select,body.pgrid .gdays{display:none !important;}
@@ -730,7 +739,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 27</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 28</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2933,7 +2942,7 @@
   function mondayOf(s){ var q = parseYmd(s); return addDays(s, -(q.dow === 0 ? 6 : q.dow - 1)); }
   function toMin(t){ var m = /^(\d{1,2}):(\d{2})$/.exec(String(t || '')); return m ? Number(m[1]) * 60 + Number(m[2]) : null; }
   function setView(mode){
-    viewMode = mode;
+    viewMode = mode; mv = null; mvErr = ''; mvNote = '';
     try { sessionStorage.setItem('jsfa_la_view', mode); } catch (e) {}
     $('vList').className = mode === 'list' ? 'on' : '';
     $('vGrid').className = mode === 'grid' ? 'on' : '';
@@ -3027,6 +3036,108 @@
     });
     return out;
   }
+
+  /* --- 교과목 이동·맞바꾸기(격자, 클릭 방식) --- */
+  var mv = null, mvErr = '', mvNote = '', mvBusy = false;
+  function mvRows(gid){ return allSessions.filter(function(r){ return groupId(r) === gid; }); }
+  function mvInfo(rows){
+    var r = rows[0];
+    return { gid: groupId(r), date: String(r['일자']), s: Number(r['시작교시']), e: Number(r['끝교시']), subj: String(r['교과목']), rows: rows, ids: rows.map(function(x){ return String(x['편성ID']); }) };
+  }
+  function mvLabel(date, s, e){ return md(date) + ' ' + (s === e ? s + '교시' : s + '~' + e + '교시'); }
+  function mvStart(gid){
+    if (isViewer() || mvBusy) return;
+    var rows = mvRows(gid);
+    if (!rows.length) return;
+    mv = mvInfo(rows); mv.key = currentKey; mvErr = ''; mvNote = '';
+    renderSessionList();
+  }
+  function mvCancel(){ if (mvBusy) return; mv = null; mvErr = ''; renderSessionList(); }
+  function mvBarHtml(){
+    if (mv) {
+      return '<div class="mvbar"><div class="mvtx"><b>이동·맞바꾸기</b> · 선택한 교과목: <b>' + esc(mv.subj) + '</b> (' + esc(mvLabel(mv.date, mv.s, mv.e)) + ')<br>' +
+        '옮길 <b>빈 칸</b>을 누르면 이동, <b>다른 교과목</b>을 누르면 맞바꿉니다(교시 길이가 같아야 합니다). 강사·강의실·반·비고는 교과목과 함께 이동합니다. 다른 주로 옮기려면 주를 바꾼 뒤 눌러 주세요.' +
+        (mvErr ? '<div class="mverr">' + esc(mvErr) + '</div>' : '') + '</div>' +
+        '<button type="button" class="btn sm" data-mvcancel="1"' + (mvBusy ? ' disabled' : '') + '>선택 취소</button></div>';
+    }
+    return mvNote ? '<div class="mvnote">' + mvNote + '</div>' : '';
+  }
+  function mvBody(r, o){
+    return { action: 'saveSession', password: getPw(), 편성ID: r['편성ID'], 개설키: r['개설키'], 반: r['반'] || '전체', 일자: o.date, 시작교시: o.s, 끝교시: o.e,
+      교과목: r['교과목'], '교과목 구분': r['교과목 구분'] || '', 강사ID: r['강사ID'] || '', 강사명: r['강사ID'] ? '' : (r['강사명'] || ''),
+      '강사 역할': r['강사 역할'] || '', 강의실: r['강의실'] || '', 비고: r['비고'] || '' };
+  }
+  function mvApply(changes, label, focusDate){
+    mvBusy = true; mvErr = '';
+    var done = [], warns = [], idx = 0;
+    function orig(c){ return { date: String(c.row['일자']), s: Number(c.row['시작교시']), e: Number(c.row['끝교시']) }; }
+    function fail(msg){
+      var k = done.length;
+      (function back(){
+        if (!done.length) {
+          mvBusy = false;
+          mvErr = msg + (k ? ' 이미 바뀐 ' + k + '건은 원래대로 되돌렸습니다.' : '') + ' 아무것도 바뀌지 않았는지 목록에서 확인해 주세요.';
+          refreshConflicts(); renderSessionList(); return;
+        }
+        var c = done.pop();
+        api(mvBody(c.row, orig(c))).then(function(res){ if (res.status === 'ok') upsertSession(res.data); }).catch(function(){}).then(back);
+      })();
+    }
+    function finish(){
+      mvBusy = false; mv = null;
+      refreshConflicts();
+      var ids = changes.map(function(c){ return String(c.row['편성ID']); });
+      var mine = cfl.filter(function(c){ return !c.conf && ids.some(function(i){ return c.a.ids.indexOf(i) > -1 || c.b.ids.indexOf(i) > -1; }); });
+      var html = '<div class="note-ok">✓ ' + esc(label) + '</div>';
+      if (warns.length) html += '<div class="note-warn"><b>확인이 필요합니다(저장은 되었습니다)</b><br>' + warns.map(function(w){ return '· ' + esc(w); }).join('<br>') + '</div>';
+      if (mine.length) html += '<div class="note-warn" style="background:var(--err-bg);color:#7A140D;"><b>겹침이 있습니다(저장은 되었습니다)</b>' + mine.map(function(c){
+        var me = ids.some(function(i){ return c.a.ids.indexOf(i) > -1; }) ? c.a : c.b, pt = conflictParts(c, me);
+        return '<br>· <b>' + esc(pt.label) + '</b> ' + pt.body;
+      }).join('') + '<br>아래 격자의 겹침 표시를 확인하고 조정해 주세요.</div>';
+      mvNote = html;
+      gridWeek = mondayOf(focusDate); gridWantDate = focusDate;
+      renderHead(planByKey(currentKey));
+      renderSessionList();
+    }
+    (function step(){
+      if (idx >= changes.length) { finish(); return; }
+      var c = changes[idx];
+      api(mvBody(c.row, c)).then(function(res){
+        if (res.status !== 'ok') { fail(res.message || '저장하지 못했습니다.'); return; }
+        upsertSession(res.data); done.push(c);
+        (res.warnings || []).forEach(function(w){ if (warns.indexOf(w) < 0) warns.push(w); });
+        idx++; step();
+      }).catch(function(){ fail('서버에 연결하지 못했습니다.'); });
+    })();
+  }
+  function mvPeriodsList(){ return periods.length ? periods.map(function(x){ return x.n; }) : [1, 2, 3, 4, 5, 6, 7]; }
+  function mvTo(date, n){
+    if (!mv || mvBusy) return;
+    var len = mv.e - mv.s, ns = n, ne = n + len, pl = mvPeriodsList();
+    if (date === mv.date && ns === mv.s) return;
+    for (var q = ns; q <= ne; q++) if (pl.indexOf(q) < 0) { mvErr = '그 칸에서 시작하면 ' + (len + 1) + '개 교시가 필요한데 교시표에 없는 교시(' + q + '교시)가 포함됩니다. 더 앞쪽 칸을 눌러 주세요.'; renderSessionList(); return; }
+    var hit = sessionsOf(currentKey).filter(function(r){
+      return String(r['일자']) === date && mv.ids.indexOf(String(r['편성ID'])) < 0 && Number(r['시작교시']) <= ne && Number(r['끝교시']) >= ns;
+    });
+    if (hit.length) { mvErr = '그 시간에는 이미 "' + hit[0]['교과목'] + '"이(가) 편성되어 있습니다. 완전히 빈 칸을 눌러 주세요.'; renderSessionList(); return; }
+    var today = ymd(new Date()), past = (date < today || mv.date < today);
+    if (!confirm('교과목을 이동할까요?\n' + mv.subj + '\n' + mvLabel(mv.date, mv.s, mv.e) + '  →  ' + mvLabel(date, ns, ne) + '\n강사·강의실·반·비고는 그대로 따라갑니다.' + (past ? '\n\n※ 지난 날짜가 포함되어 있습니다.' : ''))) return;
+    mvApply(mv.rows.map(function(r){ return { row: r, date: date, s: ns, e: ne }; }), '"' + mv.subj + '"을(를) ' + mvLabel(date, ns, ne) + '(으)로 옮겼습니다.', date);
+  }
+  function mvSwap(gid){
+    if (!mv || mvBusy || gid === mv.gid) return;
+    var rowsB = mvRows(gid);
+    if (!rowsB.length) return;
+    var B = mvInfo(rowsB), A = mv;
+    var la = A.e - A.s + 1, lb = B.e - B.s + 1;
+    if (la !== lb) { mvErr = '교시 길이가 달라 맞바꿀 수 없습니다. (' + A.subj + ' ' + la + '교시 / ' + B.subj + ' ' + lb + '교시) 빈 칸으로 옮기거나 길이가 같은 교과목을 선택해 주세요.'; renderSessionList(); return; }
+    var today = ymd(new Date()), past = (A.date < today || B.date < today);
+    if (!confirm('두 교과목을 맞바꿀까요?\n' + A.subj + ': ' + mvLabel(A.date, A.s, A.e) + '  →  ' + mvLabel(B.date, B.s, B.e) + '\n' + B.subj + ': ' + mvLabel(B.date, B.s, B.e) + '  →  ' + mvLabel(A.date, A.s, A.e) + '\n강사·강의실·반·비고는 각 교과목과 함께 이동합니다.' + (past ? '\n\n※ 지난 날짜가 포함되어 있습니다.' : ''))) return;
+    var ch = [];
+    A.rows.forEach(function(r){ ch.push({ row: r, date: B.date, s: B.s, e: B.e }); });
+    B.rows.forEach(function(r){ ch.push({ row: r, date: A.date, s: A.s, e: A.e }); });
+    mvApply(ch, '"' + A.subj + '"과(와) "' + B.subj + '"의 시간을 맞바꿨습니다.', B.date);
+  }
   function gridCell(u, cont, canEdit, p, cx){
     var r = u[0], gid = groupId(r), cl = cflByGid[gid] || [];
     var open = cl.filter(function(c){ return !c.conf; });
@@ -3057,10 +3168,18 @@
       '<div class="t">' + esc(pt.txt) + '</div>' + ins + '<div class="r">' + esc(r['강의실'] || '강의실 미정') + '</div>';
     var other = cx && !cx.own;
     var act = canEdit ? ' data-act="edit" data-id="' + esc(r['편성ID']) + '"' : (other ? ' data-gopen="' + esc(cx.key) + '" title="누르면 이 과정의 교과목 편성 화면으로 이동합니다"' : '');
-    return '<div class="gc' + cls + ((canEdit || other) ? ' ed' : '') + '"' + act + (cx ? ' style="border-left:5px solid ' + cx.color + ';"' : '') + '>' + body + '</div>';
+    var mvc = '';
+    if (canEdit && mv && mv.key === currentKey) {
+      if (gid === mv.gid) { act = ''; mvc = ' mvsel'; }
+      else { act = ' data-mvg="' + esc(gid) + '" title="누르면 선택한 교과목과 시간을 맞바꿉니다"'; mvc = ' mvt'; }
+    } else if (canEdit && !mv && !isViewer() && !cont) {
+      body += '<button type="button" class="mvb" data-mvsel="' + esc(gid) + '" title="이 교과목을 다른 칸으로 이동하거나 다른 교과목과 맞바꿉니다">⇄ 이동·맞바꾸기</button>';
+    }
+    return '<div class="gc' + cls + mvc + ((canEdit || other) && !(mvc === ' mvsel') ? ' ed' : '') + '"' + act + (cx ? ' style="border-left:5px solid ' + cx.color + ';"' : '') + '>' + body + '</div>';
   }
   function renderGrid(p, list){
     var box = $('sGridWrap');
+    if (mv && mv.key !== currentKey) { mv = null; mvErr = ''; }
     var canEdit = formState === 'ok';
     var all = gridScope === 'all';
     var weeks = all ? gridAllWeeks(p) : gridWeeksOf(p, list);
@@ -3133,7 +3252,10 @@
               ce = canEdit && cx.own; cp0 = planByKey(rk) || p;
             }
             body += '<td class="c' + sh + '" data-d="' + di + '" rowspan="' + st.rs + '">' + gridCell(st.u, st.cont, ce, cp0, cx) + '</td>';
-          } else if (li === 0 && canEdit && !all) body += '<td class="c empty' + sh + '" data-d="' + di + '" data-new="' + d + '|' + n + '"></td>';
+          } else if (li === 0 && canEdit && !all) {
+            if (mv && mv.key === currentKey) body += '<td class="c empty mvt' + sh + '" data-d="' + di + '" data-mvto="' + d + '|' + n + '" title="누르면 선택한 교과목을 이 칸으로 옮깁니다"></td>';
+            else body += '<td class="c empty' + sh + '" data-d="' + di + '" data-new="' + d + '|' + n + '"></td>';
+          }
           else body += '<td class="c' + sh + '" data-d="' + di + '"></td>';
         }
       });
@@ -3172,9 +3294,9 @@
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:#FBE0DD;border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span>' +
       '<span><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
-      empty + '<div class="gdays">' + dtabs + '</div>' +
+      mvBarHtml() + empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
-      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div></div>';
+      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 칸 안의 "이동·맞바꾸기" 버튼으로 교과목의 시간을 옮길 수 있습니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div></div>';
   }
   function gridNav(act){
     var p = planByKey(currentKey);
@@ -4061,7 +4183,11 @@
 
   function onListClick(ev){
     var t = ev.target;
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave')))) t = t.parentNode;
+    if (mv && ev.target && ev.target.closest) {   // 이동·맞바꾸기 중에는 칸 안의 강사 이름·서류 배지를 눌러도 도착 칸 선택으로 처리
+      var mt = ev.target.closest('[data-mvg],[data-mvto]');
+      if (mt) { if (mt.getAttribute('data-mvg')) mvSwap(mt.getAttribute('data-mvg')); else { var q2 = mt.getAttribute('data-mvto').split('|'); mvTo(q2[0], Number(q2[1])); } return; }
+    }
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
@@ -4079,6 +4205,13 @@
       if (cdt && normYmd(cdt)) location.hash = '#c=' + encodeURIComponent(copen) + '&d=' + normYmd(cdt); else openCourse(copen);
       return;
     }
+    var mvs = t.getAttribute('data-mvsel');
+    if (mvs) { ev.stopPropagation(); mvStart(mvs); return; }
+    var mvg = t.getAttribute('data-mvg');
+    if (mvg) { mvSwap(mvg); return; }
+    var mvt = t.getAttribute('data-mvto');
+    if (mvt) { var mp = mvt.split('|'); mvTo(mp[0], Number(mp[1])); return; }
+    if (t.getAttribute('data-mvcancel')) { mvCancel(); return; }
     var cq = t.getAttribute('data-cquick');
     if (cq) { qaOpen(cq); return; }
     var qpk = t.getAttribute('data-qpick');
@@ -4111,7 +4244,7 @@
     var gd = t.getAttribute('data-gd');
     if (gd) { gridDay = Number(gd); renderSessionList(); return; }
     var gs = t.getAttribute('data-gs');
-    if (gs) { gridScope = gs === 'all' ? 'all' : 'one'; try { sessionStorage.setItem('jsfa_la_gscope', gridScope); } catch (e) {} closeFormModal(); gridDay = -1; renderSessionList(); return; }
+    if (gs) { gridScope = gs === 'all' ? 'all' : 'one'; try { sessionStorage.setItem('jsfa_la_gscope', gridScope); } catch (e) {} closeFormModal(); gridDay = -1; mv = null; mvErr = ''; mvNote = ''; renderSessionList(); return; }
     var gh = t.getAttribute('data-gh');
     if (gh) { gridHide[gh] = !gridHide[gh]; renderSessionList(); return; }
     var go = t.getAttribute('data-gopen');
@@ -4174,6 +4307,7 @@
   $('pOverlay').addEventListener('click', function(ev){ if (ev.target === $('pOverlay')) closeCopy(); });
   document.addEventListener('keydown', function(ev){
     if (ev.key !== 'Escape') return;
+    if (mv && !mvBusy && !formModalOpen()) { mvCancel(); return; }
     if ($('cOverlay').style.display === 'flex') { closeChange(); return; }
     if ($('pOverlay').style.display === 'flex') { closeCopy(); return; }
     if ($('iOverlay').style.display === 'flex') closeInstructor();
