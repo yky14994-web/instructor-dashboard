@@ -363,6 +363,7 @@
   .pmbar .vtabs{float:none;}
   .pcalbox{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);padding:14px 16px;margin-bottom:14px;}
   .pcalbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .pcalbar .calpre{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;height:34px;}
   .pcalbar h3{margin:0 8px 0 0;font-size:17px;font-weight:800;color:var(--navy);}
   .pcalbar select,.pcalbar input[type=month]{height:34px;border:1px solid var(--border-input);border-radius:6px;padding:0 8px;font-family:inherit;font-size:13px;background:#fff;}
   .pcalsum{font-size:12.5px;color:var(--text-muted);margin:0 0 8px;}
@@ -729,7 +730,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 25</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 26</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2001,7 +2002,7 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fb); else fb();
   }
   /* ---------- 연간계획 화면: [표 | 월 캘린더] 보기 ---------- */
-  var planMode = 'table', calMonth = '', calManual = false, calType = '', calRoom = '', pendingEdit = '';
+  var planMode = 'table', calMonth = '', calManual = false, calType = '', calRoom = '', calPre = false, pendingEdit = '';
   try { var pm0 = sessionStorage.getItem('jsfa_la_pmode'); if (pm0 === 'cal' || pm0 === 'room') planMode = pm0; } catch (e) {}
   function planViewSync(){
     var cal = planMode === 'cal', rm = planMode === 'room', other = cal || rm;
@@ -2119,6 +2120,7 @@
           if (e.rows.length) drop = !e.rows.some(function(r){ return String(r['강의실'] || '') === calRoom; });
           else drop = !(p && String(p['예정 강의실'] || '').indexOf(calRoom) > -1);
         }
+        if (!drop && calPre && e.rows.length) drop = true;   // '편성 전만 보기': 교과목이 이미 있는 칸은 숨김
         if (drop) delete byDate[d][k];
       });
       if (!Object.keys(byDate[d]).length) delete byDate[d];
@@ -2150,6 +2152,7 @@
   /* 이 달에 표시할 과정이 없을 때: 일정이 있는 가까운 달로 바로 이동 */
   function emptyMonthHint(byDate){
     if (Object.keys(byDate).length) return '';
+    if (calPre) return '<div class="hint" style="margin:6px 0 10px;"><b>이 달에는 교과목 편성 전 일정이 없습니다.</b> \'편성 전만 보기\'를 끄면 전체 일정이 보입니다.</div>';
     var all = calPlanMonths(), prev = '', next = '';
     all.forEach(function(m){ if (m < calMonth) prev = m; else if (m > calMonth && !next) next = m; });
     if (!prev && !next) return '';
@@ -2178,6 +2181,7 @@
       '<input type="month" id="calMonthIn" value="' + esc(calMonth) + '" aria-label="월 선택">' +
       '<select id="calTypeSel" aria-label="구분"><option value="">구분 전체</option>' + types.map(function(t){ return '<option value="' + esc(t) + '"' + (calType === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>' +
       '<select id="calRoomSel" aria-label="강의실"><option value="">강의실 전체</option>' + Object.keys(roomSet).sort().map(function(r){ return '<option value="' + esc(r) + '"' + (calRoom === r ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('') + '</select>' +
+      '<label class="calpre"><input type="checkbox" id="calPreChk"' + (calPre ? ' checked' : '') + '> 편성 전만 보기</label>' +
       '<span style="margin-left:auto;display:inline-flex;gap:6px;">' + oriSelect('cal') + '<button type="button" class="btn sm" data-cm="print">인쇄</button></span></div>' +
       '<div class="pcalsum">이 달 과정·기수 ' + Object.keys(courseSet).length + '개 · 편성된 교과목 ' + nSubj + '건 · 강사 미지정 ' + nUnas + '건 · 겹침 경고 ' + nErr + '곳</div>' + emptyMonthHint(byDate);
     var thead = '<tr>' + names.slice(0, cols).map(function(n){ return '<th>' + n + '</th>'; }).join('') + '</tr>';
@@ -2230,7 +2234,7 @@
       return sa < sb ? -1 : sa > sb ? 1 : (a < b ? -1 : 1);
     });
     var pcHead = '<div class="pprinthead"><h2>' + q0.y + '년 ' + q0.m + '월 교육과정 일정</h2><div class="gpm">' +
-      '<span><b>구분</b> ' + esc(calType || '전체') + '</span><span><b>강의실</b> ' + esc(calRoom || '전체') + '</span>' +
+      '<span><b>구분</b> ' + esc(calType || '전체') + '</span><span><b>강의실</b> ' + esc(calRoom || '전체') + '</span>' + (calPre ? '<span><b>표시</b> 편성 전만</span>' : '') +
       '<span><b>진행 과정</b> ' + ovKeys.length + '개</span><span><b>편성된 교과목</b> ' + nSubj + '건</span><span><b>강사 미지정</b> ' + nUnas + '건</span></div>' +
       (ovKeys.length ? '<table class="pcourses"><thead><tr><th></th><th>과정·기수</th><th>구분</th><th>입교 기간</th><th>인원</th><th>예정 강의실</th><th>교과목 편성</th></tr></thead><tbody>' +
         ovKeys.map(function(k){
@@ -2559,7 +2563,7 @@
         var edit = viewer ? '' : '<button type="button" class="btn sm" data-cassign="' + esc(r['편성ID']) + '">수정</button>';
         return '<tr' + (e.key === hlKey ? ' class="hl"' : '') + '><td class="nw">' + esc(pt.txt) + (pt.time ? '<br><span class="hint">' + esc(pt.time) + '</span>' : '') + '</td><td>' + esc(r['교과목']) + '</td><td>' + dayInstr(r, viewer, cx) + '</td><td>' + esc(r['강의실'] || '미정') + '</td><td>' + edit + '</td></tr>';
       }).join('') + '</tbody></table>' : '<div class="hint">편성된 교과목이 없습니다. ' + (e.tags['사이버'] ? '(사이버 기간)' : e.tags['실습'] ? '(실습 기간)' : '(입교 기간)') + '</div>';
-      return '<h4><span class="tpill" style="' + courseStyle(p, e.key) + '">' + esc(name) + '</span>' + planPeriodHtml(p) + '</h4>' + tb;
+      return '<h4><span class="tpill" style="' + courseStyle(p, e.key) + '">' + esc(name) + '</span>' + planPeriodHtml(p) + (!rows.length && !viewer && !cx ? '<button type="button" class="btn sm primary" data-copen="' + esc(e.key) + '" data-cdate="' + esc(date) + '">' + esc(md(date)) + ' 교과목 편성하기</button>' : '') + '</h4>' + tb;
     }).join('');
     var noteH = dayNoteHtml; dayNoteHtml = '';
     $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(md(date)) + ' <span class="hint" style="font-weight:600;">일정</span></h2><div class="sub">과정 ' + list.length + '개</div></div></div>' +
@@ -4149,6 +4153,7 @@
     if (!t || !t.id) return;
     if (t.id === 'calTypeSel') { calType = t.value; renderPlanCal(); }
     else if (t.id === 'calRoomSel') { calRoom = t.value; renderPlanCal(); }
+    else if (t.id === 'calPreChk') { calPre = !!t.checked; renderPlanCal(); }
     else if (t.id === 'calMonthIn' && /^\d{4}-\d{2}$/.test(t.value)) { calMonth = t.value; calManual = true; renderPlanCal(); }
     else if (t.id === 'roomMonthIn') { roomMonth = /^\d{4}-\d{2}$/.test(t.value) ? t.value : ''; renderRoomFree(); }
     else if (t.id === 'roomMonthRoomSel') { roomMonthRoom = t.value; renderRoomFree(); }
