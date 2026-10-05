@@ -428,6 +428,21 @@
   .dday th,.dday td{padding:6px 6px;border-top:1px solid var(--border);text-align:left;vertical-align:top;}
   .dday th{font-size:11.5px;color:var(--text-muted);border-top:none;position:static;background:none;}
   .dday tr.hl td:first-child{box-shadow:inset 3px 0 0 var(--navy);}
+  .dday .dper{display:flex;flex-wrap:wrap;gap:2px 14px;align-items:baseline;margin:0 0 6px;padding:6px 9px;background:var(--info-bg);border-radius:6px;font-size:12px;color:#17304F;}
+  .dday .dper .k{font-weight:800;}
+  .dday .dper b{margin-right:4px;}
+  .dday tr.qa td{padding:0;border-top:none;}
+  .qabox{margin:4px 0 8px;padding:10px;border:1px solid var(--navy);border-radius:8px;background:#fff;}
+  .qabox .qat{font-size:12.5px;font-weight:800;margin-bottom:6px;color:var(--navy);}
+  .qabox input[type=text]{width:100%;box-sizing:border-box;height:36px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;font-family:inherit;font-size:13px;}
+  .qalist{margin-top:6px;}
+  .qai{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;margin-top:4px;cursor:pointer;}
+  .qai:hover{background:var(--info-bg);}
+  .qai .tx{flex:1;min-width:0;} .qai .tx small{display:block;color:var(--text-muted);font-size:11.5px;}
+  .qalist .info{font-size:12px;color:var(--text-muted);padding:4px 2px;}
+  .qasel{margin-top:8px;font-size:13px;}
+  .qasel select{height:30px;border:1px solid var(--border-input);border-radius:6px;font-family:inherit;margin:0 4px;}
+  .qasel .btns{display:flex;gap:8px;justify-content:flex-end;}
   @media (max-width:760px){
     table.calt{display:none;} .cagenda{display:block;}
     .cagenda .ag{border-top:1px solid var(--border);padding:8px 0;}
@@ -711,7 +726,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 21</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 22</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2503,11 +2518,22 @@
     }
     if (isOps(r)) return '<span class="tag t-ops">교육운영팀</span>';
     if (r['강사명']) return roleTag(r) + '<span class="tag t-info">' + esc(r['강사명']) + ' (직접 입력)</span>';
-    return (viewer || cx) ? '<span class="tag t-none">미지정</span>' : '<button type="button" class="btn sm" data-cassign="' + esc(r['편성ID']) + '">강사 지정</button>';
+    return (viewer || cx) ? '<span class="tag t-none">미지정</span>' : '<button type="button" class="btn sm" data-cquick="' + esc(r['편성ID']) + '">강사 지정</button>';
   }
   /* 날짜(또는 칩)를 누르면 그날의 교과목을 보여 주고, 강사 지정·수정은 해당 교과목 편성 화면으로 이어 줌 */
+  var dayNoteHtml = '', dayHl = '';
+  function planPeriodHtml(p){
+    if (!p) return '';
+    var parts = [];
+    var ip = range(p['입교 시작일'], p['입교 종료일']);
+    if (ip) parts.push('<span><b>입교</b> ' + esc(ip) + (p['교육기간'] ? ' (' + esc(p['교육기간']) + ')' : '') + '</span>');
+    var cy = range(p['사이버 시작일'], p['사이버 종료일']); if (cy) parts.push('<span><b>사이버</b> ' + esc(cy) + '</span>');
+    var sp = range(p['실습(외부) 시작일'], p['실습(외부) 종료일']); if (sp) parts.push('<span><b>실습</b> ' + esc(sp) + '</span>');
+    return '<div class="dper"><span class="k">교육기간</span>' + (parts.join('') || '<span>날짜 미입력</span>') + '</div>';
+  }
   function openDayDetail(date, hlKey){
     var byDate = calCollect(date.slice(0, 7)), m = byDate[date] || {}, viewer = isViewer();
+    dayHl = hlKey || '';
     var list = Object.keys(m).map(function(k){ return m[k]; }).sort(function(a, b){ return String(a.key) < String(b.key) ? -1 : 1; });
     var secs = list.map(function(e){
       var p = e.plan, cx = p && isCancelled(p), name = p ? String(p['과정명'] || '') + ' ' + String(p['기수'] || '') : e.key;
@@ -2517,13 +2543,118 @@
         var edit = viewer ? '' : '<button type="button" class="btn sm" data-cassign="' + esc(r['편성ID']) + '">수정</button>';
         return '<tr' + (e.key === hlKey ? ' class="hl"' : '') + '><td class="nw">' + esc(pt.txt) + (pt.time ? '<br><span class="hint">' + esc(pt.time) + '</span>' : '') + '</td><td>' + esc(r['교과목']) + '</td><td>' + dayInstr(r, viewer, cx) + '</td><td>' + esc(r['강의실'] || '미정') + '</td><td>' + edit + '</td></tr>';
       }).join('') + '</tbody></table>' : '<div class="hint">편성된 교과목이 없습니다. ' + (e.tags['사이버'] ? '(사이버 기간)' : e.tags['실습'] ? '(실습 기간)' : '(입교 기간)') + '</div>';
-      return '<h4><span class="tpill" style="' + courseStyle(p, e.key) + '">' + esc(name) + '</span> <button type="button" class="btn sm" data-copen="' + esc(e.key) + '" data-cdate="' + esc(date) + '">' + (viewer ? '교과목 편성 화면 열기' : esc(md(date)) + ' 교과목 편성하기') + '</button></h4>' + tb;
+      return '<h4><span class="tpill" style="' + courseStyle(p, e.key) + '">' + esc(name) + '</span> <button type="button" class="btn sm" data-copen="' + esc(e.key) + '" data-cdate="' + esc(date) + '">' + (viewer ? '교과목 편성 화면 열기' : esc(md(date)) + ' 교과목 편성하기') + '</button></h4>' + planPeriodHtml(p) + tb;
     }).join('');
+    var noteH = dayNoteHtml; dayNoteHtml = '';
     $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(md(date)) + ' <span class="hint" style="font-weight:600;">일정</span></h2><div class="sub">과정 ' + list.length + '개</div></div></div>' +
-      '<div class="dday">' + (secs || '<div class="hint">표시할 과정이 없습니다.</div>') + '</div>' +
+      noteH + '<div class="dday" data-dday-date="' + esc(date) + '">' + (secs || '<div class="hint">표시할 과정이 없습니다.</div>') + '</div>' +
       '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button></div>';
     $('iOverlay').style.display = 'flex';
     $('iClose').addEventListener('click', closeInstructor);
+  }
+  /* ---------- 날짜 상세 창 안에서 강사 지정(화면 이동 없음) ---------- */
+  var qa = { sid: '', iid: '', role: '주강사', busy: false, timer: null };
+  function qaRow(){ return allSessions.filter(function(x){ return String(x['편성ID']) === qa.sid; })[0]; }
+  function qaBusy(iid, r){
+    var d = normYmd(r['일자']), a = Number(r['시작교시']), b = Number(r['끝교시']), hit = [];
+    allSessions.forEach(function(x){
+      if (String(x['편성ID']) === String(r['편성ID']) || String(x['강사ID']) !== String(iid) || normYmd(x['일자']) !== d) return;
+      if (Number(x['시작교시']) <= b && Number(x['끝교시']) >= a) hit.push(x);
+    });
+    return hit;
+  }
+  function qaCloseAll(){
+    clearInterval(qa.timer); qa.sid = ''; qa.iid = '';
+    Array.prototype.forEach.call(document.querySelectorAll('#iCard tr.qa'), function(t){ t.parentNode.removeChild(t); });
+  }
+  function qaOpen(sid){
+    var r = allSessions.filter(function(x){ return String(x['편성ID']) === String(sid); })[0];
+    if (!r || isViewer()) return;
+    qaCloseAll();
+    var tr = document.querySelector('#iCard [data-cquick="' + sid.replace(/"/g, '') + '"]');
+    tr = tr && tr.closest ? tr.closest('tr') : null;
+    if (!tr) return;
+    qa = { sid: String(sid), iid: '', role: '주강사', busy: false, timer: null };
+    var q = document.createElement('tr'); q.className = 'qa';
+    q.innerHTML = '<td colspan="5"><div class="qabox"><div class="qat">강사 지정 · ' + esc(String(r['교과목'] || '')) + '</div>' +
+      '<input type="text" id="qaIn" autocomplete="off" placeholder="강사 이름·소속·분야·교과목으로 검색" aria-label="강사 검색">' +
+      '<div id="qaList" class="qalist"></div>' +
+      '<div id="qaSel" class="qasel" style="display:none;"></div>' +
+      '<div id="qaMsg"></div></div></td>';
+    tr.parentNode.insertBefore(q, tr.nextSibling);
+    ensureInstructors();
+    var inp = document.getElementById('qaIn');
+    inp.addEventListener('input', qaList);
+    inp.focus();
+    qa.timer = setInterval(function(){ if (instructors !== null && !instrLoading) { clearInterval(qa.timer); qaList(); } }, 400);
+    qaList();
+  }
+  function qaList(){
+    var box = document.getElementById('qaList'), inp = document.getElementById('qaIn');
+    if (!box || !inp) return;
+    var r = qaRow(); if (!r) return;
+    var q = inp.value.trim();
+    if (instructors === null || instrLoading) { box.innerHTML = '<div class="info">강사 목록을 불러오는 중입니다…</div>'; return; }
+    if (instrFailed) { box.innerHTML = '<div class="info">강사 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.</div>'; return; }
+    if (!q) { box.innerHTML = '<div class="info">이름 등을 입력하면 강사가 나옵니다.</div>'; return; }
+    var tokens = q.toLowerCase().split(/\s+/).filter(Boolean), scored = [];
+    instructors.forEach(function(x){
+      var f = [x.name, x.org, x.field, x.subj, x.region], ok = true, sc = 0;
+      tokens.forEach(function(tk){
+        var hit = false;
+        f.forEach(function(v, i){ if (String(v).toLowerCase().indexOf(tk) > -1) { hit = true; sc += i === 0 ? 3 : i === 1 ? 2 : 1; } });
+        if (!hit) ok = false;
+      });
+      if (ok) scored.push({ x: x, sc: sc });
+    });
+    scored.sort(function(a, b){
+      if (a.sc !== b.sc) return b.sc - a.sc;
+      var aa = a.x.status === '활성' ? 0 : 1, bb = b.x.status === '활성' ? 0 : 1;
+      return aa !== bb ? aa - bb : a.x.name.localeCompare(b.x.name, 'ko');
+    });
+    if (!scored.length) { box.innerHTML = '<div class="info">검색 결과가 없습니다.</div>'; return; }
+    box.innerHTML = scored.slice(0, 6).map(function(h){
+      var x = h.x, bz = qaBusy(x.id, r), cls = ['활성', '승인', '정식'].indexOf(x.status) > -1 ? 't-ok' : 't-warn';
+      return '<div class="qai" data-qpick="' + esc(x.id) + '">' + avatar(x, '') + '<div class="tx"><b>' + esc(x.name) + ' <span class="tag ' + cls + '">' + esc(x.status || '-') + '</span></b>' +
+        '<small>' + esc([x.field, x.org, x.region].filter(Boolean).join(' · ')) + ' · 강의 ' + x.count + '회</small></div>' +
+        (bz.length ? '<span class="tag t-warn">이미 배정됨</span>' : '') + '</div>';
+    }).join('');
+  }
+  function qaPick(iid){
+    var x = instrById[iid], r = qaRow(); if (!x || !r) return;
+    qa.iid = iid;
+    var bz = qaBusy(iid, r);
+    var sel = document.getElementById('qaSel');
+    sel.style.display = 'block';
+    sel.innerHTML = '<div><b>' + esc(x.name) + '</b> 선생님을 이 교과목의 ' +
+      '<select id="qaRole" aria-label="역할"><option value="주강사">주강사</option><option value="보조강사">보조강사</option></select>로 지정합니다.</div>' +
+      (bz.length ? '<div class="note-warn" style="margin-top:6px;">같은 날 같은 교시에 이미 배정된 강의가 있습니다: ' + bz.map(function(b){ return esc(String(b['교과목'] || '')) + '(' + esc(periodText(b).txt) + ')'; }).join(', ') + '. 저장은 되지만 겹침 경고가 표시됩니다.</div>' : '') +
+      '<div class="btns" style="margin-top:8px;"><button type="button" class="btn" data-qcancel="1">취소</button><button type="button" class="btn primary" data-qsave="1">지정 저장</button></div>';
+    document.getElementById('qaList').style.display = 'none';
+  }
+  function qaSave(){
+    var r = qaRow(); if (!r || !qa.iid || qa.busy) return;
+    var role = (document.getElementById('qaRole') || {}).value || '주강사';
+    var body = { action: 'saveSession', password: getPw(), 편성ID: String(r['편성ID']), 개설키: String(r['개설키']), 반: String(r['반'] || '전체'),
+      일자: normYmd(r['일자']), 시작교시: Number(r['시작교시']), 끝교시: Number(r['끝교시']), 교과목: String(r['교과목'] || ''),
+      '교과목 구분': String(r['교과목 구분'] || ''), 강사ID: qa.iid, 강사명: '', '강사 역할': role, 강의실: String(r['강의실'] || ''), 비고: String(r['비고'] || '') };
+    qa.busy = true;
+    var msg = document.getElementById('qaMsg'); if (msg) msg.innerHTML = '<div class="info">저장 중…</div>';
+    var date = body.일자, scroller = $('iCard'), top = scroller ? scroller.scrollTop : 0;
+    api(body).then(function(res){
+      if (res.status !== 'ok') { if (msg) msg.innerHTML = '<div class="note-err">' + esc(res.message || '저장하지 못했습니다') + '</div>'; return; }
+      upsertSession(res.data); refreshConflicts();
+      var warns = res.warnings || [], nm = (instrById[qa.iid] || {}).name || '';
+      dayNoteHtml = '<div class="note-ok" style="margin:8px 0;">✓ ' + esc(nm) + ' 선생님을 지정했습니다.</div>' +
+        (warns.length ? '<div class="note-warn" style="margin:8px 0;"><b>확인이 필요합니다(저장은 되었습니다)</b><br>' + warns.map(function(w){ return '· ' + esc(w); }).join('<br>') + '</div>' : '');
+      qaCloseAll();
+      openDayDetail(date, dayHl);
+      if ($('iCard')) $('iCard').scrollTop = top;
+      // 뒤쪽 화면(캘린더·처리할 일 등)도 새 내용으로 갱신
+      try { renderTodo(); if (planMode === 'cal') renderPlanCal(); else if (planMode === 'room') renderRoomFree(); else applyFilters(); } catch (e) {}
+    }).catch(function(){
+      if (msg) msg.innerHTML = '<div class="note-err">서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
+    }).then(function(){ qa.busy = false; });
   }
   /* 연간계획 첫 화면 '처리할 일'(과정 필터와 무관, 취소 기수·지난 강의 제외)
      ① 강의계획서: 미제출 중 기한 지남·7일 이내  ② 강사 미지정: 강의일 14일 이내  ③ 겹침 경고: 미확인 전체  ④ 강사 서류: 강의일 14일 이내 배정 강사 중 미비·보유 만료 */
@@ -3910,7 +4041,7 @@
 
   function onListClick(ev){
     var t = ev.target;
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign')))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
@@ -3928,6 +4059,12 @@
       if (cdt && normYmd(cdt)) location.hash = '#c=' + encodeURIComponent(copen) + '&d=' + normYmd(cdt); else openCourse(copen);
       return;
     }
+    var cq = t.getAttribute('data-cquick');
+    if (cq) { qaOpen(cq); return; }
+    var qpk = t.getAttribute('data-qpick');
+    if (qpk) { qaPick(qpk); return; }
+    if (t.getAttribute('data-qcancel')) { qaCloseAll(); return; }
+    if (t.getAttribute('data-qsave')) { qaSave(); return; }
     var cas = t.getAttribute('data-cassign');
     if (cas) {
       var crow = allSessions.filter(function(x){ return String(x['편성ID']) === cas; })[0];
