@@ -199,6 +199,11 @@
     padding:60px 0;text-align:center;color:var(--text-muted);font-size:14px;
   }
 
+  /* 다른 화면 위에 강사 카드만 띄우는 모드(#embed=1) */
+  html.embed, html.embed body{background:transparent !important;}
+  html.embed #loginScreen, html.embed #app, html.embed #boot{display:none !important;}
+  html.embed #overlay{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
+
   /* 상세보기 패널 */
   #overlay{
     display:none;
@@ -328,6 +333,7 @@
 </style>
 </head>
 <body>
+<script>try{if(/(^|[#&])embed=1/.test(location.hash))document.documentElement.classList.add('embed');}catch(e){}</script>
 <script>try{if(sessionStorage.getItem('jsfa_dash_pw'))document.documentElement.classList.add('autologin');}catch(e){}window.__autoDone=function(){document.documentElement.classList.remove('autologin');};</script>
 <div id="boot">불러오는 중...</div>
 
@@ -1368,6 +1374,7 @@
       render();
       showMailNotice(json.mail);
       openFromHash();
+      if (EMBED) { embedLoaded = true; postParent({type:'jsfa-card-ready'}); if (embedPending) { var pid = embedPending; embedPending = null; embedOpen(pid); } }
     });
   }
 
@@ -1383,6 +1390,27 @@
   }
 
   // 강의배정 화면의 "강사관리에서 보기"에서 넘어온 경우(#i=강사ID): 목록을 불러온 뒤 해당 강사 상세를 연다
+  // 다른 화면(홈·강의배정) 위에 카드만 띄우는 모드: 부모 화면과 메시지로 주고받음
+  var EMBED = /(^|[#&])embed=1/.test(location.hash);
+  var embedLoaded = false, embedPending = null;
+  function postParent(o){ try { window.parent.postMessage(o, '*'); } catch (e) {} }
+  function embedOpen(id){
+    var d = allData.filter(function(x){ return String(x.강사ID) === String(id); })[0];
+    if (d) { openDetail(d); postParent({type:'jsfa-card-shown'}); }
+    else { postParent({type:'jsfa-card-notfound', id:id}); postParent({type:'jsfa-card-close'}); }
+  }
+  if (EMBED) {
+    window.addEventListener('message', function(e){
+      if (e.source !== window.parent) return;
+      var m = e.data || {};
+      if (m.type !== 'jsfa-open-card') return;
+      if (embedLoaded) embedOpen(m.id); else embedPending = m.id;
+    });
+    new MutationObserver(function(){
+      if (document.getElementById('overlay').style.display === 'none') postParent({type:'jsfa-card-close'});
+    }).observe(document.getElementById('overlay'), {attributes:true, attributeFilter:['style']});
+  }
+
   function openFromHash(){
     var m = /^#i=([^&]+)/.exec(location.hash || '');
     if (!m) return;

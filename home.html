@@ -226,7 +226,7 @@
       <section class="card" id="cRoom"></section>
     </div>
   </div>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 19</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 20</div>
 </div>
 </div>
 
@@ -700,6 +700,57 @@
       showMsg('err', err.message || '불러오지 못했습니다');
     }).then(window.__autoDone, window.__autoDone);
   }
+})();
+</script>
+<script>
+// 강사 이름·"강사관리에서 보기"를 누르면 화면 이동 없이 강사 카드를 현재 화면 위에 띄움(강사관리 화면의 카드를 그대로 사용)
+(function(){
+  var KEY = 'jsfa_dash_pw';
+  var ov = null, fr = null, ready = false, pending = null, shown = false, timer = null;
+  function hasPw(){ try { return !!sessionStorage.getItem(KEY); } catch (e) { return false; } }
+  function init(){
+    if (ov) return;
+    ov = document.createElement('div');
+    ov.style.cssText = 'display:none;position:fixed;inset:0;z-index:99999;background:rgba(20,20,19,.45);';
+    ov.innerHTML = '<div class="icLoad" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;">강사 정보를 불러오는 중...</div>';
+    fr = document.createElement('iframe');
+    fr.src = 'instructor-dashboard.html#embed=1';
+    fr.title = '강사 정보 카드';
+    fr.setAttribute('allowtransparency', 'true');
+    fr.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;color-scheme:normal;';
+    ov.appendChild(fr);
+    document.body.appendChild(ov);
+  }
+  function send(){ if (ready && pending !== null) { try { fr.contentWindow.postMessage({type:'jsfa-open-card', id:pending}, '*'); } catch (e) {} } }
+  function hide(){ if (!ov) return; ov.style.display = 'none'; document.body.style.overflow = ''; clearTimeout(timer); shown = false; pending = null; }
+  function open(id){
+    init(); shown = false; pending = id;
+    ov.querySelector('.icLoad').style.display = 'flex';
+    ov.style.display = 'block'; document.body.style.overflow = 'hidden';
+    send();
+    clearTimeout(timer);
+    // 20초 안에 뜨지 않으면 기존 방식(강사관리 화면으로 이동)으로 대체
+    timer = setTimeout(function(){ if (!shown) { hide(); location.href = 'instructor-dashboard.html#i=' + encodeURIComponent(id); } }, 20000);
+  }
+  window.addEventListener('message', function(e){
+    if (!fr || e.source !== fr.contentWindow) return;
+    var m = e.data || {};
+    if (m.type === 'jsfa-card-ready') { ready = true; send(); }
+    else if (m.type === 'jsfa-card-shown') { shown = true; clearTimeout(timer); ov.querySelector('.icLoad').style.display = 'none'; }
+    else if (m.type === 'jsfa-card-close') { hide(); }
+    else if (m.type === 'jsfa-card-notfound') { window.alert('해당 강사를 강사관리 목록에서 찾지 못했습니다. (강사ID: ' + m.id + ')'); }
+  });
+  document.addEventListener('click', function(e){
+    var a = e.target.closest ? e.target.closest('a.inm, #iToDash') : null;
+    if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button) return;
+    var m = /#i=([^&]+)/.exec(a.getAttribute('href') || '');
+    if (!m || !hasPw()) return;
+    var id; try { id = decodeURIComponent(m[1]); } catch (err) { return; }
+    e.preventDefault(); open(id);
+  }, true);
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && ov && ov.style.display === 'block') hide(); });
+  // 미리 불러 두어 클릭 시 바로 뜨게 함(로그인된 경우만, 화면이 한가할 때)
+  window.addEventListener('load', function(){ if (hasPw()) setTimeout(init, 2500); });
 })();
 </script>
 </body>
