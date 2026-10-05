@@ -146,6 +146,31 @@
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px;}
   .chips .tag{background:var(--ok-bg);color:var(--ok-fg);}
 
+  /* 현황 요약 3카드 */
+  .trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:0 0 16px;align-items:stretch;}
+  @media (max-width:980px){ .trio{grid-template-columns:minmax(0,1fr);} }
+  .trio .card{display:flex;flex-direction:column;}
+  .trio .foot{margin-top:auto;padding-top:10px;}
+  .trio .sub{font-size:12px;color:var(--text-muted);margin:-6px 0 8px;}
+  .tdl{list-style:none;margin:0;padding:0;}
+  .tdl li a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 2px;border-top:1px solid var(--border);color:var(--text);text-decoration:none;font-size:13.5px;}
+  .tdl li:first-child a{border-top:none;}
+  .tdl li a:hover{background:#F4F7FA;}
+  .tdl .n{font-size:18px;font-weight:800;}
+  .tdl .n small{font-size:12px;font-weight:700;color:var(--text-muted);margin-left:2px;}
+  .tdl .bad .n{color:var(--err-fg);} .tdl .wn .n{color:var(--warn-fg);} .tdl .zero .n{color:var(--text-muted);}
+  .tdl .l small{display:block;font-size:11.5px;color:var(--text-muted);}
+  .nsl{list-style:none;margin:0;padding:0;}
+  .nsl li{padding:8px 0;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:flex-start;font-size:13.5px;}
+  .nsl li:first-child{border-top:none;}
+  .nsl a{color:var(--navy);font-weight:700;text-decoration:none;} .nsl a:hover{text-decoration:underline;}
+  .nsl small{display:block;font-size:11.5px;color:var(--text-muted);margin-top:2px;}
+  .mst{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .mst .c{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:#FAFBFC;}
+  .mst .c span{display:block;font-size:12px;color:var(--text-muted);font-weight:600;}
+  .mst .c b{display:block;font-size:22px;color:var(--navy);margin-top:2px;line-height:1.2;}
+  .mst .c b small{font-size:12px;font-weight:700;color:var(--text-muted);margin-left:2px;}
+
   /* 연간 통계 */
   .big{font-size:20px;font-weight:800;color:var(--navy);margin:2px 0 10px;}
   .big small{font-size:13px;font-weight:700;color:var(--text-muted);}
@@ -215,6 +240,12 @@
 
   <div id="msg"></div>
   <div id="loading">불러오는 중...</div>
+
+  <div class="trio" id="trio" style="display:none;">
+    <section class="card" id="cTodo"></section>
+    <section class="card" id="cNoSubj"></section>
+    <section class="card" id="cMonth"></section>
+  </div>
 
   <section class="card" id="cYear" style="display:none;margin-bottom:16px;"></section>
 
@@ -581,8 +612,76 @@
     $('cYear').innerHTML = html; $('cYear').style.display = '';
   }
 
+  /* ---------- 현황 요약 3카드: 처리할 일 / 편성 안 된 과정 / 이번 달 교육 현황 ---------- */
+  function dayDiff(a, b){
+    var p = parseYmd(a), q = parseYmd(b);
+    if (!p || !q) return null;
+    return Math.round((Date.UTC(q.y, q.m - 1, q.d) - Date.UTC(p.y, p.m - 1, p.d)) / 86400000);
+  }
+  function renderTodoCard(){
+    var el = $('cTodo'), today = todayStr();
+    if (!sessionsOk) { el.innerHTML = '<div class="chead"><h2>처리할 일</h2></div><div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
+    var over = 0, soon = 0, unas = 0;
+    allSessions.forEach(function(r){
+      var pp = planByKey(String(r['개설키'] || '')); if (pp && isCancelled(pp)) return;
+      var date = normYmd(r['일자']); if (!date) return;
+      if (hasInstr(r)) {
+        if (!String(r['강사ID'] || '').trim() || isSubRole(r) || String(r['계획서파일ID'] || '') || date < today) return;
+        var left = dayDiff(today, addDays(date, -7));
+        if (left === null || left > 7) return;
+        if (left < 0) over++; else soon++;
+      } else {
+        var d = dayDiff(today, date);
+        if (d !== null && d >= 0 && d <= 14) unas++;
+      }
+    });
+    function row(cls, n, label, sub){ return '<li><a class="' + (n ? cls : 'zero') + '" href="lecture-assignment.html#v=table"><span class="l">' + esc(label) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="n">' + n + '<small>건</small></span></a></li>'; }
+    var total = over + soon + unas;
+    el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + '</span></div>' +
+      '<ul class="tdl">' + row('bad', over, '강의계획서 기한 지남', '기한은 강의일 7일 전') + row('wn', soon, '강의계획서 7일 이내 임박') + row('wn', unas, '강사 미지정', '강의일이 14일 이내') + '</ul>' +
+      '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><a class="btn sm" href="lecture-assignment.html#v=table">처리할 일 보기</a></div>';
+  }
+  function renderNoSubjCard(){
+    var el = $('cNoSubj'), today = todayStr();
+    if (!sessionsOk) { el.innerHTML = '<div class="chead"><h2>교과목 미편성 과정</h2></div><div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
+    var has = {}; allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; });
+    var list = plans.filter(function(p){
+      if (isCancelled(p)) return false;
+      var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a; if (!a || b < today) return false;
+      return !has[String(p['과정+기수'] || '')];
+    }).sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : normYmd(x['입교 시작일']) > normYmd(y['입교 시작일']) ? 1 : 0; });
+    var html = '<div class="chead"><h2>교과목 미편성 과정</h2><span class="meta">' + (list.length ? '총 ' + list.length + '과정' : '없음') + '</span></div>';
+    if (!list.length) { el.innerHTML = html + '<div class="empty">시작 전·진행 중인 과정은 모두 교과목이 편성되어 있습니다.</div>'; return; }
+    var shownN = Math.min(list.length, 5);
+    html += '<ul class="nsl">' + list.slice(0, shownN).map(function(p){
+      var key = String(p['과정+기수']), a = normYmd(p['입교 시작일']), d = dayDiff(today, a);
+      var tag = d <= 0 ? '<span class="tag t-err">진행 중</span>' : '<span class="tag ' + (d <= 14 ? 't-err' : d <= 30 ? 't-warn' : 't-none') + '">D-' + d + '</span>';
+      return '<li><div><a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '&from=home">' + esc(nameOf(key)) + '</a><small>' + esc(ipgyoLine(p).replace(/^입교 /, '')) + '</small></div>' + tag + '</li>';
+    }).join('') + '</ul>' +
+      '<div class="foot">' + (list.length > shownN ? '<div class="hint" style="margin-bottom:8px;">시작일이 빠른 순서로 ' + shownN + '과정만 표시했습니다.</div>' : '') + '<a class="btn sm" href="lecture-assignment.html#v=table">전체 과정 보기</a></div>';
+    el.innerHTML = html;
+  }
+  function renderMonthCard(){
+    var el = $('cMonth'), q = parseYmd(todayStr()), ym = q.y + '-' + ('0' + q.m).slice(-2), today = todayStr();
+    var nq = new Date(q.y, q.m, 1), ny = nq.getFullYear() + '-' + ('0' + (nq.getMonth() + 1)).slice(-2);
+    var open = 0, ppl = 0, run = 0, next = 0, cx = 0;
+    plans.forEach(function(p){
+      var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a; if (!a) return;
+      if (a.slice(0, 7) === ym && isCancelled(p)) { cx++; return; }
+      if (isCancelled(p)) return;
+      if (a.slice(0, 7) === ym) { open++; var n = Number(p['계획인원']); if (isFinite(n)) ppl += n; }
+      if (a.slice(0, 7) === ny) next++;
+      if (a <= today && b >= today) run++;
+    });
+    function tile(l, n, u){ return '<div class="c"><span>' + esc(l) + '</span><b>' + n.toLocaleString('ko-KR') + '<small>' + u + '</small></b></div>'; }
+    el.innerHTML = '<div class="chead"><h2>이번 달 교육 현황</h2><span class="meta">' + q.y + '년 ' + q.m + '월</span></div>' +
+      '<div class="mst">' + tile('개강 기수', open, '회') + tile('계획인원 합계', ppl, '명') + tile('지금 진행 중', run, '회') + tile('다음 달 개강', next, '회') + '</div>' +
+      '<div class="foot"><div class="hint" style="margin-bottom:8px;">입교 시작일이 이번 달인 기수 기준이며 인원은 계획인원입니다.' + (cx ? ' 취소된 ' + cx + '회는 제외했습니다.' : '') + '</div><a class="btn sm" href="lecture-assignment.html#v=cal">월 일정 보기</a></div>';
+  }
+  function renderTrio(){ renderTodoCard(); renderNoSubjCard(); renderMonthCard(); $('trio').style.display = ''; }
+
   function renderAll(){
-    renderToday(); renderWeek(); renderRoom(); renderYear();
+    renderTrio(); renderToday(); renderWeek(); renderRoom(); renderYear();
   }
 
   /* ---------- 시계 ---------- */
