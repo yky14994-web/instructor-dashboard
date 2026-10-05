@@ -66,7 +66,10 @@
   /* 카드 */
   .grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:start;}
   .grid2{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:start;}
-  @media (max-width:980px){ .grid2{grid-template-columns:minmax(0,1fr);} .grid2 #cRoom{grid-column:auto !important;} }
+  .grid2 #cRoom{grid-column:1 / -1;}
+  .grid2.wide #cToday{grid-column:1 / -1;}
+  .grid2.wide #cRoom{grid-column:auto;}
+  @media (max-width:980px){ .grid2{grid-template-columns:minmax(0,1fr);} .grid2 #cRoom,.grid2.wide #cToday{grid-column:auto;} }
   .col{display:flex;flex-direction:column;gap:16px;min-width:0;}
   @media (max-width:980px){ .grid{grid-template-columns:minmax(0,1fr);} }
   .card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);padding:16px 18px;}
@@ -249,14 +252,15 @@
     <section class="card" id="cMonth"></section>
   </div>
 
-  <section class="card" id="cYear" style="display:none;margin-bottom:16px;"></section>
 
   <div class="grid2" id="main" style="display:none;">
     <section class="card" id="cToday"></section>
     <section class="card" id="cWeek"></section>
-    <section class="card" id="cRoom" style="grid-column:1 / -1;"></section>
+    <section class="card" id="cRoom"></section>
   </div>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 24</div>
+
+  <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 25</div>
 </div>
 </div>
 
@@ -419,6 +423,7 @@
       if (lane < 0) { var nc = { key: key, lane: colOf[key].length, blocks: [], first: o.a }; colOf[key].push(nc); cols.push(nc); lane = nc.lane; }
       colOf[key][lane].blocks.push(o);
     });
+    $('main').className = 'grid2' + (cols.length >= 3 ? ' wide' : '');
     cols.sort(function(x, y){ return x.first - y.first || (x.key < y.key ? -1 : x.key > y.key ? 1 : 0) || x.lane - y.lane; });
     function stateOf(o){
       var pt = periodText(o.a, o.b);
