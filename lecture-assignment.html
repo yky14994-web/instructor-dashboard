@@ -428,6 +428,9 @@
   .dday th,.dday td{padding:6px 6px;border-top:1px solid var(--border);text-align:left;vertical-align:top;}
   .dday th{font-size:11.5px;color:var(--text-muted);border-top:none;position:static;background:none;}
   .dday tr.hl td:first-child{box-shadow:inset 3px 0 0 var(--navy);}
+  .dday h4{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;}
+  .dday .dperi{display:inline-flex;flex-wrap:wrap;gap:2px 12px;font-size:12.5px;font-weight:600;color:#17304F;}
+  .dday .dperi b{font-weight:800;}
   .dday .dper{display:flex;flex-wrap:wrap;gap:2px 14px;align-items:baseline;margin:0 0 6px;padding:6px 9px;background:var(--info-bg);border-radius:6px;font-size:12px;color:#17304F;}
   .dday .dper .k{font-weight:800;}
   .dday .dper b{margin-right:4px;}
@@ -726,7 +729,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 23</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 24</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2539,10 +2542,10 @@
     if (!p) return '';
     var parts = [];
     var ip = range(p['입교 시작일'], p['입교 종료일']), il = ipgyoLen(p);
-    if (ip) parts.push('<span><b>입교</b> ' + esc(ip) + (il ? ' · ' + esc(il) : '') + '</span>');
-    var cy = range(p['사이버 시작일'], p['사이버 종료일']); if (cy) parts.push('<span><b>사이버</b> ' + esc(cy) + '</span>');
-    var sp = range(p['실습(외부) 시작일'], p['실습(외부) 종료일']); if (sp) parts.push('<span><b>실습</b> ' + esc(sp) + '</span>');
-    return '<div class="dper"><span class="k">교육기간</span>' + (parts.join('') || '<span>날짜 미입력</span>') + '</div>';
+    if (ip) parts.push('<span>입교 ' + esc(ip) + (il ? ' · <b>' + esc(il) + '</b>' : '') + '</span>');
+    var cy = range(p['사이버 시작일'], p['사이버 종료일']); if (cy) parts.push('<span>사이버 ' + esc(cy) + '</span>');
+    var sp = range(p['실습(외부) 시작일'], p['실습(외부) 종료일']); if (sp) parts.push('<span>실습 ' + esc(sp) + '</span>');
+    return '<span class="dperi">' + (parts.join('') || '<span>날짜 미입력</span>') + '</span>';
   }
   function openDayDetail(date, hlKey){
     var byDate = calCollect(date.slice(0, 7)), m = byDate[date] || {}, viewer = isViewer();
@@ -2556,7 +2559,7 @@
         var edit = viewer ? '' : '<button type="button" class="btn sm" data-cassign="' + esc(r['편성ID']) + '">수정</button>';
         return '<tr' + (e.key === hlKey ? ' class="hl"' : '') + '><td class="nw">' + esc(pt.txt) + (pt.time ? '<br><span class="hint">' + esc(pt.time) + '</span>' : '') + '</td><td>' + esc(r['교과목']) + '</td><td>' + dayInstr(r, viewer, cx) + '</td><td>' + esc(r['강의실'] || '미정') + '</td><td>' + edit + '</td></tr>';
       }).join('') + '</tbody></table>' : '<div class="hint">편성된 교과목이 없습니다. ' + (e.tags['사이버'] ? '(사이버 기간)' : e.tags['실습'] ? '(실습 기간)' : '(입교 기간)') + '</div>';
-      return '<h4><span class="tpill" style="' + courseStyle(p, e.key) + '">' + esc(name) + '</span> <button type="button" class="btn sm" data-copen="' + esc(e.key) + '" data-cdate="' + esc(date) + '">' + (viewer ? '교과목 편성 화면 열기' : esc(md(date)) + ' 교과목 편성하기') + '</button></h4>' + planPeriodHtml(p) + tb;
+      return '<h4><span class="tpill" style="' + courseStyle(p, e.key) + '">' + esc(name) + '</span>' + planPeriodHtml(p) + '</h4>' + tb;
     }).join('');
     var noteH = dayNoteHtml; dayNoteHtml = '';
     $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(md(date)) + ' <span class="hint" style="font-weight:600;">일정</span></h2><div class="sub">과정 ' + list.length + '개</div></div></div>' +
