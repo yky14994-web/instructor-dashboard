@@ -131,6 +131,13 @@
   .meta dt{color:var(--text-muted);font-size:12px;}
   .meta dd{margin:2px 0 0;font-weight:700;}
   .sum{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .chgh{margin-top:10px;border:1px solid var(--border);border-radius:8px;background:#FAFBFD;padding:6px 10px;font-size:13px;}
+  .chgh summary{cursor:pointer;list-style:none;} .chgh summary::-webkit-details-marker{display:none;}
+  .chgh summary::before{content:'▸ ';color:var(--navy);} .chgh[open] summary::before{content:'▾ ';}
+  .chgl{margin-top:6px;border-top:1px solid var(--border);padding-top:6px;line-height:1.7;max-height:260px;overflow:auto;}
+  .chgl .cd{display:inline-block;min-width:84px;color:var(--text-muted);font-size:12px;}
+  .chgl .ct{display:inline-block;font-size:11px;font-weight:800;border-radius:8px;padding:0 7px;margin-right:6px;background:#E3EBF5;color:var(--navy);}
+  @media print{ .chgh{display:none !important;} }
   .btn.sm{height:28px;padding:0 10px;font-size:12px;}
   .btn.danger{color:var(--err-fg);}
   .tagbtn{border:none;cursor:pointer;font-family:inherit;}
@@ -739,7 +746,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 28</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-05 홈 29</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1532,7 +1539,7 @@
       '<div><dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd></div>' +
       '<div><dt>예정 강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd></div>' +
       '<div><dt>편성 담당</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd></div>' +
-      '</dl><div class="sum">' + tags + '</div>';
+      '</dl><div class="sum">' + tags + '</div>' + chgHeadHtml(currentKey);
   }
 
   /* --- 입력 폼 --- */
@@ -1847,9 +1854,37 @@
     if (on) { b.dataset.t = b.textContent; b.textContent = label || '저장 중...'; }
     else if (b.dataset.t) { b.textContent = b.dataset.t; }
   }
+  /* 교과목 변경 이력(백엔드가 변경이력 시트에 남기는 것과 같은 내용을 화면에도 바로 반영) */
+  function chgNow(){ var d = new Date(); return ymd(d) + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function chgTime(r){ var a = Number(r['시작교시']), b = Number(r['끝교시']); return String(r['일자']) + ' ' + (a === b ? a + '교시' : a + '~' + b + '교시'); }
+  function chgItem(r){ var k = String(r['반'] || '전체'); return String(r['교과목']) + (k !== '전체' ? ' (' + k + '반)' : ''); }
+  function chgWho(r){ return String(r['강사명'] || '') || '미지정'; }
+  function noteChange(old, nw){
+    var key = String(nw['개설키'] || ''), st = chgNow(), item = chgItem(nw);
+    function add(type, before, after){ history.push({ 일시: st, 개설키: key, 유형: type, 항목: item, 전: before, 후: after, 사유: '', 역할: '관리자' }); }
+    if (!old) { if (!isOps(nw)) add('교과목 추가', '', chgTime(nw) + ' · ' + chgWho(nw) + (nw['강의실'] ? ' · ' + nw['강의실'] : '')); return; }
+    if (chgTime(old) !== chgTime(nw)) add('교과목 일정 변경', chgTime(old), chgTime(nw));
+    if (String(old['강사ID'] || '') !== String(nw['강사ID'] || '') || chgWho(old) !== chgWho(nw)) add('교과목 강사 변경', chgWho(old), chgWho(nw));
+    if (String(old['강의실'] || '') !== String(nw['강의실'] || '')) add('교과목 강의실 변경', String(old['강의실'] || '') || '미정', String(nw['강의실'] || '') || '미정');
+  }
+  function chgDate(t){ return String(t || '').replace(/\d{4}-\d{2}-\d{2}/g, function(d){ return md(d); }); }
+  function chgHeadHtml(key){
+    var all = history.filter(function(h){ return h['개설키'] === key && String(h['유형']).indexOf('교과목 ') === 0; }).reverse();
+    if (!all.length) return '';
+    var list = all.slice(0, 40), h0 = all[0];
+    function line(h){
+      var t = String(h['유형']).replace('교과목 ', '');
+      var body = t === '추가' ? esc(chgDate(h['후'])) : t === '삭제' ? esc(chgDate(h['전'])) + ' (삭제됨)' : esc(chgDate(h['전'])) + ' → <b>' + esc(chgDate(h['후'])) + '</b>';
+      return '<div><span class="cd">' + esc(String(h['일시']).slice(5)) + '</span><span class="ct">' + esc(t) + '</span><b>' + esc(h['항목']) + '</b> : ' + body + '</div>';
+    }
+    return '<details class="chgh"><summary><b>교과목 변경 이력 ' + all.length + '건</b> <span class="hint">최근 ' + esc(String(h0['일시']).slice(5)) + ' · ' + esc(String(h0['유형']).replace('교과목 ', '')) + ' · ' + esc(h0['항목']) + ' (눌러서 펼치기)</span></summary>' +
+      '<div class="chgl">' + list.map(line).join('') + (all.length > list.length ? '<div class="hint">이전 ' + (all.length - list.length) + '건은 변경이력 시트에서 확인해 주세요.</div>' : '') + '</div></details>';
+  }
   function upsertSession(row){
     var id = String(row['편성ID']);
     var found = false;
+    var oldRow = allSessions.filter(function(r){ return String(r['편성ID']) === id; })[0];
+    noteChange(oldRow, row);
     allSessions = allSessions.map(function(r){
       if (String(r['편성ID']) === id) { found = true; return row; }
       return r;
@@ -1926,6 +1961,7 @@
     if (!confirm('이 교과목을 삭제할까요?\n' + md(r['일자']) + ' ' + pt.txt + ' ' + r['교과목'] + '\n삭제하면 되돌릴 수 없습니다.')) return;
     api({ action: 'deleteSession', password: getPw(), 편성ID: id }).then(function(res){
       if (res.status !== 'ok') { alert(res.message || '삭제하지 못했습니다'); return; }
+      history.push({ 일시: chgNow(), 개설키: String(r['개설키'] || ''), 유형: '교과목 삭제', 항목: chgItem(r), 전: chgTime(r) + ' · ' + chgWho(r), 후: '', 사유: '', 역할: '관리자' });
       allSessions = allSessions.filter(function(x){ return String(x['편성ID']) !== id; });
       sessionsByKey = buildSessionMap(allSessions);
       refreshConflicts();
