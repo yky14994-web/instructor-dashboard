@@ -519,6 +519,8 @@
 
   function photoUrl(fileId, size){
     if (!fileId) return '';
+    // 시연용 등: 시트에 이미지 주소(data:/https:)를 직접 넣은 경우 그대로 사용
+    if (/^(data:image\/|https?:\/\/)/.test(fileId)) return fileId;
     // size: 'thumb' 또는 'full' — 둘 다 드라이브 썸네일 방식(안정적)을 쓰고 해상도만 다르게
     return size === 'full'
       ? 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w220'

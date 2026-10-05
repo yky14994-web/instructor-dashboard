@@ -3002,7 +3002,7 @@
   }
 
   /* --- 강사 카드(미리보기·상세 팝업) --- */
-  function photoUrl(fileId, sz){ return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=' + sz; }
+  function photoUrl(fileId, sz){ if (/^(data:image\/|https?:\/\/)/.test(fileId)) return fileId; return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=' + sz; }
   function avatar(x, cls){
     var ini = String(x.name || '').replace(/[^가-힣A-Za-z]/g, '').slice(-2) || '?';
     return '<span class="avatar ' + (cls || '') + '"><span>' + esc(ini) + '</span>' +
