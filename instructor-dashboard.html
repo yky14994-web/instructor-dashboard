@@ -1504,7 +1504,7 @@
 
     loadData(pw)
       .catch(function(err){
-        msg.textContent = (err && err.auth === false) ? '서버에서 목록을 불러오지 못했습니다(' + err.message + '). 잠시 후 다시 시도해 주세요.' : (err && err.auth === undefined && err.name === 'TypeError') ? '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.' : '비밀번호가 올바르지 않습니다.';
+        msg.textContent = (err && err.auth === false) ? '서버에서 목록을 불러오지 못했습니다(' + err.message + '). 잠시 후 다시 시도해 주세요.' : (err && err.auth === undefined && err.name === 'TypeError') ? '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.' : (err && /잠겼/.test(err.message || '')) ? err.message : '비밀번호가 올바르지 않습니다.';
         msg.style.display = 'block';
         sessionStorage.removeItem('jsfa_dash_pw'); sessionStorage.removeItem('jsfa_dash_role');
         clearPin();

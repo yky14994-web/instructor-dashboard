@@ -795,7 +795,7 @@
     if (pw.length < 4) return;
     btn.disabled = true; btn.textContent = '확인 중...';
     loadAll(pw).catch(function(err){
-      if (err.auth === true) msg.textContent = '비밀번호가 올바르지 않습니다.';
+      if (err.auth === true) msg.textContent = /잠겼/.test(err.message || '') ? err.message : '비밀번호가 올바르지 않습니다.';
       else if (err.auth === false) msg.textContent = err.message || '불러오지 못했습니다';
       else msg.textContent = '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.';
       msg.style.display = 'block';
