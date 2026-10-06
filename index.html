@@ -2,11 +2,19 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="refresh" content="0; url=school-intro.html">
-<title>전남소방학교 외부강사 안내</title>
-<script>location.replace('school-intro.html');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>전남소방학교 강의 마스터</title>
+<noscript><meta http-equiv="refresh" content="0; url=school-intro.html"></noscript>
+<script>
+/* 모바일(좁은 화면·휴대폰 UA)은 홈 화면, 그 외(PC)는 학교 소개 페이지로 이동 */
+(function () {
+  var mobile = false;
+  try { mobile = window.matchMedia('(max-width: 768px)').matches || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent); } catch (e) {}
+  location.replace(mobile ? 'home.html' : 'school-intro.html');
+})();
+</script>
 </head>
 <body>
-<p>페이지를 불러오는 중입니다. 자동으로 이동하지 않으면 <a href="school-intro.html">여기를 클릭</a>해 주세요.</p>
+<p>페이지를 불러오는 중입니다. 자동으로 이동하지 않으면 <a href="home.html">홈</a> 또는 <a href="school-intro.html">학교 소개</a>를 눌러 주세요.</p>
 </body>
 </html>
