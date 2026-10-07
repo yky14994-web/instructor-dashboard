@@ -1202,8 +1202,9 @@
       plans = sortPlans(a['연간계획'] || []); courseRank = null;
       history = a['변경이력'] || [];
       resv = a['강의실예약'] || [];
+      gapChk = {}; (a['빈교시확인'] || []).forEach(function(g){ gapChk[g['개설키'] + '|' + g['일자'] + '|' + g['교시']] = true; });
       periods = (a['교시표'] || []).map(function(r){
-        return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || '') };
+        return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || ''), kind: String(r['구분'] || '') };
       }).filter(function(x){ return isFinite(x.n); }).sort(function(x, y){ return x.n - y.n; });
       rooms = (a['강의실'] || []).map(function(r){ return String(r['강의실명'] || ''); }).filter(Boolean);
       roomSkip = {}; roomInfo = {};
@@ -2672,6 +2673,18 @@
     if (id === 'rvNote') { rvSt.note = v; return true; }
     return false;
   }
+  function gapMark(act){
+    var m = /^gp:mark:(.+)\|(\d{4}-\d{2}-\d{2})$/.exec(act); if (!m || isViewer()) return;
+    var key = m[1], d = m[2], idx = gapIndex();
+    var g = gapsOf(planByKey(key) || {}, d, idx).filter(function(x){ return x.date === d; })[0];
+    if (!g) return;
+    if (!confirm(courseLabel(key) + '\n' + md(d) + ' ' + gapNumText(g.nums) + '\n\n이 칸을 일부러 비워 둔 칸으로 처리할까요? 처리하면 빈 교시 목록에서 빠집니다(편성은 그대로 가능).')) return;
+    api({ action: 'markGaps', password: getPw(), 항목: g.nums.map(function(n){ return { 개설키: key, 일자: d, 교시: n }; }) }).then(function(res){
+      if (res.status !== 'ok') { alert(res.message || '처리하지 못했습니다'); return; }
+      g.nums.forEach(function(n){ gapChk[key + '|' + d + '|' + n] = true; });
+      renderTodo();
+    }).catch(function(){ alert('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'); });
+  }
   function roomNav(act){
     if (act === 'rm:xlsx') { doRoomExcel(); return; }
     var d = parseYmd(roomDate || ymd(new Date())); if (!d) d = parseYmd(ymd(new Date()));
@@ -2760,6 +2773,7 @@
   function calNav(act){
     if (act.indexOf('rm:') === 0) { roomNav(act); return; }
     if (act.indexOf('rv:') === 0) { rvAct(act); return; }
+    if (act.indexOf('gp:') === 0) { gapMark(act); return; }
     if (act === 'print') { printWith('cal', 'pcal'); return; }
     calManual = true;
     var q = parseYmd((calMonth || ymd(new Date()).slice(0, 7)) + '-01');
@@ -2917,6 +2931,58 @@
   /* 연간계획 첫 화면 '처리할 일'(과정 필터와 무관, 취소 기수·지난 강의 제외)
      ① 강의계획서: 미제출 중 기한 14일 이내 임박(기한 지난 건은 표시하지 않음)  ② 강사 미지정: 강의일 14일 이내  ③ 겹침 경고: 미확인 전체  ④ 강사 서류: 강의일 14일 이내 배정 강사 중 미비·보유 만료 */
   var todoCat = '', todoTab = 'all', todoMore = false;
+
+  /* ---------- 편성 빈 교시(처리하지 않은 빈칸) ---------- */
+  var gapChk = {};   // '개설키|일자|교시' → true (의도한 빈칸으로 처리됨)
+  function gapClassNums(){
+    var all = periods.map(function(x){ return x.n; });
+    var cls = periods.filter(function(x){ return /수업/.test(x.kind || ''); }).map(function(x){ return x.n; });
+    return cls.length ? cls : all;
+  }
+  function gapNumText(nums){
+    var out = [], i = 0;
+    while (i < nums.length) { var j = i; while (j + 1 < nums.length && nums[j + 1] === nums[j] + 1) j++; out.push(i === j ? String(nums[i]) : nums[i] + '~' + nums[j]); i = j + 1; }
+    return out.join(', ') + '교시';
+  }
+  /* 과정(p)의 입교 기간 평일(사이버·실습 기간 제외) 중 minDate 이후, 편성도 처리 표시도 없는 수업 교시. 편성이 한 건도 없는 과정은 '미편성 과정'이므로 제외 */
+  function gapsOf(p, minDate, idx){
+    var key = String(p['과정+기수'] || ''), a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a;
+    if (!key || !a || !idx[key]) return [];
+    var cls = gapClassNums(), skip = [[normYmd(p['사이버 시작일']), normYmd(p['사이버 종료일'])], [normYmd(p['실습(외부) 시작일']), normYmd(p['실습(외부) 종료일'])]];
+    var out = [];
+    for (var d = a, n = 0; d <= b && n < 400; d = addDays(d, 1), n++) {
+      if (d < minDate) continue;
+      var q = parseYmd(d); if (!q || q.dow === 0 || q.dow === 6) continue;
+      if (skip.some(function(r){ return r[0] && r[1] && d >= r[0] && d <= r[1]; })) continue;
+      var have = idx[key][d] || {}, miss = cls.filter(function(x){ return !have[x] && !gapChk[key + '|' + d + '|' + x]; });
+      if (miss.length) out.push({ key: key, date: d, nums: miss });
+    }
+    return out;
+  }
+  function gapIndex(){
+    var idx = {};
+    allSessions.forEach(function(r){
+      var key = String(r['개설키'] || ''), d = normYmd(r['일자']); if (!key || !d) return;
+      var s = Number(r['시작교시']), e = Number(r['끝교시']); if (!isFinite(s) || !isFinite(e)) return;
+      var m = (idx[key] = idx[key] || {}); m = (m[d] = m[d] || {});
+      for (var i = s; i <= e; i++) m[i] = true;
+    });
+    return idx;
+  }
+  /* 오늘부터 2개월 이내 시작·미종료 과정 중 처리하지 않은 빈 교시가 있는 과정: [{p, gaps:[{key,date,nums}]}] */
+  function gapCourses(maxDay){
+    var today = ymd(new Date()), tq = parseYmd(today), to2 = ymd(new Date(tq.y, tq.m + 1, tq.d)), idx = gapIndex(), out = [];
+    plans.forEach(function(p){
+      if (isCancelled(p)) return;
+      var a = normYmd(p['입교 시작일']); if (!a) return;
+      var b = normYmd(p['입교 종료일']) || a; if (b < today || a > to2) return;
+      var g = gapsOf(p, today, idx);
+      if (maxDay != null) { var lim = addDays(today, maxDay); g = g.filter(function(x){ return x.date <= lim; }); }
+      if (g.length) out.push({ p: p, gaps: g });
+    });
+    out.sort(function(x, y){ return x.gaps[0].date < y.gaps[0].date ? -1 : x.gaps[0].date > y.gaps[0].date ? 1 : 0; });
+    return out;
+  }
   var TODO_DAYS = 14;
   function todoItems(){
     var out = [];
@@ -3025,6 +3091,19 @@
           title: pill + ' ' + esc(x.ins.name), sub: esc(x.d.miss.join(', ')) + ' · ' + esc(r['교과목']) + ' ' + esc(md(r['일자'])), extra: docBadge(x.ins) + ' ' + esc(r['개설키']) };
       }),
       note: '배지를 누르면 서류 현황이 열리고, 행을 누르면 가장 가까운 강의의 교과목 편성 화면으로 이동합니다. 강사 안내는 자동으로 가지 않습니다.' };
+    var gcs = gapCourses(7), gapRows = [].concat.apply([], gcs.map(function(o){ return o.gaps.map(function(g){ return g; }); }));
+    gapRows.sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    var todayG = ymd(new Date());
+    D.gap = { label: '편성 빈 교시', n: gapRows.length,
+      sum: '입교 기간 평일의 수업 교시 중 교과목이 편성되지 않은 칸 <b>' + gapRows.length + '건</b> · 오늘부터 7일 이내 · 일부러 비운 칸은 "빈칸 처리"',
+      cols: ['날짜까지', '날짜', '과정 · 기수', '빈 교시', viewer ? '' : '처리'],
+      items: gapRows.map(function(g){
+        var d = dayDiff(todayG, g.date), pill = pillHtml(d <= 2 ? 'bad' : 'wn', dLabel(d)), tx = gapNumText(g.nums);
+        var btn = viewer ? '' : '<button type="button" class="btn sm" data-cm="gp:mark:' + esc(g.key) + '|' + esc(g.date) + '">빈칸 처리</button>';
+        return { key: g.key, cells: [pill, '<span class="nw">' + esc(md(g.date)) + '</span>', esc(courseLabel(g.key)), esc(tx), btn],
+          title: pill + ' ' + esc(tx), sub: esc(courseLabel(g.key)) + ' · ' + esc(md(g.date)), extra: btn };
+      }),
+      note: '행을 누르면 교과목 편성 화면으로 이동합니다. 교과목·강사를 못 구해 일부러 비워 둔 칸은 "빈칸 처리"를 누르면 이 목록과 홈에서 빠집니다(편성하면 자동으로 빠집니다).' };
     var rv = resvNoSubj(), today0 = ymd(new Date());
     D.resv = { label: '사전확보 미편성', n: rv.length,
       sum: '강의실을 사전확보했지만 ' + TODO_DAYS + '일 이내에 교과목이 아직 편성되지 않은 과정 예약 <b>' + rv.length + '건</b>',
@@ -3037,7 +3116,7 @@
       note: '행을 누르면 해당 과정의 교과목 편성 화면으로 이동합니다. 교과목을 편성하면 그 시간의 예약은 자동으로 편성으로 바뀌고 이 목록에서 빠집니다.' };
     return D;
   }
-  var TODO_ORDER = ['plan', 'unas', 'cfl', 'docs', 'resv'];
+  var TODO_ORDER = ['plan', 'unas', 'cfl', 'docs', 'resv', 'gap'];
   function renderTodo(){
     var box = $('todo');
     if (!box) return;
@@ -3047,7 +3126,7 @@
     box.style.display = '';
     var total = TODO_ORDER.reduce(function(a, k){ return a + (D[k].n || 0); }, 0);
     if (!total && instructors !== null) {
-      box.innerHTML = '<div class="th"><h3>처리할 일</h3></div><div class="tnone">처리할 일이 없습니다. 강의계획서 기한, 강사 미지정(' + TODO_DAYS + '일 이내), 겹침 경고, 강사 서류, 사전확보 미편성에 해당하는 항목이 없습니다.</div>';
+      box.innerHTML = '<div class="th"><h3>처리할 일</h3></div><div class="tnone">처리할 일이 없습니다. 강의계획서 기한, 강사 미지정(' + TODO_DAYS + '일 이내), 겹침 경고, 강사 서류, 사전확보 미편성, 편성 빈 교시에 해당하는 항목이 없습니다.</div>';
       return;
     }
     if (!todoCat || !D[todoCat]) todoCat = '';
