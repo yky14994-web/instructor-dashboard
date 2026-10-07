@@ -2553,7 +2553,7 @@
       var lines = us.slice(0, 2).map(function(u){
         return '<small>' + esc(u.label) + ' · ' + (u.type === 'plan' ? '연간계획 예정(교과목 편성 전)' : u.s + '~' + u.e + '교시' + (u.subj ? ' ' + esc(u.subj) : '')) + '</small>';
       }).join('') + (us.length > 2 ? '<small>외 ' + (us.length - 2) + '건</small>' : '');
-      if (onlyRv) return '<span class="rmchip rv" title="예약된 강의실입니다. 아래 \'예약 목록\'에서 취소·수정할 수 있습니다">' + esc(r) + lines + '</span>';
+      if (onlyRv) return '<span class="rmchip rv" data-croom="' + esc(r) + '" data-cday="' + esc(roomDate) + '" data-ckey="" title="누르면 그날 예약이 열립니다">' + esc(r) + lines + '</span>';
       return '<span class="rmchip ' + (sess ? 'use' : 'plan') + '" data-cday="' + esc(roomDate) + '" data-ckey="' + esc(us[0].key) + '" title="누르면 그날 일정이 열립니다">' + esc(r) + lines + '</span>';
     };
     var body = order.length ? order.map(function(g){
@@ -2595,7 +2595,7 @@
         if (hasS) cntU[i]++; else cntP[i]++;
         var txt = roomCellText(l), first = l[0];
         var short = esc(first.label.replace(/과정|\s+/g, ' ').trim()) + (Object.keys(keys).length > 1 ? ' 외' + (Object.keys(keys).length - 1) : '');
-        return '<td class="dc ' + (hasS ? 'u' : 'pl') + (l.some(function(x){ return x.type === 'resv'; }) ? ' rvc' : '') + (ov ? ' ov' : '') + (wk[i] ? ' we' : '') + '" data-cday="' + esc(days[i]) + '" data-ckey="' + esc(first.key) + '" title="' + esc(r + ' · ' + md(days[i]) + ' · ' + txt + (ov ? ' · 겹침' : '')) + '">' + (wk[i] ? '·' : short) + '</td>';
+        return '<td class="dc ' + (hasS ? 'u' : 'pl') + (l.some(function(x){ return x.type === 'resv'; }) ? ' rvc' : '') + (ov ? ' ov' : '') + (wk[i] ? ' we' : '') + '" data-croom="' + esc(r) + '" data-cday="' + esc(days[i]) + '" data-ckey="' + esc(first.key) + '" title="' + esc(r + ' · ' + md(days[i]) + ' · ' + txt + (ov ? ' · 겹침' : '')) + '">' + (wk[i] ? '·' : short) + '</td>';
       }).join('');
       var inf = roomInfo[r] || {}, sub = [inf.floor, inf.kind].filter(Boolean).join(' · ');
       return '<tr><td class="rn" title="' + esc(sub) + '">' + esc(r) + '</td>' + tds + '<td class="tt">' + nu + '</td><td class="tt">' + np + '</td><td class="tt">' + (nwk ? Math.round((nu + np) / nwk * 100) : 0) + '%</td></tr>';
@@ -2883,7 +2883,7 @@
     var sp = range(p['실습(외부) 시작일'], p['실습(외부) 종료일']); if (sp) parts.push('<span>실습 ' + esc(sp) + '</span>');
     return '<span class="dperi">' + (parts.join('') || '<span>날짜 미입력</span>') + '</span>';
   }
-  function openDayDetail(date, hlKey){
+  function openDayDetail(date, hlKey, hlRoom){
     var byDate = calCollect(date.slice(0, 7)), m = byDate[date] || {}, viewer = isViewer();
     dayHl = hlKey || '';
     var list = Object.keys(m).map(function(k){ return m[k]; }).sort(function(a, b){ return String(a.key) < String(b.key) ? -1 : 1; });
@@ -2898,11 +2898,32 @@
       return '<h4><span class="tpill" style="' + courseStyle(p, e.key) + '">' + esc(name) + '</span>' + planPeriodHtml(p) + (!rows.length && !viewer && !cx ? '<button type="button" class="btn sm primary" data-copen="' + esc(e.key) + '" data-cdate="' + esc(date) + '">' + esc(md(date)) + ' 교과목 편성하기</button>' : '') + '</h4>' + tb;
     }).join('');
     var noteH = dayNoteHtml; dayNoteHtml = '';
-    $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(md(date)) + ' <span class="hint" style="font-weight:600;">일정</span></h2><div class="sub">과정 ' + list.length + '개</div></div></div>' +
-      noteH + '<div class="dday" data-dday-date="' + esc(date) + '">' + (secs || '<div class="hint">표시할 과정이 없습니다.</div>') + '</div>' +
+    var rvDay = resv.filter(function(r){ return normYmd(r['일자']) === date; }).sort(function(a, b){ return (Number(a['시작교시']) - Number(b['시작교시'])) || (String(a['강의실']) < String(b['강의실']) ? -1 : 1); });
+    var rvH = rvDay.length ? '<h4 style="margin-top:14px;"><span class="tpill" style="background:#E6DDF5;color:#4B2E83;">강의실 예약</span> <span class="hint">' + rvDay.length + '건 · 사전확보·대관</span></h4>' +
+      '<table><thead><tr><th>교시</th><th>강의실</th><th>유형</th><th>과정 / 사유·부서</th><th>연락처·비고</th>' + (viewer ? '' : '<th></th>') + '</tr></thead><tbody>' + rvDay.map(function(r){
+        var big = String(r['유형']) === '대관', a = Number(r['시작교시']), b = Number(r['끝교시']), hl = hlRoom && String(r['강의실']) === hlRoom;
+        return '<tr' + (hl ? ' class="hl"' : '') + '><td class="nw">' + (a === b ? a : a + '~' + b) + '교시</td><td>' + esc(r['강의실']) + '</td><td>' + esc(r['유형']) + '</td><td>' + esc(big ? r['사유·사용부서'] : r['개설키']) + '</td><td>' + esc([r['담당자·연락처'], r['비고']].filter(Boolean).join(' · ')) + '</td>' +
+          (viewer ? '' : '<td class="nw"><button type="button" class="btn sm" data-rvd="edit:' + esc(r['예약ID']) + '">수정</button> <button type="button" class="btn sm" data-rvd="cancel:' + esc(r['예약ID']) + '">취소</button></td>') + '</tr>';
+      }).join('') + '</tbody></table>' : '';
+    $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(md(date)) + ' <span class="hint" style="font-weight:600;">일정</span></h2><div class="sub">과정 ' + list.length + '개' + (rvDay.length ? ' · 강의실 예약 ' + rvDay.length + '건' : '') + '</div></div></div>' +
+      noteH + '<div class="dday" data-dday-date="' + esc(date) + '">' + (secs || (rvDay.length ? '' : '<div class="hint">표시할 과정이 없습니다.</div>')) + rvH + '</div>' +
       '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button></div>';
     $('iOverlay').style.display = 'flex';
     $('iClose').addEventListener('click', closeInstructor);
+    Array.prototype.forEach.call($('iCard').querySelectorAll('[data-rvd]'), function(bt){
+      bt.addEventListener('click', function(){
+        var m = /^(edit|cancel):(.+)$/.exec(bt.getAttribute('data-rvd')); if (!m) return;
+        if (m[1] === 'edit') { closeInstructor(); if (planMode !== 'room') setPlanMode('room'); rvAct('rv:edit:' + m[2]); return; }
+        var r2 = resv.filter(function(x){ return String(x['예약ID']) === m[2]; })[0]; if (!r2) return;
+        if (!confirm('이 예약을 취소할까요?\n' + rvRowText(r2) + '\n' + (String(r2['유형']) === '대관' ? r2['사유·사용부서'] : r2['개설키']))) return;
+        api({ action: 'cancelReservation', password: getPw(), 예약ID: m[2] }).then(function(res){
+          if (res.status !== 'ok') { alert(res.message || '취소하지 못했습니다'); return; }
+          resv = resv.filter(function(x){ return String(x['예약ID']) !== m[2]; });
+          if (!currentKey && planMode === 'room') renderRoomFree();
+          openDayDetail(date, hlKey, hlRoom);
+        }).catch(function(){ alert('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'); });
+      });
+    });
   }
   /* ---------- 날짜 상세 창 안에서 강사 지정(화면 이동 없음) ---------- */
   var qa = { sid: '', iid: '', role: '주강사', busy: false, timer: null };
@@ -4705,7 +4726,7 @@
     var cmv = t.getAttribute('data-cm');
     if (cmv) { calNav(cmv); return; }
     var cday = t.getAttribute('data-cday');
-    if (cday) { openDayDetail(cday, t.getAttribute('data-ckey') || ''); return; }
+    if (cday) { openDayDetail(cday, t.getAttribute('data-ckey') || '', t.getAttribute('data-croom') || ''); return; }
     var copen = t.getAttribute('data-copen');
     if (copen) {
       closeInstructor();
