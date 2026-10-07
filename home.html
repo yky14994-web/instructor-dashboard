@@ -268,7 +268,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 30</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 31</div>
 </div>
 </div>
 
@@ -677,7 +677,7 @@
     var gapN = gapCourses(7).length;
     var total = soon + unas + rvn + gapN;
     el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + '</span></div>' +
-      '<ul class="tdl">' + row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전', 'plan') + row('wn', unas, '강사 미지정', '강의일이 14일 이내', 'unas') + row('wn', rvn, '사전확보 미편성', '예약일이 14일 이내', 'resv') + row('wn', gapN, '편성 빈 교시', '7일 이내 빈 교시가 있는 과정', 'gap') + '</ul>' +
+      '<ul class="tdl">' + row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전', 'plan') + row('wn', unas, '강사 미지정', '강의일이 14일 이내', 'unas') + row('wn', rvn, '사전확보 미편성', '예약일이 14일 이내', 'resv') + row('wn', gapN, '빈 교시', '일부만 편성·7일 이내 빈 교시가 있는 과정', 'gap') + '</ul>' +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><button type="button" class="btn sm" data-dt="todo">처리할 일 보기</button></div>';
   }
 
@@ -751,8 +751,8 @@
     var list = noSubjList(has);
     list.sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : normYmd(x['입교 시작일']) > normYmd(y['입교 시작일']) ? 1 : 0; });
     var html = '<div class="chead"><h2>교과목 미편성 과정</h2><span class="meta">' + (list.length ? '총 ' + list.length + '과정' : '없음') + '</span></div>';
-    var gcN = gapCourses().length;
-    var gcLine = '<div class="hint" style="margin-top:8px;">편성 빈 교시가 남은 과정 <b>' + gcN + '</b>과정' + (gcN ? ' · <a href="#d=nosubj" data-dt="nosubj">빈 교시 보기</a>' : '') + '</div>';
+    var gcN = gapCourses(14).length;
+    var gcLine = '<div class="hint" style="margin-top:8px;">빈 교시가 있는 과정(일부 편성) <b>' + gcN + '</b>과정' + (gcN ? ' · <a href="#d=nosubj" data-dt="nosubj">빈 교시 보기</a>' : '') + '</div>';
     if (!list.length) { el.innerHTML = html + '<div class="empty">오늘부터 2개월 이내에 시작하는 과정은 모두 교과목이 편성되어 있습니다.</div>' + gcLine + '<div class="foot"><button type="button" class="btn sm" data-dt="nosubj">전체 과정 보기</button></div>'; return; }
     var shownN = Math.min(list.length, 5);
     html += '<ul class="nsl">' + list.slice(0, shownN).map(function(p){
@@ -808,7 +808,7 @@
       var n = o.gaps.reduce(function(a, g){ return a + g.nums.length; }, 0);
       return [cLink(String(o.p['과정+기수'])), esc(ipgyoLine(o.p).replace(/^입교 /, '')), esc(n + '교시 · ' + o.gaps.length + '일'), det];
     });
-    return '<div class="dsec">편성 빈 교시가 있는 과정<small>' + gc.length + '과정</small></div><div class="hint" style="margin-bottom:6px;">' + esc(scope) + ' 중, 입교 기간 평일(사이버·실습 기간 제외)의 수업 교시에 교과목이 편성되지 않은 칸입니다. 일부러 비운 칸은 강의배정 화면의 처리할 일에서 "빈칸 처리"하면 이 목록에서 빠집니다.</div>' +
+    return '<div class="dsec">빈 교시가 있는 과정 (일부만 편성)<small>' + gc.length + '과정</small></div><div class="hint" style="margin-bottom:6px;">교과목이 한 건도 없으면 위의 "미편성", 일부만 편성되어 군데군데 비어 있으면 "빈 교시"로 구분합니다. ' + esc(scope) + ' 중, 입교 기간 평일(사이버·실습 기간 제외)의 수업 교시에 교과목이 없는 칸이며 빈 날짜가 오늘부터 14일 이내인 것만 셉니다. 일부러 비운 칸은 "빈칸 처리"하면 빠집니다.</div>' +
       dtTable(['과정 · 기수', '입교 기간', '빈 교시', '날짜별 빈 교시'], rows, '빈 교시가 있는 과정이 없습니다.');
   }
   function detailHtml(kind){
@@ -816,9 +816,9 @@
     if (!sessionsOk) return '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>';
     if (kind === 'nosubj') {
       var list = noSubjList().sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : 1; });
-      return '<div class="chead"><h2>교과목 미편성 과정 전체</h2><span class="meta">' + list.length + '과정</span></div>' +
+      return '<div class="chead"><h2>교과목 미편성 과정 전체 (한 건도 편성 안 됨)</h2><span class="meta">' + list.length + '과정</span></div>' +
         '<div class="cdesc">입교 시작일이 오늘부터 2개월 이내이고 아직 끝나지 않은 과정 중, 교과목이 하나도 편성되지 않은 과정입니다. 과정명을 누르면 교과목 편성 화면으로 이동합니다.</div>' +
-        dtTable(PCOLS, list.map(function(p){ return planRow(p); }), '해당하는 과정이 없습니다.') + gapSection(gapCourses(), '오늘부터 2개월 이내에 시작하거나 진행 중인 과정');
+        dtTable(PCOLS, list.map(function(p){ return planRow(p); }), '해당하는 과정이 없습니다.') + gapSection(gapCourses(14), '오늘부터 2개월 이내에 시작하거나 진행 중인 과정');
     }
     if (kind === 'month') {
       var q = parseYmd(today), ym = q.y + '-' + ('0' + q.m).slice(-2), nq = new Date(q.y, q.m, 1), ny = nq.getFullYear() + '-' + ('0' + (nq.getMonth() + 1)).slice(-2);
@@ -886,7 +886,7 @@
           }), '해당하는 건이 없습니다.');
       },
       gap: function(){
-        return '<div class="dsec">편성 빈 교시<small>' + g7.length + '과정 · ' + gapRows.length + '일 · 빈 날짜가 7일 이내</small></div>' +
+        return '<div class="dsec">빈 교시<small>' + g7.length + '과정 · ' + gapRows.length + '일 · 빈 날짜가 7일 이내</small></div>' +
           dtTable(['날짜까지', '날짜', '과정 · 기수', '빈 교시', ''], gapRows.map(function(g){
             var btn = viewer ? '' : '<button type="button" class="btn sm" data-hgap="' + esc(g.key) + '|' + esc(g.date) + '">빈칸 처리</button> <a class="btn sm" href="lecture-assignment.html#c=' + encodeURIComponent(g.key) + '&d=' + g.date + '&from=home">교과목 편성</a>';
             return [esc(dl(dayDiff(today, g.date))), '<span class="nw">' + esc(md(g.date)) + '</span>', cLink(g.key), esc(gapNumText(g.nums)), btn];

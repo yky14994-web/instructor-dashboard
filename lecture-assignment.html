@@ -3094,8 +3094,8 @@
     var gcs = gapCourses(7), gapRows = [].concat.apply([], gcs.map(function(o){ return o.gaps.map(function(g){ return g; }); }));
     gapRows.sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
     var todayG = ymd(new Date());
-    D.gap = { label: '편성 빈 교시', n: gapRows.length,
-      sum: '입교 기간 평일의 수업 교시 중 교과목이 편성되지 않은 칸 <b>' + gapRows.length + '건</b> · 오늘부터 7일 이내 · 일부러 비운 칸은 "빈칸 처리"',
+    D.gap = { label: '빈 교시', n: gapRows.length,
+      sum: '일부만 편성된 과정에서 입교 기간 평일의 수업 교시 중 교과목이 없는 칸 <b>' + gapRows.length + '건</b> · 오늘부터 7일 이내 · 일부러 비운 칸은 "빈칸 처리"',
       cols: ['날짜까지', '날짜', '과정 · 기수', '빈 교시', viewer ? '' : '처리'],
       items: gapRows.map(function(g){
         var d = dayDiff(todayG, g.date), pill = pillHtml(d <= 2 ? 'bad' : 'wn', dLabel(d)), tx = gapNumText(g.nums);
@@ -3126,7 +3126,7 @@
     box.style.display = '';
     var total = TODO_ORDER.reduce(function(a, k){ return a + (D[k].n || 0); }, 0);
     if (!total && instructors !== null) {
-      box.innerHTML = '<div class="th"><h3>처리할 일</h3></div><div class="tnone">처리할 일이 없습니다. 강의계획서 기한, 강사 미지정(' + TODO_DAYS + '일 이내), 겹침 경고, 강사 서류, 사전확보 미편성, 편성 빈 교시에 해당하는 항목이 없습니다.</div>';
+      box.innerHTML = '<div class="th"><h3>처리할 일</h3></div><div class="tnone">처리할 일이 없습니다. 강의계획서 기한, 강사 미지정(' + TODO_DAYS + '일 이내), 겹침 경고, 강사 서류, 사전확보 미편성, 빈 교시에 해당하는 항목이 없습니다.</div>';
       return;
     }
     if (!todoCat || !D[todoCat]) todoCat = '';
