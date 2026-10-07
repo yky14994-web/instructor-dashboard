@@ -2759,14 +2759,14 @@
     }).then(function(){ qa.busy = false; });
   }
   /* 연간계획 첫 화면 '처리할 일'(과정 필터와 무관, 취소 기수·지난 강의 제외)
-     ① 강의계획서: 미제출 중 기한 지남·7일 이내  ② 강사 미지정: 강의일 14일 이내  ③ 겹침 경고: 미확인 전체  ④ 강사 서류: 강의일 14일 이내 배정 강사 중 미비·보유 만료 */
+     ① 강의계획서: 미제출 중 기한 14일 이내 임박(기한 지난 건은 표시하지 않음)  ② 강사 미지정: 강의일 14일 이내  ③ 겹침 경고: 미확인 전체  ④ 강사 서류: 강의일 14일 이내 배정 강사 중 미비·보유 만료 */
   var todoCat = '', todoTab = 'all', todoMore = false;
   var TODO_DAYS = 14;
   function todoItems(){
     var out = [];
     allSessions.forEach(function(r){
       var st = planState(r);
-      if (!st || st.done || st.ended || st.left === null || st.left > 7) return;
+      if (!st || st.done || st.ended || st.left === null || st.left < 0 || st.left > 14) return;
       out.push({ r: r, st: st });
     });
     out.sort(function(a, b){
@@ -2804,11 +2804,11 @@
     }
     var D = {};
     // ① 강의계획서
-    var pl = todoItems(), nOver = pl.filter(function(o){ return o.st.left < 0; }).length;
-    var plList = pl.filter(function(o){ return todoTab === 'over' ? o.st.left < 0 : todoTab === 'soon' ? o.st.left >= 0 : true; });
+    var pl = todoItems(), nOver = 0;
+    var plList = pl;
     function copyBtn(o){ return viewer ? '' : '<button type="button" class="btn sm" data-tplink="' + esc(o.st.sid) + '|' + esc(o.st.iid) + '">링크 복사</button>'; }
     D.plan = { label: '강의계획서', n: pl.length, nOver: nOver, nSoon: pl.length - nOver,
-      sum: '기한 지남 <b style="color:var(--err-fg)">' + nOver + '건</b> · 7일 이내 임박 <b style="color:var(--warn-fg)">' + (pl.length - nOver) + '건</b> · 기한은 강의일 7일 전',
+      sum: '14일 이내 임박 <b style="color:var(--warn-fg)">' + pl.length + '건</b> · 기한은 강의일 7일 전 · 기한이 지난 건은 표시하지 않습니다',
       cols: ['상태', '기한', '과정 · 기수', '교과목 (강의일)', '강사', ''],
       items: plList.map(function(o){
         return { key: o.r['개설키'], cells: [todoPill(o.st), '<span class="nw">' + esc(md(o.st.due)) + '</span>', esc(o.r['개설키']), esc(o.st.subj) + ' (' + esc(md(o.st.date)) + ')', nameOf(o.r, o.r), copyBtn(o)],
@@ -2880,7 +2880,7 @@
       return '<button type="button" class="btn chip' + (k === cat ? ' on' : '') + (n ? ' has' : '') + '" data-tcat="' + k + '">' + esc(D[k].label) + ' ' + (n === null ? '…' : n) + '</button>';
     }).join('');
     var sub = '';
-    if (cat === 'plan') {
+    if (false) {
       sub = '<div class="tabs">' + [['all', '전체', c.n], ['over', '기한 지남', c.nOver], ['soon', '임박', c.nSoon]].map(function(t){
         return '<button type="button" class="btn' + (todoTab === t[0] ? ' on' : '') + '" data-ttab="' + t[0] + '">' + t[1] + ' ' + t[2] + '</button>';
       }).join('') + '</div>';

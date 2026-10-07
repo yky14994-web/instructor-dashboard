@@ -237,7 +237,7 @@
   </header>
 
   <div class="quick">
-    <a class="btn primary" href="lecture-assignment.html#v=table">전체 과정 보기</a>
+    <a class="btn" href="lecture-assignment.html#v=table">전체 과정 보기</a>
     <a class="btn" data-v="cal" href="lecture-assignment.html#v=cal">월 일정 보기</a>
     <a class="btn" data-v="room" href="lecture-assignment.html#v=room">빈 강의실 찾기</a>
     <a class="btn" href="instructor-dashboard.html">강사 검색하기</a>
@@ -636,41 +636,43 @@
   function renderTodoCard(){
     var el = $('cTodo'), today = todayStr();
     if (!sessionsOk) { el.innerHTML = '<div class="chead"><h2>처리할 일</h2></div><div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
-    var over = 0, soon = 0, unas = 0;
+    var soon = 0, unas = 0;
     allSessions.forEach(function(r){
       var pp = planByKey(String(r['개설키'] || '')); if (pp && isCancelled(pp)) return;
       var date = normYmd(r['일자']); if (!date) return;
       if (hasInstr(r)) {
         if (!String(r['강사ID'] || '').trim() || isSubRole(r) || String(r['계획서파일ID'] || '') || date < today) return;
         var left = dayDiff(today, addDays(date, -7));
-        if (left === null || left > 7) return;
-        if (left < 0) over++; else soon++;
+        if (left === null || left < 0 || left > 14) return;
+        soon++;
       } else {
         var d = dayDiff(today, date);
         if (d !== null && d >= 0 && d <= 14) unas++;
       }
     });
     function row(cls, n, label, sub){ return '<li><a class="' + (n ? cls : 'zero') + '" href="lecture-assignment.html#v=table"><span class="l">' + esc(label) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="n">' + n + '<small>건</small></span></a></li>'; }
-    var total = over + soon + unas;
+    var total = soon + unas;
     el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + '</span></div>' +
-      '<ul class="tdl">' + row('bad', over, '강의계획서 기한 지남', '기한은 강의일 7일 전') + row('wn', soon, '강의계획서 7일 이내 임박') + row('wn', unas, '강사 미지정', '강의일이 14일 이내') + '</ul>' +
+      '<ul class="tdl">' + row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전') + row('wn', unas, '강사 미지정', '강의일이 14일 이내') + '</ul>' +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><a class="btn sm" href="lecture-assignment.html#v=table">처리할 일 보기</a></div>';
   }
   function renderNoSubjCard(){
     var el = $('cNoSubj'), today = todayStr();
     if (!sessionsOk) { el.innerHTML = '<div class="chead"><h2>교과목 미편성 과정</h2></div><div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
     var has = {}; allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; });
+    var tq = parseYmd(today), from2 = ymd(new Date(tq.y, tq.m - 3, tq.d)); /* 오늘 기준 2개월 전 */
     var list = plans.filter(function(p){
       if (isCancelled(p)) return false;
-      var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a; if (!a || b < today) return false;
+      var a = normYmd(p['입교 시작일']); if (!a || a < from2) return false;
       return !has[String(p['과정+기수'] || '')];
     }).sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : normYmd(x['입교 시작일']) > normYmd(y['입교 시작일']) ? 1 : 0; });
     var html = '<div class="chead"><h2>교과목 미편성 과정</h2><span class="meta">' + (list.length ? '총 ' + list.length + '과정' : '없음') + '</span></div>';
-    if (!list.length) { el.innerHTML = html + '<div class="empty">시작 전·진행 중인 과정은 모두 교과목이 편성되어 있습니다.</div>'; return; }
+    if (!list.length) { el.innerHTML = html + '<div class="empty">최근 2개월 전부터의 과정은 모두 교과목이 편성되어 있습니다.</div>'; return; }
     var shownN = Math.min(list.length, 5);
     html += '<ul class="nsl">' + list.slice(0, shownN).map(function(p){
       var key = String(p['과정+기수']), a = normYmd(p['입교 시작일']), d = dayDiff(today, a);
-      var tag = d <= 0 ? '<span class="tag t-err">진행 중</span>' : '<span class="tag ' + (d <= 14 ? 't-err' : d <= 30 ? 't-warn' : 't-none') + '">D-' + d + '</span>';
+      var b2 = normYmd(p['입교 종료일']) || a;
+      var tag = b2 < today ? '<span class="tag t-none">종료</span>' : d <= 0 ? '<span class="tag t-err">진행 중</span>' : '<span class="tag ' + (d <= 14 ? 't-err' : d <= 30 ? 't-warn' : 't-none') + '">D-' + d + '</span>';
       return '<li><div><a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '&from=home">' + esc(nameOf(key)) + '</a><small>' + esc(ipgyoLine(p).replace(/^입교 /, '')) + '</small></div>' + tag + '</li>';
     }).join('') + '</ul>' +
       '<div class="foot">' + (list.length > shownN ? '<div class="hint" style="margin-bottom:8px;">시작일이 빠른 순서로 ' + shownN + '과정만 표시했습니다.</div>' : '') + '<a class="btn sm" href="lecture-assignment.html#v=table">전체 과정 보기</a></div>';
