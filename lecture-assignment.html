@@ -2952,6 +2952,18 @@
   }
   function pillHtml(cls, txt){ return '<span class="tpill ' + cls + '">' + esc(txt) + '</span>'; }
   function dLabel(d){ return d === 0 ? '오늘' : d + '일 후'; }
+  /* 사전확보 예약인데 해당 과정에 교과목이 아직 하나도 편성되지 않은 건(예약일이 TODO_DAYS 이내) */
+  function resvNoSubj(){
+    var today = ymd(new Date()), has = {};
+    allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; });
+    return resv.filter(function(r){
+      if (String(r['유형']) !== '사전확보') return false;
+      var key = String(r['개설키'] || ''), p = planByKey(key);
+      if (!key || has[key] || (p && isCancelled(p))) return false;
+      var d = dayDiff(today, normYmd(r['일자']));
+      return d !== null && d >= 0 && d <= TODO_DAYS;
+    }).sort(function(a, b){ return normYmd(a['일자']) < normYmd(b['일자']) ? -1 : normYmd(a['일자']) > normYmd(b['일자']) ? 1 : Number(a['시작교시']) - Number(b['시작교시']); });
+  }
   function todoData(){
     var viewer = isViewer();
     function nameOf(r, rowForBadge){
@@ -3013,9 +3025,19 @@
           title: pill + ' ' + esc(x.ins.name), sub: esc(x.d.miss.join(', ')) + ' · ' + esc(r['교과목']) + ' ' + esc(md(r['일자'])), extra: docBadge(x.ins) + ' ' + esc(r['개설키']) };
       }),
       note: '배지를 누르면 서류 현황이 열리고, 행을 누르면 가장 가까운 강의의 교과목 편성 화면으로 이동합니다. 강사 안내는 자동으로 가지 않습니다.' };
+    var rv = resvNoSubj(), today0 = ymd(new Date());
+    D.resv = { label: '사전확보 미편성', n: rv.length,
+      sum: '강의실을 사전확보했지만 ' + TODO_DAYS + '일 이내에 교과목이 아직 편성되지 않은 과정 예약 <b>' + rv.length + '건</b>',
+      cols: ['예약일까지', '예약일', '과정 · 기수', '교시', '강의실'],
+      items: rv.map(function(r){
+        var d = dayDiff(today0, normYmd(r['일자'])), pill = pillHtml(d <= 3 ? 'bad' : 'wn', dLabel(d)), a = Number(r['시작교시']), b = Number(r['끝교시']), ptx = (a === b ? a : a + '~' + b) + '교시';
+        return { key: r['개설키'], cells: [pill, '<span class="nw">' + esc(md(normYmd(r['일자']))) + '</span>', esc(r['개설키']), esc(ptx), esc(r['강의실'])],
+          title: pill + ' 사전확보', sub: esc(r['개설키']) + ' · ' + esc(md(normYmd(r['일자']))) + ' ' + esc(ptx), extra: esc(r['강의실']) };
+      }),
+      note: '행을 누르면 해당 과정의 교과목 편성 화면으로 이동합니다. 교과목을 편성하면 그 시간의 예약은 자동으로 편성으로 바뀌고 이 목록에서 빠집니다.' };
     return D;
   }
-  var TODO_ORDER = ['plan', 'unas', 'cfl', 'docs'];
+  var TODO_ORDER = ['plan', 'unas', 'cfl', 'docs', 'resv'];
   function renderTodo(){
     var box = $('todo');
     if (!box) return;
@@ -3025,7 +3047,7 @@
     box.style.display = '';
     var total = TODO_ORDER.reduce(function(a, k){ return a + (D[k].n || 0); }, 0);
     if (!total && instructors !== null) {
-      box.innerHTML = '<div class="th"><h3>처리할 일</h3></div><div class="tnone">처리할 일이 없습니다. 강의계획서 기한, 강사 미지정(' + TODO_DAYS + '일 이내), 겹침 경고, 강사 서류에 해당하는 항목이 없습니다.</div>';
+      box.innerHTML = '<div class="th"><h3>처리할 일</h3></div><div class="tnone">처리할 일이 없습니다. 강의계획서 기한, 강사 미지정(' + TODO_DAYS + '일 이내), 겹침 경고, 강사 서류, 사전확보 미편성에 해당하는 항목이 없습니다.</div>';
       return;
     }
     if (!todoCat || !D[todoCat]) todoCat = '';

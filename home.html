@@ -239,7 +239,7 @@
   <div class="quick">
     <a class="btn" href="lecture-assignment.html#v=table">전체 과정 보기</a>
     <a class="btn" data-v="cal" href="lecture-assignment.html#v=cal">월 일정 보기</a>
-    <a class="btn" data-v="room" href="lecture-assignment.html#v=room">빈 강의실 찾기</a>
+    <a class="btn" data-v="room" href="lecture-assignment.html#v=room">빈 강의실 찾기·예약</a>
     <a class="btn" href="instructor-dashboard.html">강사 검색하기</a>
   </div>
 
@@ -272,7 +272,7 @@
   var OPS_NAME = '교육운영팀';
   var DOW = ['일','월','화','수','목','금','토'];
 
-  var plans = [], periods = [], rooms = [], roomSkip = {}, allSessions = [];
+  var plans = [], periods = [], rooms = [], roomSkip = {}, allSessions = [], resv = [];
   var sessionsOk = false;
   var yearSel = '';      // 연간 통계 연도('' = 자동)
   var weekOffset = 0;    // 이번 주 기준 주 이동
@@ -551,6 +551,12 @@
       if (b < s || a > e) return;
       planRoomNames(rmTxt).forEach(function(rm){ use[rm] = true; });
     });
+    resv.forEach(function(r){
+      if (normYmd(r['일자']) !== date) return;
+      var a = Number(r['시작교시']), b = Number(r['끝교시']); if (!isFinite(a) || !isFinite(b)) { a = 0; b = 99; }
+      if (b < s || a > e) return;
+      planRoomNames(String(r['강의실'] || '')).forEach(function(rm){ use[rm] = true; });
+    });
     var q = parseYmd(date), wk = q && q.dow !== 0 && q.dow !== 6;
     if (wk) plans.forEach(function(p){
       if (isCancelled(p)) return;
@@ -584,7 +590,7 @@
     var busy = target.filter(function(r){ return usedBy[r]; });
     html += '<div class="rl"><span class="k">종일 비어 있음</span>' + (whole.length ? whole.map(function(r){ return '<span class="tag t-ok">' + esc(r) + '</span>'; }).join('') : '<span class="meta">없음</span>') + '</div>' +
       (busy.length ? '<div class="rl"><span class="k">사용 중</span>' + busy.map(function(r){ return '<span class="tag t-none">' + esc(r) + ' <small>' + ranges(usedBy[r]) + '</small></span>'; }).join('') + '</div>' : '') +
-      '<div style="margin-top:10px;"><a class="btn sm" data-v="room" href="lecture-assignment.html#v=room&d=' + today + '">빈 강의실 찾기</a></div>';
+      '<div style="margin-top:10px;"><a class="btn sm" data-v="room" href="lecture-assignment.html#v=room&d=' + today + '">빈 강의실 찾기·예약</a></div>';
     $('cRoom').innerHTML = html;
   }
 
@@ -636,7 +642,16 @@
   function renderTodoCard(){
     var el = $('cTodo'), today = todayStr();
     if (!sessionsOk) { el.innerHTML = '<div class="chead"><h2>처리할 일</h2></div><div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
-    var soon = 0, unas = 0;
+    var soon = 0, unas = 0, rvn = 0;
+    (function(){
+      var has = {}; allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; });
+      resv.forEach(function(r){
+        if (String(r['유형']) !== '사전확보') return;
+        var key = String(r['개설키'] || ''), pp = planByKey(key);
+        if (!key || has[key] || (pp && isCancelled(pp))) return;
+        var d = dayDiff(today, normYmd(r['일자'])); if (d !== null && d >= 0 && d <= 14) rvn++;
+      });
+    })();
     allSessions.forEach(function(r){
       var pp = planByKey(String(r['개설키'] || '')); if (pp && isCancelled(pp)) return;
       var date = normYmd(r['일자']); if (!date) return;
@@ -651,9 +666,9 @@
       }
     });
     function row(cls, n, label, sub){ return '<li><a class="' + (n ? cls : 'zero') + '" href="lecture-assignment.html#v=table"><span class="l">' + esc(label) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="n">' + n + '<small>건</small></span></a></li>'; }
-    var total = soon + unas;
+    var total = soon + unas + rvn;
     el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + '</span></div>' +
-      '<ul class="tdl">' + row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전') + row('wn', unas, '강사 미지정', '강의일이 14일 이내') + '</ul>' +
+      '<ul class="tdl">' + row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전') + row('wn', unas, '강사 미지정', '강의일이 14일 이내') + row('wn', rvn, '사전확보 미편성', '예약일이 14일 이내') + '</ul>' +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><a class="btn sm" href="lecture-assignment.html#v=table">처리할 일 보기</a></div>';
   }
   function renderNoSubjCard(){
@@ -743,6 +758,7 @@
       if (lg && lg.role) setSess(KEY_ROLE, lg.role);
       (function(){ var n = new Date(); lastLoad = ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2); tickClock(); })();
       plans = a['연간계획'] || []; courseRank = null;
+      resv = a['강의실예약'] || [];
       periods = (a['교시표'] || []).map(function(r){
         return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || '') };
       }).filter(function(x){ return isFinite(x.n); }).sort(function(x, y){ return x.n - y.n; });
