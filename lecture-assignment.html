@@ -409,6 +409,19 @@
   .rmchip{display:inline-flex;flex-direction:column;padding:7px 12px;border-radius:8px;background:#E3F1E4;color:#1F6B2B;font-size:13.5px;font-weight:800;line-height:1.3;}
   .rmchip.use{background:#FBE0DC;color:#9B1C12;cursor:pointer;} .rmchip.plan{background:#FFF1BF;color:#7A5B00;cursor:pointer;}
   .rmchip.use:hover,.rmchip.plan:hover{filter:brightness(.96);}
+  .rmchip.rv{background:#E6DDF5;color:#4B2E83;}
+  td.dc.rvc{box-shadow:inset 0 0 0 2px #8E6CC8;}
+  .rvbox{margin:14px 0 4px;padding:12px 14px;border:1px solid var(--border-input);border-radius:10px;background:#FAF8FD;}
+  .rvbox h4{margin:0 0 8px;font-size:14px;color:#4B2E83;}
+  .rvf{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:6px 0;}
+  .rvf label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;color:var(--text-sub);}
+  .rvf input,.rvf select{height:34px;padding:0 8px;border:1px solid var(--border-input);border-radius:6px;font-family:inherit;font-size:13.5px;background:#fff;}
+  .rvbox input[type=radio],.rvbox input[type=checkbox]{height:auto;width:auto;margin-right:4px;vertical-align:middle;}
+  .rvbox .rmq label{display:inline-flex;align-items:center;gap:2px;font-size:13.5px;font-weight:700;}
+  .rvf .wide{grid-column:1/-1;}
+  .rvl{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;}
+  .rvl th,.rvl td{border-bottom:1px solid #E5E0EE;padding:5px 6px;text-align:left;vertical-align:top;}
+  .rvl th{font-size:12px;color:var(--text-sub);}
   .rmchip small{font-weight:600;font-size:11.5px;opacity:.85;}
   .rmm{overflow:auto;max-height:70vh;border:1px solid var(--border-input);border-radius:8px;margin-top:6px;}
   table.rmmt{border-collapse:separate;border-spacing:0;font-size:11.5px;min-width:100%;}
@@ -679,7 +692,7 @@
 
   <div class="todo" id="todo" style="display:none;"></div>
 
-  <div class="pmbar"><span class="vtabs" role="tablist" aria-label="연간계획 보기 전환"><button type="button" id="pmTable" class="on" role="tab" data-pm="table">표</button><button type="button" id="pmCal" role="tab" data-pm="cal">월 캘린더</button><button type="button" id="pmRoom" role="tab" data-pm="room">빈 강의실</button></span></div>
+  <div class="pmbar"><span class="vtabs" role="tablist" aria-label="연간계획 보기 전환"><button type="button" id="pmTable" class="on" role="tab" data-pm="table">표</button><button type="button" id="pmCal" role="tab" data-pm="cal">월 캘린더</button><button type="button" id="pmRoom" role="tab" data-pm="room">빈 강의실·예약</button></span></div>
 
   <div class="bar" id="planBar">
     <select id="fYear" aria-label="연도"></select>
@@ -764,6 +777,7 @@
   var sessionsByKey = {}; // 개설키 -> {total, assigned}
   var shown = [];      // 현재 필터 결과
   var periods = [];    // 교시표 [{n, start, end}]
+  var resv = [];       // 강의실 예약(사전확보·대관, 상태 '예약'인 것만)
   var rooms = [];      // 강의실명 목록
   var allSessions = []; // 교과목시간표 전체 행
   var sessionsOk = false;
@@ -1187,6 +1201,7 @@
 
       plans = sortPlans(a['연간계획'] || []); courseRank = null;
       history = a['변경이력'] || [];
+      resv = a['강의실예약'] || [];
       periods = (a['교시표'] || []).map(function(r){
         return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || '') };
       }).filter(function(x){ return isFinite(x.n); }).sort(function(x, y){ return x.n - y.n; });
@@ -1482,7 +1497,7 @@
   /* 현재 목록 화면의 제목·안내·되돌아갈 주소 */
   function headInfo(){
     if (planMode === 'cal') return { t: '월 캘린더', s: '월별 과정 일정을 달력으로 봅니다. 과정마다 색이 다르며, 칸을 누르면 그날의 교과목·강사·강의실이 열립니다.', h: '#v=cal' };
-    if (planMode === 'room') return { t: '빈 강의실 조회', s: '날짜와 교시를 정해 비어 있는 강의실을 찾고, 월별 강의실 현황을 봅니다.', h: '#v=room' };
+    if (planMode === 'room') return { t: '빈 강의실 찾기·예약', s: '날짜와 교시를 정해 비어 있는 강의실을 찾고, 과정·대관용으로 강의실을 미리 잡아 둡니다.', h: '#v=room' };
     if (weekFilter) {
       var tm = mondayOf(ymd(new Date())), a = weekFilter, b = addDays(weekFilter, 6), rg = md(a).replace(/\(.\)/, '') + '~' + md(b).replace(/\(.\)/, '');
       return { t: (a === tm ? '이번주(' + rg + ')' : rg) + ' 교육과정', s: '이 기간에 진행되는 과정입니다. 과정을 보고 교과목을 편성하세요.', h: '#v=table&w=' + a };
@@ -1520,7 +1535,7 @@
     $('hTitle').textContent = '교과목 편성';
     $('hSub').textContent = '과정을 선택하면 교시 단위로 교과목·강사·강의실을 편성합니다.';
     renderCrumb();
-    $('backBtn').textContent = cameFrom === 'home' ? '← 홈으로' : cameFrom === 'dash' ? '← 강사관리로' : planMode === 'cal' ? '← 월 캘린더로' : planMode === 'room' ? '← 빈 강의실 조회로' : '← 연간계획으로';
+    $('backBtn').textContent = cameFrom === 'home' ? '← 홈으로' : cameFrom === 'dash' ? '← 강사관리로' : planMode === 'cal' ? '← 월 캘린더로' : planMode === 'room' ? '← 빈 강의실·예약으로' : '← 연간계획으로';
     $('viewerNote').style.display = isViewer() ? 'block' : 'none';
     var blk = $('sBlock');
     if (!sessionsOk) { blk.style.display = 'block'; blk.textContent = '교과목 편성 목록을 불러오지 못해 저장할 수 없습니다. 새로고침 후 다시 시도해 주세요.'; }
@@ -1917,7 +1932,10 @@
     return '<details class="chgh"><summary><b>교과목 변경 이력 ' + all.length + '건</b> <span class="hint">최근 ' + esc(String(h0['일시']).slice(5)) + ' · ' + esc(String(h0['유형']).replace('교과목 ', '')) + ' · ' + esc(h0['항목']) + ' (눌러서 펼치기)</span></summary>' +
       '<div class="chgl">' + list.map(line).join('') + (all.length > list.length ? '<div class="hint">이전 ' + (all.length - list.length) + '건은 변경이력 시트에서 확인해 주세요.</div>' : '') + '</div></details>';
   }
+  var rvTimer = null;
+  function rvLater(){ clearTimeout(rvTimer); rvTimer = setTimeout(function(){ rvReload().then(function(){ if (!currentKey && planMode === 'room') renderRoomFree(); }); }, 1200); }
   function upsertSession(row){
+    rvLater();
     var id = String(row['편성ID']);
     var found = false;
     var oldRow = allSessions.filter(function(r){ return String(r['편성ID']) === id; })[0];
@@ -2001,6 +2019,7 @@
       history.push({ 일시: chgNow(), 개설키: String(r['개설키'] || ''), 유형: '교과목 삭제', 항목: chgItem(r), 전: chgTime(r) + ' · ' + chgWho(r), 후: '', 사유: '', 역할: '관리자' });
       allSessions = allSessions.filter(function(x){ return String(x['편성ID']) !== id; });
       sessionsByKey = buildSessionMap(allSessions);
+      rvReload();
       refreshConflicts();
       if (form.id === id) resetForm();
       renderHead(planByKey(currentKey));
@@ -2365,6 +2384,16 @@
       // 강의실 이름이 목록의 정식 이름과 조금 달라도(공백·짧은 이름) 목록의 강의실로 맞춰서 계산
       planRoomNames(rmTxt).forEach(function(rm){ add(rm, { type: 'sess', key: key, label: nameOf(key), subj: String(r['교과목'] || ''), s: a, e: b }); });
     });
+    resv.forEach(function(r){
+      if (normYmd(r['일자']) !== date) return;
+      var key = String(r['개설키'] || '');
+      if (opt && opt.skipPlanKey && key && key === opt.skipPlanKey) return;   // 입력 중인 과정의 사전확보는 저장 시 편성으로 전환되므로 겹침으로 보지 않음
+      var a = Number(r['시작교시']), b = Number(r['끝교시']); if (!isFinite(a) || !isFinite(b)) { a = 0; b = 99; }
+      if (b < s || a > e) return;
+      var rm = String(r['강의실'] || '').trim(); if (!rm) return;
+      var lb = String(r['유형']) === '대관' ? '대관 · ' + String(r['사유·사용부서'] || '') : nameOf(key) + ' · 사전확보';
+      planRoomNames(rm).forEach(function(x){ add(x, { type: 'resv', key: key, rid: String(r['예약ID']), label: lb, subj: '', s: a, e: b }); });
+    });
     var q = parseYmd(date), wk = q && q.dow !== 0 && q.dow !== 6;
     if (wk) plans.forEach(function(p){
       if (isCancelled(p)) return;
@@ -2420,7 +2449,7 @@
     if (roomE < roomS) roomE = roomS;
     var use = roomUsage(roomDate, roomS, roomE);
     var opt = function(sel){ return pn.map(function(n){ return '<option value="' + n + '"' + (n === sel ? ' selected' : '') + '>' + n + '교시</option>'; }).join(''); };
-    var head = '<div class="pcalbox"><div class="pcalbar"><h3>빈 강의실 조회</h3></div>' +
+    var head = '<div class="pcalbox"><div class="pcalbar"><h3>빈 강의실 찾기·예약</h3></div>' +
       '<div class="rmq"><button type="button" class="btn sm" data-cm="rm:prev">◀ 전날</button>' +
       '<input type="date" id="roomDateIn" value="' + esc(roomDate) + '" aria-label="날짜">' +
       '<button type="button" class="btn sm" data-cm="rm:next">다음날 ▶</button><button type="button" class="btn sm" data-cm="rm:today">오늘</button>' +
@@ -2452,21 +2481,22 @@
     var chipOf = function(r){
       var inf = roomInfo[r] || {}, sub = [inf.floor, inf.kind].filter(Boolean).join(' · '), us = use[r] || [];
       if (!us.length) return '<span class="rmchip free">' + esc(r) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>';
-      var sess = us.some(function(u){ return u.type === 'sess'; });
+      var sess = us.some(function(u){ return u.type === 'sess'; }), onlyRv = us.every(function(u){ return u.type === 'resv'; });
       var lines = us.slice(0, 2).map(function(u){
         return '<small>' + esc(u.label) + ' · ' + (u.type === 'plan' ? '연간계획 예정(교과목 편성 전)' : u.s + '~' + u.e + '교시' + (u.subj ? ' ' + esc(u.subj) : '')) + '</small>';
       }).join('') + (us.length > 2 ? '<small>외 ' + (us.length - 2) + '건</small>' : '');
+      if (onlyRv) return '<span class="rmchip rv" title="예약된 강의실입니다. 아래 \'예약 목록\'에서 취소·수정할 수 있습니다">' + esc(r) + lines + '</span>';
       return '<span class="rmchip ' + (sess ? 'use' : 'plan') + '" data-cday="' + esc(roomDate) + '" data-ckey="' + esc(us[0].key) + '" title="누르면 그날 일정이 열립니다">' + esc(r) + lines + '</span>';
     };
     var body = order.length ? order.map(function(g){
       var nf = grp[g].filter(function(r){ return !(use[r] && use[r].length); }).length;
       return '<div class="rmgrp">' + esc(g) + '<small>빈 곳 ' + nf + ' / ' + grp[g].length + '곳</small></div><div class="rmlist">' + grp[g].map(chipOf).join('') + '</div>';
     }).join('') : '<div class="tnone" style="padding:10px 0;">표시할 강의실이 없습니다.</div>';
-    var leg = '<div class="calleg" style="margin:4px 0 2px;"><span><i style="background:#E3F1E4"></i>빈 강의실</span><span><i style="background:#FBE0DC"></i>사용 중(편성된 교과목)</span><span><i style="background:#FFF1BF"></i>연간계획 예정(교과목 편성 전)</span></div>';
+    var leg = '<div class="calleg" style="margin:4px 0 2px;"><span><i style="background:#E3F1E4"></i>빈 강의실</span><span><i style="background:#FBE0DC"></i>사용 중(편성된 교과목)</span><span><i style="background:#FFF1BF"></i>연간계획 예정(교과목 편성 전)</span><span><i style="background:#E6DDF5"></i>예약(사전확보·대관)</span></div>';
     var used = '';
     var skip = skipRooms.length ? '<div class="hint" style="margin-top:10px;">겹침 검사 제외 장소(동시 사용 가능): ' + esc(skipRooms.join(', ')) + '</div>' : '';
     box.innerHTML = head + sum + emptyDayHint(roomActiveDates()) + leg + body + used + skip +
-      '<div class="hint" style="margin-top:10px;">편성된 교과목의 강의실과, 교과목 편성 전이라도 연간계획에 예정 강의실이 적힌 과정(입교 기간 평일)을 사용 중으로 계산합니다. 취소된 기수는 제외합니다.</div>' +
+      '<div class="hint" style="margin-top:10px;">편성된 교과목의 강의실, 교과목 편성 전이라도 연간계획에 예정 강의실이 적힌 과정(입교 기간 평일), 예약(사전확보·대관)을 사용 중으로 계산합니다. 취소된 기수는 제외합니다.</div>' + renderRvPanel() +
       renderRoomMonth(roomMonth || roomDate.slice(0, 7)) + '</div>';
   }
   /* 월별 강의실 현황(화면): 강의실 × 날짜 표. 엑셀은 필터와 관계없이 전체 강의실 */
@@ -2497,13 +2527,13 @@
         if (hasS) cntU[i]++; else cntP[i]++;
         var txt = roomCellText(l), first = l[0];
         var short = esc(first.label.replace(/과정|\s+/g, ' ').trim()) + (Object.keys(keys).length > 1 ? ' 외' + (Object.keys(keys).length - 1) : '');
-        return '<td class="dc ' + (hasS ? 'u' : 'pl') + (ov ? ' ov' : '') + (wk[i] ? ' we' : '') + '" data-cday="' + esc(days[i]) + '" data-ckey="' + esc(first.key) + '" title="' + esc(r + ' · ' + md(days[i]) + ' · ' + txt + (ov ? ' · 겹침' : '')) + '">' + (wk[i] ? '·' : short) + '</td>';
+        return '<td class="dc ' + (hasS ? 'u' : 'pl') + (l.some(function(x){ return x.type === 'resv'; }) ? ' rvc' : '') + (ov ? ' ov' : '') + (wk[i] ? ' we' : '') + '" data-cday="' + esc(days[i]) + '" data-ckey="' + esc(first.key) + '" title="' + esc(r + ' · ' + md(days[i]) + ' · ' + txt + (ov ? ' · 겹침' : '')) + '">' + (wk[i] ? '·' : short) + '</td>';
       }).join('');
       var inf = roomInfo[r] || {}, sub = [inf.floor, inf.kind].filter(Boolean).join(' · ');
       return '<tr><td class="rn" title="' + esc(sub) + '">' + esc(r) + '</td>' + tds + '<td class="tt">' + nu + '</td><td class="tt">' + np + '</td><td class="tt">' + (nwk ? Math.round((nu + np) / nwk * 100) : 0) + '%</td></tr>';
     }).join('');
     var tot = all.length;
-    var foot = '<tr><td class="rn">편성 사용 강의실 수</td>' + cntU.map(function(n, i){ return '<td class="' + (wk[i] ? 'we' : '') + '">' + (n || '') + '</td>'; }).join('') + '<td colspan="3"></td></tr>' +
+    var foot = '<tr><td class="rn">편성·예약 사용 강의실 수</td>' + cntU.map(function(n, i){ return '<td class="' + (wk[i] ? 'we' : '') + '">' + (n || '') + '</td>'; }).join('') + '<td colspan="3"></td></tr>' +
       '<tr><td class="rn">예정(편성 전) 강의실 수</td>' + cntP.map(function(n, i){ return '<td class="' + (wk[i] ? 'we' : '') + '">' + (n || '') + '</td>'; }).join('') + '<td colspan="3"></td></tr>' +
       '<tr><td class="rn">빈 강의실 수</td>' + cntU.map(function(n, i){ return '<td class="' + (wk[i] ? 'we' : '') + '">' + (wk[i] ? '' : tot - n - cntP[i]) + '</td>'; }).join('') + '<td colspan="3"></td></tr>';
     var ropts = '<option value="">전체 강의실</option>' + all.map(function(r){ return '<option value="' + esc(r) + '"' + (r === sel ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('');
@@ -2513,9 +2543,134 @@
     return '<div class="rmgrp" style="margin-top:22px;">' + q0.y + '년 ' + q0.m + '월 강의실 현황<small>강의실 ' + tot + '곳 · 평일 ' + nwk + '일</small></div>' +
       '<div class="rmq"><span class="lb">화면 표시</span><select id="roomMonthRoomSel" aria-label="표시할 강의실">' + ropts + '</select><span class="lb">엑셀은 항상 전체 강의실</span></div>' +
       '<div class="pcalsum">전체 평균 가동률 <b>' + rate + '%</b> · 편성 사용 ' + allU + '강의실·일 + 예정 ' + allP + '강의실·일 ÷ (평일 ' + nwk + '일 × ' + tot + '곳) <small>(가동률 = 하루라도 사용·예정이 있는 평일 수 ÷ 그 달 평일 수, 교시 단위 아님)</small></div>' +
-      '<div class="calleg" style="margin:4px 0 2px;"><span><i style="background:#DCE8F8"></i>편성된 교과목 사용</span><span><i style="background:#FFF1BF"></i>연간계획 예정(편성 전)</span><span><i style="border-color:#D8574B"></i>같은 날 겹침</span><span><i style="background:#F3F4F6"></i>주말</span></div>' +
+      '<div class="calleg" style="margin:4px 0 2px;"><span><i style="background:#DCE8F8"></i>편성된 교과목 사용</span><span><i style="background:#FFF1BF"></i>연간계획 예정(편성 전)</span><span><i style="background:#E6DDF5"></i>예약 포함(사전확보·대관)</span><span><i style="border-color:#D8574B"></i>같은 날 겹침</span><span><i style="background:#F3F4F6"></i>주말</span></div>' +
       '<div class="rmm"><table class="rmmt"><thead>' + th + '</thead><tbody>' + rowsHtml + '</tbody><tfoot>' + foot + '</tfoot></table></div>' +
       '<div class="hint" style="margin-top:6px;">칸을 누르면 그날 일정이 열립니다. 표 하단 합계는 전체 강의실 기준이며, 야외·실습장(겹침 검사 제외)은 제외합니다.</div>';
+  }
+
+  /* ---------- 강의실 예약(사전확보·대관) ---------- */
+  var rvSt = { type: '사전확보', from: '', to: '', wkend: true, key: '', room: '', reason: '', contact: '', note: '', editId: '', busy: false, msg: '' };
+  function rvPeriods(){ return periods.length ? periods.map(function(x){ return x.n; }) : [1, 2, 3, 4, 5, 6, 7]; }
+  function rvDates(){
+    var out = [], a = normYmd(rvSt.from), b = normYmd(rvSt.to || rvSt.from);
+    if (!a) return out; if (!b || b < a) b = a;
+    for (var d = a, n = 0; d <= b && n < 400; d = addDays(d, 1), n++) {
+      var q = parseYmd(d);
+      if (rvSt.wkend && (q.dow === 0 || q.dow === 6) && a !== b) continue;
+      out.push(d);
+    }
+    return out;
+  }
+  function rvRowText(r){
+    var q = parseYmd(normYmd(r['일자'])), a = Number(r['시작교시']), b = Number(r['끝교시']);
+    return (q ? md(normYmd(r['일자'])) : r['일자']) + ' ' + (a === b ? a : a + '~' + b) + '교시 · ' + r['강의실'];
+  }
+  function renderRvPanel(){
+    var viewer = isViewer(), today = ymd(new Date());
+    var list = resv.filter(function(r){ return normYmd(r['일자']) >= today; }).sort(function(x, y){
+      return normYmd(x['일자']) < normYmd(y['일자']) ? -1 : normYmd(x['일자']) > normYmd(y['일자']) ? 1 : Number(x['시작교시']) - Number(y['시작교시']);
+    });
+    var pn = rvPeriods();
+    var form = '';
+    if (!viewer) {
+      if (!rvSt.from) { rvSt.from = roomDate; rvSt.to = ''; rvSt.s = roomS; rvSt.e = roomE; }
+      if (!rvSt.s || pn.indexOf(rvSt.s) < 0) rvSt.s = pn[0];
+      if (!rvSt.e || pn.indexOf(rvSt.e) < 0) rvSt.e = pn[pn.length - 1];
+      var po = function(sel){ return pn.map(function(n){ return '<option value="' + n + '"' + (n === sel ? ' selected' : '') + '>' + n + '교시</option>'; }).join(''); };
+      var ro = '<option value="">강의실 선택</option>' + rooms.filter(function(r){ return !roomSkip[r]; }).map(function(r){ return '<option value="' + esc(r) + '"' + (r === rvSt.room ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('');
+      var today0 = ymd(new Date());
+      var po2 = '<option value="">과정 선택</option>' + plans.filter(function(p){ return !isCancelled(p) && (normYmd(p['입교 종료일']) || '9999') >= today0; }).map(function(p){
+        var k = String(p['과정+기수'] || ''); return '<option value="' + esc(k) + '"' + (k === rvSt.key ? ' selected' : '') + '>' + esc(k) + (normYmd(p['입교 시작일']) ? ' (' + md(normYmd(p['입교 시작일'])) + '~)' : '') + '</option>';
+      }).join('');
+      var ds = rvDates();
+      var sum = rvSt.editId ? '수정 중: 날짜 1일만 바꿀 수 있습니다.' : (ds.length ? '예약 날짜 ' + ds.length + '일' + (ds.length > 1 ? ' (' + md(ds[0]) + ' ~ ' + md(ds[ds.length - 1]) + ')' : '') : '시작 날짜를 입력해 주세요.');
+      form = '<div class="rvbox"><h4>' + (rvSt.editId ? '예약 수정' : '강의실 예약 추가') + '</h4>' +
+        '<div class="rmq" style="margin-bottom:4px;"><label><input type="radio" name="rvType" value="사전확보" ' + (rvSt.type === '사전확보' ? 'checked' : '') + '> 사전확보 <small class="hint">과정은 있고 교과목은 아직 미편성</small></label> ' +
+        '<label><input type="radio" name="rvType" value="대관" ' + (rvSt.type === '대관' ? 'checked' : '') + '> 대관 <small class="hint">과정·교과목 없이 다른 용도</small></label></div>' +
+        '<div class="rvf">' +
+        '<label>시작일<input type="date" id="rvFrom" value="' + esc(rvSt.from) + '"></label>' +
+        (rvSt.editId ? '' : '<label>종료일(하루면 비움)<input type="date" id="rvTo" value="' + esc(rvSt.to) + '"></label>') +
+        '<label>시작 교시<select id="rvS">' + po(rvSt.s) + '</select></label><label>끝 교시<select id="rvE">' + po(rvSt.e) + '</select></label>' +
+        '<label>강의실<select id="rvRoom">' + ro + '</select></label>' +
+        (rvSt.type === '사전확보' ? '<label class="wide">과정<select id="rvKey">' + po2 + '</select></label>' : '<label class="wide">사유·사용부서<input type="text" id="rvReason" maxlength="200" placeholder="예: 인사팀 신규임용 면접 / 안전관리과 회의" value="' + esc(rvSt.reason) + '"></label>') +
+        '<label>담당자·연락처(선택)<input type="text" id="rvContact" maxlength="100" value="' + esc(rvSt.contact) + '"></label><label class="wide">비고(선택)<input type="text" id="rvNote" maxlength="200" value="' + esc(rvSt.note) + '"></label></div>' +
+        (rvSt.editId ? '' : '<label style="font-size:12.5px;"><input type="checkbox" id="rvWk" ' + (rvSt.wkend ? 'checked' : '') + '> 기간이 여러 날일 때 토·일 제외</label>') +
+        '<div class="hint" style="margin:6px 0;">' + esc(sum) + ' · 같은 강의실·교시에 이미 편성이나 예약이 있어도 저장되며, 겹친 날짜를 알려 드립니다.</div>' +
+        '<div class="rmq" style="margin:0;"><button type="button" class="btn primary sm" data-cm="rv:save"' + (rvSt.busy ? ' disabled' : '') + '>' + (rvSt.busy ? '저장 중...' : (rvSt.editId ? '수정 저장' : '예약 저장')) + '</button>' +
+        (rvSt.editId ? '<button type="button" class="btn sm" data-cm="rv:editx">수정 취소</button>' : '') + '</div>' +
+        (rvSt.msg ? '<div class="hint" style="margin-top:6px;color:#9B1C12;">' + rvSt.msg + '</div>' : '') + '</div>';
+    }
+    var tbl = list.length ? '<table class="rvl"><thead><tr><th>유형</th><th>일자·교시·강의실</th><th>과정 / 사유·부서</th><th>연락처·비고</th>' + (viewer ? '' : '<th></th>') + '</tr></thead><tbody>' +
+      list.map(function(r){
+        var big = String(r['유형']) === '대관';
+        return '<tr><td>' + esc(r['유형']) + '</td><td>' + esc(rvRowText(r)) + '</td><td>' + esc(big ? r['사유·사용부서'] : r['개설키']) + '</td><td>' + esc([r['담당자·연락처'], r['비고']].filter(Boolean).join(' · ')) + '</td>' +
+          (viewer ? '' : '<td class="nw"><button type="button" class="btn sm" data-cm="rv:edit:' + esc(r['예약ID']) + '">수정</button> <button type="button" class="btn sm" data-cm="rv:cancel:' + esc(r['예약ID']) + '">취소</button></td>') + '</tr>';
+      }).join('') + '</tbody></table>' : '<div class="tnone" style="padding:8px 0;">오늘 이후 예약이 없습니다.</div>';
+    return form + '<div class="rmgrp" style="margin-top:14px;">예약 목록<small>오늘 이후 ' + list.length + '건 · 교과목을 편성하면 사전확보 예약은 해당 시간만 자동으로 편성으로 바뀌고, 편성을 지우거나 옮기면 예약으로 되돌아옵니다</small></div>' + tbl;
+  }
+  function rvReload(){
+    return api({ action: 'listReservations', password: getPw() }).then(function(j){ if (j && j.status === 'ok') resv = j.data || []; }).catch(function(){});
+  }
+  function rvAct(act){
+    if (act === 'rv:editx') { rvReset(); renderRoomFree(); return; }
+    var m;
+    if ((m = /^rv:edit:(.+)$/.exec(act))) {
+      var r = resv.filter(function(x){ return String(x['예약ID']) === m[1]; })[0]; if (!r) return;
+      rvSt = { type: String(r['유형']), from: normYmd(r['일자']), to: '', wkend: true, key: String(r['개설키'] || ''), room: String(r['강의실'] || ''), reason: String(r['사유·사용부서'] || ''), contact: String(r['담당자·연락처'] || ''), note: String(r['비고'] || ''), editId: m[1], busy: false, msg: '', s: Number(r['시작교시']), e: Number(r['끝교시']) };
+      renderRoomFree(); var bx = document.querySelector('.rvbox'); if (bx && bx.scrollIntoView) bx.scrollIntoView({ block: 'center' });
+      return;
+    }
+    if ((m = /^rv:cancel:(.+)$/.exec(act))) {
+      var r2 = resv.filter(function(x){ return String(x['예약ID']) === m[1]; })[0]; if (!r2) return;
+      if (!confirm('이 예약을 취소할까요?\n' + rvRowText(r2) + '\n' + (String(r2['유형']) === '대관' ? r2['사유·사용부서'] : r2['개설키']))) return;
+      api({ action: 'cancelReservation', password: getPw(), 예약ID: m[1] }).then(function(res){
+        if (res.status !== 'ok') { alert(res.message || '취소하지 못했습니다'); return; }
+        resv = resv.filter(function(x){ return String(x['예약ID']) !== m[1]; }); renderRoomFree();
+      }).catch(function(){ alert('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'); });
+      return;
+    }
+    if (act === 'rv:save') rvSave();
+  }
+  function rvReset(){ rvSt = { type: rvSt.type, from: '', to: '', wkend: true, key: '', room: '', reason: '', contact: '', note: '', editId: '', busy: false, msg: '' }; }
+  function rvSave(){
+    if (rvSt.busy) return;
+    var ds = rvDates(), s = Number(rvSt.s), e = Number(rvSt.e);
+    var err = '';
+    if (!ds.length) err = '시작 날짜를 입력해 주세요.';
+    else if (e < s) err = '끝 교시가 시작 교시보다 앞입니다.';
+    else if (!rvSt.room) err = '강의실을 선택해 주세요.';
+    else if (rvSt.type === '사전확보' && !rvSt.key) err = '과정을 선택해 주세요.';
+    else if (rvSt.type === '대관' && !String(rvSt.reason).trim()) err = '대관 사유·사용부서를 입력해 주세요.';
+    if (err) { rvSt.msg = esc(err); renderRoomFree(); return; }
+    var body = { action: 'saveReservation', password: getPw(), 유형: rvSt.type, 시작교시: s, 끝교시: e, 강의실: rvSt.room,
+      개설키: rvSt.type === '사전확보' ? rvSt.key : '', 사유: rvSt.type === '대관' ? String(rvSt.reason).trim() : '', 연락처: rvSt.contact.trim(), 비고: rvSt.note.trim() };
+    if (rvSt.editId) { body.예약ID = rvSt.editId; body.일자 = ds[0]; } else body.일자들 = ds;
+    rvSt.busy = true; rvSt.msg = ''; renderRoomFree();
+    api(body).then(function(res){
+      rvSt.busy = false;
+      if (res.status !== 'ok') { rvSt.msg = esc(res.message || '저장하지 못했습니다'); renderRoomFree(); return; }
+      var w = (res.warnings || []).join(' / '), keepRoom = rvSt.room, keepType = rvSt.type;
+      return rvReload().then(function(){
+        rvReset(); rvSt.type = keepType;
+        rvSt.msg = '<span style="color:#1F6B2B;">저장했습니다(' + (res.count || 1) + '건).</span>' + (w ? ' <span style="color:#7A5B00;">주의: ' + esc(w) + '</span>' : '');
+        renderRoomFree();
+      });
+    }).catch(function(){ rvSt.busy = false; rvSt.msg = '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'; renderRoomFree(); });
+  }
+  function rvField(t){
+    var id = t.id, v = t.value;
+    if (t.name === 'rvType') { rvSt.type = v; rvSt.msg = ''; renderRoomFree(); return true; }
+    if (id === 'rvFrom') { rvSt.from = normYmd(v) || ''; renderRoomFree(); return true; }
+    if (id === 'rvTo') { rvSt.to = normYmd(v) || ''; renderRoomFree(); return true; }
+    if (id === 'rvWk') { rvSt.wkend = !!t.checked; renderRoomFree(); return true; }
+    if (id === 'rvS') { rvSt.s = Number(v); if (rvSt.e < rvSt.s) rvSt.e = rvSt.s; renderRoomFree(); return true; }
+    if (id === 'rvE') { rvSt.e = Number(v); if (rvSt.e < rvSt.s) rvSt.s = rvSt.e; renderRoomFree(); return true; }
+    if (id === 'rvRoom') { rvSt.room = v; return true; }
+    if (id === 'rvKey') { rvSt.key = v; return true; }
+    if (id === 'rvReason') { rvSt.reason = v; return true; }
+    if (id === 'rvContact') { rvSt.contact = v; return true; }
+    if (id === 'rvNote') { rvSt.note = v; return true; }
+    return false;
   }
   function roomNav(act){
     if (act === 'rm:xlsx') { doRoomExcel(); return; }
@@ -2604,6 +2759,7 @@
 
   function calNav(act){
     if (act.indexOf('rm:') === 0) { roomNav(act); return; }
+    if (act.indexOf('rv:') === 0) { rvAct(act); return; }
     if (act === 'print') { printWith('cal', 'pcal'); return; }
     calManual = true;
     var q = parseYmd((calMonth || ymd(new Date()).slice(0, 7)) + '-01');
@@ -4394,6 +4550,7 @@
   document.addEventListener('change', function(ev){
     var t = ev.target;
     if (t && t.getAttribute && t.getAttribute('data-ori')) { try { sessionStorage.setItem('jsfa_la_ori_' + t.getAttribute('data-ori'), t.value); } catch (e) {} return; }
+    if (t && (t.name === 'rvType' || (t.id && t.id.indexOf('rv') === 0)) && rvField(t)) return;
     if (!t || !t.id) return;
     if (t.id === 'calTypeSel') { calType = t.value; renderPlanCal(); }
     else if (t.id === 'calRoomSel') { calRoom = t.value; renderPlanCal(); }
