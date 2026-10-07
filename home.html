@@ -60,6 +60,13 @@
   }
 
   /* 바로가기 */
+  .dtt{width:100%;table-layout:fixed;min-width:640px;border-collapse:collapse;font-size:13.5px;margin:6px 0 4px;}
+  .dtt th,.dtt td{border-bottom:1px solid var(--border,#E5E7EB);padding:7px 8px;text-align:left;vertical-align:top;}
+  .dtt th{font-size:12px;color:#6B7280;background:#F7F8FA;white-space:nowrap;}
+  .dtt td.nw{white-space:nowrap;}
+  .dtx{overflow-x:auto;} .dtt a{color:#1B365D;font-weight:700;}
+  .dsec{margin:18px 0 4px;font-size:15px;font-weight:800;color:#1B365D;}
+  .dsec small{font-weight:600;color:#6B7280;margin-left:6px;}
   .quick{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px;}
   .quick .btn{height:40px;padding:0 16px;font-size:13.5px;}
 
@@ -244,6 +251,7 @@
   </div>
 
   <div id="msg"></div>
+  <section class="card" id="detail" style="display:none;"></section>
   <div id="loading">불러오는 중입니다. 처음에는 10초 정도 걸릴 수 있습니다.</div>
 
   <div class="trio" id="trio" style="display:none;">
@@ -260,7 +268,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 27</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 28</div>
 </div>
 </div>
 
@@ -669,20 +677,28 @@
     var total = soon + unas + rvn;
     el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + '</span></div>' +
       '<ul class="tdl">' + row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전') + row('wn', unas, '강사 미지정', '강의일이 14일 이내') + row('wn', rvn, '사전확보 미편성', '예약일이 14일 이내') + '</ul>' +
-      '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><a class="btn sm" href="lecture-assignment.html#v=table">처리할 일 보기</a></div>';
+      '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><button type="button" class="btn sm" data-dt="todo">처리할 일 보기</button></div>';
+  }
+  /* 교과목 미편성 과정: 아직 끝나지 않았고(입교 종료일 ≥ 오늘) 입교 시작일이 오늘부터 2개월 이내인 과정 */
+  function noSubjList(has){
+    var today = todayStr(), tq = parseYmd(today), to2 = ymd(new Date(tq.y, tq.m + 1, tq.d));
+    if (!has) { has = {}; allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; }); }
+    return plans.filter(function(p){
+      if (isCancelled(p)) return false;
+      var a = normYmd(p['입교 시작일']); if (!a) return false;
+      var b = normYmd(p['입교 종료일']) || a;
+      if (b < today || a > to2) return false;
+      return !has[String(p['과정+기수'] || '')];
+    });
   }
   function renderNoSubjCard(){
     var el = $('cNoSubj'), today = todayStr();
     if (!sessionsOk) { el.innerHTML = '<div class="chead"><h2>교과목 미편성 과정</h2></div><div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
     var has = {}; allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; });
-    var tq = parseYmd(today), from2 = ymd(new Date(tq.y, tq.m - 3, tq.d)); /* 오늘 기준 2개월 전 */
-    var list = plans.filter(function(p){
-      if (isCancelled(p)) return false;
-      var a = normYmd(p['입교 시작일']); if (!a || a < from2) return false;
-      return !has[String(p['과정+기수'] || '')];
-    }).sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : normYmd(x['입교 시작일']) > normYmd(y['입교 시작일']) ? 1 : 0; });
+    var list = noSubjList(has);
+    list.sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : normYmd(x['입교 시작일']) > normYmd(y['입교 시작일']) ? 1 : 0; });
     var html = '<div class="chead"><h2>교과목 미편성 과정</h2><span class="meta">' + (list.length ? '총 ' + list.length + '과정' : '없음') + '</span></div>';
-    if (!list.length) { el.innerHTML = html + '<div class="empty">최근 2개월 전부터의 과정은 모두 교과목이 편성되어 있습니다.</div>'; return; }
+    if (!list.length) { el.innerHTML = html + '<div class="empty">오늘부터 2개월 이내에 시작하는 과정은 모두 교과목이 편성되어 있습니다.</div>'; return; }
     var shownN = Math.min(list.length, 5);
     html += '<ul class="nsl">' + list.slice(0, shownN).map(function(p){
       var key = String(p['과정+기수']), a = normYmd(p['입교 시작일']), d = dayDiff(today, a);
@@ -690,7 +706,7 @@
       var tag = b2 < today ? '<span class="tag t-none">종료</span>' : d <= 0 ? '<span class="tag t-err">진행 중</span>' : '<span class="tag ' + (d <= 14 ? 't-err' : d <= 30 ? 't-warn' : 't-none') + '">D-' + d + '</span>';
       return '<li><div><a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '&from=home">' + esc(nameOf(key)) + '</a><small>' + esc(ipgyoLine(p).replace(/^입교 /, '')) + '</small></div>' + tag + '</li>';
     }).join('') + '</ul>' +
-      '<div class="foot">' + (list.length > shownN ? '<div class="hint" style="margin-bottom:8px;">시작일이 빠른 순서로 ' + shownN + '과정만 표시했습니다.</div>' : '') + '<a class="btn sm" href="lecture-assignment.html#v=table">전체 과정 보기</a></div>';
+      '<div class="foot">' + (list.length > shownN ? '<div class="hint" style="margin-bottom:8px;">시작일이 빠른 순서로 ' + shownN + '과정만 표시했습니다.</div>' : '') + '<button type="button" class="btn sm" data-dt="nosubj">전체 과정 보기</button></div>';
     el.innerHTML = html;
   }
   function renderMonthCard(){
@@ -708,13 +724,118 @@
     function tile(l, n, u){ return '<div class="c"><span>' + esc(l) + '</span><b>' + n.toLocaleString('ko-KR') + '<small>' + u + '</small></b></div>'; }
     el.innerHTML = '<div class="chead"><h2>이번 달 교육 현황</h2><span class="meta">' + q.y + '년 ' + q.m + '월</span></div>' +
       '<div class="mst">' + tile('개강 기수', open, '회') + tile('계획인원 합계', ppl, '명') + tile('지금 진행 중', run, '회') + tile('다음 달 개강', next, '회') + '</div>' +
-      '<div class="foot"><div class="hint" style="margin-bottom:8px;">입교 시작일이 이번 달인 기수 기준이며 인원은 계획인원입니다.' + (cx ? ' 취소된 ' + cx + '회는 제외했습니다.' : '') + '</div><a class="btn sm" href="lecture-assignment.html#v=cal">월 일정 보기</a></div>';
+      '<div class="foot"><div class="hint" style="margin-bottom:8px;">입교 시작일이 이번 달인 기수 기준이며 인원은 계획인원입니다.' + (cx ? ' 취소된 ' + cx + '회는 제외했습니다.' : '') + '</div><button type="button" class="btn sm" data-dt="month">월 일정 보기</button></div>';
   }
   function renderTrio(){ renderTodoCard(); renderNoSubjCard(); renderMonthCard(); $('trio').style.display = ''; }
 
   function renderAll(){
     renderTrio(); renderToday(); renderWeek(); renderRoom(); renderYear();
+    if (curDetail) renderDetail(curDetail);
   }
+
+  /* ---------- 카드별 상세 화면 ---------- */
+  var curDetail = '';
+  function dtTable(cols, rows, empty){
+    if (!rows.length) return '<div class="empty">' + esc(empty) + '</div>';
+    return '<div class="dtx"><table class="dtt"><thead><tr>' + cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+  }
+  function cLink(key, txt){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '&from=home">' + esc(txt == null ? nameOf(key) : txt) + '</a>'; }
+  function planRow(p, extra){
+    var key = String(p['과정+기수'] || ''), a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a, today = todayStr();
+    var st = b < today ? '종료' : a <= today ? '진행 중' : 'D-' + dayDiff(today, a);
+    return [cLink(key), esc(p['구분'] || ''), esc(ipgyoLine(p).replace(/^입교 /, '')), esc(p['계획인원'] || ''), esc(p['예정 강의실'] || '미정'), esc(st)].concat(extra || []);
+  }
+  var PCOLS = ['과정 · 기수', '구분', '입교 기간', '계획인원', '예정 강의실', '상태'];
+  function detailHtml(kind){
+    var today = todayStr(), html = '';
+    if (!sessionsOk) return '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>';
+    if (kind === 'nosubj') {
+      var list = noSubjList().sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : 1; });
+      return '<div class="chead"><h2>교과목 미편성 과정 전체</h2><span class="meta">' + list.length + '과정</span></div>' +
+        '<div class="cdesc">입교 시작일이 오늘부터 2개월 이내이고 아직 끝나지 않은 과정 중, 교과목이 하나도 편성되지 않은 과정입니다. 과정명을 누르면 교과목 편성 화면으로 이동합니다.</div>' +
+        dtTable(PCOLS, list.map(function(p){ return planRow(p); }), '해당하는 과정이 없습니다.');
+    }
+    if (kind === 'month') {
+      var q = parseYmd(today), ym = q.y + '-' + ('0' + q.m).slice(-2), nq = new Date(q.y, q.m, 1), ny = nq.getFullYear() + '-' + ('0' + (nq.getMonth() + 1)).slice(-2);
+      var srt = function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : 1; };
+      var live = plans.filter(function(p){ return !isCancelled(p); });
+      var open = live.filter(function(p){ return normYmd(p['입교 시작일']).slice(0, 7) === ym; }).sort(srt);
+      var run = live.filter(function(p){ var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a; return a && a <= today && b >= today; }).sort(srt);
+      var next = live.filter(function(p){ return normYmd(p['입교 시작일']).slice(0, 7) === ny; }).sort(srt);
+      var cx = plans.filter(function(p){ return isCancelled(p) && normYmd(p['입교 시작일']).slice(0, 7) === ym; }).sort(srt);
+      html = '<div class="chead"><h2>이번 달 교육 현황 상세</h2><span class="meta">' + q.y + '년 ' + q.m + '월</span></div>' +
+        '<div class="cdesc">입교 시작일 기준입니다. 과정명을 누르면 교과목 편성 화면으로 이동합니다. 월 캘린더는 상단 "월 일정 보기" 버튼에서 볼 수 있습니다.</div>';
+      [['이번 달 개강 기수', open, '이번 달에 시작하는 과정이 없습니다.'], ['지금 진행 중', run, '진행 중인 과정이 없습니다.'], ['다음 달 개강', next, '다음 달에 시작하는 과정이 없습니다.']].forEach(function(g){
+        html += '<div class="dsec">' + g[0] + '<small>' + g[1].length + '회</small></div>' + dtTable(PCOLS, g[1].map(function(p){ return planRow(p); }), g[2]);
+      });
+      if (cx.length) html += '<div class="dsec">이번 달 취소된 기수<small>' + cx.length + '회</small></div>' + dtTable(PCOLS, cx.map(function(p){ return planRow(p); }), '');
+      return html;
+    }
+    /* todo */
+    var has = {}; allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; });
+    var soon = [], unas = [], rv = [];
+    allSessions.forEach(function(r){
+      var pp = planByKey(String(r['개설키'] || '')); if (pp && isCancelled(pp)) return;
+      var date = normYmd(r['일자']); if (!date) return;
+      if (hasInstr(r)) {
+        if (!String(r['강사ID'] || '').trim() || isSubRole(r) || String(r['계획서파일ID'] || '') || date < today) return;
+        var due = addDays(date, -7), left = dayDiff(today, due);
+        if (left === null || left < 0 || left > 14) return;
+        soon.push({ r: r, date: date, due: due, left: left });
+      } else {
+        var d = dayDiff(today, date); if (d !== null && d >= 0 && d <= 14) unas.push({ r: r, date: date, d: d });
+      }
+    });
+    resv.forEach(function(r){
+      if (String(r['유형']) !== '사전확보') return;
+      var key = String(r['개설키'] || ''), pp = planByKey(key);
+      if (!key || has[key] || (pp && isCancelled(pp))) return;
+      var d = dayDiff(today, normYmd(r['일자'])); if (d !== null && d >= 0 && d <= 14) rv.push({ r: r, d: d });
+    });
+    soon.sort(function(x, y){ return x.due < y.due ? -1 : x.due > y.due ? 1 : 0; });
+    unas.sort(function(x, y){ return x.date < y.date ? -1 : x.date > y.date ? 1 : 0; });
+    rv.sort(function(x, y){ return normYmd(x.r['일자']) < normYmd(y.r['일자']) ? -1 : 1; });
+    var per = function(r){ var a = Number(r['시작교시']), b = Number(r['끝교시']); return a === b ? a + '교시' : a + '~' + b + '교시'; };
+    var dl = function(n){ return n === 0 ? '오늘' : n + '일 후'; };
+    html = '<div class="chead"><h2>처리할 일 상세</h2><span class="meta">총 ' + (soon.length + unas.length + rv.length) + '건</span></div>' +
+      '<div class="cdesc">홈 카드와 같은 기준(14일 이내)입니다. 겹침 경고·강사 서류는 강의배정 화면의 처리할 일에서 확인합니다.</div>';
+    html += '<div class="dsec">강의계획서 14일 이내 임박<small>' + soon.length + '건 · 기한은 강의일 7일 전</small></div>' +
+      dtTable(['기한까지', '기한', '과정 · 기수', '교과목 (강의일)', '강사'], soon.map(function(o){
+        return [esc(dl(o.left)), '<span class="nw">' + esc(md(o.due)) + '</span>', cLink(String(o.r['개설키'])), esc(o.r['교과목'] || '') + ' (' + esc(md(o.date)) + ')', esc(o.r['강사명'] || o.r['강사ID'] || '')];
+      }), '해당하는 건이 없습니다.');
+    html += '<div class="dsec">강사 미지정<small>' + unas.length + '건 · 강의일이 14일 이내</small></div>' +
+      dtTable(['강의일까지', '강의일', '과정 · 기수', '교과목 (교시)', '강의실'], unas.map(function(o){
+        return [esc(dl(o.d)), '<span class="nw">' + esc(md(o.date)) + '</span>', cLink(String(o.r['개설키'])), esc(o.r['교과목'] || '') + ' (' + esc(per(o.r)) + ')', esc(o.r['강의실'] || '미정')];
+      }), '해당하는 건이 없습니다.');
+    html += '<div class="dsec">사전확보 미편성<small>' + rv.length + '건 · 예약일이 14일 이내</small></div>' +
+      dtTable(['예약일까지', '예약일', '과정 · 기수', '교시', '강의실'], rv.map(function(o){
+        return [esc(dl(o.d)), '<span class="nw">' + esc(md(normYmd(o.r['일자']))) + '</span>', cLink(String(o.r['개설키'])), esc(per(o.r)), esc(o.r['강의실'] || '')];
+      }), '해당하는 건이 없습니다.');
+    return html;
+  }
+  function renderDetail(kind){
+    var box = $('detail');
+    box.innerHTML = '<div style="margin-bottom:10px;"><button type="button" class="btn sm" data-dt="">← 홈으로</button></div>' + detailHtml(kind);
+  }
+  function showDetail(kind, noHash){
+    curDetail = kind || '';
+    var home = ['trio', 'main', 'cYear'], quick = document.querySelector('.quick');
+    home.forEach(function(id){ var el = $(id); if (!el) return; if (curDetail) { if (!el.hasAttribute('data-hid') || el.style.display !== 'none') el.setAttribute('data-hid', el.style.display || ' '); el.style.display = 'none'; } else if (el.hasAttribute('data-hid')) { var v = el.getAttribute('data-hid'); el.style.display = v === ' ' ? '' : v; el.removeAttribute('data-hid'); } });
+    if (quick) quick.style.display = curDetail ? 'none' : '';
+    $('detail').style.display = curDetail ? '' : 'none';
+    if (curDetail) { renderDetail(curDetail); window.scrollTo(0, 0); }
+    if (!noHash) { try { if (curDetail) location.hash = 'd=' + curDetail; else history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
+  }
+  document.addEventListener('click', function(ev){
+    var t = ev.target && ev.target.closest ? ev.target.closest('[data-dt]') : null;
+    if (!t) return;
+    showDetail(t.getAttribute('data-dt'));
+  });
+  window.addEventListener('hashchange', function(){
+    var m = /^#d=(todo|nosubj|month)$/.exec(location.hash);
+    if ((m ? m[1] : '') !== curDetail && $('app').style.display !== 'none') showDetail(m ? m[1] : '', true);
+  });
 
   /* ---------- 시계 ---------- */
   var lastLoad = '';
@@ -778,6 +899,7 @@
       $('loading').style.display = 'none';
       $('main').style.display = '';
       renderAll();
+      (function(){ var m = /^#d=(todo|nosubj|month)$/.exec(location.hash), k = m ? m[1] : curDetail; if (k) showDetail(k, true); })();
     });
   }
 
