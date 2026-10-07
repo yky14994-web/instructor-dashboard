@@ -422,6 +422,9 @@
   .rvl{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;}
   .rvl th,.rvl td{border-bottom:1px solid #E5E0EE;padding:5px 6px;text-align:left;vertical-align:top;}
   .rvl th{font-size:12px;color:var(--text-sub);}
+  input[type=date]{font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif !important;}
+  .dowtag{font-size:13px;font-weight:800;color:var(--navy);white-space:nowrap;}
+  .rvf label .dowtag{font-weight:700;margin-top:2px;}
   .rgbox{margin:12px 0 4px;}
   .rgbox .rmm{max-height:60vh;}
   table.rgt{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%;}
@@ -2460,6 +2463,7 @@
     return a && b && a.start && b.end ? a.start + '~' + b.end : '';
   }
   /* 강의실 × 교시 격자: 빈 칸을 눌러 예약 입력에 날짜·교시·강의실을 채움 */
+  function dowTag(d){ var q = parseYmd(normYmd(d) || ''); return q ? '(' + DOW[q.dow] + '요일)' : ''; }
   function renderRoomGrid(use, pn){
     var viewer = isViewer(), rl = rooms.filter(function(r){ return !roomSkip[r]; });
     Object.keys(use).forEach(function(r){ if (rl.indexOf(r) < 0 && !roomSkip[r]) rl.push(r); });
@@ -2519,11 +2523,9 @@
     var opt = function(sel){ return pn.map(function(n){ return '<option value="' + n + '"' + (n === sel ? ' selected' : '') + '>' + n + '교시</option>'; }).join(''); };
     var head = '<div class="pcalbox"><div class="pcalbar"><h3>빈 강의실 찾기·예약</h3></div>' +
       '<div class="rmq"><button type="button" class="btn sm" data-cm="rm:prev">◀ 전날</button>' +
-      '<input type="date" id="roomDateIn" value="' + esc(roomDate) + '" aria-label="날짜">' +
+      '<input type="date" id="roomDateIn" value="' + esc(roomDate) + '" aria-label="날짜"><span class="dowtag">' + dowTag(roomDate) + '</span>' +
       '<button type="button" class="btn sm" data-cm="rm:next">다음날 ▶</button><button type="button" class="btn sm" data-cm="rm:today">오늘</button>' +
-      '<select id="roomSSel" aria-label="시작 교시">' + opt(roomS) + '</select><span class="lb">~</span><select id="roomESel" aria-label="끝 교시">' + opt(roomE) + '</select></div>' +
-      '<div class="rmq"><span class="lb">월별 현황</span><input type="month" id="roomMonthIn" value="' + esc(roomMonth || roomDate.slice(0, 7)) + '" aria-label="조회·내려받을 월">' +
-      '<button type="button" class="btn sm" data-cm="rm:xlsx">이 달 전체 강의실 엑셀 내려받기</button></div>';
+      '<select id="roomSSel" aria-label="시작 교시">' + opt(roomS) + '</select><span class="lb">~</span><select id="roomESel" aria-label="끝 교시">' + opt(roomE) + '</select></div>';
     if (!rooms.length) {
       box.innerHTML = head + '<div class="hint">강의실 목록(강의배정DB 강의실 시트)이 비어 있어 빈 강의실을 계산할 수 없습니다.</div></div>';
       return;
@@ -2609,6 +2611,8 @@
     all.forEach(function(r){ usage.forEach(function(u, i){ if (wk[i]) return; var l = u[r] || []; if (l.some(function(x){ return x.type !== 'plan'; })) allU++; else if (l.length) allP++; }); });
     var rate = nwk && tot ? Math.round((allU + allP) / (nwk * tot) * 1000) / 10 : 0;
     return '<div class="rmgrp" style="margin-top:22px;">' + q0.y + '년 ' + q0.m + '월 강의실 현황<small>강의실 ' + tot + '곳 · 평일 ' + nwk + '일</small></div>' +
+      '<div class="rmq"><span class="lb">조회 월</span><input type="month" id="roomMonthIn" value="' + esc(ym) + '" aria-label="조회·내려받을 월">' +
+      '<button type="button" class="btn sm" data-cm="rm:xlsx">이 달 전체 강의실 엑셀 내려받기</button></div>' +
       '<div class="rmq"><span class="lb">화면 표시</span><select id="roomMonthRoomSel" aria-label="표시할 강의실">' + ropts + '</select><span class="lb">엑셀은 항상 전체 강의실</span></div>' +
       '<div class="pcalsum">전체 평균 가동률 <b>' + rate + '%</b> · 편성 사용 ' + allU + '강의실·일 + 예정 ' + allP + '강의실·일 ÷ (평일 ' + nwk + '일 × ' + tot + '곳) <small>(가동률 = 하루라도 사용·예정이 있는 평일 수 ÷ 그 달 평일 수, 교시 단위 아님)</small></div>' +
       '<div class="calleg" style="margin:4px 0 2px;"><span><i style="background:#DCE8F8"></i>편성된 교과목 사용</span><span><i style="background:#FFF1BF"></i>연간계획 예정(편성 전)</span><span><i style="background:#E6DDF5"></i>예약 포함(사전확보·대관)</span><span><i style="border-color:#D8574B"></i>같은 날 겹침</span><span><i style="background:#F3F4F6"></i>주말</span></div>' +
@@ -2656,8 +2660,8 @@
         '<div class="rmq" style="margin-bottom:4px;"><label><input type="radio" name="rvType" value="사전확보" ' + (rvSt.type === '사전확보' ? 'checked' : '') + '> 사전확보 <small class="hint">과정은 있고 교과목은 아직 미편성</small></label> ' +
         '<label><input type="radio" name="rvType" value="대관" ' + (rvSt.type === '대관' ? 'checked' : '') + '> 대관 <small class="hint">과정·교과목 없이 다른 용도</small></label></div>' +
         '<div class="rvf">' +
-        '<label>시작일<input type="date" id="rvFrom" value="' + esc(rvSt.from) + '"></label>' +
-        (rvSt.editId ? '' : '<label>종료일(하루면 비움)<input type="date" id="rvTo" value="' + esc(rvSt.to) + '"></label>') +
+        '<label>시작일<input type="date" id="rvFrom" value="' + esc(rvSt.from) + '"><span class="dowtag">' + dowTag(rvSt.from) + '</span></label>' +
+        (rvSt.editId ? '' : '<label>종료일(하루면 비움)<input type="date" id="rvTo" value="' + esc(rvSt.to) + '"><span class="dowtag">' + dowTag(rvSt.to) + '</span></label>') +
         '<label>시작 교시<select id="rvS">' + po(rvSt.s) + '</select></label><label>끝 교시<select id="rvE">' + po(rvSt.e) + '</select></label>' +
         '<label>강의실<select id="rvRoom">' + ro + '</select></label>' +
         (rvSt.type === '사전확보' ? '<label class="wide">과정<select id="rvKey">' + po2 + '</select></label>' : '<label class="wide">사유·사용부서<input type="text" id="rvReason" maxlength="200" placeholder="예: 인사팀 신규임용 면접 / 안전관리과 회의" value="' + esc(rvSt.reason) + '"></label>') +
