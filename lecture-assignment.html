@@ -98,6 +98,7 @@
   .t-none{background:var(--none-bg);color:var(--none-fg);}
   .t-info{background:var(--info-bg);color:var(--info-fg);}
   .t-ops{background:#E6ECF6;color:#27406B;}
+  .chgm{display:block;font-size:11px;margin-top:3px;color:var(--text-sub);line-height:1.3;font-weight:600;}
   .chk{font-size:11.5px;margin-top:4px;color:var(--text-sub);line-height:1.35;}
   .empty{padding:36px 16px;text-align:center;color:var(--text-muted);font-size:13.5px;line-height:1.6;}
   #loading{padding:40px 16px;text-align:center;color:var(--text-muted);}
@@ -1131,11 +1132,11 @@
     if (s.kind === 'cx') {
       var st0 = sessionsByKey[p['과정+기수']];
       if (!st0 || !st0.total) return '<span class="legend">-</span>';
-      return '<button type="button" class="tag tagbtn t-none" data-open="' + esc(p['과정+기수']) + '" title="남아 있는 편성 보기">남은 교과목 ' + st0.total + '개 ›</button>';
+      return '<button type="button" class="tag tagbtn t-none" data-open="' + esc(p['과정+기수']) + '" title="남아 있는 편성 보기">남은 교과목 ' + st0.total + '개 ›</button>' + chgLastLine(p['과정+기수']);
     }
     var cls = s.kind === 'none' ? 't-none' : s.kind === 'ok' ? 't-ok' : 't-info';
     var stx = s.kind === 'ok' ? '교과목 ' + (sessionsByKey[p['과정+기수']] || {}).total + '개 · 배정 완료' : s.text;
-    return '<button type="button" class="tag tagbtn ' + cls + '" data-open="' + esc(p['과정+기수']) + '" title="교과목 편성 화면 열기">' + esc(stx) + ' ›</button>' + cflTag(p);
+    return '<button type="button" class="tag tagbtn ' + cls + '" data-open="' + esc(p['과정+기수']) + '" title="교과목 편성 화면 열기">' + esc(stx) + ' ›</button>' + cflTag(p) + chgLastLine(p['과정+기수']);
   }
 
   function render(){
@@ -1972,6 +1973,27 @@
     if (chgTime(old) !== chgTime(nw)) add('교과목 일정 변경', chgTime(old), chgTime(nw));
     if (String(old['강사ID'] || '') !== String(nw['강사ID'] || '') || chgWho(old) !== chgWho(nw)) add('교과목 강사 변경', chgWho(old), chgWho(nw));
     if (String(old['강의실'] || '') !== String(nw['강의실'] || '')) add('교과목 강의실 변경', String(old['강의실'] || '') || '미정', String(nw['강의실'] || '') || '미정');
+  }
+  /* 과정별 마지막 교과목 변경(목록 표시용): 교과목 추가·일정·강사·강의실 변경·삭제, 편성 복사 */
+  var chgLastCache = null, chgLastN = -1;
+  function chgLastMap(){
+    if (chgLastCache && chgLastN === history.length) return chgLastCache;
+    var m = {}, n = {};
+    history.forEach(function(h){
+      var t = String(h['유형'] || '');
+      if (t.indexOf('교과목 ') !== 0 && t !== '편성 복사') return;
+      var k = String(h['개설키'] || ''), at = String(h['일시'] || '');
+      n[k] = (n[k] || 0) + 1;
+      if (!m[k] || at >= m[k].at) m[k] = { at: at, type: t.replace('교과목 ', ''), item: String(h['항목'] || ''), before: String(h['전'] || ''), after: String(h['후'] || '') };
+    });
+    Object.keys(m).forEach(function(k){ m[k].n = n[k]; });
+    chgLastCache = m; chgLastN = history.length; return m;
+  }
+  function chgLastLine(key){
+    var c = chgLastMap()[key]; if (!c) return '';
+    var q = /^(\d{4}-\d{2}-\d{2})[ T]?(\d{2}:\d{2})?/.exec(c.at), when = q ? md(q[1]) + (q[2] ? ' ' + q[2] : '') : c.at;
+    var tip = c.item + (c.before || c.after ? ' : ' + chgDate(c.before) + (c.before && c.after ? ' → ' : '') + chgDate(c.after) : '') + ' (교과목 변경 ' + c.n + '건)';
+    return '<span class="chgm" title="' + esc(tip) + '">최근 변경 ' + esc(when) + ' · ' + esc(c.type) + '</span>';
   }
   function chgDate(t){ return String(t || '').replace(/\d{4}-\d{2}-\d{2}/g, function(d){ return md(d); }); }
   function chgHeadHtml(key){
