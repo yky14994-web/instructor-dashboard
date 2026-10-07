@@ -543,6 +543,12 @@
   table.g td.c{height:56px;padding:3px;}
   table.g td.empty{cursor:pointer;}
   table.g td.empty:hover{background:#F3F8FF;}
+  table.g td.gpopen,table.g td.gpdone{vertical-align:middle;text-align:center;}
+  table.g td.gpopen{background:repeating-linear-gradient(135deg,#FFF6D8,#FFF6D8 6px,#FFFDF3 6px,#FFFDF3 12px);}
+  table.g td.gpdone{background:repeating-linear-gradient(135deg,#E6E8EB,#E6E8EB 6px,#F4F5F7 6px,#F4F5F7 12px);}
+  .gpt{display:block;font-size:11.5px;font-weight:800;color:#8A6D00;} td.gpdone .gpt{color:#5B6470;} .gpt small{display:block;font-weight:600;font-size:10.5px;margin-top:1px;}
+  .gpb{margin-top:4px;height:22px;padding:0 7px;border:1px solid #C9BFA0;border-radius:5px;background:#fff;font-size:11px;font-weight:700;cursor:pointer;color:#5a4a00;} td.gpdone .gpb{border-color:#B8BEC7;color:#444;}
+  table.g td.gpopen:hover::after,table.g td.gpdone:hover::after{content:none !important;}
   table.g td.empty:hover::after{content:'+ 교과목 추가';display:block;text-align:center;color:#5b7fa8;font-size:11.5px;margin-top:14px;}
   .gc{border-radius:6px;padding:5px 7px;height:100%;font-size:12.5px;line-height:1.4;background:var(--info-bg);border:1px solid #C9D8EC;overflow:hidden;}
   .gc.ed{cursor:pointer;} .gc.ed:hover{filter:brightness(.97);}
@@ -1202,7 +1208,7 @@
       plans = sortPlans(a['연간계획'] || []); courseRank = null;
       history = a['변경이력'] || [];
       resv = a['강의실예약'] || [];
-      gapChk = {}; (a['빈교시확인'] || []).forEach(function(g){ gapChk[g['개설키'] + '|' + g['일자'] + '|' + g['교시']] = true; });
+      gapLoad(a['빈교시확인']);
       periods = (a['교시표'] || []).map(function(r){
         return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || ''), kind: String(r['구분'] || '') };
       }).filter(function(x){ return isFinite(x.n); }).sort(function(x, y){ return x.n - y.n; });
@@ -2673,16 +2679,28 @@
     if (id === 'rvNote') { rvSt.note = v; return true; }
     return false;
   }
+  /* 빈 교시 비워둠 처리/취소: act = gp:mark|undo:개설키|일자[|교시] */
   function gapMark(act){
-    var m = /^gp:mark:(.+)\|(\d{4}-\d{2}-\d{2})$/.exec(act); if (!m || isViewer()) return;
-    var key = m[1], d = m[2], idx = gapIndex();
-    var g = gapsOf(planByKey(key) || {}, d, idx).filter(function(x){ return x.date === d; })[0];
-    if (!g) return;
-    if (!confirm(courseLabel(key) + '\n' + md(d) + ' ' + gapNumText(g.nums) + '\n\n이 칸을 일부러 비워 둔 칸으로 처리할까요? 처리하면 빈 교시 목록에서 빠집니다(편성은 그대로 가능).')) return;
-    api({ action: 'markGaps', password: getPw(), 항목: g.nums.map(function(n){ return { 개설키: key, 일자: d, 교시: n }; }) }).then(function(res){
+    var m = /^gp:(mark|undo):(.+)\|(\d{4}-\d{2}-\d{2})(?:\|(\d+))?$/.exec(act); if (!m || isViewer()) return;
+    var on = m[1] === 'mark', key = m[2], d = m[3], one = m[4] ? Number(m[4]) : 0, nums;
+    if (on) {
+      var g = gapsOf(planByKey(key) || {}, d, gapIndex()).filter(function(x){ return x.date === d; })[0];
+      nums = one ? [one] : (g ? g.nums : []);
+      if (one && !g && gapSlotState(planByKey(key) || {}, d, one) !== 'open') return;
+    } else {
+      var o = gapDoneList().filter(function(x){ return x.key === key && x.date === d; })[0];
+      nums = one ? [one] : (o ? o.nums : []);
+    }
+    if (!nums.length) return;
+    var label = courseLabel(key) + '\n' + md(d) + ' ' + gapNumText(nums), reason = '';
+    if (on) {
+      var r = window.prompt(label + '\n\n일부러 비워 두는 칸으로 처리합니다. 사유를 적어 주세요(선택, 비워도 됩니다).\n예: 강사 섭외 중, 자율학습\n\n※ 처리해도 "비워둠 처리한 칸"에 남고, 편성된 것으로 계산되지 않으며 언제든 취소할 수 있습니다.', '');
+      if (r === null) return; reason = r.trim();
+    } else if (!confirm(label + '\n\n비워둠 처리를 취소할까요? 취소하면 다시 빈 교시로 표시됩니다.')) return;
+    api({ action: 'markGaps', password: getPw(), 처리: on, 사유: reason, 항목: nums.map(function(n){ return { 개설키: key, 일자: d, 교시: n }; }) }).then(function(res){
       if (res.status !== 'ok') { alert(res.message || '처리하지 못했습니다'); return; }
-      g.nums.forEach(function(n){ gapChk[key + '|' + d + '|' + n] = true; });
-      renderTodo();
+      nums.forEach(function(n){ var k = key + '|' + d + '|' + n; if (on) gapChk[k] = { r: reason, at: '방금' }; else delete gapChk[k]; });
+      if (currentKey) renderSessionList(); else renderTodo();
     }).catch(function(){ alert('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'); });
   }
   function roomNav(act){
@@ -2932,8 +2950,10 @@
      ① 강의계획서: 미제출 중 기한 14일 이내 임박(기한 지난 건은 표시하지 않음)  ② 강사 미지정: 강의일 14일 이내  ③ 겹침 경고: 미확인 전체  ④ 강사 서류: 강의일 14일 이내 배정 강사 중 미비·보유 만료 */
   var todoCat = '', todoTab = 'all', todoMore = false;
 
-  /* ---------- 편성 빈 교시(처리하지 않은 빈칸) ---------- */
-  var gapChk = {};   // '개설키|일자|교시' → true (의도한 빈칸으로 처리됨)
+  /* ---------- 빈 교시 (일부만 편성된 과정의 비어 있는 수업 교시) ---------- */
+  var gapChk = {};   // '개설키|일자|교시' → { r: 사유, at: 처리일시 } (비워둠 처리됨)
+  var GAP_LONG_DAYS = 35;   // 입교 기간이 5주(35일)를 넘는 과정은 빈 교시 표시 대상에서 제외
+  function gapLoad(list){ gapChk = {}; (list || []).forEach(function(g){ gapChk[g['개설키'] + '|' + g['일자'] + '|' + g['교시']] = { r: String(g['사유'] || ''), at: String(g['처리일시'] || '') }; }); }
   function gapClassNums(){
     var all = periods.map(function(x){ return x.n; });
     var cls = periods.filter(function(x){ return /수업/.test(x.kind || ''); }).map(function(x){ return x.n; });
@@ -2944,19 +2964,32 @@
     while (i < nums.length) { var j = i; while (j + 1 < nums.length && nums[j + 1] === nums[j] + 1) j++; out.push(i === j ? String(nums[i]) : nums[i] + '~' + nums[j]); i = j + 1; }
     return out.join(', ') + '교시';
   }
-  /* 과정(p)의 입교 기간 평일(사이버·실습 기간 제외) 중 minDate 이후, 편성도 처리 표시도 없는 수업 교시. 편성이 한 건도 없는 과정은 '미편성 과정'이므로 제외 */
-  function gapsOf(p, minDate, idx){
-    var key = String(p['과정+기수'] || ''), a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a;
-    if (!key || !a || !idx[key]) return [];
-    var cls = gapClassNums(), skip = [[normYmd(p['사이버 시작일']), normYmd(p['사이버 종료일'])], [normYmd(p['실습(외부) 시작일']), normYmd(p['실습(외부) 종료일'])]];
-    var out = [];
+  function gapIsLong(p){
+    var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a;
+    return !!a && dayDiff(a, b) + 1 > GAP_LONG_DAYS;
+  }
+  /* 과정의 수업일(입교 기간 평일, 사이버·실습 기간 제외) */
+  function gapDayList(p){
+    var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a, out = [];
+    if (!a) return out;
+    var skip = [[normYmd(p['사이버 시작일']), normYmd(p['사이버 종료일'])], [normYmd(p['실습(외부) 시작일']), normYmd(p['실습(외부) 종료일'])]];
     for (var d = a, n = 0; d <= b && n < 400; d = addDays(d, 1), n++) {
-      if (d < minDate) continue;
       var q = parseYmd(d); if (!q || q.dow === 0 || q.dow === 6) continue;
       if (skip.some(function(r){ return r[0] && r[1] && d >= r[0] && d <= r[1]; })) continue;
+      out.push(d);
+    }
+    return out;
+  }
+  /* 처리하지 않은 빈 교시. 편성이 한 건도 없는 과정은 '미편성 과정'이므로 제외, 5주 초과 과정도 제외 */
+  function gapsOf(p, minDate, idx){
+    var key = String(p['과정+기수'] || '');
+    if (!key || !idx[key] || gapIsLong(p)) return [];
+    var cls = gapClassNums(), out = [];
+    gapDayList(p).forEach(function(d){
+      if (d < minDate) return;
       var have = idx[key][d] || {}, miss = cls.filter(function(x){ return !have[x] && !gapChk[key + '|' + d + '|' + x]; });
       if (miss.length) out.push({ key: key, date: d, nums: miss });
-    }
+    });
     return out;
   }
   function gapIndex(){
@@ -2969,7 +3002,7 @@
     });
     return idx;
   }
-  /* 오늘부터 2개월 이내 시작·미종료 과정 중 처리하지 않은 빈 교시가 있는 과정: [{p, gaps:[{key,date,nums}]}] */
+  /* 오늘부터 2개월 이내 시작·미종료 과정 중 처리하지 않은 빈 교시가 있는 과정(빈 날짜가 maxDay일 이내): [{p, gaps}] */
   function gapCourses(maxDay){
     var today = ymd(new Date()), tq = parseYmd(today), to2 = ymd(new Date(tq.y, tq.m + 1, tq.d)), idx = gapIndex(), out = [];
     plans.forEach(function(p){
@@ -2982,6 +3015,38 @@
     });
     out.sort(function(x, y){ return x.gaps[0].date < y.gaps[0].date ? -1 : x.gaps[0].date > y.gaps[0].date ? 1 : 0; });
     return out;
+  }
+  /* 비워둠 처리된 칸(아직 편성되지 않은 것, 오늘 이후): [{key, date, nums, reason, at}] */
+  function gapDoneList(){
+    var today = ymd(new Date()), idx = gapIndex(), by = {}, out = [];
+    Object.keys(gapChk).forEach(function(k){
+      var m = /^(.+)\|(\d{4}-\d{2}-\d{2})\|(\d+)$/.exec(k); if (!m) return;
+      var key = m[1], d = m[2], n = Number(m[3]);
+      if (d < today) return;
+      var p = planByKey(key); if (!p || isCancelled(p)) return;
+      if (idx[key] && idx[key][d] && idx[key][d][n]) return;   // 이후 편성됨
+      var g = key + '|' + d, o = by[g] || (by[g] = { key: key, date: d, nums: [], reason: '', at: '' });
+      o.nums.push(n); if (gapChk[k].r) o.reason = gapChk[k].r; if (gapChk[k].at > o.at) o.at = gapChk[k].at;
+    });
+    Object.keys(by).forEach(function(g){ by[g].nums.sort(function(x, y){ return x - y; }); out.push(by[g]); });
+    out.sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : a.key < b.key ? -1 : 1; });
+    return out;
+  }
+  /* 과정별 편성 현황: 수업 교시 전체 중 편성된 교시, 비워둠 처리된 교시 */
+  function courseFill(p, idx){
+    var key = String(p['과정+기수'] || ''), cls = gapClassNums(), tot = 0, fill = 0, done = 0;
+    gapDayList(p).forEach(function(d){
+      var have = (idx[key] || {})[d] || {};
+      cls.forEach(function(n){ tot++; if (have[n]) fill++; else if (gapChk[key + '|' + d + '|' + n]) done++; });
+    });
+    return { total: tot, filled: fill, done: done };
+  }
+  /* 격자 칸 상태: 'open'(빈 교시) / 'done'(비워둠 처리) / ''(해당 없음) — 편성이 없는 칸에서만 호출 */
+  function gapSlotState(p, d, n){
+    var key = String(p['과정+기수'] || '');
+    if (!key || gapIsLong(p) || gapClassNums().indexOf(n) < 0 || gapDayList(p).indexOf(d) < 0) return '';
+    if (!allSessions.some(function(r){ return String(r['개설키'] || '') === key; })) return '';
+    return gapChk[key + '|' + d + '|' + n] ? 'done' : 'open';
   }
   var TODO_DAYS = 14;
   function todoItems(){
@@ -3095,15 +3160,25 @@
     gapRows.sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
     var todayG = ymd(new Date());
     D.gap = { label: '빈 교시', n: gapRows.length,
-      sum: '일부만 편성된 과정에서 입교 기간 평일의 수업 교시 중 교과목이 없는 칸 <b>' + gapRows.length + '건</b> · 오늘부터 7일 이내 · 일부러 비운 칸은 "빈칸 처리"',
+      sum: '일부만 편성된 과정에서 입교 기간 평일의 수업 교시 중 교과목이 없는 칸 <b>' + gapRows.length + '건</b> · 오늘부터 7일 이내 · 일부러 비운 칸은 "비워둠 처리"',
       cols: ['날짜까지', '날짜', '과정 · 기수', '빈 교시', viewer ? '' : '처리'],
       items: gapRows.map(function(g){
         var d = dayDiff(todayG, g.date), pill = pillHtml(d <= 2 ? 'bad' : 'wn', dLabel(d)), tx = gapNumText(g.nums);
-        var btn = viewer ? '' : '<button type="button" class="btn sm" data-cm="gp:mark:' + esc(g.key) + '|' + esc(g.date) + '">빈칸 처리</button>';
+        var btn = viewer ? '' : '<button type="button" class="btn sm" data-cm="gp:mark:' + esc(g.key) + '|' + esc(g.date) + '">비워둠 처리</button>';
         return { key: g.key, cells: [pill, '<span class="nw">' + esc(md(g.date)) + '</span>', esc(courseLabel(g.key)), esc(tx), btn],
           title: pill + ' ' + esc(tx), sub: esc(courseLabel(g.key)) + ' · ' + esc(md(g.date)), extra: btn };
       }),
-      note: '행을 누르면 교과목 편성 화면으로 이동합니다. 교과목·강사를 못 구해 일부러 비워 둔 칸은 "빈칸 처리"를 누르면 이 목록과 홈에서 빠집니다(편성하면 자동으로 빠집니다).' };
+      note: '행을 누르면 교과목 편성 화면으로 이동합니다. 교과목·강사를 못 구해 일부러 비워 둔 칸은 "비워둠 처리"로 사유를 남기면 이 목록에서 빠지고 "비워둠 처리한 칸" 탭에 계속 표시됩니다(편성하면 자동으로 빠집니다).' };
+    var gd = gapDoneList();
+    D.gapdone = { label: '비워둠 처리한 칸', n: gd.length, info: true,
+      sum: '일부러 비워 두기로 처리한 칸 <b>' + gd.length + '건</b> · 편성된 것이 아니므로 잊지 않도록 계속 표시합니다 · 이 건수는 위 "처리할 일" 합계에 넣지 않습니다',
+      cols: ['날짜', '과정 · 기수', '비워둔 교시', '사유', '처리일시', viewer ? '' : '취소'],
+      items: gd.map(function(o){
+        var btn = viewer ? '' : '<button type="button" class="btn sm" data-cm="gp:undo:' + esc(o.key) + '|' + esc(o.date) + '">처리 취소</button>';
+        return { key: o.key, cells: ['<span class="nw">' + esc(md(o.date)) + '</span>', esc(courseLabel(o.key)), esc(gapNumText(o.nums)), esc(o.reason || '-'), esc(o.at || ''), btn],
+          title: esc(md(o.date)) + ' ' + esc(gapNumText(o.nums)), sub: esc(courseLabel(o.key)) + (o.reason ? ' · ' + esc(o.reason) : ''), extra: btn };
+      }),
+      note: '행을 누르면 교과목 편성 화면으로 이동합니다. 교과목을 편성하면 자동으로 이 목록에서 빠지고, "처리 취소"하면 다시 빈 교시로 돌아갑니다.' };
     var rv = resvNoSubj(), today0 = ymd(new Date());
     D.resv = { label: '사전확보 미편성', n: rv.length,
       sum: '강의실을 사전확보했지만 ' + TODO_DAYS + '일 이내에 교과목이 아직 편성되지 않은 과정 예약 <b>' + rv.length + '건</b>',
@@ -3116,7 +3191,7 @@
       note: '행을 누르면 해당 과정의 교과목 편성 화면으로 이동합니다. 교과목을 편성하면 그 시간의 예약은 자동으로 편성으로 바뀌고 이 목록에서 빠집니다.' };
     return D;
   }
-  var TODO_ORDER = ['plan', 'unas', 'cfl', 'docs', 'resv', 'gap'];
+  var TODO_ORDER = ['plan', 'unas', 'cfl', 'docs', 'resv', 'gap', 'gapdone'];
   function renderTodo(){
     var box = $('todo');
     if (!box) return;
@@ -3124,7 +3199,7 @@
     if (instructors === null) ensureInstructors();
     var D = todoData();
     box.style.display = '';
-    var total = TODO_ORDER.reduce(function(a, k){ return a + (D[k].n || 0); }, 0);
+    var total = TODO_ORDER.reduce(function(a, k){ return a + (D[k].info ? 0 : (D[k].n || 0)); }, 0);
     if (!total && instructors !== null) {
       box.innerHTML = '<div class="th"><h3>처리할 일</h3></div><div class="tnone">처리할 일이 없습니다. 강의계획서 기한, 강사 미지정(' + TODO_DAYS + '일 이내), 겹침 경고, 강사 서류, 사전확보 미편성, 빈 교시에 해당하는 항목이 없습니다.</div>';
       return;
@@ -3476,6 +3551,12 @@
     B.rows.forEach(function(r){ ch.push({ row: r, date: A.date, s: A.s, e: A.e }); });
     mvApply(ch, '"' + A.subj + '"과(와) "' + B.subj + '"의 시간을 맞바꿨습니다.', B.date);
   }
+  function gapCellHtml(gs, p, d, n, canEdit){
+    if (!gs) return '';
+    var key = String(p['과정+기수'] || ''), rec = gapChk[key + '|' + d + '|' + n];
+    if (gs === 'open') return '<span class="gpt">빈 교시</span>' + (canEdit ? '<button type="button" class="gpb" data-cm="gp:mark:' + esc(key) + '|' + esc(d) + '|' + n + '" title="교과목·강사를 못 구해 일부러 비워 두는 칸으로 처리합니다">비워둠 처리</button>' : '');
+    return '<span class="gpt">비워둠' + (rec && rec.r ? '<small>' + esc(rec.r) + '</small>' : '') + '</span>' + (canEdit ? '<button type="button" class="gpb" data-cm="gp:undo:' + esc(key) + '|' + esc(d) + '|' + n + '" title="비워둠 처리를 취소합니다">처리 취소</button>' : '');
+  }
   function gridCell(u, cont, canEdit, p, cx){
     var r = u[0], gid = groupId(r), cl = cflByGid[gid] || [];
     var open = cl.filter(function(c){ return !c.conf; });
@@ -3591,10 +3672,11 @@
             }
             body += '<td class="c' + sh + '" data-d="' + di + '" rowspan="' + st.rs + '">' + gridCell(st.u, st.cont, ce, cp0, cx) + '</td>';
           } else if (li === 0 && canEdit && !all) {
+            var gs = gapSlotState(p, d, n);
             if (mv && mv.key === currentKey) body += '<td class="c empty mvt' + sh + '" data-d="' + di + '" data-mvto="' + d + '|' + n + '" title="누르면 선택한 교과목을 이 칸으로 옮깁니다"></td>';
-            else body += '<td class="c empty' + sh + '" data-d="' + di + '" data-new="' + d + '|' + n + '"></td>';
+            else body += '<td class="c empty' + (gs ? ' gp' + gs : '') + sh + '" data-d="' + di + '" data-new="' + d + '|' + n + '">' + gapCellHtml(gs, p, d, n, true) + '</td>';
           }
-          else body += '<td class="c' + sh + '" data-d="' + di + '"></td>';
+          else { var gs2 = (!all && li === 0) ? gapSlotState(p, d, n) : ''; body += '<td class="c' + (gs2 ? ' gp' + gs2 : '') + sh + '" data-d="' + di + '">' + gapCellHtml(gs2, p, d, n, false) + '</td>'; }
         }
       });
       body += '</tr>';
@@ -3618,7 +3700,7 @@
     var pHead = all ? '<div class="gprinthead"><h2>주간 교과목 시간표</h2><div class="gpm"><span><b>기간</b> ' + (wi + 1) + '주차 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span><span><b>진행 과정</b> ' + courses.length + '개</span></div></div>' :
       '<div class="gprinthead"><h2>' + esc(p['과정명'] || '') + ' ' + esc(p['기수'] || '') + '</h2><div class="gpm">' +
       '<span><b>구분</b> ' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ') || '-') + '</span>' +
-      '<span><b>입교</b> ' + esc(ipgyo(p)) + '</span>' +
+      '<span><b>입교</b> ' + esc(ipgyo(p)) + '</span>' + (function(){ var cf = courseFill(p, gapIndex()); return cf.total ? '<span><b>편성 현황</b> ' + cf.filled + '/' + cf.total + '교시' + (cf.done ? ' (비워둠 ' + cf.done + ')' : '') + '</span>' : ''; })() +
       '<span><b>계획인원</b> ' + esc(p['계획인원'] === '' || p['계획인원'] == null ? '-' : p['계획인원']) + '명</span>' +
       '<span><b>예정 강의실</b> ' + esc(p['예정 강의실'] || '-') + '</span>' +
       '<span><b>교과목 시간표</b> ' + (wi + 1) + '주차 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span></div></div>';
@@ -3628,9 +3710,10 @@
       '<button type="button" class="btn sm" data-gw="next"' + (wi === weeks.length - 1 ? ' disabled' : '') + '>다음 주 ▶</button>' +
       '<button type="button" class="btn sm" data-gw="today">이번 주</button>' +
       '<span class="wk">' + (wi + 1) + '주차 / ' + weeks.length + '주 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span>' +
+      (all ? '' : (function(){ var cf = courseFill(p, gapIndex()); return cf.total ? '<span class="wk gfill">편성 현황 ' + cf.filled + '/' + cf.total + '교시' + (cf.done ? ' (비워둠 ' + cf.done + ')' : '') + '</span>' : ''; })()) +
       '<span style="margin-left:auto;display:inline-flex;gap:6px;">' + (isViewer() ? '' : '<button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>') + oriSelect('grid') + '<button type="button" class="btn sm" data-gw="print">인쇄</button></span></div>' + ctab +
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
-      '<span><i style="background:#FBE0DD;border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span>' +
+      '<span><i style="background:#FBE0DD;border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span><span><i style="background:repeating-linear-gradient(135deg,#FFF1BF,#FFF1BF 3px,#fff 3px,#fff 6px);border:1px solid #D9B100"></i>빈 교시</span><span><i style="background:repeating-linear-gradient(135deg,#D9DCE0,#D9DCE0 3px,#F4F5F7 3px,#F4F5F7 6px)"></i>비워둠 처리(편성 아님)</span>' +
       '<span><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
       mvBarHtml() + empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
