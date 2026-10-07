@@ -268,7 +268,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 31</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 32</div>
 </div>
 </div>
 
@@ -294,22 +294,50 @@
   function getPw(){ try { return sessionStorage.getItem(KEY_PW); } catch(e){ return null; } }
   function setSess(k, v){ try { sessionStorage.setItem(k, v); } catch(e){} }
   function delSess(k){ try { sessionStorage.removeItem(k); } catch(e){} }
-  function api(body){
-    /* 조회 전용 요청은 일시적 연결 실패·응답 지연 시 자동 재시도(최대 3회, 25초 제한). 저장·변경 요청은 중복 방지를 위해 재시도하지 않음 */
-    var RETRY = { listAssignmentData:1, listSessions:1, login:1, list:1, getHistory:1 };
-    var tries = RETRY[body && body.action] ? 3 : 1;
+  function api(body, opts){
+    /* 조회 전용 요청은 일시적 연결 실패·응답 지연 시 자동 재시도(기본 최대 3회·25초 제한). 시작 화면용 bootstrap은 1회 10초·최대 2회. 저장·변경 요청은 중복 방지를 위해 재시도하지 않음 */
+    var RETRY = { listAssignmentData:1, listSessions:1, login:1, list:1, getHistory:1, bootstrap:1 };
+    var fast = !!(body && body.action === 'bootstrap');
+    var tries = RETRY[body && body.action] ? (fast ? 2 : 3) : 1;
+    var limit = fast ? 10000 : 25000;
     function once(n){
       var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-      var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 25000) : null;
+      var timer = ctl ? setTimeout(function(){ ctl.abort(); }, limit) : null;
       return fetch(WEBAPP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
         .then(function(res){ return res.json(); })
         .then(function(j){ if (timer) clearTimeout(timer); return j; }, function(err){
           if (timer) clearTimeout(timer);
-          if (n < tries) return new Promise(function(r){ setTimeout(r, 1200 * n); }).then(function(){ return once(n + 1); });
+          if (n < tries) { if (opts && opts.onRetry) { try { opts.onRetry(n + 1); } catch(e){} } return new Promise(function(r){ setTimeout(r, 1200 * n); }).then(function(){ return once(n + 1); }); }
           throw err;
         });
     }
     return once(1);
+  }
+
+  /* ---------- 시작 데이터(bootstrap) · 탭 임시 저장 ----------
+     시작 요청 3건(연간계획·편성·로그인)을 1건으로 합치고, 직전 데이터를 이 탭(sessionStorage)에만 보관해 화면 이동 시 먼저 보여 준 뒤 뒤에서 갱신.
+     탭을 닫으면 사라지고 로그아웃·비밀번호 불일치 시 삭제됨. 백엔드가 bootstrap을 모르면(미배포) 기존 3건 방식으로 자동 대체 */
+  var KEY_BOOT = 'jsfa_boot_v1', BOOT_MAX_AGE = 30 * 60 * 1000, lastSig = '', bootMs = null;
+  function pwFp(pw){ var h = 5381, s = String(pw || ''); for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return String(h); }
+  function bootSave(pw, a, s, role){ try { sessionStorage.setItem(KEY_BOOT, JSON.stringify({ t: Date.now(), k: pwFp(pw), a: a, s: s, role: role || '' })); } catch(e){ try { sessionStorage.removeItem(KEY_BOOT); } catch(e2){} } }
+  function bootRead(pw){ try { var j = JSON.parse(sessionStorage.getItem(KEY_BOOT) || 'null'); return j && j.a && j.s && j.k === pwFp(pw) && (Date.now() - j.t) < BOOT_MAX_AGE ? j : null; } catch(e){ return null; } }
+  function bootClear(){ delSess(KEY_BOOT); lastSig = ''; }
+  function fetchBoot(pw, onSlow){
+    return api({ action: 'bootstrap', password: pw }, { onRetry: onSlow }).then(function(b){
+      if (b && b.status === 'ok' && b['편성']) {
+        bootMs = b['서버ms'] == null ? null : b['서버ms']; delete b['서버ms']; window.__bootMs = bootMs;
+        var s = b['편성'], role = b.role; delete b['편성']; delete b.role;
+        return { a: b, s: s, lg: { status: 'ok', role: role } };
+      }
+      if (b && b.status === 'error' && /unknown action/.test(b.message || '')) {
+        return Promise.all([
+          api({ action: 'listAssignmentData', password: pw }),
+          api({ action: 'listSessions', password: pw }),
+          api({ action: 'login', password: pw })
+        ]).then(function(res){ return { a: res[0], s: res[1], lg: res[2] }; });
+      }
+      return { a: b || { status: 'error', message: '불러오지 못했습니다' }, s: { status: 'error' }, lg: null };
+    });
   }
 
   /* ---------- 날짜 ---------- */
@@ -1040,15 +1068,21 @@
   }
 
   /* ---------- 불러오기 ---------- */
-  function loadAll(pw, quiet){
+  function loadAll(pw, quiet, skipSame){
     if (!quiet) { $('loading').style.display = 'block'; }
     showMsg('', '');
-    return Promise.all([
-      api({ action: 'listAssignmentData', password: pw }),
-      api({ action: 'listSessions', password: pw }),
-      api({ action: 'login', password: pw })
-    ]).then(function(res){
-      var a = res[0], s = res[1], lg = res[2];
+    return fetchBoot(pw, function(){ showMsg('warn', '서버 응답이 늦어 다시 시도하고 있습니다. 잠시만 기다려 주세요.'); }).then(function(r){
+      if (r.a && r.a.status === 'ok' && r.s && r.s.status === 'ok') {
+        var sig = JSON.stringify([r.a, r.s]);
+        if (skipSame && sig === lastSig && getPw() === pw) { setSess(KEY_ROLE, (r.lg && r.lg.role) || ''); bootSave(pw, r.a, r.s, r.lg && r.lg.role); showMsg('', ''); return; }
+        lastSig = sig; bootSave(pw, r.a, r.s, r.lg && r.lg.role);
+      }
+      return applyBoot(pw, r.a, r.s, r.lg);
+    });
+  }
+
+  function applyBoot(pw, a, s, lg){
+      showMsg('', '');
       if (a.status !== 'ok') {
         var err = new Error(a.message || '불러오지 못했습니다');
         err.auth = /인증|비밀번호/.test(a.message || '');
@@ -1082,7 +1116,6 @@
       $('main').style.display = '';
       renderAll();
       (function(){ var m = /^#d=(todo(?::[a-z]+)?|nosubj|month)$/.exec(location.hash), k = m ? m[1] : curDetail; if (k) showDetail(k, true); })();
-    });
   }
 
   document.addEventListener('click', function(e){
@@ -1134,15 +1167,17 @@
       else if (err.auth === false) msg.textContent = err.message || '불러오지 못했습니다';
       else msg.textContent = '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.';
       msg.style.display = 'block';
-      delSess(KEY_PW); delSess(KEY_ROLE);
+      delSess(KEY_PW); delSess(KEY_ROLE); bootClear();
       clearPin();
     }).finally(function(){ btn.disabled = false; btn.textContent = '로그인'; });
   });
 
   var saved = getPw();
   if (saved) {
-    loadAll(saved).catch(function(err){
-      if (err.auth) { delSess(KEY_PW); delSess(KEY_ROLE); return; }
+    var bc = bootRead(saved), fast = false;
+    if (bc) { try { lastSig = JSON.stringify([bc.a, bc.s]); applyBoot(saved, bc.a, bc.s, { status: 'ok', role: bc.role }); fast = true; if (window.__autoDone) window.__autoDone(); } catch(e){ fast = false; lastSig = ''; } }
+    loadAll(saved, fast, fast).catch(function(err){
+      if (err.auth) { delSess(KEY_PW); delSess(KEY_ROLE); bootClear(); if (fast) location.reload(); return; }
       $('loginScreen').style.display = 'none';
       $('app').style.display = 'block';
       $('loading').style.display = 'none';
