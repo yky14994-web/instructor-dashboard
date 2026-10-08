@@ -144,6 +144,12 @@
         .tree li .node-box { min-width: 0; width: 100%; box-sizing: border-box; padding: 12px 14px; }
         .tree li .root-node { width: auto; }
 
+        /* 넓은 화면: 팀 박스 높이를 가장 긴 박스에 맞춰 같게 */
+        @media (min-width: 640px) {
+            .tree ul ul > li { display: flex; flex-direction: column; }
+            .tree ul ul > li > .node-box { flex: 1 1 auto; }
+        }
+
         /* 좁은 화면(639px 이하): 조직도를 세로로 쌓아 한 화면 안에 표시 (옆 스크롤 없음) */
         @media (max-width: 639px) {
             .org-container { overflow-x: visible; padding: 10px 0 20px 0; }
