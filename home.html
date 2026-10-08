@@ -303,7 +303,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 55</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 56</div>
 </div>
 </div>
 
@@ -678,7 +678,7 @@
   /* ---------- 이번 주 과정 ---------- */
   function renderWeek(){
     var base = addDays(mondayOf(todayStr()), weekOffset * 7);
-    var end = addDays(base, 6);
+    var end = addDays(base, 4);   /* 이번 주 = 월~금(2026-10-09 변경, 이전 월~일) */
     var weekdays = []; for (var i = 0; i < 5; i++) weekdays.push(addDays(base, i));
     var items = [];
     plans.forEach(function(p){

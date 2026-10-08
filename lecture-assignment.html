@@ -803,7 +803,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 56</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 57</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1094,7 +1094,7 @@
   /* 홈 '이번 주 과정'에서 넘어온 경우: 그 주(월~일)에 입교·실습 기간이 걸치는 과정만 표시 */
   var weekFilter = '';
   function planOverlapsWeek(p, mon){
-    var end = addDays(mon, 6);
+    var end = addDays(mon, 4);   /* 주 = 월~금(2026-10-09 변경, 이전 월~일) */
     return planRanges(p).some(function(r){ return r[0] <= end && r[1] >= mon; });
   }
   function updateListHint(){
@@ -1109,7 +1109,7 @@
     if (!weekFilter) { el.style.display = 'none'; el.innerHTML = ''; return; }
     var n = shown.length;
     el.style.display = '';
-    el.innerHTML = '<b>' + md(weekFilter) + ' ~ ' + md(addDays(weekFilter, 6)) + ' 주</b>에 진행되는 과정만 보고 있습니다(' + n + '개). 과정명을 누르면 교과목 편성 화면이 열립니다. ' +
+    el.innerHTML = '<b>' + md(weekFilter) + ' ~ ' + md(addDays(weekFilter, 4)) + ' 주</b>에 진행되는 과정만 보고 있습니다(' + n + '개). 과정명을 누르면 교과목 편성 화면이 열립니다. ' +
       '<button type="button" class="btn sm" id="weekClear">전체 과정 보기</button>';
     var b = $('weekClear'); if (b) b.onclick = function(){ weekFilter = ''; applyFilters(); };
   }
@@ -1630,7 +1630,7 @@
     if (planMode === 'cal') return { t: '월 캘린더', s: '월별 과정 일정을 달력으로 봅니다. 과정마다 색이 다르며, 칸을 누르면 그날의 교과목·강사·강의실이 열립니다.', h: '#v=cal' };
     if (planMode === 'room') return { t: '강의실 현황·예약', s: '날짜와 교시를 정해 비어 있는 강의실을 찾고, 과정·대관용으로 강의실을 미리 잡아 둡니다.', h: '#v=room' };
     if (weekFilter) {
-      var tm = mondayOf(ymd(new Date())), a = weekFilter, b = addDays(weekFilter, 6), rg = md(a).replace(/\(.\)/, '') + '~' + md(b).replace(/\(.\)/, '');
+      var tm = mondayOf(ymd(new Date())), a = weekFilter, b = addDays(weekFilter, 4), rg = md(a).replace(/\(.\)/, '') + '~' + md(b).replace(/\(.\)/, '');
       return { t: (a === tm ? '이번주(' + rg + ')' : rg) + ' 교육과정', s: '이 기간에 진행되는 과정입니다. 과정을 보고 교과목을 편성하세요.', h: '#v=table&w=' + a };
     }
     var fy = $('fYear').value, fm = $('fMonth').value, ft = $('fType').value;
