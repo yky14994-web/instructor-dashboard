@@ -510,6 +510,9 @@
 <script>
   var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwLgHlqLhN79N0Rc1ZvtmsOJH5ocu_5faU_qv62IKWEiUOHQ7_0sZNoG8sGSbGCV8e3/exec';
 
+  /* 서버(Apps Script) 미리 깨우기: 로그인 화면이 뜨는 즉시 가벼운 요청을 보내 PIN을 입력하는 동안 서버를 준비시키고, 화면이 열려 있는 동안 4분마다 반복해 잠들지 않게 함 */
+  (function(){ function w(){ try { fetch(WEBAPP_URL + '?warm=' + Date.now(), { mode: 'no-cors', cache: 'no-store' }).catch(function(){}); } catch (e) {} } w(); setInterval(function(){ if (!document.hidden) w(); }, 240000); document.addEventListener('visibilitychange', function(){ if (!document.hidden) w(); }); })();
+
   var allData = [];
   var historyCache = {};
 

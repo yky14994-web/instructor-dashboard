@@ -273,13 +273,16 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 47</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 48</div>
 </div>
 </div>
 
 <script>
 (function(){
   var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwLgHlqLhN79N0Rc1ZvtmsOJH5ocu_5faU_qv62IKWEiUOHQ7_0sZNoG8sGSbGCV8e3/exec';
+
+  /* 서버(Apps Script) 미리 깨우기: 로그인 화면이 뜨는 즉시 가벼운 요청을 보내 PIN을 입력하는 동안 서버를 준비시키고, 화면이 열려 있는 동안 4분마다 반복해 잠들지 않게 함 */
+  (function(){ function w(){ try { fetch(WEBAPP_URL + '?warm=' + Date.now(), { mode: 'no-cors', cache: 'no-store' }).catch(function(){}); } catch (e) {} } w(); setInterval(function(){ if (!document.hidden) w(); }, 240000); document.addEventListener('visibilitychange', function(){ if (!document.hidden) w(); }); })();
   var KEY_PW = 'jsfa_dash_pw';
   var KEY_ROLE = 'jsfa_dash_role';
   var OPS_NAME = '교육운영팀';
@@ -327,9 +330,13 @@
   function bootSave(pw, a, s, role){ try { sessionStorage.setItem(KEY_BOOT, JSON.stringify({ t: Date.now(), k: pwFp(pw), a: a, s: s, role: role || '' })); } catch(e){ try { sessionStorage.removeItem(KEY_BOOT); } catch(e2){} } }
   function bootRead(pw){ try { var j = JSON.parse(sessionStorage.getItem(KEY_BOOT) || 'null'); return j && j.a && j.s && j.k === pwFp(pw) && (Date.now() - j.t) < BOOT_MAX_AGE ? j : null; } catch(e){ return null; } }
   function bootClear(){ delSess(KEY_BOOT); delSess('jsfa_list_v1'); lastSig = ''; }
+  function stampTime(total, server){
+    try { var el = document.getElementById('verStamp'); if (!el) return; el.textContent = el.textContent.replace(/ · 불러오기.*$/, '') + ' · 불러오기 ' + (total / 1000).toFixed(1) + '초' + (server != null ? '(서버 ' + (server / 1000).toFixed(1) + '초)' : ''); } catch (e) {}
+  }
   function fetchBoot(pw, onSlow){
+    var t0 = Date.now();
     return api({ action: 'bootstrap', password: pw }, { onRetry: onSlow }).then(function(b){
-      if (b && b.status === 'ok' && b['편성']) {
+      if (b && b.status === 'ok' && b['편성']) { stampTime(Date.now() - t0, b['서버ms']);
         bootMs = b['서버ms'] == null ? null : b['서버ms']; delete b['서버ms']; window.__bootMs = bootMs;
         var s = b['편성'], role = b.role; delete b['편성']; delete b.role;
         return { a: b, s: s, lg: { status: 'ok', role: role } };
