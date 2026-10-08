@@ -273,7 +273,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 44</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 45</div>
 </div>
 </div>
 
@@ -514,7 +514,7 @@
     var keys = []; cols.forEach(function(c){ if (keys.indexOf(c.key) < 0) keys.push(c.key); });
     var cards = keys.map(function(k){
       var nm = courseName(k), items = list.filter(function(o){ return o.key === k; });
-      return '<div class="tcard" style="border-left:5px solid ' + courseColor(nm) + ';background:' + courseBg(nm) + ';"><div class="tch">' + courseLink(k, nameOf(k), today) + (ipgyoLine(planByKey(k)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(k))) + '</small>' : '') + '</div>' + items.map(function(o){
+      return '<div class="tcard" style="border-left:5px solid ' + courseColor(nm) + ';background:' + courseBg(nm) + ';"><div class="tch">' + courseLink(k, nameOf(k), today) + (ipgyoLine(planByKey(k)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(k))) + '</small>' : '') + (nowIsOver() ? '<span class="tag t-none" style="display:inline-block;margin-top:4px;">종료</span>' : '') + '</div>' + items.map(function(o){
         var pt = periodText(o.a, o.b), st = stateOf(o);
         return '<div class="tcr ' + st + '"><div class="tm">' + esc(pt.txt) + (pt.time ? '<small>' + esc(pt.time) + '</small>' : '') + '</div><div><div class="sj">' + esc(o.subj) + klassTag(o) + stateTag(st) + '</div>' +
           '<div class="ro">' + (o.room ? esc(o.room) : '<span class="hint">강의실 미정</span>') + ' · ' + instrHtml(o.rows) + '</div></div></div>';
@@ -1189,6 +1189,12 @@
     });
   }
 
+  /* 로그인 직후 키보드·입력칸 위치 때문에 화면이 아래쪽에 머무는 경우가 있어 맨 위로 올림(상세 화면 해시가 있으면 제외) */
+  function toTop(){
+    if (/^#d=/.test(location.hash)) return;
+    var go = function(){ try { window.scrollTo(0, 0); } catch (e) {} };
+    go(); setTimeout(go, 150); setTimeout(go, 600);
+  }
   function applyBoot(pw, a, s, lg){
       showMsg('', '');
       if (a.status !== 'ok') {
@@ -1196,8 +1202,10 @@
         err.auth = /인증|비밀번호/.test(a.message || '');
         throw err;
       }
+      var firstShow = $('app').style.display !== 'block';
       $('loginScreen').style.display = 'none';
       $('app').style.display = 'block';
+      if (firstShow) toTop();
       setSess(KEY_PW, pw);
       if (lg && lg.role) setSess(KEY_ROLE, lg.role);
       (function(){ var n = new Date(); lastLoad = ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2); tickClock(); })();
