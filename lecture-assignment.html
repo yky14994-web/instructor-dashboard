@@ -787,7 +787,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 36</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 37</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -801,7 +801,7 @@
   var shown = [];      // 현재 필터 결과
   var periods = [];    // 교시표 [{n, start, end}]
   var resv = [];       // 강의실 예약(사전확보·대관, 상태 '예약'인 것만)
-  var reqs = [];       // 강의실 대관 신청(상태 '신청중', 관리자 승인 대기)
+  var reqs = [], reqsOk = true;       // 강의실 대관 신청(상태 '신청중', 관리자 승인 대기). reqsOk=false: 서버가 아직 대관 신청 기능으로 업데이트되지 않음
   var rooms = [];      // 강의실명 목록
   var allSessions = []; // 교과목시간표 전체 행
   var sessionsOk = false;
@@ -1260,7 +1260,7 @@
       plans = sortPlans(a['연간계획'] || []); courseRank = null;
       history = a['변경이력'] || [];
       resv = a['강의실예약'] || [];
-      reqs = a['강의실신청'] || [];
+      reqsOk = Array.isArray(a['강의실신청']); reqs = reqsOk ? a['강의실신청'] : [];
       gapLoad(a['빈교시확인']);
       periods = (a['교시표'] || []).map(function(r){
         return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || ''), kind: String(r['구분'] || '') };
@@ -2198,7 +2198,7 @@
     var cal = planMode === 'cal', rm = planMode === 'room', other = cal || rm;
     $('pmTable').className = other ? '' : 'on'; $('pmCal').className = cal ? 'on' : ''; $('pmRoom').className = rm ? 'on' : '';
     var cardsBox = document.querySelector('#planView .cards'); if (cardsBox) cardsBox.style.display = other ? 'none' : '';   // 숫자 카드: 표 보기에서만 표시
-    if (other && $('todo')) $('todo').style.display = 'none';   // 처리할 일: 표 보기에서만 표시
+    if ($('todo')) { try { renderTodo(); } catch (e) { $('todo').style.display = 'none'; } }   // 처리할 일: 캘린더·강의실 보기에서는 건수 있는 항목만 한 줄로 표시
     $('planCal').style.display = cal ? '' : 'none';
     $('planRoom').style.display = rm ? '' : 'none';
     ['planBar', 'planLegend', 'count', 'tableWrap', 'cardList', 'emptyBox'].forEach(function(id){
@@ -2220,6 +2220,7 @@
     try { sessionStorage.setItem('jsfa_la_pmode', planMode); } catch (e) {}
     applyPlanHead();
     applyFilters();
+    try { renderTodo(); } catch (e) {}
   }
   function monthDays(ym){
     var m = /^(\d{4})-(\d{2})$/.exec(ym); if (!m) return [];
@@ -2731,6 +2732,7 @@
       form = '<div class="rvbox"><h4>' + (rvSt.editId ? '예약 수정' : '강의실 예약 추가') + '</h4>' +
         '<div class="rmq" style="margin-bottom:4px;"><label><input type="radio" name="rvType" value="사전확보" ' + (rvSt.type === '사전확보' ? 'checked' : '') + '> 사전확보 <small class="hint">과정은 있고 교과목은 아직 미편성</small></label> ' +
         '<label><input type="radio" name="rvType" value="대관" ' + (rvSt.type === '대관' ? 'checked' : '') + '> 대관 <small class="hint">과정·교과목 없이 다른 용도</small></label></div>' +
+        '<div class="hint" style="margin-bottom:6px;">※ 여기서 저장하면 승인 절차 없이 바로 예약으로 등록됩니다. 직원이 조회 전용으로 신청한 대관은 아래 \'대관 신청 승인 대기\'에 표시됩니다.</div>' +
         '<div class="rvf">' +
         '<label>시작일' + dateIn('rvFrom', rvSt.from) + '</label>' +
         (rvSt.editId ? '' : '<label>종료일(하루면 비움)' + dateIn('rvTo', rvSt.to) + '</label>') +
@@ -2753,7 +2755,7 @@
     return form + '<div class="rmgrp" style="margin-top:14px;">예약 목록<small>오늘 이후 ' + list.length + '건 · 교과목을 편성하면 사전확보 예약은 해당 시간만 자동으로 편성으로 바뀌고, 편성을 지우거나 옮기면 예약으로 되돌아옵니다</small></div>' + tbl;
   }
   function rvReload(){
-    return api({ action: 'listReservations', password: getPw() }).then(function(j){ if (j && j.status === 'ok') { resv = j.data || []; reqs = j.신청 || []; } }).catch(function(){});
+    return api({ action: 'listReservations', password: getPw() }).then(function(j){ if (j && j.status === 'ok') { resv = j.data || []; reqsOk = Array.isArray(j.신청); reqs = reqsOk ? j.신청 : []; } }).catch(function(){});
   }
   function rvAct(act){
     if (act === 'rv:editx') { rvReset(); renderRoomFree(); return; }
@@ -2851,6 +2853,7 @@
   }
   function renderReqPanel(){
     var viewer = isViewer(), list = rqSorted(), form = '';
+    if (!viewer && !reqsOk) return '<div id="rqBox" class="hint" style="margin-top:10px;color:#9B1C12;">대관 신청 목록을 불러오지 못했습니다. 서버(Apps Script)가 대관 신청 기능이 들어 있는 최신 backend-code로 배포되지 않았을 수 있습니다. 새 버전으로 다시 배포한 뒤 이 화면을 새로고침해 주세요.</div>';
     if (!viewer && !list.length) return '';
     if (viewer) {
       var pn = rvPeriods();
@@ -2878,7 +2881,7 @@
     var tbl = list.length ? '<table class="rvl"><thead><tr><th>일자</th><th>교시 · 강의실</th><th>사유 · 사용부서</th><th>담당자 · 연락처 · 비고</th><th>신청일시</th>' + (viewer ? '' : '<th>겹침 확인</th><th></th>') + '</tr></thead><tbody>' +
       list.map(function(r){
         var d = normYmd(r['일자']), a = Number(r['시작교시']), b = Number(r['끝교시']), cl = viewer ? [] : rqClash(r);
-        return '<tr' + (viewer ? '' : '') + '><td class="nw">' + esc(md(d)) + (parseYmd(d) ? ' (' + ['일', '월', '화', '수', '목', '금', '토'][parseYmd(d).dow] + ')' : '') + '</td><td>' + (a === b ? a : a + '~' + b) + '교시 · ' + esc(r['강의실']) + '</td><td>' + esc(r['사유·사용부서']) + '</td><td>' + esc([r['담당자·연락처'], r['비고']].filter(Boolean).join(' · ')) + '</td><td class="nw">' + esc(rqWhen(r)) + '</td>' +
+        return '<tr' + (viewer ? '' : '') + '><td class="nw">' + esc(md(d)) + '</td><td>' + (a === b ? a : a + '~' + b) + '교시 · ' + esc(r['강의실']) + '</td><td>' + esc(r['사유·사용부서']) + '</td><td>' + esc([r['담당자·연락처'], r['비고']].filter(Boolean).join(' · ')) + '</td><td class="nw">' + esc(rqWhen(r)) + '</td>' +
           (viewer ? '' : '<td>' + (cl.length ? '<span style="color:#9B1C12;">' + esc(cl.slice(0, 2).join(', ')) + (cl.length > 2 ? ' 외 ' + (cl.length - 2) + '건' : '') + '</span>' : '<span style="color:#1F6B2B;">겹침 없음</span>') + '</td><td class="nw">' + rqBtns(r) + '</td>') + '</tr>';
       }).join('') + '</tbody></table>' : '<div class="tnone" style="padding:8px 0;">승인 대기 중인 대관 신청이 없습니다.</div>';
     return '<div id="rqBox">' + (viewer ? form : '') + '<div class="rmgrp" style="margin-top:14px;">대관 신청 ' + (viewer ? '현황' : '승인 대기') + '<small>' + list.length + '건 · ' + (viewer ? '담당자 승인 대기 중인 신청입니다' : '승인하면 강의실 예약(대관)으로 등록되고, 반려하면 목록에서 빠집니다') + '</small></div>' + tbl + '</div>';
@@ -3529,9 +3532,18 @@
   function renderTodo(){
     var box = $('todo');
     if (!box) return;
-    if (!sessionsOk || planMode !== 'table') { box.style.display = 'none'; return; }
+    if (!sessionsOk) { box.style.display = 'none'; return; }
     if (instructors === null) ensureInstructors();
     var D = todoData();
+    if (planMode !== 'table') {   // 월 캘린더·강의실 보기에서는 건수가 있는 항목만 한 줄로 요약(누르면 표 보기의 처리할 일로 이동)
+      var ks = TODO_ORDER.filter(function(k){ return D[k].n; });
+      if (!ks.length) { box.style.display = 'none'; return; }
+      box.style.display = '';
+      box.innerHTML = '<div class="th"><h3>처리할 일</h3><div class="chips">' + ks.map(function(k){
+        return '<button type="button" class="btn chip has" data-tgo="' + k + '">' + esc(D[k].label) + ' ' + D[k].n + '</button>';
+      }).join('') + '</div></div>';
+      return;
+    }
     box.style.display = '';
     var total = TODO_ORDER.reduce(function(a, k){ return a + (D[k].info ? 0 : (D[k].n || 0)); }, 0);
     var nInfo = D.chg.n + D.gapdone.n;
@@ -4968,7 +4980,7 @@
       var mt = ev.target.closest('[data-mvg],[data-mvto]');
       if (mt) { if (mt.getAttribute('data-mvg')) mvSwap(mt.getAttribute('data-mvg')); else { var q2 = mt.getAttribute('data-mvto').split('|'); mvTo(q2[0], Number(q2[1])); } return; }
     }
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-rqgo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel') || t.getAttribute('data-mvmode') || t.getAttribute('data-pf')))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-rqgo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-tgo') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel') || t.getAttribute('data-mvmode') || t.getAttribute('data-pf')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
@@ -5007,6 +5019,12 @@
       var crow = allSessions.filter(function(x){ return String(x['편성ID']) === cas; })[0];
       if (crow) { closeInstructor(); pendingEdit = cas; openCourse(String(crow['개설키'])); }
       return;
+    }
+    var tgo = t.getAttribute('data-tgo');
+    if (tgo) {
+      todoCat = tgo; todoMore = false;
+      if (tgo === 'rvreq') { rqGo(''); return; }
+      setPlanMode('table'); return;
     }
     var tcat = t.getAttribute('data-tcat');
     if (tcat) { todoCat = tcat; todoMore = false; renderTodo(); return; }
