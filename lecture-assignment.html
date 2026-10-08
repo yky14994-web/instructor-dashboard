@@ -800,7 +800,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 43</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 44</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -3889,6 +3889,10 @@
   var mv = null, mvErr = '', mvNote = '', mvBusy = false;
   var mvMode = false, mvModeKey = '';   // 이동 모드: 켠 과정에서만 칸별 이동 버튼 표시
   function mvOn(){ return mvMode && mvModeKey === currentKey; }
+  /* 비워둠 처리 모드: 켠 과정에서만 빈 칸마다 '비워둠 처리'(처리 취소) 버튼 표시. 평소에는 숨겨 격자를 간단하게 유지 */
+  var gpMode = false, gpModeKey = '';
+  function gpOn(){ return gpMode && gpModeKey === currentKey; }
+  function gpToggle(){ if (gpOn()) gpMode = false; else { gpMode = true; gpModeKey = currentKey; } renderSessionList(); }
   function mvToggle(){
     if (mvBusy) return;
     if (mvOn()) { mvMode = false; mv = null; mvErr = ''; mvNote = ''; }
@@ -3998,8 +4002,8 @@
   function gapCellHtml(gs, p, d, n, canEdit){
     if (!gs) return '';
     var key = String(p['과정+기수'] || ''), rec = gapChk[key + '|' + d + '|' + n];
-    if (gs === 'open') return '<span class="gpt">빈 교시</span>' + (canEdit ? '<button type="button" class="gpb" data-cm="gp:mark:' + esc(key) + '|' + esc(d) + '|' + n + '" title="교과목·강사를 못 구해 일부러 비워 두는 칸으로 처리합니다">비워둠 처리</button>' : '');
-    return '<span class="gpt">비워둠' + (rec && rec.r ? '<small>' + esc(rec.r) + '</small>' : '') + '</span>' + (canEdit ? '<button type="button" class="gpb" data-cm="gp:undo:' + esc(key) + '|' + esc(d) + '|' + n + '" title="비워둠 처리를 취소합니다">처리 취소</button>' : '');
+    if (gs === 'open') return '<span class="gpt">빈 교시</span>' + (canEdit && gpOn() ? '<button type="button" class="gpb" data-cm="gp:mark:' + esc(key) + '|' + esc(d) + '|' + n + '" title="교과목·강사를 못 구해 일부러 비워 두는 칸으로 처리합니다">비워둠 처리</button>' : '');
+    return '<span class="gpt">비워둠' + (rec && rec.r ? '<small>' + esc(rec.r) + '</small>' : '') + '</span>' + (canEdit && gpOn() ? '<button type="button" class="gpb" data-cm="gp:undo:' + esc(key) + '|' + esc(d) + '|' + n + '" title="비워둠 처리를 취소합니다">처리 취소</button>' : '');
   }
   function gridCell(u, cont, canEdit, p, cx){
     var r = u[0], gid = groupId(r), cl = cflByGid[gid] || [];
@@ -4155,13 +4159,13 @@
       '<button type="button" class="btn sm" data-gw="today">이번 주</button>' +
       '<span class="wk">' + (wi + 1) + '주차 / ' + weeks.length + '주 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span>' +
       (all ? '' : (function(){ var cf = courseFill(p, gapIndex()); return cf.total ? '<span class="wk gfill">편성 현황 ' + cf.filled + '/' + cf.total + '교시' + (cf.done ? ' (비워둠 ' + cf.done + ')' : '') + '</span>' : ''; })()) +
-      '<span style="margin-left:auto;display:inline-flex;gap:6px;">' + (isViewer() ? '' : '<button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>') + oriSelect('grid') + '<button type="button" class="btn sm" data-gw="print">인쇄</button></span></div>' + ctab +
+      '<span style="margin-left:auto;display:inline-flex;gap:6px;">' + (isViewer() ? '' : '<button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>' + '<button type="button" class="btn sm mvm' + (gpOn() ? ' on' : '') + '" data-gpmode="1" title="켜면 빈 교시 칸마다 비워둠 처리 버튼이 나타납니다. 평소에는 숨겨 둡니다">비워둠 처리 ' + (gpOn() ? '끄기' : '켜기') + '</button>') + oriSelect('grid') + '<button type="button" class="btn sm" data-gw="print">인쇄</button></span></div>' + ctab +
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:#FBE0DD;border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span><span><i style="background:repeating-linear-gradient(135deg,#FFF1BF,#FFF1BF 3px,#fff 3px,#fff 6px);border:1px solid #D9B100"></i>빈 교시</span><span><i style="background:repeating-linear-gradient(135deg,#D9DCE0,#D9DCE0 3px,#F4F5F7 3px,#F4F5F7 6px)"></i>비워둠 처리(편성 아님)</span>' +
       '<span><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
       mvBarHtml() + empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
-      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
+      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
       '<div class="hint gnp" style="margin-top:4px;">강의일 당일 17:50 이후는 종료된 일정으로 보며, 종료된 일정에는 교과목을 배정·수정할 수 없고 삭제만 할 수 있습니다.</div></div>';
   }
   function gridNav(act){
@@ -5079,7 +5083,7 @@
       var mt = ev.target.closest('[data-mvg],[data-mvto]');
       if (mt) { if (mt.getAttribute('data-mvg')) mvSwap(mt.getAttribute('data-mvg')); else { var q2 = mt.getAttribute('data-mvto').split('|'); mvTo(q2[0], Number(q2[1])); } return; }
     }
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-rqgo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-shrs') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel') || t.getAttribute('data-mvmode') || t.getAttribute('data-pf')))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-rqgo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-shrs') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel') || t.getAttribute('data-mvmode') || t.getAttribute('data-gpmode') || t.getAttribute('data-pf')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
@@ -5107,6 +5111,7 @@
     if (mvt) { var mp = mvt.split('|'); mvTo(mp[0], Number(mp[1])); return; }
     if (t.getAttribute('data-mvcancel')) { mvCancel(); return; }
     if (t.getAttribute('data-mvmode')) { mvToggle(); return; }
+    if (t.getAttribute('data-gpmode')) { gpToggle(); return; }
     var cq = t.getAttribute('data-cquick');
     if (cq) { qaOpen(cq); return; }
     var qpk = t.getAttribute('data-qpick');
