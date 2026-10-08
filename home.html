@@ -71,6 +71,9 @@
   .dtx{overflow-x:auto;} .dtt a{color:#1B365D;font-weight:700;}
   .dsec{margin:18px 0 4px;font-size:15px;font-weight:800;color:#1B365D;}
   .dsec small{font-weight:600;color:#6B7280;margin-left:6px;}
+  .mhd{display:flex;align-items:baseline;gap:8px;margin:20px 0 4px;padding:8px 12px;background:#E8EEF7;border-left:5px solid #1B365D;border-radius:6px;font-size:16px;font-weight:800;color:#1B365D;}
+  .mhd small{font-size:12.5px;font-weight:700;color:#4B5B73;}
+  .mchips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px;} .mchips span{background:#F1F4F8;border:1px solid #D9E0EA;border-radius:999px;padding:3px 11px;font-size:12.5px;font-weight:700;color:#1B365D;}
   .quick{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px;}
   .quick .btn{height:40px;padding:0 16px;font-size:13.5px;}
 
@@ -298,7 +301,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 50</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 51</div>
 </div>
 </div>
 
@@ -1063,14 +1066,29 @@
     return '<div class="dsec">빈 교시가 있는 과정 (일부만 편성)<small>' + gc.length + '과정</small></div><div class="hint" style="margin-bottom:6px;">교과목이 한 건도 없으면 위의 "미편성", 일부만 편성되어 군데군데 비어 있으면 "빈 교시"로 구분합니다. ' + esc(scope) + ' 중, 입교 기간 평일(실습 기간 제외)의 수업 교시에 교과목이 없는 칸이며 빈 날짜가 오늘부터 14일 이내인 것만 셉니다. 입교 기간이 5주를 넘는 과정은 제외합니다. 일부러 비운 칸은 "비워둠 처리"하면 빈 교시에서 빠지고 아래 "비워둠 처리한 칸"에 남습니다.</div>' +
       dtTable(['과정 · 기수', '입교 기간', '편성 현황(전체)', '빈 교시(14일 이내)', '날짜별 빈 교시'], rows, '빈 교시가 있는 과정이 없습니다.') + gapDoneSection(homeViewer());
   }
+  /* 입교 시작일 기준 월별로 끊어서 표시(월 제목 띠 + 월별 표, 맨 위에 월별 건수 요약) */
+  function byMonthTables(list){
+    if (!list.length) return '<div class="empty">해당하는 과정이 없습니다.</div>';
+    var groups = [], idx = {};
+    list.forEach(function(p){
+      var a = normYmd(p['입교 시작일']), k = a.slice(0, 7);
+      if (!(k in idx)) { idx[k] = groups.length; groups.push({ k: k, items: [] }); }
+      groups[idx[k]].items.push(p);
+    });
+    var lab = function(k){ var y = k.slice(0, 4), m = Number(k.slice(5, 7)); return y + '년 ' + m + '월'; };
+    return '<div class="mchips">' + groups.map(function(g){ return '<span>' + esc(Number(g.k.slice(5, 7)) + '월 ' + g.items.length + '과정') + '</span>'; }).join('') + '</div>' +
+      groups.map(function(g){
+        return '<div class="mhd">' + esc(lab(g.k)) + ' 시작<small>' + g.items.length + '과정</small></div>' + dtTable(PCOLS, g.items.map(function(p){ return planRow(p); }), '');
+      }).join('');
+  }
   function detailHtml(kind){
     var today = todayStr(), html = '';
     if (!sessionsOk) return '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>';
     if (kind === 'nosubj') {
       var list = noSubjList(null, true).sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : 1; });
       return '<div class="chead"><h2>교과목 미편성 과정 전체 (한 건도 편성 안 됨)</h2><span class="meta">' + list.length + '과정</span></div>' +
-        '<div class="cdesc">입교 시작일이 오늘부터 2개월 이내이고 아직 끝나지 않은 과정 중, 교과목이 하나도 편성되지 않은 과정입니다. 과정명을 누르면 교과목 편성 화면으로 이동합니다.</div>' +
-        dtTable(PCOLS, list.map(function(p){ return planRow(p); }), '해당하는 과정이 없습니다.') + gapSection(gapCourses(14), '오늘부터 2개월 이내에 시작하거나 진행 중인 과정');
+        '<div class="cdesc">입교 시작일이 오늘부터 2개월 이내이고 아직 끝나지 않은 과정 중, 교과목이 하나도 편성되지 않은 과정입니다. 입교 시작일의 월별로 나누어 보여 줍니다. 과정명을 누르면 교과목 편성 화면으로 이동합니다.</div>' +
+        byMonthTables(list) + gapSection(gapCourses(14), '오늘부터 2개월 이내에 시작하거나 진행 중인 과정');
     }
     if (kind === 'month') {
       var q = parseYmd(today), ym = q.y + '-' + ('0' + q.m).slice(-2), nq = new Date(q.y, q.m, 1), ny = nq.getFullYear() + '-' + ('0' + (nq.getMonth() + 1)).slice(-2);
