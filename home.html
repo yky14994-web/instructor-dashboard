@@ -301,7 +301,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 51</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 52</div>
 </div>
 </div>
 
@@ -330,24 +330,40 @@
   function getPw(){ try { return sessionStorage.getItem(KEY_PW); } catch(e){ return null; } }
   function setSess(k, v){ try { sessionStorage.setItem(k, v); } catch(e){} }
   function delSess(k){ try { sessionStorage.removeItem(k); } catch(e){} }
+  /* 조회 전용 요청(겹쳐 보내기): 응답이 늦으면 앞 요청을 끊지 않고 같은 요청을 하나 더 보내 먼저 도착한 응답을 사용.
+     0초·6초·15초에 최대 3건, 연결 실패 시 즉시 다음 요청, 전체 50초 제한. (끊고 다시 보내면 서버가 처리하던 일을 버리게 되어 더 늦어짐) */
+  function hedgedPost(body, onRetry){
+    var AT = [0, 6000, 15000], LIMIT = 50000, payload = JSON.stringify(body);
+    var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    return new Promise(function(resolve, reject){
+      var done = false, started = 0, failed = 0, timers = [], lastErr = null;
+      function finish(ok, v){ if (done) return; done = true; timers.forEach(clearTimeout); if (ctl) { try { ctl.abort(); } catch(e){} } if (ok) resolve(v); else reject(v); }
+      function launch(){
+        if (done || started >= AT.length) return;
+        var i = started++;
+        if (i > 0 && onRetry) { try { onRetry(i + 1); } catch(e){} }
+        fetch(WEBAPP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload, cache: 'no-store', signal: ctl ? ctl.signal : undefined })
+          .then(function(res){ return res.json(); })
+          .then(function(j){ finish(true, j); }, function(err){
+            if (done) return;
+            failed++; lastErr = err;
+            if (failed >= AT.length) { finish(false, err); return; }
+            if (failed >= started) timers.push(setTimeout(launch, 800));
+          });
+      }
+      AT.forEach(function(ms){ timers.push(setTimeout(launch, ms)); });
+      timers.push(setTimeout(function(){ finish(false, lastErr || new Error('응답 시간 초과')); }, LIMIT));
+    });
+  }
   function api(body, opts){
-    /* 조회 전용 요청은 일시적 연결 실패·응답 지연 시 자동 재시도(기본 최대 3회·25초 제한). 시작 화면용 bootstrap은 1회 10초·최대 2회. 저장·변경 요청은 중복 방지를 위해 재시도하지 않음 */
-    var RETRY = { listAssignmentData:1, listSessions:1, login:1, list:1, getHistory:1, bootstrap:1 };
-    var fast = !!(body && body.action === 'bootstrap');
-    var tries = RETRY[body && body.action] ? 3 : 1;
-    var limit = fast ? 20000 : 25000;   /* 시작 요청: 서버가 깨어나는 데 걸리는 시간을 고려해 20초씩 최대 3회 */
-    function once(n){
-      var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-      var timer = ctl ? setTimeout(function(){ ctl.abort(); }, limit) : null;
-      return fetch(WEBAPP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
-        .then(function(res){ return res.json(); })
-        .then(function(j){ if (timer) clearTimeout(timer); return j; }, function(err){
-          if (timer) clearTimeout(timer);
-          if (n < tries) { if (opts && opts.onRetry) { try { opts.onRetry(n + 1); } catch(e){} } return new Promise(function(r){ setTimeout(r, 1200 * n); }).then(function(){ return once(n + 1); }); }
-          throw err;
-        });
-    }
-    return once(1);
+    /* 조회 전용 요청은 겹쳐 보내기(hedgedPost). 저장·변경 요청은 중복 방지를 위해 1건만 보내고 40초까지 기다림 */
+    var READ = { listAssignmentData:1, listSessions:1, login:1, list:1, getHistory:1, bootstrap:1, listReservations:1 };
+    if (READ[body && body.action]) return hedgedPost(body, opts && opts.onRetry);
+    var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 40000) : null;
+    return fetch(WEBAPP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
+      .then(function(res){ return res.json(); })
+      .then(function(j){ if (timer) clearTimeout(timer); return j; }, function(err){ if (timer) clearTimeout(timer); throw err; });
   }
 
   /* ---------- 시작 데이터(bootstrap) · 탭 임시 저장 ----------
@@ -365,7 +381,7 @@
     var t0 = Date.now();
     return api({ action: 'bootstrap', password: pw }, { onRetry: onSlow }).then(function(b){
       if (b && b.status === 'ok' && b['편성']) { stampTime(Date.now() - t0, b['서버ms']);
-        bootMs = b['서버ms'] == null ? null : b['서버ms']; delete b['서버ms']; window.__bootMs = bootMs;
+        bootMs = b['서버ms'] == null ? null : b['서버ms']; delete b['서버ms']; delete b['보관']; window.__bootMs = bootMs;
         var s = b['편성'], role = b.role; delete b['편성']; delete b.role;
         return { a: b, s: s, lg: { status: 'ok', role: role } };
       }

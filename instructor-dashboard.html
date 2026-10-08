@@ -1409,21 +1409,32 @@
   document.getElementById('exportFilteredBtn').addEventListener('click', function(){ exportInstructors(lastFiltered, '화면목록'); });
   document.getElementById('exportAllBtn').addEventListener('click', function(){ exportInstructors(allData, '전체'); });
 
-  /* 조회 전용 요청: 일시적 연결 실패·응답 지연 시 자동 재시도(최대 3회, 25초 제한) */
-  function readFetch(body){
-    function once(n){
-      var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-      var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 25000) : null;
-      return fetch(WEBAPP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
-        .then(function(res){ return res.json(); })
-        .then(function(j){ if (timer) clearTimeout(timer); return j; }, function(err){
-          if (timer) clearTimeout(timer);
-          if (n < 3) return new Promise(function(r){ setTimeout(r, 1200 * n); }).then(function(){ return once(n + 1); });
-          throw err;
-        });
-    }
-    return once(1);
+  /* 조회 전용 요청(겹쳐 보내기): 응답이 늦으면 앞 요청을 끊지 않고 같은 요청을 하나 더 보내 먼저 도착한 응답을 사용.
+     0초·6초·15초에 최대 3건, 연결 실패 시 즉시 다음 요청, 전체 50초 제한. (끊고 다시 보내면 서버가 처리하던 일을 버리게 되어 더 늦어짐) */
+  function hedgedPost(body, onRetry){
+    var AT = [0, 6000, 15000], LIMIT = 50000, payload = JSON.stringify(body);
+    var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    return new Promise(function(resolve, reject){
+      var done = false, started = 0, failed = 0, timers = [], lastErr = null;
+      function finish(ok, v){ if (done) return; done = true; timers.forEach(clearTimeout); if (ctl) { try { ctl.abort(); } catch(e){} } if (ok) resolve(v); else reject(v); }
+      function launch(){
+        if (done || started >= AT.length) return;
+        var i = started++;
+        if (i > 0 && onRetry) { try { onRetry(i + 1); } catch(e){} }
+        fetch(WEBAPP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload, cache: 'no-store', signal: ctl ? ctl.signal : undefined })
+          .then(function(res){ return res.json(); })
+          .then(function(j){ finish(true, j); }, function(err){
+            if (done) return;
+            failed++; lastErr = err;
+            if (failed >= AT.length) { finish(false, err); return; }
+            if (failed >= started) timers.push(setTimeout(launch, 800));
+          });
+      }
+      AT.forEach(function(ms){ timers.push(setTimeout(launch, ms)); });
+      timers.push(setTimeout(function(){ finish(false, lastErr || new Error('응답 시간 초과')); }, LIMIT));
+    });
   }
+  function readFetch(body){ return hedgedPost(body); }
   /* ---------- 목록 임시 저장(이 탭 sessionStorage, 개인정보 최소화) ----------
      강사관리를 다시 열 때 직전 목록을 먼저 보여 주고 뒤에서 최신 정보로 바꿈.
      저장하는 항목: 강사ID·성명·소속·직위·강사구분·전문분야·활동지역·상태·등록경로·등록일·사진·강의 건수 등 목록 표시용만.
