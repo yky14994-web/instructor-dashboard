@@ -277,6 +277,7 @@
 
 </div>
 
+<script>function escHtml(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}</script>
 <script>
   var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwLgHlqLhN79N0Rc1ZvtmsOJH5ocu_5faU_qv62IKWEiUOHQ7_0sZNoG8sGSbGCV8e3/exec';
 
@@ -351,7 +352,7 @@
     document.getElementById('pageTitle').textContent = '이번 강의 자료를 제출해 주세요';
     document.getElementById('pageDesc').textContent = '이미 등록되어 있는 강사님입니다. 이번 강의에 필요한 자료만 제출해 주시면 됩니다.';
     document.getElementById('greeting').style.display = 'block';
-    document.getElementById('greeting').innerHTML = '안녕하세요, <b>' + name + '</b>님. 프로필 정보는 이미 저장되어 있어 이번엔 강의 자료만 제출하시면 됩니다.';
+    document.getElementById('greeting').innerHTML = '안녕하세요, <b>' + escHtml(name) + '</b>님. 프로필 정보는 이미 저장되어 있어 이번엔 강의 자료만 제출하시면 됩니다.';
     document.getElementById('profileSection').style.display = 'none';
     document.getElementById('consentSection').style.display = 'none';
     document.getElementById('name').required = false;
@@ -396,7 +397,7 @@
     document.getElementById('pageDesc').textContent = '배정된 교과목의 강의계획서(PDF)를 올려 주세요. 교과목마다 따로 제출합니다.';
     var g = document.getElementById('greeting');
     g.style.display = 'block';
-    g.innerHTML = '안녕하세요, <b>' + (name || '강사') + '</b>님.';
+    g.innerHTML = '안녕하세요, <b>' + escHtml(name || '강사') + '</b>님.';
     ['profileSection','consentSection','lectureInfoSection'].forEach(function(id){ document.getElementById(id).style.display = 'none'; });
     ['name','birth','phone','email','org','specialty','photo','profileFile','consentFile','lectureName','lectureDate','startHour','endHour','category'].forEach(function(id){ document.getElementById(id).required = false; });
     document.getElementById('assignedInfoBox').style.display = 'block';

@@ -267,7 +267,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 35</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 36</div>
 </div>
 </div>
 
@@ -320,7 +320,7 @@
   function pwFp(pw){ var h = 5381, s = String(pw || ''); for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return String(h); }
   function bootSave(pw, a, s, role){ try { sessionStorage.setItem(KEY_BOOT, JSON.stringify({ t: Date.now(), k: pwFp(pw), a: a, s: s, role: role || '' })); } catch(e){ try { sessionStorage.removeItem(KEY_BOOT); } catch(e2){} } }
   function bootRead(pw){ try { var j = JSON.parse(sessionStorage.getItem(KEY_BOOT) || 'null'); return j && j.a && j.s && j.k === pwFp(pw) && (Date.now() - j.t) < BOOT_MAX_AGE ? j : null; } catch(e){ return null; } }
-  function bootClear(){ delSess(KEY_BOOT); lastSig = ''; }
+  function bootClear(){ delSess(KEY_BOOT); delSess('jsfa_list_v1'); lastSig = ''; }
   function fetchBoot(pw, onSlow){
     return api({ action: 'bootstrap', password: pw }, { onRetry: onSlow }).then(function(b){
       if (b && b.status === 'ok' && b['편성']) {

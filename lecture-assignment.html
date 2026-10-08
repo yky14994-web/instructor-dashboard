@@ -787,7 +787,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 35</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 36</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -850,7 +850,7 @@
   function pwFp(pw){ var h = 5381, s = String(pw || ''); for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return String(h); }
   function bootSave(pw, a, s, role){ try { sessionStorage.setItem(KEY_BOOT, JSON.stringify({ t: Date.now(), k: pwFp(pw), a: a, s: s, role: role || '' })); } catch(e){ try { sessionStorage.removeItem(KEY_BOOT); } catch(e2){} } }
   function bootRead(pw){ try { var j = JSON.parse(sessionStorage.getItem(KEY_BOOT) || 'null'); return j && j.a && j.s && j.k === pwFp(pw) && (Date.now() - j.t) < BOOT_MAX_AGE ? j : null; } catch(e){ return null; } }
-  function bootClear(){ delSess(KEY_BOOT); lastSig = ''; }
+  function bootClear(){ delSess(KEY_BOOT); delSess('jsfa_list_v1'); lastSig = ''; }
   function fetchBoot(pw, onSlow){
     return api({ action: 'bootstrap', password: pw }, { onRetry: onSlow }).then(function(b){
       if (b && b.status === 'ok' && b['편성']) {
