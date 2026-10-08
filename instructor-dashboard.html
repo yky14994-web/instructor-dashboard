@@ -13,7 +13,7 @@
     --navy:#1B3A5F;
     --text:#2C2C2A;
     --text-sub:#4A4946;
-    --text-muted:#767F8C;
+    --text-muted:#5F6877;
     --border:#EFEDE7;
     --border-input:#D9D6CF;
   }
@@ -27,7 +27,7 @@
     -moz-osx-font-smoothing:grayscale;
     text-rendering:optimizeLegibility;
   }
-  .wrap{max-width:1000px;margin:0 auto;padding:20px 20px 60px 20px;}
+  .wrap{max-width:1280px;margin:0 auto;padding:20px 16px 60px 16px;}
   header{
     height:auto;
     padding:20px 24px;
@@ -47,14 +47,11 @@
     background:#fff;border:1px solid var(--border-input);color:var(--text-sub);
     font-size:13px;font-weight:700;
     display:inline-flex;align-items:center;
-    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    transition:background-color .15s ease, border-color .15s ease, color .15s ease;
   }
   span.badge{background:#E3E9EE;color:var(--navy);border:none;height:28px;padding:0 12px;border-radius:20px;}
-  button.badge:hover, .badge[id]:hover{
-    transform:translateY(-2px);
-    box-shadow:0 4px 10px rgba(20,20,19,0.15);
-    background:#F4F7FA;
-  }
+  button.badge:hover, .badge[id]:hover{background:#F4F7FA;}
+  button.badge:active{background:#E9EEF3;}
   #inviteOpenBtn:hover{background:#142a45 !important;}
   @media (max-width:640px){
     .badge{height:30px;padding:0 10px;font-size:11px;white-space:nowrap;}
@@ -68,30 +65,28 @@
     gap:8px;
     margin:28px 0;
   }
+  /* 요약 카드: 강의배정·홈과 같은 모양(숫자가 위, 설명이 아래). 마크업 순서는 그대로 두고 표시 순서만 바꿈 */
   .card{
     background:#fff;
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:14px 12px;
-    box-shadow:0 2px 4px rgba(0,0,0,0.03);
-    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    border:1px solid transparent;
+    border-radius:10px;
+    padding:14px 16px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    display:flex;flex-direction:column-reverse;
+    transition:border-color .15s ease, background-color .15s ease;
   }
-  .card[data-filter]:hover{
-    transform:translateY(-3px);
-    box-shadow:0 6px 14px rgba(20,20,19,0.1);
-    border-color:var(--navy);
-  }
-  .card .label{font-size:11px;color:var(--text-muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .card .num{font-size:19px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;}
+  .card[data-filter]:hover{border-color:var(--navy);}
+  .card .label{font-size:12.5px;color:var(--text-sub);margin-top:6px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .card .num{font-size:26px;line-height:1.1;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;}
   .card.active-filter{border-color:var(--navy);background:#EEF3F8;}
   .stoggle{
     display:inline-flex;align-items:center;gap:8px;
     border:1.5px solid var(--border);background:#F7F6F3;border-radius:22px;
     height:40px;padding:0 8px 0 16px;font-size:14px;font-weight:700;color:var(--text);
     font-family:'Nanum Gothic',sans-serif;cursor:pointer;
-    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+    transition:background-color .15s ease, border-color .15s ease, color .15s ease;
   }
-  .stoggle:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(20,20,19,0.14);border-color:var(--navy);}
+  .stoggle:hover{border-color:var(--navy);}
   .stoggle span{
     display:inline-flex;align-items:center;justify-content:center;
     min-width:24px;height:24px;padding:0 7px;border-radius:12px;
@@ -363,10 +358,10 @@
   <header>
     <div class="title">강사관리 · 강사 조회·검색</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <button id="reloadListBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:'Nanum Gothic',sans-serif;">새로고침</button>
-      <button id="inviteOpenBtn" class="badge" style="border:none;cursor:pointer;font-family:'Nanum Gothic',sans-serif;background:#1B3A5F;color:#fff;">강사 초대</button>
-      <button id="copyPublicLinkBtn" class="badge" style="border:none;cursor:pointer;font-family:'Nanum Gothic',sans-serif;">강사등록 링크</button>
-      <button id="pageLinksOpenBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:'Nanum Gothic',sans-serif;">페이지 링크 모음</button>
+      <button id="reloadListBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">새로고침</button>
+      <button id="inviteOpenBtn" class="badge" style="border:1px solid #1B3A5F;cursor:pointer;font-family:inherit;background:#1B3A5F;color:#fff;">강사 초대</button>
+      <button id="copyPublicLinkBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">강사등록 링크</button>
+      <button id="pageLinksOpenBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">페이지 링크 모음</button>
     </div>
   </header>
 
@@ -712,7 +707,7 @@
         '<td>' + esc(d.성명||'') + routeBadge(d.등록경로) + newBadge(d) +
           pendingBadgesHtml(d) +
         '</td>' +
-        '<td>' + (d._stale ? '<span style="color:#9AA3AF;">…</span>' : esc(d.연락처||'')) + '</td>' +
+        '<td style="white-space:nowrap;">' + (d._stale ? '<span style="color:#9AA3AF;">…</span>' : esc(d.연락처||'')) + '</td>' +
         '<td>' + esc(d.직위||'') + '</td>' +
         '<td>' + esc(d.강사구분||'') + '</td>' +
         '<td>' + esc(d.전문분야||'') + '</td>' +

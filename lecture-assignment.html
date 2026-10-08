@@ -10,7 +10,7 @@
     --navy:#1B3A5F;
     --text:#2C2C2A;
     --text-sub:#4A4946;
-    --text-muted:#767F8C;
+    --text-muted:#5F6877;
     --border:#EFEDE7;
     --border-input:#D9D6CF;
     --ok-bg:#E3F1E4; --ok-fg:#1F6B2B;
@@ -40,11 +40,15 @@
     height:36px;padding:0 14px;border-radius:6px;background:#fff;border:1px solid var(--border-input);
     color:var(--text-sub);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
     display:inline-flex;align-items:center;text-decoration:none;white-space:nowrap;
+    transition:background-color .15s ease, border-color .15s ease, color .15s ease;
   }
   .btn:hover{background:#F4F7FA;}
+  .btn:active{background:#E9EEF3;}
   .btn.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
   .btn.primary:hover{background:#142a45;}
+  .btn.primary:active{background:#0F2236;}
   .btn:disabled{opacity:.5;cursor:default;}
+  @media (prefers-reduced-motion:reduce){ .btn{transition:none;} }
 
   /* 로그인 */
   #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
@@ -70,6 +74,8 @@
   .bar select,.bar input[type=search]{height:36px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;font-family:inherit;font-size:13px;background:#fff;color:var(--text);}
   .bar input[type=search]{min-width:190px;flex:1 1 190px;max-width:320px;}
   .bar .spacer{flex:1 1 auto;}
+  .bar .bgrp{display:inline-flex;gap:8px;align-items:center;flex-wrap:nowrap;margin-left:auto;}
+  @media (max-width:720px){ .bar .bgrp{flex-wrap:wrap;margin-left:0;} }
   .legend{font-size:12px;color:var(--text-muted);}
   #msgBox{display:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:12px;}
   #msgBox.warn{display:block;background:var(--warn-bg);color:var(--warn-fg);}
@@ -84,6 +90,7 @@
   tr:last-child td{border-bottom:none;}
   td.num,th.num{text-align:right;}
   td.nw{white-space:nowrap;}
+  #tbody td,.rc{word-break:keep-all;overflow-wrap:break-word;}
   .course{font-weight:700;color:var(--text);}
   .course small{display:block;font-weight:500;color:var(--text-muted);font-size:11.5px;margin-top:2px;}
   .tag{display:inline-block;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:700;line-height:1.4;}
@@ -348,6 +355,7 @@
   .todo .chips{display:flex;gap:6px;flex-wrap:wrap;}
   .todo .chip{height:30px;font-size:12.5px;}
   .todo .chip.has{border-color:#D9B100;}
+  .todo .chip:not(.has):not(.on){color:var(--text-muted);}
   .todo .chip.on{background:var(--navy);color:#fff;border-color:var(--navy);}
   .todo .th2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 6px;}
   .todo .tabs{display:flex;gap:6px;margin-left:auto;}
@@ -395,8 +403,8 @@
   .cc.err.unas{border-style:solid;border-color:#D8574B;}
   .cc.pre{opacity:.78;}
   .cc.ph{visibility:hidden;cursor:default;}
-  .lhint{margin:6px 2px 10px;padding:12px 16px;border-radius:8px;background:#FFF6D6;border:1.5px solid #E0B400;border-left:6px solid #E0B400;color:#3D2F00;font-size:15.5px;line-height:1.5;}
-  .lhint b{font-weight:800;font-size:16.5px;color:#1F2D45;}
+  .lhint{margin:6px 2px 10px;padding:10px 14px;border-radius:8px;background:var(--info-bg);color:var(--info-fg);font-size:13.5px;line-height:1.5;}
+  .lhint b{font-weight:800;}
   .cmore{display:block;margin-top:3px;font-size:11.5px;font-weight:700;color:var(--navy);cursor:pointer;padding:0 3px;}
   .calleg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-sub);margin-top:8px;}
   .calleg i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px;border:1.5px solid transparent;}
@@ -423,6 +431,9 @@
   .rvl{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;}
   .rvl th,.rvl td{border-bottom:1px solid #E5E0EE;padding:5px 6px;text-align:left;vertical-align:top;}
   .rvl th{font-size:12px;color:var(--text-sub);}
+  .rvlw{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .rvl.rvt td:first-child,.rvl.rvt th:first-child{white-space:nowrap;}
+  @media (max-width:720px){ .rvlw .rvl{min-width:560px;} }
   input[type=date]{font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif !important;}
   .dbx{position:relative;display:inline-block;}
   .dbx input[type=date]{min-width:176px;padding-right:44px;}
@@ -736,10 +747,12 @@
     </select>
     <input type="search" id="fText" placeholder="과정명 검색" aria-label="과정명 검색">
     <span class="spacer"></span>
-    <button class="btn" id="reloadBtn" type="button">새로고침</button>
-    <button class="btn" id="excelBtn" type="button">엑셀 내려받기</button>
-    <select class="porient" id="oriTable" data-ori="table" aria-label="인쇄 용지 방향"></select>
-    <button class="btn" id="printBtn" type="button">인쇄</button>
+    <span class="bgrp">
+      <button class="btn" id="reloadBtn" type="button">새로고침</button>
+      <button class="btn" id="excelBtn" type="button">엑셀 내려받기</button>
+      <select class="porient" id="oriTable" data-ori="table" aria-label="인쇄 용지 방향"></select>
+      <button class="btn" id="printBtn" type="button">인쇄</button>
+    </span>
   </div>
   <div class="legend" id="planLegend" style="margin:0 2px 8px 2px;">검사 열에는 확인 필요(노랑)·오류(빨강)인 과정만 표시합니다. 표시가 없으면 이상 없음입니다. 검사 결과는 강의배정DB 연간계획 시트의 값입니다.</div>
 
@@ -787,7 +800,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 40</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 41</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1040,7 +1053,7 @@
     var h = $('listHint'); if (!h) return;
     var on = shown.length > 0 && planMode === 'table';
     h.style.display = on ? '' : 'none';
-    h.innerHTML = on ? '<b>아래 과정을 선택하고 교과목을 지정할 수 있습니다.</b><br>과정명을 누르면 교과목 편성 화면이 열립니다.' : '';
+    h.innerHTML = on ? '<b>아래 과정을 선택하고 교과목을 지정할 수 있습니다.</b> 과정명을 누르면 교과목 편성 화면이 열립니다.' : '';
   }
   function updateWeekNote(){
     updateListHint();
@@ -2783,12 +2796,12 @@
         (rvSt.editId ? '<button type="button" class="btn sm" data-cm="rv:editx">수정 취소</button>' : '') + '</div>' +
         (rvSt.msg ? '<div class="hint" style="margin-top:6px;color:#9B1C12;">' + rvSt.msg + '</div>' : '') + '</div>';
     }
-    var tbl = list.length ? '<table class="rvl"><thead><tr><th>유형</th><th>일자·교시·강의실</th><th>과정 / 사유·부서</th><th>연락처·비고</th>' + (viewer ? '' : '<th></th>') + '</tr></thead><tbody>' +
+    var tbl = list.length ? '<div class="rvlw"><table class="rvl rvt"><thead><tr><th>유형</th><th>일자·교시·강의실</th><th>과정 / 사유·부서</th><th>연락처·비고</th>' + (viewer ? '' : '<th></th>') + '</tr></thead><tbody>' +
       list.map(function(r){
         var big = String(r['유형']) === '대관';
         return '<tr><td>' + esc(r['유형']) + '</td><td>' + esc(rvRowText(r)) + '</td><td>' + esc(big ? r['사유·사용부서'] : r['개설키']) + '</td><td>' + esc([r['담당자·연락처'], r['비고']].filter(Boolean).join(' · ')) + '</td>' +
           (viewer ? '' : '<td class="nw"><button type="button" class="btn sm" data-cm="rv:edit:' + esc(r['예약ID']) + '">수정</button> <button type="button" class="btn sm" data-cm="rv:cancel:' + esc(r['예약ID']) + '">취소</button></td>') + '</tr>';
-      }).join('') + '</tbody></table>' : '<div class="tnone" style="padding:8px 0;">오늘 이후 예약이 없습니다.</div>';
+      }).join('') + '</tbody></table></div>' : '<div class="tnone" style="padding:8px 0;">오늘 이후 예약이 없습니다.</div>';
     return form + '<div class="rmgrp" style="margin-top:14px;">예약 목록<small>오늘 이후 ' + list.length + '건 · 교과목을 편성하면 사전확보 예약은 해당 시간만 자동으로 편성으로 바뀌고, 편성을 지우거나 옮기면 예약으로 되돌아옵니다</small></div>' + tbl;
   }
   function rvReload(){
@@ -2915,12 +2928,12 @@
         '<div class="rmq" style="margin:0;"><button type="button" class="btn primary sm" data-cm="rq:save"' + (rqSt.busy ? ' disabled' : '') + '>' + (rqSt.busy ? '신청 중...' : '대관 신청') + '</button></div>' +
         (rqSt.msg ? '<div class="hint" style="margin-top:6px;">' + rqSt.msg + '</div>' : '') + '</div>';
     }
-    var tbl = list.length ? '<table class="rvl"><thead><tr><th>일자</th><th>교시 · 강의실</th><th>사유 · 사용부서</th><th>담당자 · 연락처 · 비고</th><th>신청일시</th>' + (viewer ? '' : '<th>겹침 확인</th><th></th>') + '</tr></thead><tbody>' +
+    var tbl = list.length ? '<div class="rvlw"><table class="rvl"><thead><tr><th>일자</th><th>교시 · 강의실</th><th>사유 · 사용부서</th><th>담당자 · 연락처 · 비고</th><th>신청일시</th>' + (viewer ? '' : '<th>겹침 확인</th><th></th>') + '</tr></thead><tbody>' +
       list.map(function(r){
         var d = normYmd(r['일자']), a = Number(r['시작교시']), b = Number(r['끝교시']), cl = viewer ? [] : rqClash(r);
         return '<tr' + (viewer ? '' : '') + '><td class="nw">' + esc(md(d)) + '</td><td>' + (a === b ? a : a + '~' + b) + '교시 · ' + esc(r['강의실']) + '</td><td>' + esc(r['사유·사용부서']) + '</td><td>' + esc([r['담당자·연락처'], r['비고']].filter(Boolean).join(' · ')) + '</td><td class="nw">' + esc(rqWhen(r)) + '</td>' +
           (viewer ? '' : '<td>' + (cl.length ? '<span style="color:#9B1C12;">' + esc(cl.slice(0, 2).join(', ')) + (cl.length > 2 ? ' 외 ' + (cl.length - 2) + '건' : '') + '</span>' : '<span style="color:#1F6B2B;">겹침 없음</span>') + '</td><td class="nw">' + rqBtns(r) + '</td>') + '</tr>';
-      }).join('') + '</tbody></table>' : '<div class="tnone" style="padding:8px 0;">승인 대기 중인 대관 신청이 없습니다.</div>';
+      }).join('') + '</tbody></table></div>' : '<div class="tnone" style="padding:8px 0;">승인 대기 중인 대관 신청이 없습니다.</div>';
     return '<div id="rqBox">' + (viewer ? form : '') + '<div class="rmgrp" style="margin-top:14px;">대관 신청 ' + (viewer ? '현황' : '승인 대기') + '<small>' + list.length + '건 · ' + (viewer ? '담당자 승인 대기 중인 신청입니다' : '승인하면 강의실 예약(대관)으로 등록되고, 반려하면 목록에서 빠집니다') + '</small></div>' + tbl + '</div>';
   }
   function rqGo(v){
