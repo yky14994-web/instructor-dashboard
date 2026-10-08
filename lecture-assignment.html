@@ -688,7 +688,7 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i on" id="gnavAssign" aria-current="page" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" id="gnavRoom" href="lecture-assignment.html#v=room">빈 강의실</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i on" id="gnavAssign" aria-current="page" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" id="gnavRoom" href="lecture-assignment.html#v=room">강의실</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
   <div class="crumb" id="crumb"></div>
   <header>
@@ -714,7 +714,7 @@
 
   <div class="todo" id="todo" style="display:none;"></div>
 
-  <div class="pmbar"><span class="vtabs" role="tablist" aria-label="연간계획 보기 전환"><button type="button" id="pmTable" class="on" role="tab" data-pm="table">표</button><button type="button" id="pmCal" role="tab" data-pm="cal">월 캘린더</button><button type="button" id="pmRoom" role="tab" data-pm="room">빈 강의실·예약</button></span></div>
+  <div class="pmbar"><span class="vtabs" role="tablist" aria-label="연간계획 보기 전환"><button type="button" id="pmTable" class="on" role="tab" data-pm="table">표</button><button type="button" id="pmCal" role="tab" data-pm="cal">월 캘린더</button><button type="button" id="pmRoom" role="tab" data-pm="room">강의실</button></span></div>
 
   <div class="bar" id="planBar">
     <select id="fYear" aria-label="연도"></select>
@@ -785,7 +785,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 33</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 34</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1554,7 +1554,7 @@
   /* 현재 목록 화면의 제목·안내·되돌아갈 주소 */
   function headInfo(){
     if (planMode === 'cal') return { t: '월 캘린더', s: '월별 과정 일정을 달력으로 봅니다. 과정마다 색이 다르며, 칸을 누르면 그날의 교과목·강사·강의실이 열립니다.', h: '#v=cal' };
-    if (planMode === 'room') return { t: '빈 강의실 찾기·예약', s: '날짜와 교시를 정해 비어 있는 강의실을 찾고, 과정·대관용으로 강의실을 미리 잡아 둡니다.', h: '#v=room' };
+    if (planMode === 'room') return { t: '강의실 현황·예약', s: '날짜와 교시를 정해 비어 있는 강의실을 찾고, 과정·대관용으로 강의실을 미리 잡아 둡니다.', h: '#v=room' };
     if (weekFilter) {
       var tm = mondayOf(ymd(new Date())), a = weekFilter, b = addDays(weekFilter, 6), rg = md(a).replace(/\(.\)/, '') + '~' + md(b).replace(/\(.\)/, '');
       return { t: (a === tm ? '이번주(' + rg + ')' : rg) + ' 교육과정', s: '이 기간에 진행되는 과정입니다. 과정을 보고 교과목을 편성하세요.', h: '#v=table&w=' + a };
@@ -1583,7 +1583,7 @@
     $('crumb').innerHTML = out;
     navSync();
   }
-  /* 상단 메뉴 강조: 빈 강의실 화면이면 '빈 강의실', 그 외 강의배정 */
+  /* 상단 메뉴 강조: 강의실 화면이면 '강의실', 그 외 강의배정 */
   function navSync(){
     var room = !currentKey && planMode === 'room', a = $('gnavAssign'), b = $('gnavRoom');
     if (!a || !b) return;
@@ -1601,7 +1601,7 @@
     $('hTitle').textContent = '교과목 편성';
     $('hSub').textContent = '과정을 선택하면 교시 단위로 교과목·강사·강의실을 편성합니다.';
     renderCrumb();
-    $('backBtn').textContent = cameFrom === 'home' ? '← 홈으로' : cameFrom === 'dash' ? '← 강사관리로' : planMode === 'cal' ? '← 월 캘린더로' : planMode === 'room' ? '← 빈 강의실·예약으로' : '← 연간계획으로';
+    $('backBtn').textContent = cameFrom === 'home' ? '← 홈으로' : cameFrom === 'dash' ? '← 강사관리로' : planMode === 'cal' ? '← 월 캘린더로' : planMode === 'room' ? '← 강의실로' : '← 연간계획으로';
     $('viewerNote').style.display = isViewer() ? 'block' : 'none';
     var blk = $('sBlock');
     if (!sessionsOk) { blk.style.display = 'block'; blk.textContent = '교과목 편성 목록을 불러오지 못해 저장할 수 없습니다. 새로고침 후 다시 시도해 주세요.'; }
@@ -2586,7 +2586,7 @@
     if (roomE < roomS) roomE = roomS;
     var use = roomUsage(roomDate, roomS, roomE);
     var opt = function(sel){ return pn.map(function(n){ return '<option value="' + n + '"' + (n === sel ? ' selected' : '') + '>' + n + '교시</option>'; }).join(''); };
-    var head = '<div class="pcalbox"><div class="pcalbar"><h3>빈 강의실 찾기·예약</h3></div>' +
+    var head = '<div class="pcalbox"><div class="pcalbar"><h3>강의실 현황·예약</h3></div>' +
       '<div class="rmq"><button type="button" class="btn sm" data-cm="rm:prev">◀ 전날</button>' +
       '<input type="date" id="roomDateIn" value="' + esc(roomDate) + '" aria-label="날짜"><span class="dowtag">' + dowTag(roomDate) + '</span>' +
       '<button type="button" class="btn sm" data-cm="rm:next">다음날 ▶</button><button type="button" class="btn sm" data-cm="rm:today">오늘</button>' +
