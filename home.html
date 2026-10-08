@@ -273,7 +273,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 45</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 46</div>
 </div>
 </div>
 
@@ -462,9 +462,20 @@
     var today = todayStr(), q = parseYmd(today);
     var list = sessionsOn(today);
     var now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
-    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건</span></div><div class="cdesc">오늘 진행되는 수업을 교시별·과정별로 보여줍니다. 과정마다 색이 다릅니다. 과정명을 누르면 해당 과정의 오늘 날짜 주간 일정이, <b>강사 이름을 누르면 강사 정보 카드(상세)</b>가 열립니다.</div>';
+    /* 오늘 입교·실습 기간인 과정(평일). 오늘 편성된 교과목이 없어도 과정 자체는 자정까지 보여 줌 */
+    var haveKey = {}; list.forEach(function(o){ haveKey[o.key] = true; });
+    var extra = [];
+    if (sessionsOk && q.dow >= 1 && q.dow <= 5) {
+      plans.forEach(function(p){
+        if (isCancelled(p)) return;
+        var key = String(p['과정+기수'] || ''); if (!key || haveKey[key]) return;
+        if (planRanges(p).some(function(r){ return r.a <= today && r.b >= today; })) { extra.push(key); haveKey[key] = true; }
+      });
+      extra.sort(function(x, y){ var a = normYmd(planByKey(x)['입교 시작일']) || '', b = normYmd(planByKey(y)['입교 시작일']) || ''; return a < b ? -1 : a > b ? 1 : x < y ? -1 : 1; });
+    }
+    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건' + (extra.length ? ' · 교과목 미편성 과정 ' + extra.length + '개' : '') + '</span></div><div class="cdesc">오늘 진행되는 수업을 교시별·과정별로 보여줍니다. 과정마다 색이 다릅니다. 과정명을 누르면 해당 과정의 오늘 날짜 주간 일정이, <b>강사 이름을 누르면 강사 정보 카드(상세)</b>가 열립니다.</div>';
     if (!sessionsOk) { $('cToday').innerHTML = html + '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
-    if (!list.length) { $('cToday').innerHTML = html + '<div class="empty">오늘 예정된 수업이 없습니다.</div>'; return; }
+    if (!list.length && !extra.length) { $('cToday').innerHTML = html + '<div class="empty">오늘 예정된 수업이 없습니다.</div>'; return; }
     // 행: 교시표의 교시 + 수업에 쓰인 교시
     var rowSet = {}; periods.forEach(function(x){ rowSet[x.n] = true; });
     list.forEach(function(o){ for (var n = o.a; n <= o.b && n < o.a + 20; n++) rowSet[n] = true; });
@@ -481,6 +492,7 @@
       if (lane < 0) { var nc = { key: key, lane: colOf[key].length, blocks: [], first: o.a }; colOf[key].push(nc); cols.push(nc); lane = nc.lane; }
       colOf[key][lane].blocks.push(o);
     });
+    extra.forEach(function(k){ cols.push({ key: k, lane: 0, blocks: [], first: 9999 }); });
     cols.sort(function(x, y){ return x.first - y.first || (x.key < y.key ? -1 : x.key > y.key ? 1 : 0) || x.lane - y.lane; });
     function stateOf(o){
       var pt = periodText(o.a, o.b);
@@ -493,7 +505,7 @@
     rows.forEach(function(n){ var pi = periodInfo(n); if (pi && validTime(pi.start) && validTime(pi.end) && nowMin >= toMin(pi.start) && nowMin < toMin(pi.end)) curRow = n; });
     var th = '<tr><th class="pn">교시</th>' + cols.map(function(c){
       var nm = courseName(c.key);
-      return '<th class="cn" style="background:' + courseBg(nm) + ';border-top:4px solid ' + courseColor(nm) + ';">' + (c.lane === 0 ? courseLink(c.key, nameOf(c.key), today) : '<span class="hint">' + esc(nameOf(c.key)) + ' (동시 진행)</span>') + (c.lane === 0 && ipgyoLine(planByKey(c.key)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(c.key))) + '</small>' : '') + (nowIsOver() ? '<span class="tag t-none" style="display:inline-block;margin-top:4px;">종료</span>' : '') + '</th>';
+      return '<th class="cn" style="background:' + courseBg(nm) + ';border-top:4px solid ' + courseColor(nm) + ';">' + (c.lane === 0 ? courseLink(c.key, nameOf(c.key), today) : '<span class="hint">' + esc(nameOf(c.key)) + ' (동시 진행)</span>') + (c.lane === 0 && ipgyoLine(planByKey(c.key)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(c.key))) + '</small>' : '') + (!c.blocks.length ? '<span class="tag t-warn" style="display:inline-block;margin-top:4px;margin-right:4px;">오늘 교과목 미편성</span>' : '') + (nowIsOver() ? '<span class="tag t-none" style="display:inline-block;margin-top:4px;">종료</span>' : '') + '</th>';
     }).join('') + '</tr>';
     var body = rows.map(function(n){
       var pi = periodInfo(n), tm = pi && validTime(pi.start) ? pi.start + (validTime(pi.end) ? '~' + pi.end : '') : '';
@@ -514,7 +526,7 @@
     var keys = []; cols.forEach(function(c){ if (keys.indexOf(c.key) < 0) keys.push(c.key); });
     var cards = keys.map(function(k){
       var nm = courseName(k), items = list.filter(function(o){ return o.key === k; });
-      return '<div class="tcard" style="border-left:5px solid ' + courseColor(nm) + ';background:' + courseBg(nm) + ';"><div class="tch">' + courseLink(k, nameOf(k), today) + (ipgyoLine(planByKey(k)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(k))) + '</small>' : '') + (nowIsOver() ? '<span class="tag t-none" style="display:inline-block;margin-top:4px;">종료</span>' : '') + '</div>' + items.map(function(o){
+      return '<div class="tcard" style="border-left:5px solid ' + courseColor(nm) + ';background:' + courseBg(nm) + ';"><div class="tch">' + courseLink(k, nameOf(k), today) + (ipgyoLine(planByKey(k)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(k))) + '</small>' : '') + (nowIsOver() ? '<span class="tag t-none" style="display:inline-block;margin-top:4px;">종료</span>' : '') + '</div>' + (items.length ? '' : '<div class="tcr"><div class="sj"><span class="tag t-warn">오늘 교과목 미편성</span></div></div>') + items.map(function(o){
         var pt = periodText(o.a, o.b), st = stateOf(o);
         return '<div class="tcr ' + st + '"><div class="tm">' + esc(pt.txt) + (pt.time ? '<small>' + esc(pt.time) + '</small>' : '') + '</div><div><div class="sj">' + esc(o.subj) + klassTag(o) + stateTag(st) + '</div>' +
           '<div class="ro">' + (o.room ? esc(o.room) : '<span class="hint">강의실 미정</span>') + ' · ' + instrHtml(o.rows) + '</div></div></div>';
