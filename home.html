@@ -994,9 +994,9 @@
       plan: function(){
         return '<div class="dsec">강의계획서 14일 이내 임박<small>' + soon.length + '건 · 기한은 강의일 7일 전</small></div>' +
           dtTable(['기한까지', '기한', '과정 · 기수', '교과목 (강의일)', '강사', ''], soon.map(function(o){
-            var btn = viewer ? '' : '<button type="button" class="btn sm" data-hcopy="' + esc(o.r['편성ID']) + '|' + esc(o.r['강사ID']) + '">링크 복사</button>';
+            var btn = viewer ? '' : '<button type="button" class="btn sm" data-hcopy="' + esc(o.r['편성ID']) + '">안내 재발송</button>';
             return [esc(dl(o.left)), '<span class="nw">' + esc(md(o.due)) + '</span>', cLink(String(o.r['개설키'])), esc(o.r['교과목'] || '') + ' (' + esc(md(o.date)) + ')', esc(o.r['강사명'] || o.r['강사ID'] || ''), btn];
-          }), '해당하는 건이 없습니다.') + (viewer ? '' : '<div class="hint">"링크 복사"는 강사에게 보낼 강의계획서 제출 링크를 복사합니다(자동 발송은 없습니다).</div>');
+          }), '해당하는 건이 없습니다.') + (viewer ? '' : '<div class="hint">배정 안내(메일·문자)는 편성을 저장할 때 자동 발송됩니다. 강사가 메일을 못 받았다면 "안내 재발송"을 눌러 주세요.</div>');
       },
       unas: function(){
         return '<div class="dsec">강사 미지정<small>' + unas.length + '건 · 강의일이 14일 이내</small></div>' +
@@ -1118,10 +1118,16 @@
   document.addEventListener('click', function(ev){
     var cp = ev.target && ev.target.closest ? ev.target.closest('[data-hcopy]') : null;
     if (cp) {
-      var q = cp.getAttribute('data-hcopy').split('|'), url = new URL('lecture-submission.html', location.href).href.split('#')[0] + '?id=' + encodeURIComponent(q[1]) + '&sid=' + encodeURIComponent(q[0]);
-      var done = function(){ var o = cp.getAttribute('data-o') || cp.textContent; cp.setAttribute('data-o', o); cp.textContent = '복사했습니다'; setTimeout(function(){ cp.textContent = o; }, 1800); };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, function(){ window.prompt('아래 링크를 복사해 주세요', url); });
-      else window.prompt('아래 링크를 복사해 주세요', url);
+      var sid = cp.getAttribute('data-hcopy');
+      if (!sid || cp.disabled) return;
+      if (!confirm('이 강사에게 배정 안내(메일+문자)를 다시 보낼까요?\n메일에는 이 교과목 전용 강의계획서 제출 링크가 들어갑니다.')) return;
+      var o = cp.textContent;
+      cp.disabled = true; cp.textContent = '보내는 중…';
+      api({ action: 'resendSessionNotice', password: getPw(), 편성ID: sid }).then(function(res){
+        if (res.status !== 'ok') { alert(res.message || '보내지 못했습니다'); return; }
+        alert('안내를 보냈습니다.\n' + (res['안내'] || []).map(function(n){ return (n['대상'] || '') + ' 선생님 ' + (n['종류'] || '') + ' 안내 — 메일 ' + (n['메일'] || '-') + ' · 문자 ' + (n['문자'] || '-'); }).join('\n'));
+      }).catch(function(){ alert('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'); })
+        .then(function(){ cp.disabled = false; cp.textContent = o; });
       return;
     }
     var ud = ev.target && ev.target.closest ? ev.target.closest('[data-hundo]') : null;

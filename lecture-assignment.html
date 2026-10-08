@@ -2137,7 +2137,7 @@
       $('sStart').value = String(nx); $('sEnd').value = String(nx); refreshPeriodLock();
       var html = '✓ ' + (wasEdit ? '수정했습니다.' : '저장했습니다.');
       var box = $('sMsg');
-      box.innerHTML = '<div class="note-ok">' + html + '</div>' +
+      box.innerHTML = '<div class="note-ok">' + html + '</div>' + noticeBoxHtml(res['안내']) +
         (warns.length ? '<div class="note-warn"><b>확인이 필요합니다(저장은 되었습니다)</b><br>' + warns.map(function(w){ return '· ' + esc(w); }).join('<br>') + '</div>' : '');
       var savedId = String(res.data['편성ID']);
       var mine = cfl.filter(function(c){ return !c.conf && (c.a.ids.indexOf(savedId) > -1 || c.b.ids.indexOf(savedId) > -1); });
@@ -2166,6 +2166,7 @@
       if (form.id === id) resetForm();
       renderHead(planByKey(currentKey));
       renderSessionList();
+      if ((res['안내'] || []).length) alert('삭제했습니다.\n\n강사 안내\n' + noticeText(res['안내']));
     }).catch(function(){ alert('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'); });
   }
 
@@ -2231,8 +2232,30 @@
     if (st.left === null) return '미제출';
     return '미제출 · 기한 ' + st.due + (st.left === 0 ? '(오늘)' : '(' + st.left + '일 남음)');
   }
-  function planLink(iid, sid){
-    return new URL('lecture-submission.html', location.href).href.split('#')[0] + '?id=' + encodeURIComponent(iid) + '&sid=' + encodeURIComponent(sid);
+  /* 강사 안내(배정·변경·취소 메일+문자) 결과 표시. 백엔드가 저장·삭제·복사 응답의 '안내'에 담아 줌 */
+  function noticeBoxHtml(list){
+    if (!list || !list.length) return '';
+    var bad = list.some(function(n){ return n['메일'] !== '발송' || n['문자'] !== '발송'; });
+    return '<div class="' + (bad ? 'note-warn' : 'note-ok') + '" style="margin-top:6px;"><b>강사 안내</b><br>' + list.map(function(n){
+      return '· ' + esc(n['대상'] || '') + ' 선생님 ' + esc(n['종류'] || '') + ' 안내' + (Number(n['건수']) > 1 ? '(' + n['건수'] + '건 묶음)' : '') +
+        ' — 메일 ' + esc(n['메일'] || '-') + ' · 문자 ' + esc(n['문자'] || '-');
+    }).join('<br>') + (bad ? '<br><span class="hint">발송되지 않은 항목은 강사 연락처·이메일을 확인하거나 "안내 재발송"을 이용해 주세요.</span>' : '') + '</div>';
+  }
+  function noticeText(list){
+    return (list || []).map(function(n){
+      return (n['대상'] || '') + ' 선생님 ' + (n['종류'] || '') + ' 안내' + (Number(n['건수']) > 1 ? '(' + n['건수'] + '건 묶음)' : '') + ' — 메일 ' + (n['메일'] || '-') + ' · 문자 ' + (n['문자'] || '-');
+    }).join('\n');
+  }
+  function resendNotice(sid, btn){
+    if (!sid || isViewer()) return;
+    if (!confirm('이 강사에게 배정 안내(메일+문자)를 다시 보낼까요?\n메일에는 이 교과목 전용 강의계획서 제출 링크가 들어갑니다.')) return;
+    var o = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = '보내는 중…'; }
+    api({ action: 'resendSessionNotice', password: getPw(), 편성ID: sid }).then(function(res){
+      if (res.status !== 'ok') { alert(res.message || '보내지 못했습니다'); return; }
+      alert('안내를 보냈습니다.\n' + noticeText(res['안내']));
+    }).catch(function(){ alert('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'); })
+      .then(function(){ if (btn) { btn.disabled = false; btn.textContent = o; } });
   }
   function copyText(t, btn){
     var done = function(){ if (btn) { var o = btn.getAttribute('data-o') || btn.textContent; btn.setAttribute('data-o', o); btn.textContent = '복사했습니다'; setTimeout(function(){ btn.textContent = o; }, 1800); } };
@@ -3284,7 +3307,7 @@
       if (res.status !== 'ok') { if (msg) msg.innerHTML = '<div class="note-err">' + esc(res.message || '저장하지 못했습니다') + '</div>'; return; }
       upsertSession(res.data); refreshConflicts();
       var warns = res.warnings || [], nm = (instrById[qa.iid] || {}).name || '';
-      dayNoteHtml = '<div class="note-ok" style="margin:8px 0;">✓ ' + esc(nm) + ' 선생님을 지정했습니다.</div>' +
+      dayNoteHtml = '<div class="note-ok" style="margin:8px 0;">✓ ' + esc(nm) + ' 선생님을 지정했습니다.</div>' + noticeBoxHtml(res['안내']) +
         (warns.length ? '<div class="note-warn" style="margin:8px 0;"><b>확인이 필요합니다(저장은 되었습니다)</b><br>' + warns.map(function(w){ return '· ' + esc(w); }).join('<br>') + '</div>' : '');
       qaCloseAll();
       openDayDetail(date, dayHl);
@@ -3454,7 +3477,7 @@
     // ① 강의계획서
     var pl = todoItems(), nOver = 0;
     var plList = pl;
-    function copyBtn(o){ return viewer ? '' : '<button type="button" class="btn sm" data-tplink="' + esc(o.st.sid) + '|' + esc(o.st.iid) + '">링크 복사</button>'; }
+    function copyBtn(o){ return viewer ? '' : '<button type="button" class="btn sm" data-tplink="' + esc(o.st.sid) + '">안내 재발송</button>'; }
     D.plan = { label: '강의계획서', n: pl.length, nOver: nOver, nSoon: pl.length - nOver,
       sum: '14일 이내 임박 <b style="color:var(--warn-fg)">' + pl.length + '건</b> · 기한은 강의일 7일 전 · 기한이 지난 건은 표시하지 않습니다',
       cols: ['상태', '기한', '과정 · 기수', '교과목 (강의일)', '강사', ''],
@@ -3462,7 +3485,7 @@
         return { key: o.r['개설키'], cells: [todoPill(o.st), '<span class="nw">' + esc(md(o.st.due)) + '</span>', esc(o.r['개설키']), esc(o.st.subj) + ' (' + esc(md(o.st.date)) + ')', nameOf(o.r, o.r), copyBtn(o)],
           title: todoPill(o.st) + ' ' + esc(o.st.subj), sub: esc(o.r['개설키']) + ' · 강의 ' + esc(md(o.st.date)) + ' · 기한 ' + esc(md(o.st.due)), extra: nameOf(o.r, o.r) + ' ' + copyBtn(o) };
       }),
-      note: '행을 누르면 해당 과정의 교과목 편성 화면으로 이동합니다' + (viewer ? '.' : '. 링크 복사는 강사에게 직접 전달해 주세요(자동 발송 없음).') };
+      note: '행을 누르면 해당 과정의 교과목 편성 화면으로 이동합니다' + (viewer ? '.' : '. 배정 안내(메일·문자)는 편성 저장 때 자동 발송됩니다. 강사가 메일을 못 받았다면 "안내 재발송"을 눌러 주세요.') };
     var up = upcomingRows();
     // ② 강사 미지정
     var un = up.filter(function(o){ return !hasInstr(o.r); });
@@ -3887,7 +3910,7 @@
   }
   function mvApply(changes, label, focusDate){
     mvBusy = true; mvErr = '';
-    var done = [], warns = [], idx = 0;
+    var done = [], warns = [], idx = 0, notices = [];
     function orig(c){ return { date: String(c.row['일자']), s: Number(c.row['시작교시']), e: Number(c.row['끝교시']) }; }
     function fail(msg){
       var k = done.length;
@@ -3906,7 +3929,7 @@
       refreshConflicts();
       var ids = changes.map(function(c){ return String(c.row['편성ID']); });
       var mine = cfl.filter(function(c){ return !c.conf && ids.some(function(i){ return c.a.ids.indexOf(i) > -1 || c.b.ids.indexOf(i) > -1; }); });
-      var html = '<div class="note-ok">✓ ' + esc(label) + '</div>';
+      var html = '<div class="note-ok">✓ ' + esc(label) + '</div>' + noticeBoxHtml(notices);
       if (warns.length) html += '<div class="note-warn"><b>확인이 필요합니다(저장은 되었습니다)</b><br>' + warns.map(function(w){ return '· ' + esc(w); }).join('<br>') + '</div>';
       if (mine.length) html += '<div class="note-warn" style="background:var(--err-bg);color:#7A140D;"><b>겹침이 있습니다(저장은 되었습니다)</b>' + mine.map(function(c){
         var me = ids.some(function(i){ return c.a.ids.indexOf(i) > -1; }) ? c.a : c.b, pt = conflictParts(c, me);
@@ -3923,6 +3946,7 @@
       api(mvBody(c.row, c)).then(function(res){
         if (res.status !== 'ok') { fail(res.message || '저장하지 못했습니다.'); return; }
         upsertSession(res.data); done.push(c);
+        (res['안내'] || []).forEach(function(n){ notices.push(n); });
         (res.warnings || []).forEach(function(w){ if (warns.indexOf(w) < 0) warns.push(w); });
         idx++; step();
       }).catch(function(){ fail('서버에 연결하지 못했습니다.'); });
@@ -4208,12 +4232,12 @@
     $('iCard').innerHTML = '<div class="top"><div><h2>' + esc(x.name) + ' <span class="hint" style="font-weight:600;">서류 현황</span></h2><div class="sub">' + esc([x.org, x.pos].filter(Boolean).join(' · ')) + '</div></div>' + avatar(x, 'lg') + '</div>' +
       head + '<table class="dtab" style="width:100%;border-collapse:collapse;">' + rows + '</table>' +
       '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button><button type="button" class="btn" id="iFull" data-full="' + esc(id) + '">강사 정보 전체 보기</button>' +
-      (ps && !ps.done && !ps.ended && !isViewer() ? '<button type="button" class="btn primary" id="iCopyLink">제출 링크 복사</button>' : '') + '</div>' +
-      (ps && !ps.done && !ps.ended && !isViewer() ? '<div class="hint" style="margin-top:8px;">복사한 링크를 강사에게 직접 전달해 주세요(자동 발송은 하지 않습니다). 이 링크는 이 교과목 전용입니다.</div>' : '');
+      (ps && !ps.done && !ps.ended && !isViewer() ? '<button type="button" class="btn primary" id="iResend">안내 재발송</button>' : '') + '</div>' +
+      (ps && !ps.done && !ps.ended && !isViewer() ? '<div class="hint" style="margin-top:8px;">배정 안내(메일·문자)는 편성 저장 때 자동 발송됩니다. 강사가 메일을 못 받았다면 "안내 재발송"을 눌러 주세요. 제출 링크는 이 교과목 전용으로 메일에만 들어갑니다.</div>' : '');
     $('iOverlay').style.display = 'flex';
     $('iClose').addEventListener('click', closeInstructor);
     $('iFull').addEventListener('click', function(){ openInstructor(id, false); });
-    if ($('iCopyLink')) $('iCopyLink').addEventListener('click', function(){ copyText(planLink(id, sid), this); });
+    if ($('iResend')) $('iResend').addEventListener('click', function(){ resendNotice(sid, this); });
   }
   function closeInstructor(){ $('iOverlay').style.display = 'none'; }
   /* 이 강사의 주강사 편성(교과목별) 강의계획서 제출 현황 */
@@ -4226,7 +4250,7 @@
       '<div class="hbox">' + list.map(function(o){
         var st = o.st, cls = st.done ? 'ok' : st.over ? 'bad' : st.ended ? '' : 'wn';
         return '<div class="hi">' + esc(md(st.date)) + ' · ' + esc(st.subj) + ' <span class="db ' + cls + '">' + esc(planText(st)) + '</span>' + (st.fid ? fileLinks(st.fid) : '') +
-          (!st.done && !st.ended && !viewer ? ' <button type="button" class="btn sm" data-plink="' + esc(st.sid) + '">제출 링크 복사</button>' : '') +
+          (!st.done && !st.ended && !viewer ? ' <button type="button" class="btn sm" data-plink="' + esc(st.sid) + '">안내 재발송</button>' : '') +
           '<br><span class="hint">' + esc(String(o.r['개설키'] || '')) + '</span></div>';
       }).join('') + '</div>';
   }
@@ -4273,7 +4297,7 @@
     $('iOverlay').style.display = 'flex';
     $('iClose').addEventListener('click', closeInstructor);
     Array.prototype.forEach.call($('iCard').querySelectorAll('[data-plink]'), function(b){
-      b.addEventListener('click', function(){ copyText(planLink(id, b.getAttribute('data-plink')), b); });
+      b.addEventListener('click', function(){ resendNotice(b.getAttribute('data-plink'), b); });
     });
     if ($('iPick')) $('iPick').addEventListener('click', function(){ pickInstructor(id); });
   }
@@ -4894,7 +4918,7 @@
       '<b>복사 ' + good.length + '줄</b>' + (bad ? ' · <span style="color:var(--err-fg);font-weight:700;">제외 ' + bad + '줄(아래 표 확인)</span>' : '') + '</div>' +
       '<div class="pwrap"><table><thead><tr><th>원본 일자</th><th>새 일자</th><th>교시</th><th>교과목</th><th>반</th><th>강사</th><th>강의실</th><th>결과</th></tr></thead><tbody>' + trs + '</tbody></table></div>' +
       cfHtml +
-      '<div class="box w">원본 내용을 그대로 가져옵니다. 저장 후 교과목 편성 화면의 "수정"에서 <b>날짜·교시·교과목·반·강의실·강사·비고를 모두 바꿀 수 있고</b>, 필요 없는 줄은 삭제할 수 있습니다. <b>강사에게 안내는 자동으로 가지 않으니</b> 수동으로 진행해 주세요.' + (cp.instr ? ' 강사가 달라지는 기수라면 "강사도 복사"를 해제해 비워 둘 수 있습니다.' : ' 강사는 비어 있는 상태("미지정")로 저장됩니다.') + '</div>' +
+      '<div class="box w">원본 내용을 그대로 가져옵니다. 저장 후 교과목 편성 화면의 "수정"에서 <b>날짜·교시·교과목·반·강의실·강사·비고를 모두 바꿀 수 있고</b>, 필요 없는 줄은 삭제할 수 있습니다. <b>저장하면 강사에게 배정 안내(메일·문자)가 바로 자동 발송됩니다</b>(강사별 1통으로 묶음, 오늘 이전 일자 제외).' + (cp.instr ? ' 강사가 달라지는 기수라면 "강사도 복사"를 해제해 비워 둘 수 있습니다.' : ' 강사는 비어 있는 상태("미지정")로 저장됩니다.') + '</div>' +
       '<div class="msg" id="pMsg"></div>' +
       '<div class="btns"><button type="button" class="btn" id="pClose">닫기</button><button type="button" class="btn primary" id="pSave"' + (good.length ? '' : ' disabled') + '>' + good.length + '줄 복사해 저장</button></div>';
     $('pClose').addEventListener('click', closeCopy);
@@ -4908,6 +4932,11 @@
     var good = buildCopyRows().filter(function(r){ return !r.err; });
     if (!good.length) return;
     var btn = $('pSave'), label = btn.textContent, srcKey = cp.src, useInstr = cp.instr;
+    /* 저장하면 강사에게 메일·문자가 바로 나가므로, 안내 대상(강사 ID가 있고 오늘 이후 일자) 인원을 미리 알려 확인받음 */
+    var todayS = ymd(new Date()), who = {};
+    good.forEach(function(r){ var b = r.body || {}; if (b['강사ID'] && String(b['일자'] || '') >= todayS) who[b['강사ID']] = true; });
+    var nWho = Object.keys(who).length;
+    if (nWho && !confirm('저장하면 강사 ' + nWho + '명에게 배정 안내(메일·문자)가 바로 발송됩니다.\n(강사별 1통으로 묶음, 오늘 이전 일자 제외)\n\n계속할까요?')) return;
     cp.busy = true; btn.disabled = true; btn.textContent = '복사 중...';
     api({ action: 'copySessions', password: getPw(), 개설키: currentKey, 원본키: srcKey, rows: good.map(function(r){ return r.body; }) }).then(function(j){
       if (j.status !== 'ok') {
@@ -4922,9 +4951,11 @@
       var p = planByKey(currentKey);
       if (p) { renderHead(p); renderSessionList(); }
       var nIns = (j.data || []).filter(function(r){ return r['강사ID'] || r['강사명']; }).length;
+      var cpNotices = j['안내'] || [];
       showMsg('ok', courseLabel(srcKey) + '에서 교과목 ' + (j.개수 || good.length) + '줄을 복사했습니다. ' +
         (useInstr ? '강사 ' + nIns + '줄은 원본 그대로 복사했으니, 달라지는 교과목은 "수정"에서 바꿔 주세요. ' : '강사는 비워 두었습니다("강사 지정"으로 입력). ') +
-        '강사 안내는 자동으로 가지 않으니 수동으로 진행해 주세요.' + ((j.warnings || []).length ? ' 확인 필요: ' + j.warnings.join(' / ') + '.' : ''));
+        (cpNotices.length ? '강사 안내: ' + noticeText(cpNotices).split('\n').join(' / ') + '. ' : '') +
+        ((j.warnings || []).length ? ' 확인 필요: ' + j.warnings.join(' / ') + '.' : ''));
       window.scrollTo(0, 0);
     }).catch(function(){
       cp.busy = false; btn.disabled = false; btn.textContent = label;
@@ -5042,7 +5073,7 @@
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
-    if (tpl) { var tp = tpl.split('|'); copyText(planLink(tp[1], tp[0]), t); return; }
+    if (tpl) { resendNotice(tpl.split('|')[0], t); return; }
     var pmv = t.getAttribute('data-pm');
     if (pmv) { setPlanMode(pmv); return; }
     var cmv = t.getAttribute('data-cm');
