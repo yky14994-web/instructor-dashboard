@@ -273,7 +273,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 46</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 47</div>
 </div>
 </div>
 
@@ -303,8 +303,8 @@
     /* 조회 전용 요청은 일시적 연결 실패·응답 지연 시 자동 재시도(기본 최대 3회·25초 제한). 시작 화면용 bootstrap은 1회 10초·최대 2회. 저장·변경 요청은 중복 방지를 위해 재시도하지 않음 */
     var RETRY = { listAssignmentData:1, listSessions:1, login:1, list:1, getHistory:1, bootstrap:1 };
     var fast = !!(body && body.action === 'bootstrap');
-    var tries = RETRY[body && body.action] ? (fast ? 2 : 3) : 1;
-    var limit = fast ? 10000 : 25000;
+    var tries = RETRY[body && body.action] ? 3 : 1;
+    var limit = fast ? 20000 : 25000;   /* 시작 요청: 서버가 깨어나는 데 걸리는 시간을 고려해 20초씩 최대 3회 */
     function once(n){
       var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
       var timer = ctl ? setTimeout(function(){ ctl.abort(); }, limit) : null;
@@ -1292,7 +1292,7 @@
     var btn = $('loginBtn'), msg = $('loginMsg');
     msg.style.display = 'none';
     if (pw.length < 4) return;
-    btn.disabled = true; btn.textContent = '확인 중...';
+    btn.disabled = true; btn.textContent = '확인 중... (서버가 느리면 최대 1분)';
     loadAll(pw).catch(function(err){
       if (err.auth === true) msg.textContent = /잠겼/.test(err.message || '') ? err.message : '비밀번호가 올바르지 않습니다.';
       else if (err.auth === false) msg.textContent = err.message || '불러오지 못했습니다';
