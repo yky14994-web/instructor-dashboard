@@ -802,7 +802,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 53</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 54</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -5397,7 +5397,7 @@
 })();
 </script>
 <script>
-/* 이메일 주소를 누르면 화면을 벗어나지 않고 작은 선택창을 띄움: Gmail(새 탭)·공직자통합메일(새 탭, 주소 복사)·주소 복사
+/* 이메일 주소를 누르면 화면을 벗어나지 않고 작은 선택창을 띄움: PC: Gmail(새 탭)·공직자통합메일·네이버 메일(새 탭, 주소 복사)·주소 복사. 휴대폰은 기기 메일 앱 선택창 그대로
    (브라우저에 Gmail이 메일 처리 앱으로 등록되어 있으면 mailto 링크가 현재 탭을 Gmail로 바꿔 버리는 문제 방지) */
 (function(){
   var box = null;
@@ -5411,6 +5411,8 @@
     var a = ev.target && ev.target.closest ? ev.target.closest('a[href^="mailto:"]') : null;
     if (box && (!ev.target.closest || !ev.target.closest('#mailPick'))) close();
     if (!a) return;
+    /* 휴대폰·태블릿(터치 화면)은 기기 자체 메일 앱 선택창(네이버 메일·Gmail 등)이 바로 뜨므로 가로채지 않음 */
+    try { if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(any-pointer: fine)').matches) return; } catch (e) {}
     ev.preventDefault(); ev.stopPropagation();
     var addr = decodeURIComponent(a.getAttribute('href').slice(7).split('?')[0]);
     box = document.createElement('div'); box.id = 'mailPick';
@@ -5418,6 +5420,7 @@
     var items = [
       ['Gmail로 메일 쓰기 (새 탭)', function(){ window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(addr), '_blank', 'noopener'); }],
       ['공직자통합메일 열기 (주소 자동 복사, 새 탭)', function(){ copy(addr); window.open('https://mail.korea.kr', '_blank', 'noopener'); }],
+      ['네이버 메일 열기 (주소 자동 복사, 새 탭)', function(){ copy(addr); window.open('https://mail.naver.com', '_blank', 'noopener'); }],
       ['주소만 복사', function(){ copy(addr); }]
     ];
     var head = document.createElement('div'); head.textContent = addr; head.style.cssText = 'padding:6px 10px 8px;color:#64748B;font-size:12px;border-bottom:1px solid #EEF2F7;margin-bottom:4px;word-break:break-all;';
