@@ -139,6 +139,31 @@
     .tl .tm small{display:inline;margin-left:6px;}
   }
 
+  /* 오늘 수업 크게 보기(전체 화면 상황판) */
+  #tvOv{position:fixed;inset:0;z-index:9000;background:#F3F5F8;display:none;flex-direction:column;--f:16px;}
+  #tvOv.on{display:flex;}
+  #tvOv .tvbar{display:flex;align-items:center;justify-content:space-between;gap:8px 14px;flex-wrap:wrap;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:var(--navy);color:#fff;}
+  #tvOv .tvt{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;} #tvOv .tvt b{font-size:20px;} #tvOv .tvt span{font-size:15px;font-weight:700;opacity:.92;}
+  #tvOv .tvbtn{display:flex;gap:8px;} #tvOv .tvbtn .btn{height:40px;padding:0 18px;font-size:14px;background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.6);} #tvOv .tvbtn .btn:hover{background:rgba(255,255,255,.28);} #tvOv .tvbtn .btn.primary{background:#fff;color:var(--navy);border-color:#fff;} #tvOv .tvbtn .btn.primary:hover{background:#E6ECF4;}
+  #tvOv .tag{font-size:calc(var(--f)*.68);padding:calc(var(--f)*.08) calc(var(--f)*.45);}
+  #tvBody{flex:1;overflow:auto;padding:12px 14px;padding-bottom:max(14px,env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;}
+  #tvBody .ttwrap{overflow:visible;}
+  #tvOv table.tt{min-width:0 !important;}
+  #tvOv .tt th.cn{font-size:calc(var(--f)*1.08);padding:calc(var(--f)*.55) calc(var(--f)*.6);}
+  #tvOv .tt th.pn{width:calc(var(--f)*6.4);font-size:calc(var(--f)*.95);} #tvOv .tt th.pn small{font-size:calc(var(--f)*.78);}
+  #tvOv .tt td.blk{font-size:var(--f);padding:calc(var(--f)*.5) calc(var(--f)*.6);}
+  #tvOv .tt .sj{font-size:calc(var(--f)*1.18);} #tvOv .tt .ins{font-size:var(--f);} #tvOv .tt .ro{font-size:calc(var(--f)*.92);}
+  #tvOv .ipl{font-size:calc(var(--f)*.78);}
+  #tvOv .tt td.emp{height:calc(var(--f)*2.4);}
+  #tvOv .tt td.emp.nowrow{background:#D6E7FF;} #tvOv .tt th.pn.nowrow{background:#D6E7FF;}
+  #tvOv .tt td.blk.now{box-shadow:0 0 0 4px #2F6FD6 inset;}
+  #tvOv .tcard{padding:calc(var(--f)*.6) calc(var(--f)*.7);} #tvOv .tcard .tch{font-size:calc(var(--f)*1.05);font-weight:800;color:var(--navy);}
+  #tvOv .tcr{grid-template-columns:calc(var(--f)*6.6) minmax(0,1fr);padding:calc(var(--f)*.4) calc(var(--f)*.5);} #tvOv .tcr .tm{font-size:var(--f);} #tvOv .tcr .sj{font-size:calc(var(--f)*1.1);} #tvOv .tcr .ro{font-size:calc(var(--f)*.92);}
+  #tvOv .tcr.now{background:rgba(47,111,214,.18);box-shadow:0 0 0 3px #2F6FD6 inset;}
+  #tvOv .empty{font-size:calc(var(--f)*1.2);padding:40px 10px;}
+  #tvOv a{pointer-events:none;}
+  @media print{ #tvOv{display:none !important;} }
+
   /* 이번 주 */
   .wk{list-style:none;margin:0;padding:0;}
   .wk li{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:4px 14px;padding:10px 4px;border-top:1px solid var(--border);}
@@ -273,7 +298,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 48</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 50</div>
 </div>
 </div>
 
@@ -465,6 +490,79 @@
       return nmTxt + (multi && isSubRole(r) ? ' <span class="tag t-none">보조</span>' : '');
     }).join(', ');
   }
+  /* ---------- 오늘 수업 크게 보기 ---------- */
+  var tvData = null, tvEl = null, tvOn = false, tvLock = null, tvTimer = null, tvData5 = null;
+  function tvSupportFs(){ return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled); }
+  function tvFsNow(){ return document.fullscreenElement || document.webkitFullscreenElement; }
+  function tvBuild(){
+    if (tvEl) return;
+    tvEl = document.createElement('div');
+    tvEl.id = 'tvOv'; tvEl.setAttribute('role', 'dialog'); tvEl.setAttribute('aria-modal', 'true'); tvEl.setAttribute('aria-label', '오늘 수업 크게 보기');
+    tvEl.innerHTML = '<div class="tvbar"><div class="tvt"><b>오늘 수업</b><span id="tvMeta"></span><span id="tvClock"></span></div><div class="tvbtn">' + (tvSupportFs() ? '<button type="button" class="btn" id="tvFs">전체 화면</button>' : '') + '<button type="button" class="btn primary" id="tvClose">닫기</button></div></div><div id="tvBody"></div>';
+    document.body.appendChild(tvEl);
+    tvEl.addEventListener('click', function(ev){
+      var t = ev.target && ev.target.closest ? ev.target.closest('button') : null; if (!t) return;
+      if (t.id === 'tvClose') tvClose();
+      else if (t.id === 'tvFs') tvToggleFs();
+    });
+  }
+  function tvToggleFs(){
+    try {
+      if (tvFsNow()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+      else { var el = tvEl; (el.requestFullscreen || el.webkitRequestFullscreen).call(el); }
+    } catch (e) {}
+  }
+  function tvFsLabel(){ var b = document.getElementById('tvFs'); if (b) b.textContent = tvFsNow() ? '전체 화면 끄기' : '전체 화면'; }
+  function tvClock(){
+    var n = new Date(), c = document.getElementById('tvClock');
+    if (c) c.textContent = ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2) + ' 현재';
+  }
+  /* 화면 폭과 과정 수에 맞춰 글자 크기를 자동 조정 */
+  function tvFit(){
+    var w = window.innerWidth, narrow = w <= 640, n = (tvData && tvData.cols) || 1, f;
+    if (narrow) f = Math.max(15, Math.min(20, Math.round(w / 22)));
+    else { f = Math.floor((w - 40) / (n * 10 + 6)); var rn = (tvData && tvData.rowsN) || 7; f = Math.min(f, Math.floor((window.innerHeight - 90) / (rn * 3.4 + 9))); f = Math.max(13, Math.min(30, f)); }
+    tvEl.style.setProperty('--f', f + 'px');
+  }
+  function tvRender(){
+    if (!tvOn || !tvEl) return;
+    var b = document.getElementById('tvBody'), m = document.getElementById('tvMeta');
+    if (m) m.textContent = (tvData && tvData.meta) || '';
+    tvClock();
+    var html;
+    if (!tvData) html = '<div class="empty">불러오는 중입니다.</div>';
+    else if (tvData.empty) html = '<div class="empty">' + esc(tvData.empty) + '</div>';
+    else html = '<div class="ttwrap"><table class="tt"><thead>' + tvData.th + '</thead><tbody>' + tvData.body + '</tbody></table></div><div class="tcards">' + tvData.cards + '</div>';
+    html = html.replace(/<a\b[^>]*>/g, '<span>').replace(/<\/a>/g, '</span>');   // 상황판에서는 링크 이동 없음
+    var keep = b.scrollTop;
+    b.innerHTML = html; b.scrollTop = keep;
+    tvFit();
+  }
+  function tvWake(){
+    try { if (navigator.wakeLock && tvOn && !tvLock) navigator.wakeLock.request('screen').then(function(l){ tvLock = l; l.addEventListener('release', function(){ tvLock = null; }); }).catch(function(){}); } catch (e) {}
+  }
+  function tvOpen(){
+    tvBuild(); tvOn = true; tvEl.classList.add('on'); document.body.style.overflow = 'hidden';
+    tvRender(); tvWake();
+    clearInterval(tvTimer);
+    tvTimer = setInterval(function(){ tvClock(); }, 15000);
+    clearInterval(tvData5);
+    tvData5 = setInterval(function(){ if (tvOn && !document.hidden) loadAll(getPw(), true, true).catch(function(){}); }, 300000);   // 켜 둔 동안 5분마다 데이터 새로 받기
+    var cb = document.getElementById('tvClose'); if (cb) cb.focus();
+  }
+  function tvClose(){
+    tvOn = false; if (tvEl) tvEl.classList.remove('on'); document.body.style.overflow = '';
+    clearInterval(tvTimer); clearInterval(tvData5);
+    try { if (tvFsNow()) (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {}
+    try { if (tvLock) { tvLock.release(); tvLock = null; } } catch (e) {}
+  }
+  document.addEventListener('click', function(ev){ var t = ev.target && ev.target.closest ? ev.target.closest('#tvOpen') : null; if (t) tvOpen(); });
+  document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape' && tvOn) tvClose(); });
+  document.addEventListener('fullscreenchange', tvFsLabel); document.addEventListener('webkitfullscreenchange', tvFsLabel);
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) tvWake(); });
+  window.addEventListener('resize', function(){ if (tvOn) tvFit(); });
+  window.addEventListener('orientationchange', function(){ setTimeout(function(){ if (tvOn) tvFit(); }, 200); });
+
   function renderToday(){
     var today = todayStr(), q = parseYmd(today);
     var list = sessionsOn(today);
@@ -480,9 +578,9 @@
       });
       extra.sort(function(x, y){ var a = normYmd(planByKey(x)['입교 시작일']) || '', b = normYmd(planByKey(y)['입교 시작일']) || ''; return a < b ? -1 : a > b ? 1 : x < y ? -1 : 1; });
     }
-    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건' + (extra.length ? ' · 교과목 미편성 과정 ' + extra.length + '개' : '') + '</span></div><div class="cdesc">오늘 진행되는 수업을 교시별·과정별로 보여줍니다. 과정마다 색이 다릅니다. 과정명을 누르면 해당 과정의 오늘 날짜 주간 일정이, <b>강사 이름을 누르면 강사 정보 카드(상세)</b>가 열립니다.</div>';
-    if (!sessionsOk) { $('cToday').innerHTML = html + '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
-    if (!list.length && !extra.length) { $('cToday').innerHTML = html + '<div class="empty">오늘 예정된 수업이 없습니다.</div>'; return; }
+    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건' + (extra.length ? ' · 교과목 미편성 과정 ' + extra.length + '개' : '') + '</span>' + (sessionsOk ? '<button type="button" class="btn sm" id="tvOpen" title="오늘 수업을 화면 전체에 크게 보여 줍니다">크게 보기</button>' : '') + '</div><div class="cdesc">오늘 진행되는 수업을 교시별·과정별로 보여줍니다. 과정마다 색이 다릅니다. 과정명을 누르면 해당 과정의 오늘 날짜 주간 일정이, <b>강사 이름을 누르면 강사 정보 카드(상세)</b>가 열립니다.</div>';
+    if (!sessionsOk) { tvData = { empty: '교과목 편성 현황을 불러오지 못했습니다.', meta: q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ')' }; $('cToday').innerHTML = html + '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; tvRender(); return; }
+    if (!list.length && !extra.length) { tvData = { empty: '오늘 예정된 수업이 없습니다.', meta: q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · 0건' }; $('cToday').innerHTML = html + '<div class="empty">오늘 예정된 수업이 없습니다.</div>'; tvRender(); return; }
     // 행: 교시표의 교시 + 수업에 쓰인 교시
     var rowSet = {}; periods.forEach(function(x){ rowSet[x.n] = true; });
     list.forEach(function(o){ for (var n = o.a; n <= o.b && n < o.a + 20; n++) rowSet[n] = true; });
@@ -508,8 +606,9 @@
     }
     function klassTag(o){ return o.klass && o.klass !== '전체' ? ' <span class="tag t-none">' + esc(o.klass) + '반</span>' : ''; }
     function stateTag(st){ return st === 'now' ? ' <span class="tag t-ok">진행 중</span>' : st === 'done' ? ' <span class="tag t-none">종료</span>' : ''; }
-    var curRow = null;
+    var curRow = null, nextRow = null;
     rows.forEach(function(n){ var pi = periodInfo(n); if (pi && validTime(pi.start) && validTime(pi.end) && nowMin >= toMin(pi.start) && nowMin < toMin(pi.end)) curRow = n; });
+    rows.forEach(function(n){ var pi = periodInfo(n); if (nextRow === null && pi && validTime(pi.start) && toMin(pi.start) > nowMin) nextRow = n; });
     var th = '<tr><th class="pn">교시</th>' + cols.map(function(c){
       var nm = courseName(c.key);
       return '<th class="cn" style="background:' + courseBg(nm) + ';border-top:4px solid ' + courseColor(nm) + ';">' + (c.lane === 0 ? courseLink(c.key, nameOf(c.key), today) : '<span class="hint">' + esc(nameOf(c.key)) + ' (동시 진행)</span>') + (c.lane === 0 && ipgyoLine(planByKey(c.key)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(c.key))) + '</small>' : '') + (!c.blocks.length ? '<span class="tag t-warn" style="display:inline-block;margin-top:4px;margin-right:4px;">오늘 교과목 미편성</span>' : '') + (nowIsOver() ? '<span class="tag t-none" style="display:inline-block;margin-top:4px;">종료</span>' : '') + '</th>';
@@ -527,7 +626,7 @@
         if (c.blocks.some(function(b){ return n > b.a && n <= b.b; })) return '';   // 위 칸이 이어짐(rowspan)
         return '<td class="emp' + (n === curRow ? ' nowrow' : '') + '"></td>';
       }).join('');
-      return '<tr class="' + (n === curRow ? 'nowrow' : '') + '"><th class="pn' + (n === curRow ? ' nowrow' : '') + '">' + n + '교시' + (tm ? '<small>' + esc(tm) + '</small>' : '') + '</th>' + tds + '</tr>';
+      return '<tr class="' + (n === curRow ? 'nowrow' : '') + '"><th class="pn' + (n === curRow ? ' nowrow' : '') + '">' + n + '교시' + (tm ? '<small>' + esc(tm) + '</small>' : '') + (n === nextRow ? '<small><span class="tag t-none">다음 교시</span></small>' : '') + '</th>' + tds + '</tr>';
     }).join('');
     // 모바일: 과정별 카드
     var keys = []; cols.forEach(function(c){ if (keys.indexOf(c.key) < 0) keys.push(c.key); });
@@ -539,7 +638,9 @@
           '<div class="ro">' + (o.room ? esc(o.room) : '<span class="hint">강의실 미정</span>') + ' · ' + instrHtml(o.rows) + '</div></div></div>';
       }).join('') + '</div>';
     }).join('');
+    tvData = { cols: cols.length, rowsN: rows.length, th: th, body: body, cards: cards, meta: q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건' + (extra.length ? ' · 교과목 미편성 과정 ' + extra.length + '개' : '') };
     $('cToday').innerHTML = html + '<div class="ttwrap"><table class="tt" style="min-width:' + (70 + cols.length * 170) + 'px;"><thead>' + th + '</thead><tbody>' + body + '</tbody></table></div>' + (cols.length > 3 ? '<div class="hint ttscroll">과정이 많아 표를 좌우로 밀어서 볼 수 있습니다.</div>' : '') + '<div class="tcards">' + cards + '</div>';
+    tvRender();
   }
 
   /* ---------- 이번 주 과정 ---------- */
