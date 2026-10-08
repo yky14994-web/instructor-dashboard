@@ -1682,5 +1682,48 @@
   });
 </script>
 
+<script>
+/* 이메일 주소를 누르면 화면을 벗어나지 않고 작은 선택창을 띄움: Gmail(새 탭)·기본 메일 프로그램·주소 복사
+   (브라우저에 Gmail이 메일 처리 앱으로 등록되어 있으면 mailto 링크가 현재 탭을 Gmail로 바꿔 버리는 문제 방지) */
+(function(){
+  var box = null;
+  function close(){ if (box) { box.remove(); box = null; } }
+  function toast(t){ var d = document.createElement('div'); d.textContent = t; d.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1E3A5F;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;z-index:100001;'; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 1800); }
+  function copy(addr){
+    function fb(){ try { var t = document.createElement('textarea'); t.value = addr; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); toast('주소를 복사했습니다: ' + addr); } catch (e) { window.prompt('주소를 복사해 주세요', addr); } }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(function(){ toast('주소를 복사했습니다: ' + addr); }, fb); else fb();
+  }
+  document.addEventListener('click', function(ev){
+    var a = ev.target && ev.target.closest ? ev.target.closest('a[href^="mailto:"]') : null;
+    if (box && (!ev.target.closest || !ev.target.closest('#mailPick'))) close();
+    if (!a) return;
+    ev.preventDefault(); ev.stopPropagation();
+    var addr = decodeURIComponent(a.getAttribute('href').slice(7).split('?')[0]);
+    box = document.createElement('div'); box.id = 'mailPick';
+    box.style.cssText = 'position:fixed;z-index:100000;background:#fff;border:1px solid #CBD5E1;border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,.18);padding:6px;min-width:230px;font-size:14px;';
+    var items = [
+      ['Gmail로 메일 쓰기 (새 탭)', function(){ window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(addr), '_blank', 'noopener'); }],
+      ['기본 메일 프로그램으로 쓰기', function(){ var l = document.createElement('a'); l.href = 'mailto:' + addr; l.target = '_blank'; l.rel = 'noopener'; document.body.appendChild(l); l.click(); l.remove(); }],
+      ['주소 복사 (공직자통합메일 등에 붙여넣기)', function(){ copy(addr); }]
+    ];
+    var head = document.createElement('div'); head.textContent = addr; head.style.cssText = 'padding:6px 10px 8px;color:#64748B;font-size:12px;border-bottom:1px solid #EEF2F7;margin-bottom:4px;word-break:break-all;';
+    box.appendChild(head);
+    items.forEach(function(it){
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = it[0];
+      b.style.cssText = 'display:block;width:100%;text-align:left;border:0;background:none;padding:10px;border-radius:6px;cursor:pointer;font:inherit;color:#1E3A5F;';
+      b.onmouseenter = function(){ b.style.background = '#F1F5F9'; }; b.onmouseleave = function(){ b.style.background = 'none'; };
+      b.onclick = function(e){ e.stopPropagation(); close(); it[1](); };
+      box.appendChild(b);
+    });
+    document.body.appendChild(box);
+    var r = a.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
+    var left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
+    var top = r.bottom + 6; if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+    box.style.left = left + 'px'; box.style.top = top + 'px';
+  }, true);
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
+  window.addEventListener('scroll', close, true);
+})();
+</script>
 </body>
 </html>
