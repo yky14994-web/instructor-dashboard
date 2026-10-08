@@ -273,7 +273,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 42</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 43</div>
 </div>
 </div>
 
@@ -376,6 +376,10 @@
     return q && q.m === +m[2] && q.d === +m[3] ? out : '';
   }
   function todayStr(){ return ymd(new Date()); }
+  /* 종료 기준: 날짜가 오늘 이전이거나, 오늘이면 17:50 이후(강의배정의 종료 일정 차단과 같은 기준) */
+  var END_HM = 17 * 60 + 50;
+  function nowIsOver(){ var n = new Date(); return n.getHours() * 60 + n.getMinutes() >= END_HM; }
+  function dateOver(d){ var t = todayStr(); return d < t || (d === t && nowIsOver()); }
 
   /* ---------- 데이터 정리 ---------- */
   function isCancelled(p){
@@ -811,8 +815,8 @@
     plans.forEach(function(p){
       if (isCancelled(p)) return;
       var a = normYmd(p['입교 시작일']); if (!a) return;
-      var b = normYmd(p['입교 종료일']) || a; if (b < today || a > to2) return;
-      var g = gapsOf(p, today, idx);
+      var b = normYmd(p['입교 종료일']) || a; if (dateOver(b) || a > to2) return;
+      var g = gapsOf(p, nowIsOver() ? addDays(today, 1) : today, idx);
       if (maxDay != null) { var lim = addDays(today, maxDay); g = g.filter(function(x){ return x.date <= lim; }); }
       if (g.length) out.push({ p: p, gaps: g });
     });
@@ -859,7 +863,7 @@
       if (isCancelled(p)) return false;
       var a = normYmd(p['입교 시작일']); if (!a) return false;
       var b = normYmd(p['입교 종료일']) || a;
-      if (b < today || a > to2) return false;
+      if (dateOver(b) || a > to2) return false;
       return !has[String(p['과정+기수'] || '')];
     });
   }
@@ -877,7 +881,7 @@
     html += '<ul class="nsl">' + list.slice(0, shownN).map(function(p){
       var key = String(p['과정+기수']), a = normYmd(p['입교 시작일']), d = dayDiff(today, a);
       var b2 = normYmd(p['입교 종료일']) || a;
-      var tag = b2 < today ? '<span class="tag t-none">종료</span>' : d <= 0 ? '<span class="tag t-err">진행 중</span>' : '<span class="tag ' + (d <= 14 ? 't-err' : d <= 30 ? 't-warn' : 't-none') + '">D-' + d + '</span>';
+      var tag = dateOver(b2) ? '<span class="tag t-none">종료</span>' : d <= 0 ? '<span class="tag t-err">진행 중</span>' : '<span class="tag ' + (d <= 14 ? 't-err' : d <= 30 ? 't-warn' : 't-none') + '">D-' + d + '</span>';
       return '<li><div><a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '&from=home">' + esc(nameOf(key)) + '</a><small>' + esc(ipgyoLine(p).replace(/^입교 /, '')) + '</small></div>' + tag + '</li>';
     }).join('') + '</ul>' +
       gcLine + '<div class="foot">' + (list.length > shownN ? '<div class="hint" style="margin-bottom:8px;">시작일이 빠른 순서로 ' + shownN + '과정만 표시했습니다.</div>' : '') + '<button type="button" class="btn sm" data-dt="nosubj">전체 과정 보기</button></div>';
@@ -893,7 +897,7 @@
       if (isCancelled(p)) return;
       if (a.slice(0, 7) === ym) { open++; var n = Number(p['계획인원']); if (isFinite(n)) ppl += n; }
       if (a.slice(0, 7) === ny) next++;
-      if (a <= today && b >= today) run++;
+      if (a <= today && !dateOver(b)) run++;
     });
     function tile(l, n, u){ return '<div class="c"><span>' + esc(l) + '</span><b>' + n.toLocaleString('ko-KR') + '<small>' + u + '</small></b></div>'; }
     el.innerHTML = '<div class="chead"><h2>이번 달 교육 현황</h2><span class="meta">' + q.y + '년 ' + q.m + '월</span></div>' +
@@ -917,7 +921,7 @@
   function cLink(key, txt){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '&from=home">' + esc(txt == null ? nameOf(key) : txt) + '</a>'; }
   function planRow(p, extra){
     var key = String(p['과정+기수'] || ''), a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a, today = todayStr();
-    var st = b < today ? '종료' : a <= today ? '진행 중' : 'D-' + dayDiff(today, a);
+    var st = dateOver(b) ? '종료' : a <= today ? '진행 중' : 'D-' + dayDiff(today, a);
     return [cLink(key), esc(p['구분'] || ''), esc(ipgyoLine(p).replace(/^입교 /, '')), esc(p['계획인원'] || ''), esc(p['예정 강의실'] || '미정'), esc(st)].concat(extra || []);
   }
   var PCOLS = ['과정 · 기수', '구분', '입교 기간', '계획인원', '예정 강의실', '상태'];
@@ -952,7 +956,7 @@
       var srt = function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : 1; };
       var live = plans.filter(function(p){ return !isCancelled(p); });
       var open = live.filter(function(p){ return normYmd(p['입교 시작일']).slice(0, 7) === ym; }).sort(srt);
-      var run = live.filter(function(p){ var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a; return a && a <= today && b >= today; }).sort(srt);
+      var run = live.filter(function(p){ var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a; return a && a <= today && !dateOver(b); }).sort(srt);
       var next = live.filter(function(p){ return normYmd(p['입교 시작일']).slice(0, 7) === ny; }).sort(srt);
       var cx = plans.filter(function(p){ return isCancelled(p) && normYmd(p['입교 시작일']).slice(0, 7) === ym; }).sort(srt);
       html = '<div class="chead"><h2>이번 달 교육 현황 상세</h2><span class="meta">' + q.y + '년 ' + q.m + '월</span></div>' +
@@ -1158,9 +1162,11 @@
     Array.prototype.forEach.call(document.querySelectorAll('a[data-v]'), function(a){ a.setAttribute('href', 'lecture-assignment.html#v=' + a.getAttribute('data-v') + '&d=' + t); });
   }
   tickClock(); updateQuickLinks();
+  var lastOver = nowIsOver();
   setInterval(function(){
     tickClock(); updateQuickLinks();
     if ($('main').style.display !== 'none') renderToday();   // 진행 중·종료 표시 갱신
+    if (nowIsOver() !== lastOver) { lastOver = nowIsOver(); if ($('main').style.display !== 'none' && sessionsOk) { try { renderTrio(); } catch (e) {} } }   // 17:50 경과 시 과정 상태·건수 갱신
   }, 60000);
 
   function showMsg(kind, text){
