@@ -787,7 +787,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 38</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 39</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2193,7 +2193,7 @@
     var cal = planMode === 'cal', rm = planMode === 'room', other = cal || rm;
     $('pmTable').className = other ? '' : 'on'; $('pmCal').className = cal ? 'on' : ''; $('pmRoom').className = rm ? 'on' : '';
     var cardsBox = document.querySelector('#planView .cards'); if (cardsBox) cardsBox.style.display = other ? 'none' : '';   // 숫자 카드: 표 보기에서만 표시
-    if ($('todo')) { try { renderTodo(); } catch (e) { $('todo').style.display = 'none'; } }   // 처리할 일: 캘린더·강의실 보기에서는 건수 있는 항목만 한 줄로 표시
+    if (other && $('todo')) $('todo').style.display = 'none';   // 처리할 일: 표 보기에서만 표시
     $('planCal').style.display = cal ? '' : 'none';
     $('planRoom').style.display = rm ? '' : 'none';
     ['planBar', 'planLegend', 'count', 'tableWrap', 'cardList', 'emptyBox'].forEach(function(id){
@@ -3525,18 +3525,9 @@
   function renderTodo(){
     var box = $('todo');
     if (!box) return;
-    if (!sessionsOk) { box.style.display = 'none'; return; }
+    if (!sessionsOk || planMode !== 'table') { box.style.display = 'none'; return; }
     if (instructors === null) ensureInstructors();
     var D = todoData();
-    if (planMode !== 'table') {   // 월 캘린더·강의실 보기에서는 건수가 있는 항목만 한 줄로 요약(누르면 표 보기의 처리할 일로 이동)
-      var ks = TODO_ORDER.filter(function(k){ return D[k].n; });
-      if (!ks.length) { box.style.display = 'none'; return; }
-      box.style.display = '';
-      box.innerHTML = '<div class="th"><h3>처리할 일</h3><div class="chips">' + ks.map(function(k){
-        return '<button type="button" class="btn chip has" data-tgo="' + k + '">' + esc(D[k].label) + ' ' + D[k].n + '</button>';
-      }).join('') + '</div></div>';
-      return;
-    }
     box.style.display = '';
     var total = TODO_ORDER.reduce(function(a, k){ return a + (D[k].info ? 0 : (D[k].n || 0)); }, 0);
     var nInfo = D.chg.n + D.gapdone.n;
@@ -4973,7 +4964,7 @@
       var mt = ev.target.closest('[data-mvg],[data-mvto]');
       if (mt) { if (mt.getAttribute('data-mvg')) mvSwap(mt.getAttribute('data-mvg')); else { var q2 = mt.getAttribute('data-mvto').split('|'); mvTo(q2[0], Number(q2[1])); } return; }
     }
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-rqgo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-tgo') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel') || t.getAttribute('data-mvmode') || t.getAttribute('data-pf')))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-rqgo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel') || t.getAttribute('data-mvmode') || t.getAttribute('data-pf')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
@@ -5012,12 +5003,6 @@
       var crow = allSessions.filter(function(x){ return String(x['편성ID']) === cas; })[0];
       if (crow) { closeInstructor(); pendingEdit = cas; openCourse(String(crow['개설키'])); }
       return;
-    }
-    var tgo = t.getAttribute('data-tgo');
-    if (tgo) {
-      todoCat = tgo; todoMore = false;
-      if (tgo === 'rvreq') { rqGo(''); return; }
-      setPlanMode('table'); return;
     }
     var tcat = t.getAttribute('data-tcat');
     if (tcat) { todoCat = tcat; todoMore = false; renderTodo(); return; }
