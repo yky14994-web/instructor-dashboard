@@ -1448,8 +1448,10 @@
   function showList(json, stale){
     document.getElementById('loadError').style.display = 'none';
     document.getElementById('staleBar').style.display = stale ? 'block' : 'none';
+    var firstShow = document.getElementById('app').style.display !== 'block';
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    if (firstShow && !location.hash) { var goTop = function(){ try { window.scrollTo(0, 0); } catch (e) {} }; goTop(); setTimeout(goTop, 150); setTimeout(goTop, 600); }
     if (!stale) {
       sessionStorage.setItem('jsfa_dash_role', json.role || 'admin');
     }
