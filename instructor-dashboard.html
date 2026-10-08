@@ -1683,7 +1683,7 @@
 </script>
 
 <script>
-/* 이메일 주소를 누르면 화면을 벗어나지 않고 작은 선택창을 띄움: Gmail(새 탭)·기본 메일 프로그램·주소 복사
+/* 이메일 주소를 누르면 화면을 벗어나지 않고 작은 선택창을 띄움: Gmail(새 탭)·공직자통합메일(새 탭, 주소 복사)·주소 복사
    (브라우저에 Gmail이 메일 처리 앱으로 등록되어 있으면 mailto 링크가 현재 탭을 Gmail로 바꿔 버리는 문제 방지) */
 (function(){
   var box = null;
@@ -1703,8 +1703,8 @@
     box.style.cssText = 'position:fixed;z-index:100000;background:#fff;border:1px solid #CBD5E1;border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,.18);padding:6px;min-width:230px;font-size:14px;';
     var items = [
       ['Gmail로 메일 쓰기 (새 탭)', function(){ window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(addr), '_blank', 'noopener'); }],
-      ['기본 메일 프로그램으로 쓰기', function(){ var l = document.createElement('a'); l.href = 'mailto:' + addr; l.target = '_blank'; l.rel = 'noopener'; document.body.appendChild(l); l.click(); l.remove(); }],
-      ['주소 복사 (공직자통합메일 등에 붙여넣기)', function(){ copy(addr); }]
+      ['공직자통합메일 열기 (주소 자동 복사, 새 탭)', function(){ copy(addr); window.open('https://mail.korea.kr', '_blank', 'noopener'); }],
+      ['주소만 복사', function(){ copy(addr); }]
     ];
     var head = document.createElement('div'); head.textContent = addr; head.style.cssText = 'padding:6px 10px 8px;color:#64748B;font-size:12px;border-bottom:1px solid #EEF2F7;margin-bottom:4px;word-break:break-all;';
     box.appendChild(head);
