@@ -800,7 +800,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 42</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 43</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -903,6 +903,16 @@
     var out = m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2), q = parseYmd(out);
     return q && q.m === +m[2] && q.d === +m[3] ? out : '';
   }
+  /* 종료된 일정: 강의일 당일 17:50 이후(서버와 같은 기준). 종료된 일정은 배정·수정이 막히고 삭제만 가능 */
+  var SESS_END_HHMM = '17:50';
+  function sessEnded(ymd){
+    var d = normYmd(ymd); if (!d) return false;
+    var k = new Date(Date.now() + 9 * 3600000), p2 = function(n){ return ('0' + n).slice(-2); };
+    var today = k.getUTCFullYear() + '-' + p2(k.getUTCMonth() + 1) + '-' + p2(k.getUTCDate());
+    var hm = p2(k.getUTCHours()) + ':' + p2(k.getUTCMinutes());
+    return d < today || (d === today && hm >= SESS_END_HHMM);
+  }
+  var ENDED_ADD_MSG = '종료된 일정(강의일 당일 17:50 이후)에는 교과목을 배정할 수 없습니다. 오늘 이후(17:50 이전) 날짜를 선택해 주세요.';
   function range(a, b){
     if (!a && !b) return '';
     if (a && !b) return md(a) + '~';
@@ -2099,6 +2109,7 @@
     var subj = $('sSubj').value.trim();
     var s = Number($('sStart').value), e = Number($('sEnd').value);
     if (!parseYmd(date)) { showFormMsg('note-err', '일자를 선택해 주세요.'); return; }
+    if (sessEnded(date)) { showFormMsg('note-err', ENDED_ADD_MSG); return; }
     if (!subj) { showFormMsg('note-err', '교과목을 입력해 주세요.'); return; }
     if (s > e) { showFormMsg('note-err', '시작 교시가 끝 교시보다 클 수 없습니다.'); return; }
     if (!((form.iid || form.iname) && $('sRole').value === '보조강사')) {
@@ -2154,11 +2165,11 @@
       showFormMsg('note-err', '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }).then(function(){ setBusy(false); });
   }
-  function deleteRow(id){
+  function deleteRow(id, noConfirm){
     var r = allSessions.filter(function(x){ return String(x['편성ID']) === id; })[0];
     if (!r) return;
     var pt = periodText(r);
-    if (!confirm('이 교과목을 삭제할까요?\n' + md(r['일자']) + ' ' + pt.txt + ' ' + r['교과목'] + '\n삭제하면 되돌릴 수 없습니다.')) return;
+    if (!noConfirm && !confirm('이 교과목을 삭제할까요?\n' + md(r['일자']) + ' ' + pt.txt + ' ' + r['교과목'] + '\n삭제하면 되돌릴 수 없습니다.')) return;
     api({ action: 'deleteSession', password: getPw(), 편성ID: id }).then(function(res){
       if (res.status !== 'ok') { alert(res.message || '삭제하지 못했습니다'); return; }
       history.push({ 일시: chgNow(), 개설키: String(r['개설키'] || ''), 유형: '교과목 삭제', 항목: chgItem(r), 전: chgTime(r) + ' · ' + chgWho(r), 후: '', 사유: '', 역할: '관리자' });
@@ -3797,6 +3808,7 @@
     $('fBackdrop').style.display = 'none';
   }
   function prefillNew(date, n){
+    if (sessEnded(date)) { alert('종료된 일정(' + date + ', 강의일 당일 17:50 이후)에는 교과목을 배정할 수 없습니다.'); return; }
     var p = planByKey(currentKey);
     if (!p || formState !== 'ok') return;
     lastDate = date;
@@ -4023,7 +4035,7 @@
     if (canEdit && mv && mv.key === currentKey) {
       if (gid === mv.gid) { act = ''; mvc = ' mvsel'; }
       else { act = ' data-mvg="' + esc(gid) + '" title="누르면 선택한 교과목과 시간을 맞바꿉니다"'; mvc = ' mvt'; }
-    } else if (canEdit && mvOn() && !mv && !isViewer() && !cont) {
+    } else if (canEdit && mvOn() && !mv && !isViewer() && !cont && !sessEnded(r['일자'])) {
       body += '<button type="button" class="mvb" data-mvsel="' + esc(gid) + '" title="이 교과목을 다른 칸으로 이동하거나 다른 교과목과 맞바꿉니다">⇄ 이동·맞바꾸기</button>';
     }
     return '<div class="gc' + cls + mvc + ((canEdit || other) && !(mvc === ' mvsel') ? ' ed' : '') + '"' + act + (cx ? ' style="border-left:5px solid ' + cx.color + ';"' : '') + '>' + body + '</div>';
@@ -4149,7 +4161,8 @@
       '<span><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
       mvBarHtml() + empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
-      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div></div>';
+      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
+      '<div class="hint gnp" style="margin-top:4px;">강의일 당일 17:50 이후는 종료된 일정으로 보며, 종료된 일정에는 교과목을 배정·수정할 수 없고 삭제만 할 수 있습니다.</div></div>';
   }
   function gridNav(act){
     var p = planByKey(currentKey);
@@ -5152,6 +5165,10 @@
     var row = allSessions.filter(function(x){ return String(x['편성ID']) === id; })[0];
     if (!row) return;
     if (act === 'del') deleteRow(id);
+    else if ((act === 'edit' || act === 'assign') && sessEnded(row['일자'])) {
+      var ptE = periodText(row);
+      if (confirm('이미 종료된 일정입니다(강의일 당일 17:50 이후).\n교과목은 수정할 수 없고 삭제만 할 수 있습니다.\n\n' + md(row['일자']) + ' ' + ptE.txt + ' ' + row['교과목'] + '\n\n이 교과목을 삭제하시겠습니까?\n삭제하면 되돌릴 수 없습니다.')) deleteRow(id, true);
+    }
     else if (act === 'edit') fillForm(row, 'edit');
     else if (act === 'copy') fillForm(row, 'copy');
     else if (act === 'assign') { fillForm(row, 'edit'); setTimeout(function(){ var i = $('sInstr'); if (i) i.focus(); }, 400); }
