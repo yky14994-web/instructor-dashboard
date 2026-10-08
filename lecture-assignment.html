@@ -787,7 +787,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 39</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 40</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -934,24 +934,35 @@
       var g = key + '|' + r['일자'] + '|' + r['시작교시'] + '|' + r['끝교시'] + '|' + r['교과목'];
       if (!map[g]) {
         var h = (Number(r['끝교시']) || 0) - (Number(r['시작교시']) || 0) + 1;
-        map[g] = { key: key, all: true, hours: h > 0 ? h : 1 };
+        map[g] = { key: key, all: true, hours: h > 0 ? h : 1, ops: true, subj: String(r['교과목'] || ''), kind: '', names: {}, date: String(r['일자'] || '') };
         order.push(g);
       }
       if (!hasInstr(r)) map[g].all = false;
+      if (!isOps(r)) map[g].ops = false;
+      if (!map[g].kind && String(r['교과목 구분'] || '').trim()) map[g].kind = String(r['교과목 구분']).trim();
+      if (hasInstr(r) && !isOps(r)) map[g].names[String(r['강사명'] || r['강사ID'])] = true;
     });
     return order.map(function(g){ return map[g]; });
   }
   function buildSessionMap(list){
     var out = {};
     groupSessions(list).forEach(function(o){
-      if (!out[o.key]) out[o.key] = { total: 0, assigned: 0, hours: 0 };
+      if (!out[o.key]) out[o.key] = { total: 0, assigned: 0, hours: 0, ops: 0 };
       out[o.key].total++;
+      if (o.ops) out[o.key].ops++;
       out[o.key].hours += o.hours;
       if (o.all) out[o.key].assigned++;
     });
     return out;
   }
 
+  /* 교과목 수 문구: 강사가 필요한 교과목과 교육운영팀 운영 교시를 나눠 표시 */
+  function subjCount(st){ return st.total - (st.ops || 0); }
+  function subjText(st, done){
+    var n = subjCount(st), a = st.assigned - (st.ops || 0), o = st.ops ? ' · 운영 교시 ' + st.ops : '';
+    if (!n) return '운영 교시 ' + st.ops + '개만 편성';
+    return done ? '교과목 ' + n + '개 · 배정 완료' + o : '교과목 ' + n + '개 중 ' + a + '개 배정' + o;
+  }
   function subjState(p){
     var key = p['과정+기수'];
     if (!key || !sessionsOk) return { kind: 'na', text: '-' };
@@ -959,7 +970,7 @@
     var s = sessionsByKey[key];
     if (!s || !s.total) return { kind: 'none', text: '교과목 미편성' };
     var cls = s.assigned >= s.total ? 'ok' : 'info';
-    return { kind: cls, text: '교과목 ' + s.total + '개 중 ' + s.assigned + '개 배정' };
+    return { kind: cls, text: subjText(s, false) };
   }
 
   function isCancelled(p){
@@ -1134,10 +1145,10 @@
     if (s.kind === 'cx') {
       var st0 = sessionsByKey[p['과정+기수']];
       if (!st0 || !st0.total) return '<span class="legend">-</span>';
-      return '<button type="button" class="tag tagbtn t-none" data-open="' + esc(p['과정+기수']) + '" title="남아 있는 편성 보기">남은 교과목 ' + st0.total + '개 ›</button>' + chgLastLine(p['과정+기수']);
+      return '<button type="button" class="tag tagbtn t-none" data-open="' + esc(p['과정+기수']) + '" title="남아 있는 편성 보기">' + (subjCount(st0) ? '남은 교과목 ' + subjCount(st0) + '개' : '남은 운영 교시 ' + st0.ops + '개') + ' ›</button>' + chgLastLine(p['과정+기수']);
     }
     var cls = s.kind === 'none' ? 't-none' : s.kind === 'ok' ? 't-ok' : 't-info';
-    var stx = s.kind === 'ok' ? '교과목 ' + (sessionsByKey[p['과정+기수']] || {}).total + '개 · 배정 완료' : s.text;
+    var stx = s.kind === 'ok' ? subjText(sessionsByKey[p['과정+기수']] || { total: 0, assigned: 0, ops: 0 }, true) : s.text;
     return '<button type="button" class="tag tagbtn ' + cls + '" data-open="' + esc(p['과정+기수']) + '" title="교과목 편성 화면 열기">' + esc(stx) + ' ›</button>' + cflTag(p) + chgLastLine(p['과정+기수']);
   }
 
@@ -1626,14 +1637,46 @@
     renderSessionList();
   }
 
+  /* --- 교과목별 시수(교과목 10개 이상 과정에서만, 접어 두기) --- */
+  var SUBJ_HRS_MIN = 10;
+  function subjHoursHtml(key){
+    var seen = {}, gl = [], by = {}, opsH = 0, tot = 0;
+    sessionsOf(key).forEach(function(r){   // 같은 날·교시·교과목은 분반이어도 1회로 묶음
+      var a = Number(r['시작교시']), b = Number(r['끝교시']), h = (isFinite(a) && isFinite(b) && b >= a) ? b - a + 1 : 1;
+      var g = [r['일자'], r['시작교시'], r['끝교시'], r['교과목']].join('|');
+      if (!seen[g]) { seen[g] = { ops: true, h: h, subj: String(r['교과목'] || '(이름 없음)'), kind: '', names: {}, date: String(r['일자'] || '') }; gl.push(seen[g]); }
+      var e = seen[g];
+      if (!isOps(r)) e.ops = false;
+      if (!e.kind && String(r['교과목 구분'] || '').trim()) e.kind = String(r['교과목 구분']).trim();
+      if (hasInstr(r) && !isOps(r)) e.names[String(r['강사명'] || r['강사ID'])] = true;
+    });
+    gl.forEach(function(e){
+      if (e.ops) { opsH += e.h; return; }
+      var q = by[e.subj] = by[e.subj] || { h: 0, kind: '', names: {}, date: e.date };
+      q.h += e.h; tot += e.h;
+      if (!q.kind) q.kind = e.kind;
+      Object.keys(e.names).forEach(function(n){ q.names[n] = true; });
+      if (e.date < q.date) q.date = e.date;
+    });
+    var names = Object.keys(by).sort(function(x, y){ return by[x].date < by[y].date ? -1 : by[x].date > by[y].date ? 1 : 0; });
+    var rows = names.map(function(n){
+      var q = by[n], who = Object.keys(q.names).join(', ') || '미지정';
+      return '<tr><td>' + esc(n) + '</td><td>' + esc(q.kind || '-') + '</td><td class="num">' + q.h + '시간</td><td>' + esc(who) + '</td></tr>';
+    }).join('');
+    return '<div id="shrsBox" style="display:none;margin-top:10px;"><div class="hint" style="margin-bottom:4px;">이 기수에 편성된 교과목별 시간입니다(1교시 = 1시간, 같은 날·교시·교과목은 분반이어도 1회로 계산). 연 누계가 아닙니다.</div>' +
+      '<div class="tw"><table class="rvl"><thead><tr><th>교과목</th><th>구분</th><th class="num">편성 시간</th><th>강사</th></tr></thead><tbody>' + rows +
+      '</tbody><tfoot><tr><td colspan="2"><b>교과목 합계</b></td><td class="num"><b>' + tot + '시간</b></td><td>' + (opsH ? '운영 교시 ' + opsH + '시간 별도' : '') + '</td></tr></tfoot></table></div></div>';
+  }
+
   /* --- 머리 카드 --- */
   function renderHead(p){
     var st = sessionsByKey[currentKey] || { total: 0, assigned: 0, hours: 0 };
     var unassigned = st.total - st.assigned;
     var tags = '';
     if (!st.total) tags += '<span class="tag t-none">교과목 미편성</span>';
-    else tags += '<span class="tag ' + (unassigned ? 't-info' : 't-ok') + '">교과목 ' + st.total + '개 중 ' + st.assigned + '개 배정</span>' +
+    else tags += '<span class="tag ' + (unassigned ? 't-info' : 't-ok') + '">' + esc(subjText(st, false)) + '</span>' +
       '<span class="tag t-none">편성 시수 합계 ' + st.hours + '시간</span>' +
+      (subjCount(st) >= SUBJ_HRS_MIN ? '<button type="button" class="tag tagbtn t-info" data-shrs="1" aria-expanded="false">교과목별 ▾</button>' : '') +
       (unassigned ? '<span class="tag t-warn">강사 미지정 ' + unassigned + '건</span>' : '');
     var co = cflByKey[currentKey];
     if (co && co.open) tags += '<span class="tag t-err">겹침 경고 ' + co.open + '건 (미확인)</span>';
@@ -1654,7 +1697,7 @@
       '<div><dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd></div>' +
       '<div><dt>예정 강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd></div>' +
       '<div><dt>편성 담당</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd></div>' +
-      '</dl><div class="sum">' + tags + '</div>' + chgHeadHtml(currentKey);
+      '</dl><div class="sum">' + tags + '</div>' + (subjCount(st) >= SUBJ_HRS_MIN ? subjHoursHtml(currentKey) : '') + chgHeadHtml(currentKey);
   }
 
   /* --- 입력 폼 --- */
@@ -4793,7 +4836,7 @@
     var good = rows.filter(function(r){ return !r.err; }), bad = rows.length - good.length;
     var opts = cands.map(function(q){
       var k = q['과정+기수'];
-      return '<option value="' + esc(k) + '"' + (k === cp.src ? ' selected' : '') + '>' + esc(courseLabel(k) + ' · ' + range(q['입교 시작일'], q['입교 종료일']) + ' · 교과목 ' + (sessionsByKey[k] || {}).total + '개') + '</option>';
+      return '<option value="' + esc(k) + '"' + (k === cp.src ? ' selected' : '') + '>' + esc(courseLabel(k) + ' · ' + range(q['입교 시작일'], q['입교 종료일']) + ' · ' + subjText(sessionsByKey[k] || { total: 0, assigned: 0, ops: 0 }, false).replace(/ 중 \d+개 배정/, '').replace(/^교과목 (\d+)개$/, '교과목 $1개')) + '</option>';
     }).join('');
     var trs = rows.map(function(r){
       var s0 = r.src, pt = periodText(s0);
@@ -4964,7 +5007,7 @@
       var mt = ev.target.closest('[data-mvg],[data-mvto]');
       if (mt) { if (mt.getAttribute('data-mvg')) mvSwap(mt.getAttribute('data-mvg')); else { var q2 = mt.getAttribute('data-mvto').split('|'); mvTo(q2[0], Number(q2[1])); } return; }
     }
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-rqgo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel') || t.getAttribute('data-mvmode') || t.getAttribute('data-pf')))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-rqgo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-shrs') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel') || t.getAttribute('data-mvmode') || t.getAttribute('data-pf')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
@@ -5002,6 +5045,10 @@
     if (cas) {
       var crow = allSessions.filter(function(x){ return String(x['편성ID']) === cas; })[0];
       if (crow) { closeInstructor(); pendingEdit = cas; openCourse(String(crow['개설키'])); }
+      return;
+    }
+    if (t.getAttribute('data-shrs')) {
+      var sb = document.getElementById('shrsBox'); if (sb) { var open0 = sb.style.display === 'none'; sb.style.display = open0 ? '' : 'none'; t.setAttribute('aria-expanded', open0 ? 'true' : 'false'); t.textContent = open0 ? '교과목별 ▴' : '교과목별 ▾'; }
       return;
     }
     var tcat = t.getAttribute('data-tcat');
