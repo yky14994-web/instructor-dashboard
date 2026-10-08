@@ -170,7 +170,7 @@
   .tdl li a:hover{background:#F4F7FA;}
   .tdl .n{font-size:18px;font-weight:800;}
   .tdl .n small{font-size:12px;font-weight:700;color:var(--text-muted);margin-left:2px;}
-  .tdl .bad .n{color:var(--err-fg);} .tdl .wn .n{color:var(--warn-fg);} .tdl .zero .n{color:var(--text-muted);}
+  .tdl .bad .n{color:var(--err-fg);} .tdl .wn .n{color:var(--warn-fg);} .tdl .inf .n{color:var(--navy);} .tdl .zero .n{color:var(--text-muted);}
   .tdl .l small{display:block;font-size:11.5px;color:var(--text-muted);}
   .nsl{list-style:none;margin:0;padding:0;}
   .nsl li{padding:8px 0;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:flex-start;font-size:13.5px;}
@@ -233,7 +233,7 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">빈 강의실</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
   <header>
     <div>
@@ -246,7 +246,6 @@
   <div class="quick">
     <a class="btn" href="lecture-assignment.html#v=table">전체 과정 보기</a>
     <a class="btn" data-v="cal" href="lecture-assignment.html#v=cal">월 일정 보기</a>
-    <a class="btn" data-v="room" href="lecture-assignment.html#v=room">빈 강의실 찾기·예약</a>
     <a class="btn" href="instructor-dashboard.html">강사 검색하기</a>
   </div>
 
@@ -268,7 +267,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-05 홈 32</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 33</div>
 </div>
 </div>
 
@@ -280,7 +279,7 @@
   var OPS_NAME = '교육운영팀';
   var DOW = ['일','월','화','수','목','금','토'];
 
-  var plans = [], periods = [], rooms = [], roomSkip = {}, allSessions = [], resv = [];
+  var plans = [], periods = [], rooms = [], roomSkip = {}, allSessions = [], resv = [], reqs = [], histRows = [];
   var sessionsOk = false;
   var yearSel = '';      // 연간 통계 연도('' = 자동)
   var weekOffset = 0;    // 이번 주 기준 주 이동
@@ -675,6 +674,42 @@
     if (!p || !q) return null;
     return Math.round((Date.UTC(q.y, q.m - 1, q.d) - Date.UTC(p.y, p.m - 1, p.d)) / 86400000);
   }
+  /* 대관 신청(승인 대기)·최근 7일 변경 */
+  function rqSorted(){
+    return reqs.slice().sort(function(x, y){
+      var a = normYmd(x['일자']), b = normYmd(y['일자']);
+      return a < b ? -1 : a > b ? 1 : (Number(x['시작교시']) - Number(y['시작교시'])) || (String(x['예약ID']) < String(y['예약ID']) ? -1 : 1);
+    });
+  }
+  function rqWhen(r){
+    var q = /^(\d{4}-\d{2}-\d{2})[ T]?(\d{2}:\d{2})?/.exec(String(r['등록일시'] || ''));
+    return q ? md(q[1]) + (q[2] ? ' ' + q[2] : '') : String(r['등록일시'] || '');
+  }
+  function rqText(r){ var a = Number(r['시작교시']), b = Number(r['끝교시']); return md(normYmd(r['일자'])) + ' ' + (a === b ? a : a + '~' + b) + '교시 · ' + r['강의실']; }
+  function rqClash(r){
+    var d = normYmd(r['일자']), a = Number(r['시작교시']), b = Number(r['끝교시']), room = String(r['강의실'] || ''), out = [];
+    allSessions.forEach(function(x){ var pp = planByKey(String(x['개설키'] || '')); if (pp && isCancelled(pp)) return; if (normYmd(x['일자']) === d && String(x['강의실'] || '') === room && Number(x['시작교시']) <= b && a <= Number(x['끝교시'])) out.push(nameOf(String(x['개설키'] || '')) + ' ' + x['시작교시'] + '~' + x['끝교시'] + '교시'); });
+    resv.forEach(function(x){ if (normYmd(x['일자']) === d && String(x['강의실'] || '') === room && Number(x['시작교시']) <= b && a <= Number(x['끝교시'])) out.push(String(x['유형']) + ' ' + (String(x['유형']) === '대관' ? x['사유·사용부서'] : nameOf(String(x['개설키'] || '')))); });
+    return out;
+  }
+  function chgDate(t){ return String(t || '').replace(/\d{4}-\d{2}-\d{2}/g, function(d){ return md(d); }); }
+  function chgRecent(){
+    var from = addDays(todayStr(), -6), g = {}, order = [];
+    histRows.forEach(function(h){
+      var t = String(h['유형'] || ''), plan = t === '일정 변경' || t === '기수 취소' || t === '취소 해제';
+      if (!(plan || t.indexOf('교과목 ') === 0 || t === '편성 복사')) return;
+      var at = String(h['일시'] || ''); if (at.slice(0, 10) < from) return;
+      var k = [h['개설키'], at, t].join('|');
+      if (!g[k]) { g[k] = { key: String(h['개설키'] || ''), at: at, type: t.replace('교과목 ', ''), plan: plan, role: String(h['역할'] || ''), lines: [] }; order.push(k); }
+      var tx = t === '교과목 추가' ? chgDate(h['후']) : t === '교과목 삭제' ? chgDate(h['전']) + ' (삭제됨)' : chgDate(h['전']) + (h['전'] && h['후'] ? ' → ' : '') + chgDate(h['후']);
+      g[k].lines.push(String(h['항목'] || '') + (tx ? ' : ' + tx : '') + (t === '기수 취소' && h['사유'] ? ' · 사유: ' + h['사유'] : ''));
+    });
+    return order.map(function(k){
+      var o = g[k], q = /^(\d{4}-\d{2}-\d{2})[ T]?(\d{2}:\d{2})?/.exec(o.at);
+      o.when = q ? md(q[1]) + (q[2] ? ' ' + q[2] : '') : o.at;
+      return o;
+    }).sort(function(a, b){ return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
+  }
   function renderTodoCard(){
     var el = $('cTodo'), today = todayStr();
     if (!sessionsOk) { el.innerHTML = '<div class="chead"><h2>처리할 일</h2></div><div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
@@ -703,9 +738,10 @@
     });
     function row(cls, n, label, sub, dk){ return '<li><a class="' + (n ? cls : 'zero') + '" href="#d=todo:' + dk + '" data-dt="todo:' + dk + '"><span class="l">' + esc(label) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="n">' + n + '<small>건</small></span></a></li>'; }
     var gapN = gapCourses(7).length;
-    var total = soon + unas + rvn + gapN;
-    el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + '</span></div>' +
-      '<ul class="tdl">' + row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전', 'plan') + row('wn', unas, '강사 미지정', '강의일이 14일 이내', 'unas') + row('wn', rvn, '사전확보 미편성', '예약일이 14일 이내', 'resv') + row('wn', gapN, '빈 교시', '일부만 편성·7일 이내 빈 교시가 있는 과정', 'gap') + '</ul>' +
+    var rqN = reqs.length, chgN = chgRecent().length;
+    var total = soon + unas + rvn + gapN + rqN;
+    el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + (chgN ? ' · 최근 변경 ' + chgN + '건' : '') + '</span></div>' +
+      '<ul class="tdl">' + row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전', 'plan') + row('wn', unas, '강사 미지정', '강의일이 14일 이내', 'unas') + row('wn', rvn, '사전확보 미편성', '예약일이 14일 이내', 'resv') + row('wn', rqN, '대관 신청', '승인 대기 중인 강의실 대관 신청', 'rvreq') + row('wn', gapN, '빈 교시', '일부만 편성·7일 이내 빈 교시가 있는 과정', 'gap') + row('inf', chgN, '최근 7일 변경', '연간계획·교과목 편성 변경(알림용, 건수 합계 제외)', 'chg') + '</ul>' +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><button type="button" class="btn sm" data-dt="todo">처리할 일 보기</button></div>';
   }
 
@@ -968,6 +1004,27 @@
             return [esc(dl(o.d)), '<span class="nw">' + esc(md(normYmd(o.r['일자']))) + '</span>', cLink(String(o.r['개설키'])), esc(per(o.r)), esc(o.r['강의실'] || ''), viewer ? '' : '<a class="btn sm" href="lecture-assignment.html#c=' + encodeURIComponent(String(o.r['개설키'])) + '&d=' + normYmd(o.r['일자']) + '&from=home">교과목 편성</a>'];
           }), '해당하는 건이 없습니다.');
       },
+      rvreq: function(){
+        var rl = rqSorted();
+        return '<div class="dsec">대관 신청<small>' + rl.length + '건 · 승인 대기</small></div>' +
+          dtTable(['사용일까지', '일자', '교시 · 강의실', '사유 · 사용부서', '담당자 · 연락처 · 비고', '신청일시', viewer ? '' : '겹침 확인', ''], rl.map(function(r){
+            var dd = normYmd(r['일자']), d = dayDiff(today, dd), cl = viewer ? [] : rqClash(r), id = esc(r['예약ID']);
+            var pill = d !== null && d < 0 ? '날짜 지남' : dl(d);
+            var go = '<a class="btn sm" href="lecture-assignment.html#v=room&d=' + dd + '">빈 강의실에서 보기</a>';
+            var btn = viewer ? go : '<button type="button" class="btn primary sm" data-hrq="ok|' + id + '">승인</button> <button type="button" class="btn sm" data-hrq="no|' + id + '">반려</button> ' + go;
+            var row = [esc(pill), '<span class="nw">' + esc(md(dd)) + '</span>', esc(per(r) + ' · ' + r['강의실']), esc(r['사유·사용부서'] || ''), esc([r['담당자·연락처'], r['비고']].filter(Boolean).join(' · ') || '-'), '<span class="nw">' + esc(rqWhen(r)) + '</span>'];
+            if (!viewer) row.push(cl.length ? '<span style="color:var(--err-fg);">' + esc(cl.slice(0, 2).join(', ')) + (cl.length > 2 ? ' 외 ' + (cl.length - 2) + '건' : '') + '</span>' : '<span style="color:#1F6B2B;">겹침 없음</span>');
+            row.push(btn);
+            return row;
+          }), '승인 대기 중인 대관 신청이 없습니다.') + '<div class="hint">' + (viewer ? '담당자가 승인하면 강의실 예약(대관)으로 등록됩니다. 신청은 강의배정 → 빈 강의실 화면에서 합니다.' : '"승인"하면 강의실 예약(대관)으로 등록되고 "반려"하면 목록에서 빠집니다. 같은 시간에 이미 편성·예약이 있어도 승인할 수 있으며, 겹침 확인 열에 표시됩니다.') + '</div>';
+      },
+      chg: function(){
+        var cg = chgRecent();
+        return '<div class="dsec">최근 7일 변경<small>' + cg.length + '건 · 연간계획 일정·취소, 교과목 추가·수정·삭제, 편성 복사</small></div>' +
+          dtTable(['일시', '구분', '과정 · 기수', '변경 내용'], cg.map(function(g){
+            return ['<span class="nw">' + esc(g.when) + '</span>', esc((g.plan ? '연간계획 ' : '교과목 ') + g.type), cLink(g.key), g.lines.map(function(x){ return '<div>' + esc(x) + '</div>'; }).join('')];
+          }), '최근 7일 동안 변경이 없습니다.') + '<div class="hint">변경 이력 전체는 강의배정 화면의 과정별 "교과목 변경 이력"과 변경이력 시트에서 볼 수 있습니다. 겹침 확인은 포함하지 않습니다.</div>';
+      },
       gap: function(){
         return '<div class="dsec">빈 교시<small>' + g7.length + '과정 · ' + gapRows.length + '일 · 빈 날짜가 7일 이내</small></div>' +
           dtTable(['날짜까지', '날짜', '과정 · 기수', '빈 교시', ''], gapRows.map(function(g){
@@ -976,11 +1033,11 @@
           }), '해당하는 건이 없습니다.') + '<div class="hint">교과목·강사를 못 구해 일부러 비워 둔 칸은 "비워둠 처리"로 사유를 남기면 위 목록에서 빠지고, 아래 "비워둠 처리한 칸"에 계속 표시됩니다(처리 취소 가능). 나중에 교과목을 편성하면 자동으로 빠집니다.</div>' + gapDoneSection(viewer);
       }
     };
-    var total = soon.length + unas.length + rv.length + g7.length;
+    var total = soon.length + unas.length + rv.length + g7.length + reqs.length;
     if (sub && SEC[sub]) return SEC[sub]();
     html = '<div class="chead"><h2>처리할 일 전체</h2><span class="meta">총 ' + total + '건</span></div>' +
       '<div class="cdesc">홈 카드와 같은 기준입니다. 겹침 경고·강사 서류는 강의배정 화면의 처리할 일에서 확인합니다.</div>';
-    ['plan', 'unas', 'resv', 'gap'].forEach(function(k){ html += SEC[k](); });
+    ['plan', 'unas', 'resv', 'rvreq', 'gap', 'chg'].forEach(function(k){ html += SEC[k](); });
     return html;
   }
   function renderDetail(kind){
@@ -1014,6 +1071,22 @@
       renderTrio(); if (curDetail) showDetailKeep();
     }).catch(function(){ btn.disabled = false; alert('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'); });
   }
+  function hRqDecide(v, btn){
+    if (homeViewer()) return;
+    var m = /^(ok|no)\|(.+)$/.exec(v); if (!m) return;
+    var id = m[2], ok = m[1] === 'ok', r = reqs.filter(function(x){ return String(x['예약ID']) === id; })[0]; if (!r) return;
+    var info = rqText(r) + '\n' + (r['사유·사용부서'] || '') + (r['담당자·연락처'] ? ' / ' + r['담당자·연락처'] : ''), cl = rqClash(r), why = '';
+    if (ok) { if (!confirm('이 대관 신청을 승인할까요?\n' + info + (cl.length ? '\n\n※ 같은 시간에 이미 있는 일정: ' + cl.join(', ') : '') + '\n\n승인하면 강의실 예약(대관)으로 등록됩니다.')) return; }
+    else { var x = window.prompt('이 대관 신청을 반려할까요?\n' + info + '\n\n반려 사유를 적어 주세요(선택, 비워도 됩니다).', ''); if (x === null) return; why = x.trim(); }
+    btn.disabled = true;
+    api({ action: 'decideReservation', password: getPw(), 결정: ok ? '승인' : '반려', 사유: why, 예약IDs: [id] }).then(function(res){
+      if (res.status !== 'ok') alert(res.message || '처리하지 못했습니다');
+      else if (res.warnings && res.warnings.length) alert((ok ? '승인했습니다.' : '반려했습니다.') + '\n주의: ' + res.warnings.join(' / '));
+      return api({ action: 'listReservations', password: getPw() }).then(function(j){ if (j && j.status === 'ok') { resv = j.data || []; reqs = j.신청 || []; } });
+    }).catch(function(){ alert('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'); }).then(function(){
+      renderAll(); if (curDetail) showDetailKeep();
+    });
+  }
   function showDetailKeep(){ var k = curDetail, y = window.scrollY; renderDetail(k); window.scrollTo(0, y); var home = ['trio', 'main', 'cYear']; home.forEach(function(id){ var el = $(id); if (el) el.style.display = 'none'; }); }
   function showDetail(kind, noHash){
     var prevDetail = curDetail; curDetail = kind || '';
@@ -1037,6 +1110,8 @@
     if (ud) { hGapUndo(ud.getAttribute('data-hundo'), ud); return; }
     var gp = ev.target && ev.target.closest ? ev.target.closest('[data-hgap]') : null;
     if (gp) { hGapMark(gp.getAttribute('data-hgap'), gp); return; }
+    var rq = ev.target && ev.target.closest ? ev.target.closest('[data-hrq]') : null;
+    if (rq) { hRqDecide(rq.getAttribute('data-hrq'), rq); return; }
     var t = ev.target && ev.target.closest ? ev.target.closest('[data-dt]') : null;
     if (!t) return;
     showDetail(t.getAttribute('data-dt'));
@@ -1095,6 +1170,8 @@
       (function(){ var n = new Date(); lastLoad = ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2); tickClock(); })();
       plans = a['연간계획'] || []; courseRank = null;
       resv = a['강의실예약'] || [];
+      reqs = a['강의실신청'] || [];
+      histRows = a['변경이력'] || [];
       gapLoad(a['빈교시확인']);
       periods = (a['교시표'] || []).map(function(r){
         return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || ''), kind: String(r['구분'] || '') };
