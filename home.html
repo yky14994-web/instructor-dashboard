@@ -301,7 +301,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 52</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 53</div>
 </div>
 </div>
 
@@ -330,6 +330,17 @@
   function getPw(){ try { return sessionStorage.getItem(KEY_PW); } catch(e){ return null; } }
   function setSess(k, v){ try { sessionStorage.setItem(k, v); } catch(e){} }
   function delSess(k){ try { sessionStorage.removeItem(k); } catch(e){} }
+  /* 응답을 JSON으로 해석. 구글이 JSON 대신 오류 페이지(HTML)를 보내면 그 페이지의 문구를 오류 메시지에 담아 원인을 알 수 있게 함 */
+  function readJson(res){
+    return res.text().then(function(t){
+      try { return JSON.parse(t); } catch (e) {
+        var body = String(t || '').replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+        var err = new Error('서버가 데이터 대신 구글 오류 화면을 보냈습니다(HTTP ' + res.status + '): ' + (body.slice(0, 180) || '내용 없음'));
+        err.html = true;
+        throw err;
+      }
+    });
+  }
   /* 조회 전용 요청(겹쳐 보내기): 응답이 늦으면 앞 요청을 끊지 않고 같은 요청을 하나 더 보내 먼저 도착한 응답을 사용.
      0초·6초·15초에 최대 3건, 연결 실패 시 즉시 다음 요청, 전체 50초 제한. (끊고 다시 보내면 서버가 처리하던 일을 버리게 되어 더 늦어짐) */
   function hedgedPost(body, onRetry){
@@ -343,7 +354,7 @@
         var i = started++;
         if (i > 0 && onRetry) { try { onRetry(i + 1); } catch(e){} }
         fetch(WEBAPP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload, cache: 'no-store', signal: ctl ? ctl.signal : undefined })
-          .then(function(res){ return res.json(); })
+          .then(readJson)
           .then(function(j){ finish(true, j); }, function(err){
             if (done) return;
             failed++; lastErr = err;
@@ -362,7 +373,7 @@
     var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 40000) : null;
     return fetch(WEBAPP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
-      .then(function(res){ return res.json(); })
+      .then(readJson)
       .then(function(j){ if (timer) clearTimeout(timer); return j; }, function(err){ if (timer) clearTimeout(timer); throw err; });
   }
 
@@ -1326,7 +1337,7 @@
 
   function showMsg(kind, text){
     var m = $('msg'); m.className = kind || ''; m.textContent = text || '';
-    if (!kind) m.style.display = 'none';
+    m.style.display = kind ? '' : 'none';   /* 숨김(인라인) 뒤에도 다음 안내가 보이도록 매번 다시 지정 */
   }
 
   /* ---------- 불러오기 ---------- */
@@ -1454,7 +1465,7 @@
       $('loginScreen').style.display = 'none';
       $('app').style.display = 'block';
       $('loading').style.display = 'none';
-      showMsg('err', err.message || '불러오지 못했습니다');
+      if (fast) showMsg('warn', '직전에 불러온 내용을 보여 주고 있습니다. 최신 내용으로 바꾸지 못했으니 잠시 후 새로고침해 주세요. (' + (err.message || '연결 실패') + ')'); else showMsg('err', err.message || '불러오지 못했습니다');
     }).then(window.__autoDone, window.__autoDone);
   }
 })();
