@@ -414,7 +414,7 @@
   td.dc.rvc{box-shadow:inset 0 0 0 2px #8E6CC8;}
   .rvbox{margin:14px 0 4px;padding:12px 14px;border:1px solid var(--border-input);border-radius:10px;background:#FAF8FD;}
   .rvbox h4{margin:0 0 8px;font-size:14px;color:#4B2E83;}
-  .rvf{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:6px 0;}
+  .rvf{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin:6px 0;}
   .rvf label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;color:var(--text-sub);}
   .rvf input,.rvf select{height:34px;padding:0 8px;border:1px solid var(--border-input);border-radius:6px;font-family:inherit;font-size:13.5px;background:#fff;}
   .rvbox input[type=radio],.rvbox input[type=checkbox]{height:auto;width:auto;margin-right:4px;vertical-align:middle;}
@@ -424,8 +424,10 @@
   .rvl th,.rvl td{border-bottom:1px solid #E5E0EE;padding:5px 6px;text-align:left;vertical-align:top;}
   .rvl th{font-size:12px;color:var(--text-sub);}
   input[type=date]{font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif !important;}
-  .dowtag{font-size:13px;font-weight:800;color:var(--navy);white-space:nowrap;}
-  .rvf label .dowtag{font-weight:700;margin-top:2px;}
+  .dbx{position:relative;display:inline-block;}
+  .dbx input[type=date]{min-width:176px;padding-right:44px;}
+  .dbx .dow1{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:800;color:var(--navy);pointer-events:none;font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;}
+  .rvf .dbx{display:block;} .rvf .dbx input[type=date]{width:100%;min-width:0;}
   .rgbox{margin:12px 0 4px;}
   .rgbox .rmm{max-height:60vh;}
   table.rgt{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%;}
@@ -785,7 +787,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 34</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 35</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2529,6 +2531,11 @@
   }
   /* 강의실 × 교시 격자: 빈 칸을 눌러 예약 입력에 날짜·교시·강의실을 채움 */
   function dowTag(d){ var q = parseYmd(normYmd(d) || ''); return q ? '(' + DOW[q.dow] + '요일)' : ''; }
+  /* 날짜 입력칸 안쪽 오른쪽(달력 아이콘 왼쪽)에 요일 한 글자 표시 */
+  function dateIn(id, v, aria){
+    var q = parseYmd(normYmd(v) || '');
+    return '<span class="dbx"><input type="date" id="' + id + '" value="' + esc(v) + '"' + (aria ? ' aria-label="' + aria + '"' : '') + '><span class="dow1" aria-hidden="true">' + (q ? '(' + DOW[q.dow] + ')' : '') + '</span></span>';
+  }
   function renderRoomGrid(use, pn){
     var viewer = isViewer(), rl = rooms.filter(function(r){ return !roomSkip[r]; });
     Object.keys(use).forEach(function(r){ if (rl.indexOf(r) < 0 && !roomSkip[r]) rl.push(r); });
@@ -2588,7 +2595,7 @@
     var opt = function(sel){ return pn.map(function(n){ return '<option value="' + n + '"' + (n === sel ? ' selected' : '') + '>' + n + '교시</option>'; }).join(''); };
     var head = '<div class="pcalbox"><div class="pcalbar"><h3>강의실 현황·예약</h3></div>' +
       '<div class="rmq"><button type="button" class="btn sm" data-cm="rm:prev">◀ 전날</button>' +
-      '<input type="date" id="roomDateIn" value="' + esc(roomDate) + '" aria-label="날짜"><span class="dowtag">' + dowTag(roomDate) + '</span>' +
+      dateIn('roomDateIn', roomDate, '날짜') +
       '<button type="button" class="btn sm" data-cm="rm:next">다음날 ▶</button><button type="button" class="btn sm" data-cm="rm:today">오늘</button>' +
       '<select id="roomSSel" aria-label="시작 교시">' + opt(roomS) + '</select><span class="lb">~</span><select id="roomESel" aria-label="끝 교시">' + opt(roomE) + '</select></div>';
     if (!rooms.length) {
@@ -2725,8 +2732,8 @@
         '<div class="rmq" style="margin-bottom:4px;"><label><input type="radio" name="rvType" value="사전확보" ' + (rvSt.type === '사전확보' ? 'checked' : '') + '> 사전확보 <small class="hint">과정은 있고 교과목은 아직 미편성</small></label> ' +
         '<label><input type="radio" name="rvType" value="대관" ' + (rvSt.type === '대관' ? 'checked' : '') + '> 대관 <small class="hint">과정·교과목 없이 다른 용도</small></label></div>' +
         '<div class="rvf">' +
-        '<label>시작일<input type="date" id="rvFrom" value="' + esc(rvSt.from) + '"><span class="dowtag">' + dowTag(rvSt.from) + '</span></label>' +
-        (rvSt.editId ? '' : '<label>종료일(하루면 비움)<input type="date" id="rvTo" value="' + esc(rvSt.to) + '"><span class="dowtag">' + dowTag(rvSt.to) + '</span></label>') +
+        '<label>시작일' + dateIn('rvFrom', rvSt.from) + '</label>' +
+        (rvSt.editId ? '' : '<label>종료일(하루면 비움)' + dateIn('rvTo', rvSt.to) + '</label>') +
         '<label>시작 교시<select id="rvS">' + po(rvSt.s) + '</select></label><label>끝 교시<select id="rvE">' + po(rvSt.e) + '</select></label>' +
         '<label>강의실<select id="rvRoom">' + ro + '</select></label>' +
         (rvSt.type === '사전확보' ? '<label class="wide">과정<select id="rvKey">' + po2 + '</select></label>' : '<label class="wide">사유·사용부서<input type="text" id="rvReason" maxlength="200" placeholder="예: 인사팀 신규임용 면접 / 안전관리과 회의" value="' + esc(rvSt.reason) + '"></label>') +
@@ -2857,8 +2864,8 @@
       form = '<div class="rvbox"><h4>강의실 대관 신청</h4>' +
         '<div class="hint" style="margin-bottom:6px;">담당자가 확인·승인하면 강의실 예약(대관)으로 등록됩니다. 승인 전에는 강의실이 확보된 것이 아니므로, 위 격자에서 비어 있는 시간을 확인한 뒤 신청해 주세요. 반려되면 이 목록에서 사라지며 결과 안내는 따로 가지 않습니다(연락처로 담당자가 확인).</div>' +
         '<div class="rvf">' +
-        '<label>시작일<input type="date" id="rqFrom" value="' + esc(rqSt.from) + '"><span class="dowtag">' + dowTag(rqSt.from) + '</span></label>' +
-        '<label>종료일(하루면 비움)<input type="date" id="rqTo" value="' + esc(rqSt.to) + '"><span class="dowtag">' + dowTag(rqSt.to) + '</span></label>' +
+        '<label>시작일' + dateIn('rqFrom', rqSt.from) + '</label>' +
+        '<label>종료일(하루면 비움)' + dateIn('rqTo', rqSt.to) + '</label>' +
         '<label>시작 교시<select id="rqS">' + po(rqSt.s) + '</select></label><label>끝 교시<select id="rqE">' + po(rqSt.e) + '</select></label>' +
         '<label>강의실<select id="rqRoom">' + ro + '</select></label>' +
         '<label class="wide">사유·사용부서<input type="text" id="rqReason" maxlength="200" placeholder="예: 인사팀 신규임용 면접 / 안전관리과 회의" value="' + esc(rqSt.reason) + '"></label>' +
