@@ -273,7 +273,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 43</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 44</div>
 </div>
 </div>
 
@@ -493,7 +493,7 @@
     rows.forEach(function(n){ var pi = periodInfo(n); if (pi && validTime(pi.start) && validTime(pi.end) && nowMin >= toMin(pi.start) && nowMin < toMin(pi.end)) curRow = n; });
     var th = '<tr><th class="pn">교시</th>' + cols.map(function(c){
       var nm = courseName(c.key);
-      return '<th class="cn" style="background:' + courseBg(nm) + ';border-top:4px solid ' + courseColor(nm) + ';">' + (c.lane === 0 ? courseLink(c.key, nameOf(c.key), today) : '<span class="hint">' + esc(nameOf(c.key)) + ' (동시 진행)</span>') + (c.lane === 0 && ipgyoLine(planByKey(c.key)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(c.key))) + '</small>' : '') + '</th>';
+      return '<th class="cn" style="background:' + courseBg(nm) + ';border-top:4px solid ' + courseColor(nm) + ';">' + (c.lane === 0 ? courseLink(c.key, nameOf(c.key), today) : '<span class="hint">' + esc(nameOf(c.key)) + ' (동시 진행)</span>') + (c.lane === 0 && ipgyoLine(planByKey(c.key)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(c.key))) + '</small>' : '') + (nowIsOver() ? '<span class="tag t-none" style="display:inline-block;margin-top:4px;">종료</span>' : '') + '</th>';
     }).join('') + '</tr>';
     var body = rows.map(function(n){
       var pi = periodInfo(n), tm = pi && validTime(pi.start) ? pi.start + (validTime(pi.end) ? '~' + pi.end : '') : '';
@@ -856,14 +856,15 @@
     return gapChk[key + '|' + d + '|' + n] ? 'done' : 'open';
   }
   /* 교과목 미편성 과정: 아직 끝나지 않았고(입교 종료일 ≥ 오늘) 입교 시작일이 오늘부터 2개월 이내인 과정 */
-  function noSubjList(has){
+  /* keepOver=true: 입교 종료일 당일 17:50 이후에도 자정까지 목록에 남김(종료·편성 불가 배지로 표시). 기본은 17:50 이후 제외 */
+  function noSubjList(has, keepOver){
     var today = todayStr(), tq = parseYmd(today), to2 = ymd(new Date(tq.y, tq.m + 1, tq.d));
     if (!has) { has = {}; allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; }); }
     return plans.filter(function(p){
       if (isCancelled(p)) return false;
       var a = normYmd(p['입교 시작일']); if (!a) return false;
       var b = normYmd(p['입교 종료일']) || a;
-      if (dateOver(b) || a > to2) return false;
+      if ((keepOver ? b < today : dateOver(b)) || a > to2) return false;
       return !has[String(p['과정+기수'] || '')];
     });
   }
@@ -871,7 +872,7 @@
     var el = $('cNoSubj'), today = todayStr();
     if (!sessionsOk) { el.innerHTML = '<div class="chead"><h2>교과목 미편성 과정</h2></div><div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
     var has = {}; allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; });
-    var list = noSubjList(has);
+    var list = noSubjList(has, true);
     list.sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : normYmd(x['입교 시작일']) > normYmd(y['입교 시작일']) ? 1 : 0; });
     var html = '<div class="chead"><h2>교과목 미편성 과정</h2><span class="meta">' + (list.length ? '총 ' + list.length + '과정' : '없음') + '</span></div>';
     var gcN = gapCourses(14).length;
@@ -881,7 +882,7 @@
     html += '<ul class="nsl">' + list.slice(0, shownN).map(function(p){
       var key = String(p['과정+기수']), a = normYmd(p['입교 시작일']), d = dayDiff(today, a);
       var b2 = normYmd(p['입교 종료일']) || a;
-      var tag = dateOver(b2) ? '<span class="tag t-none">종료</span>' : d <= 0 ? '<span class="tag t-err">진행 중</span>' : '<span class="tag ' + (d <= 14 ? 't-err' : d <= 30 ? 't-warn' : 't-none') + '">D-' + d + '</span>';
+      var tag = dateOver(b2) ? '<span class="tag t-none">종료·편성 불가</span>' : d <= 0 ? '<span class="tag t-err">진행 중</span>' : '<span class="tag ' + (d <= 14 ? 't-err' : d <= 30 ? 't-warn' : 't-none') + '">D-' + d + '</span>';
       return '<li><div><a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '&from=home">' + esc(nameOf(key)) + '</a><small>' + esc(ipgyoLine(p).replace(/^입교 /, '')) + '</small></div>' + tag + '</li>';
     }).join('') + '</ul>' +
       gcLine + '<div class="foot">' + (list.length > shownN ? '<div class="hint" style="margin-bottom:8px;">시작일이 빠른 순서로 ' + shownN + '과정만 표시했습니다.</div>' : '') + '<button type="button" class="btn sm" data-dt="nosubj">전체 과정 보기</button></div>';
@@ -946,7 +947,7 @@
     var today = todayStr(), html = '';
     if (!sessionsOk) return '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>';
     if (kind === 'nosubj') {
-      var list = noSubjList().sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : 1; });
+      var list = noSubjList(null, true).sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : 1; });
       return '<div class="chead"><h2>교과목 미편성 과정 전체 (한 건도 편성 안 됨)</h2><span class="meta">' + list.length + '과정</span></div>' +
         '<div class="cdesc">입교 시작일이 오늘부터 2개월 이내이고 아직 끝나지 않은 과정 중, 교과목이 하나도 편성되지 않은 과정입니다. 과정명을 누르면 교과목 편성 화면으로 이동합니다.</div>' +
         dtTable(PCOLS, list.map(function(p){ return planRow(p); }), '해당하는 과정이 없습니다.') + gapSection(gapCourses(14), '오늘부터 2개월 이내에 시작하거나 진행 중인 과정');

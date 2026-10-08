@@ -575,6 +575,8 @@
   table.g td.gpopen,table.g td.gpdone{vertical-align:middle;text-align:center;}
   table.g td.gpopen{background:repeating-linear-gradient(135deg,#FFF6D8,#FFF6D8 6px,#FFFDF3 6px,#FFFDF3 12px);}
   table.g td.gpdone{background:repeating-linear-gradient(135deg,#E6E8EB,#E6E8EB 6px,#F4F5F7 6px,#F4F5F7 12px);}
+  table.g td.gpend{background:repeating-linear-gradient(135deg,#ECEEF1,#ECEEF1 6px,#F7F8FA 6px,#F7F8FA 12px);cursor:not-allowed;}
+  .gend{display:block;margin:3px auto 0;width:max-content;font-size:10.5px;font-weight:800;color:#4B5563;background:#E3E6EA;border-radius:999px;padding:1px 8px;}
   .gpt{display:block;font-size:11.5px;font-weight:800;color:#8A6D00;} td.gpdone .gpt{color:#5B6470;} .gpt small{display:block;font-weight:600;font-size:10.5px;margin-top:1px;}
   .gpb{margin-top:4px;height:22px;padding:0 7px;border:1px solid #C9BFA0;border-radius:5px;background:#fff;font-size:11px;font-weight:700;cursor:pointer;color:#5a4a00;} td.gpdone .gpb{border-color:#B8BEC7;color:#444;}
   table.g td.gpopen:hover::after,table.g td.gpdone:hover::after{content:none !important;}
@@ -800,7 +802,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 44</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 45</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -4100,7 +4102,7 @@
     });
     var totalCols = lay.reduce(function(a, l){ return a + l.lanes; }, 0);
     var head = '<tr><th class="pc">교시</th>' + days.map(function(d, i){
-      return '<th colspan="' + lay[i].lanes + '" data-d="' + i + '" class="' + (d === today ? 'today ' : '') + (i === gridDay ? 'dshow' : '') + '">' + esc(DOW[parseYmd(d).dow]) + '<small>' + esc(md(d).replace(/\(.\)/, '')) + (d === today ? ' · 오늘' : '') + '</small></th>';
+      return '<th colspan="' + lay[i].lanes + '" data-d="' + i + '" class="' + (d === today ? 'today ' : '') + (i === gridDay ? 'dshow' : '') + '">' + esc(DOW[parseYmd(d).dow]) + '<small>' + esc(md(d).replace(/\(.\)/, '')) + (d === today ? ' · 오늘' : '') + '</small>' + (sessEnded(d) ? '<span class="gend" title="종료된 일정(강의일 당일 17:50 이후)에는 교과목을 배정할 수 없습니다">편성 불가</span>' : '') + '</th>';
     }).join('') + '</tr>';
     var body = '';
     pl.forEach(function(n, ri){
@@ -4121,10 +4123,11 @@
             body += '<td class="c' + sh + '" data-d="' + di + '" rowspan="' + st.rs + '">' + gridCell(st.u, st.cont, ce, cp0, cx) + '</td>';
           } else if (li === 0 && canEdit && !all) {
             var gs = gapSlotState(p, d, n);
-            if (mv && mv.key === currentKey) body += '<td class="c empty mvt' + sh + '" data-d="' + di + '" data-mvto="' + d + '|' + n + '" title="누르면 선택한 교과목을 이 칸으로 옮깁니다"></td>';
-            else body += '<td class="c empty' + (gs ? ' gp' + gs : '') + sh + '" data-d="' + di + '" data-new="' + d + '|' + n + '">' + gapCellHtml(gs, p, d, n, true) + '</td>';
+            var endD = sessEnded(d); if (endD) gs = '';
+            if (mv && mv.key === currentKey && !endD) body += '<td class="c empty mvt' + sh + '" data-d="' + di + '" data-mvto="' + d + '|' + n + '" title="누르면 선택한 교과목을 이 칸으로 옮깁니다"></td>';
+            else body += '<td class="c empty' + (endD ? ' gpend' : (gs ? ' gp' + gs : '')) + sh + '" data-d="' + di + '" data-new="' + d + '|' + n + '"' + (endD ? ' title="종료된 일정이라 편성할 수 없습니다"' : '') + '>' + gapCellHtml(gs, p, d, n, true) + '</td>';
           }
-          else { var gs2 = (!all && li === 0) ? gapSlotState(p, d, n) : ''; body += '<td class="c' + (gs2 ? ' gp' + gs2 : '') + sh + '" data-d="' + di + '">' + gapCellHtml(gs2, p, d, n, false) + '</td>'; }
+          else { var endD2 = sessEnded(d), gs2 = (!all && li === 0 && !endD2) ? gapSlotState(p, d, n) : ''; body += '<td class="c' + (endD2 ? ' gpend' : (gs2 ? ' gp' + gs2 : '')) + sh + '" data-d="' + di + '">' + gapCellHtml(gs2, p, d, n, false) + '</td>'; }
         }
       });
       body += '</tr>';
