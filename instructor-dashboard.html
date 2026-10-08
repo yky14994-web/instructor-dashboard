@@ -16,6 +16,12 @@
     --text-muted:#5F6877;
     --border:#EFEDE7;
     --border-input:#D9D6CF;
+    /* C4: 공통 색 변수(2026-10-09) */
+    --bg-hover:#F4F7FA;
+    --bg-soft:#F7F8FA;
+    --line:#E5E8EC;
+    --none-bg:#ECEEF1;
+    --text-faint:#8A8F98;
   }
   *{box-sizing:border-box;}
   body{
@@ -28,6 +34,9 @@
     text-rendering:optimizeLegibility;
   }
   .wrap{max-width:1280px;margin:0 auto;padding:20px 16px 60px 16px;}
+  /* C7: 선 아이콘(문자 기호 대신, 굵기·크기 통일). 클릭은 버튼으로 전달 */
+  .ic{pointer-events:none;width:1.05em;height:1.05em;vertical-align:-0.15em;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .ic.l{margin-right:4px;} .ic.r{margin-left:4px;}
   header{
     height:auto;
     padding:20px 24px;
@@ -41,7 +50,7 @@
     gap:10px;
     margin-bottom:24px;
   }
-  header .title{font-size:19px;font-weight:800;color:var(--navy);}
+  header .title{font-size:20px;font-weight:800;color:var(--navy);}
   .badge{
     height:36px;padding:0 16px;border-radius:6px;
     background:#fff;border:1px solid var(--border-input);color:var(--text-sub);
@@ -49,9 +58,9 @@
     display:inline-flex;align-items:center;
     transition:background-color .15s ease, border-color .15s ease, color .15s ease;
   }
-  span.badge{background:#E3E9EE;color:var(--navy);border:none;height:28px;padding:0 12px;border-radius:20px;}
-  button.badge:hover, .badge[id]:hover{background:#F4F7FA;}
-  button.badge:active{background:#E9EEF3;}
+  span.badge{background:var(--line);color:var(--navy);border:none;height:28px;padding:0 12px;border-radius:20px;}
+  button.badge:hover, .badge[id]:hover{background:var(--bg-hover);}
+  button.badge:active{background:var(--none-bg);}
   #inviteOpenBtn:hover{background:#142a45 !important;}
   @media (max-width:640px){
     .badge{height:30px;padding:0 10px;font-size:11px;white-space:nowrap;}
@@ -76,14 +85,14 @@
     transition:border-color .15s ease, background-color .15s ease;
   }
   .card[data-filter]:hover{border-color:var(--navy);}
-  .card .label{font-size:12.5px;color:var(--text-sub);margin-top:6px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .card .label{font-size:13px;color:var(--text-sub);margin-top:6px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .card .num{font-size:26px;line-height:1.1;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;}
   .card.active-filter{border-color:var(--navy);background:#EEF3F8;}
   .stoggle{
     display:inline-flex;align-items:center;gap:8px;
     border:1.5px solid var(--border);background:#F7F6F3;border-radius:22px;
     height:40px;padding:0 8px 0 16px;font-size:14px;font-weight:700;color:var(--text);
-    font-family:'Nanum Gothic',sans-serif;cursor:pointer;
+    font-family:inherit;cursor:pointer;
     transition:background-color .15s ease, border-color .15s ease, color .15s ease;
   }
   .stoggle:hover{border-color:var(--navy);}
@@ -148,10 +157,10 @@
   .initials-avatar{
     width:48px;height:48px;border-radius:50%;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
-    background:#E9ECEF;color:#9AA5B1;font-size:15px;font-weight:800;
+    background:var(--none-bg);color:#9AA5B1;font-size:15px;font-weight:800;
   }
   .mcard{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.03);}
-  .mcard .mname{font-size:17px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;}
+  .mcard .mname{font-size:18px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;}
   .mcard .mmeta{font-size:14px;color:var(--text-sub);margin-top:4px;}
   @media (max-width: 900px){
     #tableScrollWrap{display:none;}
@@ -164,7 +173,7 @@
     font-size:13px;color:var(--text-sub);font-weight:700;
     text-align:left;padding:12px 10px;border-bottom:1.5px solid var(--border);
     white-space:nowrap;
-    background:#F8F9FA;
+    background:var(--bg-soft);
     box-shadow:0 1px 0 var(--border);
   }
   td{
@@ -173,26 +182,26 @@
     font-variant-numeric:tabular-nums;
   }
   tr.row{cursor:pointer;}
-  tr.row:hover{background:#F4F7FA;}
+  tr.row:hover{background:var(--bg-hover);}
   .status{font-size:12px;font-weight:700;padding:3px 9px;border-radius:10px;}
   .status.active{background:#EAF3DE;color:#27500A;}
   .status.pending{background:#FAEEDA;color:#633806;}
-  .status.hold{background:#EFEDE7;color:#5F5E5A;}
+  .status.hold{background:var(--border);color:#5F5E5A;}
   .status.rejected{background:#FCEBEB;color:#791F1F;}
   .status.other{background:var(--border);color:var(--text-sub);}
   .route-badge{font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:6px;vertical-align:middle;}
   .route-badge.self{background:var(--border);color:var(--text-sub);}
-  .route-badge.invite{background:#DCE8F5;color:#1B3A5F;}
+  .route-badge.invite{background:#DCE8F5;color:var(--navy);}
   .route-badge.newbie{background:#FDE8E8;color:#A32D2D;}
-  .route-badge.docreq{background:#E3ECF7;color:#1B3A5F;}
-  .dr-open{border:1px solid #1B3A5F;background:#fff;color:#1B3A5F;border-radius:14px;padding:2px 12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin:0 2px;}
+  .route-badge.docreq{background:#E3ECF7;color:var(--navy);}
+  .dr-open{border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:14px;padding:2px 12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin:0 2px;}
   .dr-open:hover{background:#E3ECF7;}
   .dr-link{background:none;border:none;padding:0;color:var(--navy);font-weight:700;cursor:pointer;font-family:inherit;font-size:inherit;margin-right:14px;}
   .pending-badge{font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;white-space:nowrap;}
   .badge-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
-  .pending-badge.assigned{background:#EDE4F7;color:#5B2A9E;}
-  .pending-badge.unsubmitted{background:#FAEEDA;color:#633806;}
-  .pending-badge.done{background:#EAF3DE;color:#27500A;}
+  .pending-badge.assigned{background:#EEF2F7;color:var(--navy);}   /* I2: 강의확정은 중립(남색 옅은 바탕) */
+  .pending-badge.unsubmitted{background:#FAEEDA;color:#633806;box-shadow:inset 0 0 0 1px #E5C48A;}   /* I2: 미제출만 강조색 */
+  .pending-badge.done{background:#F1F3F5;color:var(--text-muted);}   /* I2: 제출완료는 회색(처리 끝난 상태) */
 
   #empty, #loading{
     padding:60px 0;text-align:center;color:var(--text-muted);font-size:14px;
@@ -267,7 +276,7 @@
     text-align:center;
     box-shadow:0 12px 40px rgba(0,0,0,0.35);
   }
-  #loginScreen .title{font-size:19px;font-weight:800;color:#ffffff;margin-bottom:6px;text-shadow:0 1px 4px rgba(0,0,0,0.4);}
+  #loginScreen .title{font-size:20px;font-weight:800;color:#ffffff;margin-bottom:6px;text-shadow:0 1px 4px rgba(0,0,0,0.4);}
   #loginScreen .sub{font-size:13px;color:rgba(255,255,255,0.85);margin-bottom:28px;}
   .pin-box{
     width:52px;height:58px;
@@ -292,7 +301,7 @@
     border:none;border-radius:6px;
     background:var(--navy);color:#fff;
     font-size:15px;font-weight:700;
-    font-family:'Nanum Gothic', sans-serif;
+    font-family:inherit;
     cursor:pointer;
   }
   #loginScreen button:disabled{background:var(--text-muted);}
@@ -302,7 +311,7 @@
   }
 
   /* 공통 상단 메뉴 (강사 조회·강의배정 페이지 동일) */
-  .gnav{background:#1B3A5F;color:#fff;}
+  .gnav{background:var(--navy);color:#fff;}
   .gnav-in{display:flex;align-items:stretch;gap:2px;padding:0 20px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .gnav-in::-webkit-scrollbar{display:none;}
   .gnav-brand{display:flex;align-items:center;font-size:13px;font-weight:800;letter-spacing:-0.2px;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
@@ -310,7 +319,7 @@
   a.gnav-i:hover{color:#fff;background:rgba(255,255,255,0.08);}
   .gnav-i.on{color:#fff;border-bottom-color:#fff;}
   .gnav-i.off{color:rgba(255,255,255,0.45);cursor:default;}
-  .gnav-i small{font-size:10.5px;font-weight:700;border:1px solid rgba(255,255,255,0.35);border-radius:999px;padding:1px 7px;color:rgba(255,255,255,0.6);}
+  .gnav-i small{font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,0.35);border-radius:999px;padding:1px 7px;color:rgba(255,255,255,0.6);}
   @media (max-width:640px){
     .gnav-in{padding:0 8px;}
     .gnav-brand{display:none;}
@@ -321,14 +330,14 @@
   /* 저장된 로그인이 있으면 로그인 화면(배경)을 보여주지 않고 바로 불러오기 */
   #boot{display:none;}
   html.autologin #loginScreen{display:none !important;}
-  html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:#5b6575;font-size:14px;}
+  html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:var(--text-muted);font-size:14px;}
 
-  .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;font-size:16px;color:#5B6575;margin:2px 0 12px;font-weight:600;}
-  .crumb a{color:#1B3A5F;text-decoration:none;font-weight:800;padding:5px 9px;border-radius:8px;}
+  .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;font-size:16px;color:var(--text-muted);margin:2px 0 12px;font-weight:600;}
+  .crumb a{color:var(--navy);text-decoration:none;font-weight:800;padding:5px 9px;border-radius:8px;}
   .crumb a:hover{background:#E4ECF5;text-decoration:none;}
-  .crumb .sep{margin:0 2px;color:#8A93A0;font-size:18px;font-weight:700;}
-  .crumb .cur{color:#fff;background:#1B3A5F;font-weight:800;padding:5px 12px;border-radius:8px;}
-  @media (max-width:640px){ .crumb{font-size:14.5px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} }
+  .crumb .sep{margin:0 2px;color:var(--text-faint);font-size:18px;font-weight:700;}
+  .crumb .cur{color:#fff;background:var(--navy);font-weight:800;padding:5px 12px;border-radius:8px;}
+  @media (max-width:640px){ .crumb{font-size:14px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} }
 </style>
 </head>
 <body>
@@ -363,13 +372,13 @@
     <div class="title">강사관리 · 강사 조회·검색</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button id="reloadListBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">새로고침</button>
-      <button id="inviteOpenBtn" class="badge" style="border:1px solid #1B3A5F;cursor:pointer;font-family:inherit;background:#1B3A5F;color:#fff;">강사 초대</button>
+      <button id="inviteOpenBtn" class="badge" style="border:1px solid var(--navy);cursor:pointer;font-family:inherit;background:var(--navy);color:#fff;">강사 초대</button>
       <button id="copyPublicLinkBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">강사등록 링크</button>
     </div>
   </header>
 
-  <div id="staleBar" style="display:none;background:#EEF3F8;color:#1B3A5F;font-size:12.5px;font-weight:700;border-radius:8px;padding:10px 14px;margin:-4px 0 12px 0;">이전에 불러온 목록을 먼저 보여 드리고 있습니다. 연락처·상세 정보는 최신 정보를 받으면 자동으로 표시됩니다.</div>
-  <div id="viewerModeBanner" style="display:none;background:#FAEEDA;color:#633806;font-size:12.5px;font-weight:700;border-radius:8px;padding:10px 14px;margin:-4px 0 16px 0;">조회 전용 계정입니다. 강사 정보 열람과 자료 다운로드만 가능하며, 승인·삭제 등 변경 작업은 관리자 계정으로 로그인해야 합니다.</div>
+  <div id="staleBar" style="display:none;background:#EEF3F8;color:var(--navy);font-size:13px;font-weight:700;border-radius:8px;padding:10px 14px;margin:-4px 0 12px 0;">이전에 불러온 목록을 먼저 보여 드리고 있습니다. 연락처·상세 정보는 최신 정보를 받으면 자동으로 표시됩니다.</div>
+  <div id="viewerModeBanner" style="display:none;background:#FAEEDA;color:#633806;font-size:13px;font-weight:700;border-radius:8px;padding:10px 14px;margin:-4px 0 16px 0;">조회 전용 계정입니다. 강사 정보 열람과 자료 다운로드만 가능하며, 승인·삭제 등 변경 작업은 관리자 계정으로 로그인해야 합니다.</div>
 
   <!-- 강사 초대 모달 -->
   <div id="inviteOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,20,19,0.45);z-index:60;align-items:center;justify-content:center;padding:20px;">
@@ -377,13 +386,13 @@
       <button id="inviteCloseX" style="position:absolute;top:14px;right:14px;border:none;background:none;font-size:18px;color:var(--text-muted);cursor:pointer;line-height:1;">×</button>
       <div style="font-size:16px;font-weight:800;margin-bottom:4px;">신규 강사 초대</div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:18px;">이름·연락처·이메일만 입력하면, 강사가 직접 기본정보를 입력해 심사 없이 바로 등록되는 링크가 메일로 발송됩니다.</div>
-      <input type="text" id="inviteName" placeholder="성명" style="width:100%;height:42px;border:1px solid #D9D6CF;border-radius:6px;padding:0 10px;margin-bottom:8px;">
-      <input type="text" id="invitePhone" placeholder="연락처 (010-0000-0000)" style="width:100%;height:42px;border:1px solid #D9D6CF;border-radius:6px;padding:0 10px;margin-bottom:8px;">
-      <input type="email" id="inviteEmail" placeholder="이메일" style="width:100%;height:42px;border:1px solid #D9D6CF;border-radius:6px;padding:0 10px;margin-bottom:14px;">
+      <input type="text" id="inviteName" placeholder="성명" style="width:100%;height:42px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;margin-bottom:8px;">
+      <input type="text" id="invitePhone" placeholder="연락처 (010-0000-0000)" style="width:100%;height:42px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;margin-bottom:8px;">
+      <input type="email" id="inviteEmail" placeholder="이메일" style="width:100%;height:42px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;margin-bottom:14px;">
       <div id="inviteMsg" style="font-size:13px;margin-bottom:10px;display:none;"></div>
       <div style="display:flex;gap:8px;">
-        <button id="inviteCancelBtn" style="flex:1;height:42px;border:1px solid #D9D6CF;border-radius:6px;background:#fff;font-family:'Nanum Gothic',sans-serif;cursor:pointer;">취소</button>
-        <button id="inviteSubmitBtn" style="flex:1;height:42px;border:none;border-radius:6px;background:#1B3A5F;color:#fff;font-weight:700;font-family:'Nanum Gothic',sans-serif;cursor:pointer;">초대 링크 발송</button>
+        <button id="inviteCancelBtn" style="flex:1;height:42px;border:1px solid var(--border-input);border-radius:6px;background:#fff;font-family:inherit;cursor:pointer;">취소</button>
+        <button id="inviteSubmitBtn" style="flex:1;height:42px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-weight:700;font-family:inherit;cursor:pointer;">초대 링크 발송</button>
       </div>
     </div>
   </div>
@@ -404,7 +413,7 @@
   <div class="toolbar-card">
     <div class="toolbar">
       <input type="text" id="search" placeholder="강사명, 소속, 연락처로 검색">
-      <button type="button" id="mobileFilterToggle" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:'Nanum Gothic',sans-serif;">상세 필터 ▾</button>
+      <button type="button" id="mobileFilterToggle" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">상세 필터<svg class="ic r" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     </div>
     <div class="filter-row" id="filterOptions">
       <select class="filter" id="filterSpecialty">
@@ -435,17 +444,17 @@
 
   <div id="exportRow" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 14px 0;">
     <span style="font-size:13px;color:var(--text-sub);">엑셀 내려받기 (모든 정보 포함)</span>
-    <button type="button" id="exportFilteredBtn" style="border:1px solid var(--border-input);background:#fff;border-radius:6px;height:34px;padding:0 14px;font-size:13px;font-weight:700;font-family:'Nanum Gothic',sans-serif;cursor:pointer;color:var(--navy);">화면 목록 <span id="exportFilteredCount">0</span>명</button>
-    <button type="button" id="exportAllBtn" style="border:1px solid var(--navy);background:var(--navy);border-radius:6px;height:34px;padding:0 14px;font-size:13px;font-weight:700;font-family:'Nanum Gothic',sans-serif;cursor:pointer;color:#fff;">전체 <span id="exportAllCount">0</span>명</button>
+    <button type="button" id="exportFilteredBtn" style="border:1px solid var(--border-input);background:#fff;border-radius:6px;height:34px;padding:0 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--navy);">화면 목록 <span id="exportFilteredCount">0</span>명</button>
+    <button type="button" id="exportAllBtn" style="border:1px solid var(--navy);background:var(--navy);border-radius:6px;height:34px;padding:0 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:#fff;">전체 <span id="exportAllCount">0</span>명</button>
   </div>
 
   <div id="loading">불러오는 중...</div>
-  <div id="loadError" style="display:none;background:#FFF4E5;border:1px solid #F0C98A;border-radius:10px;padding:14px 16px;margin:10px 0;font-size:13.5px;color:#7A4B00;">
+  <div id="loadError" style="display:none;background:#FFF4E5;border:1px solid #F0C98A;border-radius:10px;padding:14px 16px;margin:10px 0;font-size:14px;color:#7A4B00;">
     <div id="loadErrorText" style="margin-bottom:8px;"></div>
-    <button type="button" id="loadRetryBtn" style="border:1px solid #1B3A5F;background:#1B3A5F;color:#fff;border-radius:6px;height:34px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;">다시 불러오기</button>
+    <button type="button" id="loadRetryBtn" style="border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:6px;height:34px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;">다시 불러오기</button>
   </div>
-  <div id="docReplaceNotice" style="display:none;background:#EEF3F9;border:1px solid #B9CBE0;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:13.5px;color:#1B3A5F;line-height:1.8;"></div>
-  <div id="mailNotice" style="display:none;background:#FFF4E5;border:1px solid #F0C98A;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:13.5px;color:#7A4B00;line-height:1.6;"></div>
+  <div id="docReplaceNotice" style="display:none;background:#EEF3F9;border:1px solid #B9CBE0;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:14px;color:var(--navy);line-height:1.8;"></div>
+  <div id="mailNotice" style="display:none;background:#FFF4E5;border:1px solid #F0C98A;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:14px;color:#7A4B00;line-height:1.6;"></div>
   <div id="empty" style="display:none;">조건에 맞는 강사가 없습니다.</div>
 
   <div id="instructorViewWrap">
@@ -464,9 +473,9 @@
 
   <div id="mobileCardList"></div>
   <div id="mobilePagination" style="display:none;align-items:center;justify-content:center;gap:16px;margin-top:16px;">
-    <button id="mobilePrevBtn" style="border:1px solid var(--border);background:#fff;border-radius:6px;height:38px;padding:0 16px;font-family:'Nanum Gothic',sans-serif;cursor:pointer;">이전</button>
+    <button id="mobilePrevBtn" style="border:1px solid var(--border);background:#fff;border-radius:6px;height:38px;padding:0 16px;font-family:inherit;cursor:pointer;">이전</button>
     <span id="mobilePageLabel" style="font-size:13px;color:var(--text-sub);"></span>
-    <button id="mobileNextBtn" style="border:1px solid var(--border);background:#fff;border-radius:6px;height:38px;padding:0 16px;font-family:'Nanum Gothic',sans-serif;cursor:pointer;">다음</button>
+    <button id="mobileNextBtn" style="border:1px solid var(--border);background:#fff;border-radius:6px;height:38px;padding:0 16px;font-family:inherit;cursor:pointer;">다음</button>
   </div>
   </div>
 
@@ -475,14 +484,14 @@
 
 <div id="overlay">
   <div id="detail">
-    <button class="close" id="closeBtn">닫기 ✕</button>
+    <button class="close" id="closeBtn">닫기<svg class="ic r" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     <div id="detailBody"></div>
   </div>
 </div>
 
 <div id="schoolOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,20,19,0.4);align-items:center;justify-content:center;padding:20px;z-index:20;">
   <div style="background:#fff;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;border-radius:10px;padding:28px;">
-    <button id="schoolCloseBtn" style="float:right;border:none;background:none;font-size:14px;color:var(--text-sub);cursor:pointer;">닫기 ✕</button>
+    <button id="schoolCloseBtn" style="float:right;border:none;background:none;font-size:14px;color:var(--text-sub);cursor:pointer;">닫기<svg class="ic r" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     <h2 style="font-size:18px;margin:0 0 20px 0;">학교소개 페이지 관리</h2>
     <form id="schoolForm">
       <div style="display:flex;flex-direction:column;gap:14px;">
@@ -501,7 +510,7 @@
           <input type="file" id="schoolPhoto" accept="image/*" style="width:100%;">
         </div>
       </div>
-      <button type="submit" id="schoolSaveBtn" style="width:100%;height:46px;margin-top:22px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-size:15px;font-weight:700;font-family:'Nanum Gothic',sans-serif;cursor:pointer;">저장하기</button>
+      <button type="submit" id="schoolSaveBtn" style="width:100%;height:46px;margin-top:22px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;">저장하기</button>
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
@@ -652,7 +661,7 @@
     box.innerHTML = '<b>서류 교체 요청 ' + items.length + '건이 확인을 기다립니다.</b> ' +
       items.map(function(r){
         return '<button type="button" class="dr-open" data-drinst="' + escapeAttr(r.강사ID) + '">' + esc(r.성명 || r.강사ID) + '</button>';
-      }).join(' ') + '<span style="display:block;font-size:12px;color:#5F6877;margin-top:4px;">이름을 누르면 강사 상세에서 새 파일을 미리 보고 승인·반려할 수 있습니다.</span>';
+      }).join(' ') + '<span style="display:block;font-size:12px;color:var(--text-muted);margin-top:4px;">이름을 누르면 강사 상세에서 새 파일을 미리 보고 승인·반려할 수 있습니다.</span>';
     box.style.display = 'block';
   }
   document.addEventListener('click', function(ev){
@@ -674,12 +683,12 @@
                '<button type="button" data-pf="' + escapeAttr(fid) + '" data-pfm="dl" class="dr-link">다운로드</button>'
              : '<span style="color:var(--text-muted);">교체 없음</span>') + '</div>';
     }
-    return '<div id="docReplaceBox" style="margin-top:18px;border:1.5px solid #1B3A5F;border-radius:10px;padding:14px 16px;background:#F4F7FA;font-size:13px;">' +
+    return '<div id="docReplaceBox" style="margin-top:18px;border:1.5px solid var(--navy);border-radius:10px;padding:14px 16px;background:var(--bg-hover);font-size:13px;">' +
       '<div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:8px;">서류 교체 요청 <span style="font-weight:400;color:var(--text-sub);">(' + esc(r.요청일시) + ')</span></div>' +
       pv('새 강사카드', r.강사카드) + pv('새 동의서', r.동의서) +
       '<div style="font-size:12px;color:#A32D2D;margin:8px 0 12px;line-height:1.6;">승인하면 위 파일이 현재 서류가 되고 <b>이전 서류는 영구 삭제</b>됩니다(되돌릴 수 없음). 반려하면 기존 서류가 그대로 유지됩니다. 등록일 기준 3년 보유기간은 바뀌지 않습니다.</div>' +
       '<div style="display:flex;gap:10px;">' +
-        '<button id="drApproveBtn" type="button" style="flex:1;height:42px;border:none;border-radius:6px;background:#1B3A5F;color:#fff;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">교체 승인 (이전 서류 삭제)</button>' +
+        '<button id="drApproveBtn" type="button" style="flex:1;height:42px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">교체 승인 (이전 서류 삭제)</button>' +
         '<button id="drRejectBtn" type="button" style="flex:1;height:42px;border:1.5px solid #A32D2D;border-radius:6px;background:#fff;color:#A32D2D;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">반려</button>' +
       '</div></div>';
   }
@@ -876,7 +885,7 @@
     var body = document.getElementById('detailBody');
     var isViewer = isViewerRole();
     var photoHtml = d.사진링크
-      ? '<img src="' + esc(photoUrl(d.사진링크,'full')) + '" style="width:112px;height:112px;object-fit:cover;border-radius:50%;flex-shrink:0;border:1px solid #EFEDE7;" alt="" onerror="this.style.display=\'none\';">'
+      ? '<img src="' + esc(photoUrl(d.사진링크,'full')) + '" style="width:112px;height:112px;object-fit:cover;border-radius:50%;flex-shrink:0;border:1px solid var(--border);" alt="" onerror="this.style.display=\'none\';">'
       : '';
     var age = calcAge(d.생년월일);
     var birthDisplay = d.생년월일 ? esc(d.생년월일) + (age !== null ? ' (만 ' + age + '세)' : '') : '-';
@@ -918,7 +927,7 @@
       docReplaceBoxHtml(d, isViewer) +
       (!isViewer && (d.상태 === '승인대기' || d.상태 === '보류중')
         ? '<div id="approvalActions" style="display:flex;gap:10px;margin-top:20px;">' +
-            '<button id="approveBtn" style="flex:1;height:44px;border:none;border-radius:6px;background:#1B3A5F;color:#fff;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">승인</button>' +
+            '<button id="approveBtn" style="flex:1;height:44px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">승인</button>' +
             '<button id="holdBtn" style="flex:1;height:44px;border:1.5px solid #9AA5B1;border-radius:6px;background:#fff;color:#5F5E5A;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">보류</button>' +
             '<button id="rejectBtn" style="flex:1;height:44px;border:1.5px solid #A32D2D;border-radius:6px;background:#fff;color:#A32D2D;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">반려</button>' +
           '</div>'
@@ -929,7 +938,7 @@
         '<div style="display:flex;gap:14px;align-items:center;">' +
           (isViewer ? '' :
             '<button id="dormantBtn" style="border:none;background:none;color:#5F5E5A;font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">휴면 처리 (관리자 전용)</button>' +
-            '<button id="reconsentBtn" style="border:none;background:none;color:#1B3A5F;font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">재동의 확인 기록 (관리자 전용)</button>' +
+            '<button id="reconsentBtn" style="border:none;background:none;color:var(--navy);font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">재동의 확인 기록 (관리자 전용)</button>' +
             ((d.이력있음 !== undefined ? d.이력있음 : d.강의회차 > 0)
               ? '<span style="font-size:11px;color:var(--text-muted);">강의 이력이 있는 강사는 삭제할 수 없습니다</span>'
               : '<button id="deleteBtn" style="border:none;background:none;color:#A32D2D;font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">강사카드 삭제 (관리자 전용)</button>')) +
@@ -1080,7 +1089,7 @@
       var totalHours = 0;
       mainRows.forEach(function(h){ totalHours += histHours(h); });
       var summary = '<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">주강사 ' + mainRows.length + '회 · 누적 ' + totalHours + '시간</div>' +
-        '<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:10px;">' +
+        '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">' +
           '보조강사 ' + (live.length - mainRows.length) + '건' + (cancelled ? ' · 취소된 기수 ' + cancelled + '건 제외' : '') +
           ' · 누적은 주강사만 집계(1교시=1시간) · 강의배정DB 기준, 배정·변경은 강의배정 메뉴에서 합니다.' +
         '</div>' +
@@ -1104,7 +1113,7 @@
         var isSubRole = h.역할 === '보조강사';
         var isPast = !(h.일자 && String(h.일자) >= today);
         var displayLabel = isCancelled ? '취소됨' : (isPast ? '강의완료' : '예정');
-        var statusStyle = displayLabel === '강의완료' ? 'background:#E3E9EE;color:#243B53;'
+        var statusStyle = displayLabel === '강의완료' ? 'background:var(--line);color:#243B53;'
           : displayLabel === '취소됨' ? 'background:#FCEBEB;color:#A32D2D;'
           : 'background:#FAEEDA;color:#633806;';
         var roleBadge = isSubRole ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#F2F1EC;color:#5F5E5A;margin-left:6px;">보조</span>' : '';
@@ -1228,7 +1237,7 @@
   document.getElementById('mobileFilterToggle').addEventListener('click', function(){
     var row = document.getElementById('filterOptions');
     row.classList.toggle('show');
-    this.textContent = row.classList.contains('show') ? '상세 필터 ▴' : '상세 필터 ▾';
+    this.innerHTML = '상세 필터' + (row.classList.contains('show') ? '<svg class="ic r" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>' : '<svg class="ic r" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
   });
 
   document.getElementById('inviteOpenBtn').addEventListener('click', function(){
@@ -1688,7 +1697,7 @@
 (function(){
   var box = null;
   function close(){ if (box) { box.remove(); box = null; } }
-  function toast(t){ var d = document.createElement('div'); d.textContent = t; d.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1E3A5F;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;z-index:100001;'; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 1800); }
+  function toast(t){ var d = document.createElement('div'); d.textContent = t; d.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;z-index:100001;'; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 1800); }
   function copy(addr){
     function fb(){ try { var t = document.createElement('textarea'); t.value = addr; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); toast('주소를 복사했습니다: ' + addr); } catch (e) { window.prompt('주소를 복사해 주세요', addr); } }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(function(){ toast('주소를 복사했습니다: ' + addr); }, fb); else fb();
@@ -1713,8 +1722,8 @@
     box.appendChild(head);
     items.forEach(function(it){
       var b = document.createElement('button'); b.type = 'button'; b.textContent = it[0];
-      b.style.cssText = 'display:block;width:100%;text-align:left;border:0;background:none;padding:10px;border-radius:6px;cursor:pointer;font:inherit;color:#1E3A5F;';
-      b.onmouseenter = function(){ b.style.background = '#F1F5F9'; }; b.onmouseleave = function(){ b.style.background = 'none'; };
+      b.style.cssText = 'display:block;width:100%;text-align:left;border:0;background:none;padding:10px;border-radius:6px;cursor:pointer;font:inherit;color:var(--navy);';
+      b.onmouseenter = function(){ b.style.background = 'var(--bg-hover)'; }; b.onmouseleave = function(){ b.style.background = 'none'; };
       b.onclick = function(e){ e.stopPropagation(); close(); it[1](); };
       box.appendChild(b);
     });
