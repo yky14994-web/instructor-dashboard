@@ -267,7 +267,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 37</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 38</div>
 </div>
 </div>
 
@@ -397,7 +397,7 @@
     return { txt: txt, time: time, s: ps && validTime(ps.start) ? toMin(ps.start) : null, e: pe && validTime(pe.end) ? toMin(pe.end) : null };
   }
   function planRanges(p){
-    return [['입교', '입교 시작일', '입교 종료일'], ['사이버', '사이버 시작일', '사이버 종료일'], ['실습(외부)', '실습(외부) 시작일', '실습(외부) 종료일']]
+    return [['입교', '입교 시작일', '입교 종료일'], ['실습(외부)', '실습(외부) 시작일', '실습(외부) 종료일']]
       .map(function(k){ var a = normYmd(p[k[1]]), b = normYmd(p[k[2]]); if (!a && !b) return null; a = a || b; b = b || a; return { kind: k[0], a: a, b: b }; })
       .filter(Boolean);
   }
@@ -544,7 +544,7 @@
     var isThis = weekOffset === 0;
     var html = '<div class="chead"><h2>이번 주 과정</h2><div class="wknav"><span class="meta">' + md(base) + ' ~ ' + md(end) + (isThis ? '' : ' · ' + (weekOffset > 0 ? weekOffset + '주 뒤' : -weekOffset + '주 전')) + '</span>' +
       '<button type="button" class="btn sm" data-w="-1" aria-label="지난주">◀</button>' + (isThis ? '' : '<button type="button" class="btn sm" data-w="0">이번 주</button>') +
-      '<button type="button" class="btn sm" data-w="1" aria-label="다음주">▶</button></div></div><div class="cdesc">이번 주에 진행되는 과정입니다(입교·사이버·실습 기간 포함). 과정명을 누르면 교과목 편성 화면이 열립니다.</div>';
+      '<button type="button" class="btn sm" data-w="1" aria-label="다음주">▶</button></div></div><div class="cdesc">이번 주에 진행되는 과정입니다(입교·실습 기간 포함). 과정명을 누르면 교과목 편성 화면이 열립니다.</div>';
     if (!items.length) html += '<div class="empty">이 주에 진행되는 과정이 없습니다.</div>';
     else html += '<ul class="wk">' + items.map(function(o){
       var seg = o.hit.map(function(r){ return r.kind + ' ' + (r.a === r.b ? md(r.a) : md(r.a) + '~' + md(r.b)) + (r.kind === '입교' ? ' · ' + eduLen(r.a, r.b) : ''); }).join(' · ');
@@ -763,11 +763,11 @@
     var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a;
     return !!a && dayDiff(a, b) + 1 > GAP_LONG_DAYS;
   }
-  /* 과정의 수업일(입교 기간 평일, 사이버·실습 기간 제외) */
+  /* 과정의 수업일(입교 기간 평일, 실습 기간 제외) */
   function gapDayList(p){
     var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a, out = [];
     if (!a) return out;
-    var skip = [[normYmd(p['사이버 시작일']), normYmd(p['사이버 종료일'])], [normYmd(p['실습(외부) 시작일']), normYmd(p['실습(외부) 종료일'])]];
+    var skip = [[normYmd(p['실습(외부) 시작일']), normYmd(p['실습(외부) 종료일'])]];
     for (var d = a, n = 0; d <= b && n < 400; d = addDays(d, 1), n++) {
       var q = parseYmd(d); if (!q || q.dow === 0 || q.dow === 6) continue;
       if (skip.some(function(r){ return r[0] && r[1] && d >= r[0] && d <= r[1]; })) continue;
@@ -927,7 +927,7 @@
       var n = o.gaps.reduce(function(a, g){ return a + g.nums.length; }, 0), cf = courseFill(o.p, gapIndex());
       return [cLink(String(o.p['과정+기수'])), esc(ipgyoLine(o.p).replace(/^입교 /, '')), esc(cf.filled + '/' + cf.total + '교시 편성' + (cf.done ? ' (비워둠 ' + cf.done + ')' : '')), esc(n + '교시 · ' + o.gaps.length + '일'), det];
     });
-    return '<div class="dsec">빈 교시가 있는 과정 (일부만 편성)<small>' + gc.length + '과정</small></div><div class="hint" style="margin-bottom:6px;">교과목이 한 건도 없으면 위의 "미편성", 일부만 편성되어 군데군데 비어 있으면 "빈 교시"로 구분합니다. ' + esc(scope) + ' 중, 입교 기간 평일(사이버·실습 기간 제외)의 수업 교시에 교과목이 없는 칸이며 빈 날짜가 오늘부터 14일 이내인 것만 셉니다. 입교 기간이 5주를 넘는 과정은 제외합니다. 일부러 비운 칸은 "비워둠 처리"하면 빈 교시에서 빠지고 아래 "비워둠 처리한 칸"에 남습니다.</div>' +
+    return '<div class="dsec">빈 교시가 있는 과정 (일부만 편성)<small>' + gc.length + '과정</small></div><div class="hint" style="margin-bottom:6px;">교과목이 한 건도 없으면 위의 "미편성", 일부만 편성되어 군데군데 비어 있으면 "빈 교시"로 구분합니다. ' + esc(scope) + ' 중, 입교 기간 평일(실습 기간 제외)의 수업 교시에 교과목이 없는 칸이며 빈 날짜가 오늘부터 14일 이내인 것만 셉니다. 입교 기간이 5주를 넘는 과정은 제외합니다. 일부러 비운 칸은 "비워둠 처리"하면 빈 교시에서 빠지고 아래 "비워둠 처리한 칸"에 남습니다.</div>' +
       dtTable(['과정 · 기수', '입교 기간', '편성 현황(전체)', '빈 교시(14일 이내)', '날짜별 빈 교시'], rows, '빈 교시가 있는 과정이 없습니다.') + gapDoneSection(homeViewer());
   }
   function detailHtml(kind){

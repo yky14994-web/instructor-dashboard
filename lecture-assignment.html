@@ -751,7 +751,7 @@
     <table>
       <thead>
         <tr>
-          <th>구분</th><th>과정 · 기수</th><th>사이버</th><th>입교</th><th>교육기간</th>
+          <th>구분</th><th>과정 · 기수</th><th>입교</th><th>교육기간</th>
           <th class="num">계획인원</th><th>강의실</th><th>합숙</th><th>편성 담당</th><th>강사 배정 현황</th><th>검사</th><th class="chg" id="thChg">변경</th>
         </tr>
       </thead>
@@ -787,7 +787,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 37</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 홈 38</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1019,7 +1019,7 @@
     fillSelect($('fType'), Object.keys(types).map(function(t){ return { v: t, t: t }; }), '전체 구분', true);
   }
 
-  /* 홈 '이번 주 과정'에서 넘어온 경우: 그 주(월~일)에 입교·사이버·실습 기간이 걸치는 과정만 표시 */
+  /* 홈 '이번 주 과정'에서 넘어온 경우: 그 주(월~일)에 입교·실습 기간이 걸치는 과정만 표시 */
   var weekFilter = '';
   function planOverlapsWeek(p, mon){
     var end = addDays(mon, 6);
@@ -1119,7 +1119,6 @@
       ? '<button type="button" class="btn sm" data-chg="' + k + '" data-ck="restore">취소 해제</button>'
       : '<button type="button" class="btn sm" data-chg="' + k + '" data-ck="dates">변경</button>';
   }
-  function cyber(p){ return range(p['사이버 시작일'], p['사이버 종료일']) || '-'; }
   function ipgyo(p){ var r = range(p['입교 시작일'], p['입교 종료일']); if (!r) return '날짜 미입력'; var l = ipgyoLen(p); return l ? r + ' · ' + l : r; }
   function camp(p){ var v = String(p['합숙여부'] || ''); return v || '-'; }
   function checkCell(p){
@@ -1197,7 +1196,6 @@
       rows += '<tr' + (cx ? ' class="cx"' : '') + '>' +
         '<td class="nw">' + typeCell(p) + '</td>' +
         '<td>' + courseCell(p) + '</td>' +
-        '<td class="nw">' + esc(cyber(p)) + '</td>' +
         '<td class="nw">' + esc(range(p['입교 시작일'], p['입교 종료일']) || '날짜 미입력') + (og ? '<span class="orig">(' + esc(og) + ')</span>' : '') + '</td>' +
         '<td class="nw">' + esc(ipgyoLen(p) || p['교육기간'] || '-') + '</td>' +
         '<td class="num nw">' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '</td>' +
@@ -1213,7 +1211,6 @@
         '<div class="meta">' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ')) + '</div></div>' +
         '<div>' + subjCell(p) + '</div></div>' +
         '<dl><dt>입교</dt><dd>' + esc(ipgyo(p)) + (og ? '<span class="orig">(' + esc(og) + ')</span>' : '') + '</dd>' +
-        '<dt>사이버</dt><dd>' + esc(cyber(p)) + '</dd>' +
         '<dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd>' +
         '<dt>강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd>' +
         '<dt>편성 담당</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd>' +
@@ -1305,7 +1302,7 @@
     document.head.appendChild(sc);
   }
   var EXPORT_HEAD = ['구분', '세부구분', '과정명', '기수', '교육대상', '입교 시작일', '입교 종료일', '교육기간', '계획인원', '예정 강의실',
-    '합숙여부', '입교 시수', '편성 담당', '사이버 시작일', '사이버 종료일', '실습(외부) 시작일', '실습(외부) 종료일', '보조 장소', '비고',
+    '합숙여부', '입교 시수', '편성 담당', '실습(외부) 시작일', '실습(외부) 종료일', '보조 장소', '비고',
     '상태', '강사 배정 현황', '검사 결과'];
   function exportRows(){
     var aoa = [EXPORT_HEAD];
@@ -1435,7 +1432,7 @@
     return { txt: txt, time: time };
   }
   function planRanges(p){
-    return [['입교 시작일', '입교 종료일'], ['사이버 시작일', '사이버 종료일'], ['실습(외부) 시작일', '실습(외부) 종료일']]
+    return [['입교 시작일', '입교 종료일'], ['실습(외부) 시작일', '실습(외부) 종료일']]
       .map(function(k){ return [String(p[k[0]] || ''), String(p[k[1]] || '')]; })
       .filter(function(r){ return r[0] && r[1]; });
   }
@@ -1444,7 +1441,7 @@
   }
   function rowWarnings(r, p){
     var w = [];
-    if (p && r['일자'] && !dateInRanges(p, String(r['일자']))) w.push('일자가 이 과정의 입교·사이버·실습 기간 밖입니다');
+    if (p && r['일자'] && !dateInRanges(p, String(r['일자']))) w.push('일자가 이 과정의 입교·실습 기간 밖입니다');
     if (periods.length) {
       var ok = function(n){ return !!periodInfo(Number(n)); };
       if (!ok(r['시작교시']) || !ok(r['끝교시'])) w.push('교시표에 없는 교시입니다');
@@ -1641,7 +1638,6 @@
     var co = cflByKey[currentKey];
     if (co && co.open) tags += '<span class="tag t-err">겹침 경고 ' + co.open + '건 (미확인)</span>';
     if (co && co.done) tags += '<span class="tag t-none">겹침 ' + co.done + '건 확인됨</span>';
-    var cy = range(p['사이버 시작일'], p['사이버 종료일']);
     var cxd = isCancelled(p), ci = changeInfo(currentKey), og = origText(p);
     var kk = esc(currentKey);
     var chgBtns = isViewer() ? '' : (cxd
@@ -1655,7 +1651,6 @@
       '<dl class="meta">' +
       '<div><dt>구분</dt><dd>' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ') || '-') + '</dd></div>' +
       '<div><dt>입교</dt><dd>' + esc(ipgyo(p)) + (og ? '<span class="orig" style="font-weight:500;">(' + esc(og) + ')</span>' : '') + '</dd></div>' +
-      (cy ? '<div><dt>사이버</dt><dd>' + esc(cy) + '</dd></div>' : '') +
       '<div><dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd></div>' +
       '<div><dt>예정 강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd></div>' +
       '<div><dt>편성 담당</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd></div>' +
@@ -1847,7 +1842,7 @@
     var box = $('sDow');
     if (!pd) { box.className = 'hint'; box.textContent = ''; return; }
     var txt = DOW[pd.dow] + '요일';
-    if (p && !dateInRanges(p, d)) { box.className = 'hint warn'; box.textContent = txt + ' · 이 과정의 입교·사이버·실습 기간 밖입니다'; }
+    if (p && !dateInRanges(p, d)) { box.className = 'hint warn'; box.textContent = txt + ' · 이 과정의 입교·실습 기간 밖입니다'; }
     else { box.className = 'hint'; box.textContent = txt; }
   }
   function roomValue(){
@@ -2228,13 +2223,13 @@
     for (var d = 1; d <= n; d++) out.push(ym + '-' + ('0' + d).slice(-2));
     return out;
   }
-  /* 일정이 있는 달(YYYY-MM) 목록: 취소 제외, 입교·사이버·실습 기간의 시작·종료 달 포함 */
+  /* 일정이 있는 달(YYYY-MM) 목록: 취소 제외, 입교·실습 기간의 시작·종료 달 포함 */
   function calPlanMonths(){
     var set = {};
     plans.forEach(function(p){
       if (isCancelled(p)) return;
       if (calType && String(p['구분'] || '') !== calType) return;   // 구분을 골랐으면 그 구분의 일정이 있는 달만
-      [['입교 시작일', '입교 종료일'], ['사이버 시작일', '사이버 종료일'], ['실습(외부) 시작일', '실습(외부) 종료일']].forEach(function(k){
+      [['입교 시작일', '입교 종료일'], ['실습(외부) 시작일', '실습(외부) 종료일']].forEach(function(k){
         var a = normYmd(p[k[0]]), b = normYmd(p[k[1]]); if (!a && !b) return; a = a || b; b = b || a;
         var y = +a.slice(0, 4), m = +a.slice(5, 7), end = b.slice(0, 7), n = 0;
         while (n++ < 36) { var ym = y + '-' + ('0' + m).slice(-2); set[ym] = true; if (ym >= end) break; m++; if (m > 12) { m = 1; y++; } }
@@ -2270,7 +2265,7 @@
     var t = String(p && p['구분'] || '');
     return ['기본', '전문', '특별', '민관'].indexOf(t) > -1 ? 'ct-' + t : 'ct-기타';
   }
-  /* 선택한 달의 날짜별·과정별 항목: 연간계획 기간(입교·사이버·실습 평일) + 편성된 교과목(주말 포함) */
+  /* 선택한 달의 날짜별·과정별 항목: 연간계획 기간(입교·실습 평일) + 편성된 교과목(주말 포함) */
   function calCollect(month){
     var byDate = {};
     function ent(date, key){
@@ -2281,7 +2276,7 @@
     plans.forEach(function(p){
       if (isCancelled(p)) return;
       var key = String(p['과정+기수'] || ''); if (!key) return;
-      [['입교 시작일', '입교 종료일', '입교'], ['사이버 시작일', '사이버 종료일', '사이버'], ['실습(외부) 시작일', '실습(외부) 종료일', '실습']].forEach(function(k){
+      [['입교 시작일', '입교 종료일', '입교'], ['실습(외부) 시작일', '실습(외부) 종료일', '실습']].forEach(function(k){
         var a = normYmd(p[k[0]]), b = normYmd(p[k[1]]);
         if (!a && !b) return;
         if (!a) a = b; if (!b) b = a;           // 한쪽만 있으면 그 하루로 표시
@@ -2331,8 +2326,7 @@
     var st = entState(e), p = e.plan;
     var name = p ? String(p['과정명'] || '') + ' ' + String(p['기수'] || '') : e.key;
     var typ = p ? String(p['구분'] || '') : '';
-    var sub = e.rows.length ? '교과목 ' + st.n : (e.tags['사이버'] ? '사이버' : e.tags['실습'] ? '실습' : '교과목 편성 전');
-    if (e.rows.length && e.tags['사이버']) sub += ' · 사이버';
+    var sub = e.rows.length ? '교과목 ' + st.n : (e.tags['실습'] ? '실습' : '교과목 편성 전');
     if (st.unas) sub += ' · 강사 미지정 ' + st.unas;
     if (st.err) sub += ' · 겹침';
     if (e.span && (e.span.a.slice(0, 7) !== e.span.b.slice(0, 7)) && e.span.a !== e.span.b) sub += ' · ' + md(e.span.a).replace(/\(.\)/, '') + '~' + md(e.span.b).replace(/\(.\)/, '');
@@ -2440,7 +2434,7 @@
         }).join('') + '</tbody></table>' : '') + '</div>';
     box.innerHTML = '<div class="pcalbox">' + head + pcHead + '<table class="calt"><thead>' + thead + '</thead><tbody>' + body + '</tbody></table>' +
       '<div class="cagenda">' + (agenda || '<div class="tnone" style="padding:10px 0;">이 달에 표시할 과정이 없습니다.</div>') + '</div>' + leg +
-      '<div class="hint" style="margin-top:8px;">과정 칩이나 날짜를 누르면 그날의 교과목·강사·강의실이 열립니다. 입교·사이버·실습 기간의 평일은 교과목 편성 전에도 표시됩니다.</div></div>';
+      '<div class="hint" style="margin-top:8px;">과정 칩이나 날짜를 누르면 그날의 교과목·강사·강의실이 열립니다. 입교·실습 기간의 평일은 교과목 편성 전에도 표시됩니다.</div></div>';
   }
   /* ---------- 빈 강의실 조회 ---------- */
   var roomDate = '', roomS = 0, roomE = 0, roomMonth = '', roomMonthRoom = '';
@@ -3094,7 +3088,6 @@
     var parts = [];
     var ip = range(p['입교 시작일'], p['입교 종료일']), il = ipgyoLen(p);
     if (ip) parts.push('<span>입교 ' + esc(ip) + (il ? ' · <b>' + esc(il) + '</b>' : '') + '</span>');
-    var cy = range(p['사이버 시작일'], p['사이버 종료일']); if (cy) parts.push('<span>사이버 ' + esc(cy) + '</span>');
     var sp = range(p['실습(외부) 시작일'], p['실습(외부) 종료일']); if (sp) parts.push('<span>실습 ' + esc(sp) + '</span>');
     return '<span class="dperi">' + (parts.join('') || '<span>날짜 미입력</span>') + '</span>';
   }
@@ -3109,7 +3102,7 @@
         var pt = periodText(r);
         var edit = viewer ? '' : '<button type="button" class="btn sm" data-cassign="' + esc(r['편성ID']) + '">수정</button>';
         return '<tr' + (e.key === hlKey ? ' class="hl"' : '') + '><td class="nw">' + esc(pt.txt) + (pt.time ? '<br><span class="hint">' + esc(pt.time) + '</span>' : '') + '</td><td>' + esc(r['교과목']) + '</td><td>' + dayInstr(r, viewer, cx) + '</td><td>' + esc(r['강의실'] || '미정') + '</td><td>' + edit + '</td></tr>';
-      }).join('') + '</tbody></table>' : '<div class="hint">편성된 교과목이 없습니다. ' + (e.tags['사이버'] ? '(사이버 기간)' : e.tags['실습'] ? '(실습 기간)' : '(입교 기간)') + '</div>';
+      }).join('') + '</tbody></table>' : '<div class="hint">편성된 교과목이 없습니다. ' + (e.tags['실습'] ? '(실습 기간)' : '(입교 기간)') + '</div>';
       return '<h4><span class="tpill" style="' + courseStyle(p, e.key) + '">' + esc(name) + '</span>' + planPeriodHtml(p) + (!rows.length && !viewer && !cx ? '<button type="button" class="btn sm primary" data-copen="' + esc(e.key) + '" data-cdate="' + esc(date) + '">' + esc(md(date)) + ' 교과목 편성하기</button>' : '') + '</h4>' + tb;
     }).join('');
     var noteH = dayNoteHtml; dayNoteHtml = '';
@@ -3266,11 +3259,11 @@
     var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a;
     return !!a && dayDiff(a, b) + 1 > GAP_LONG_DAYS;
   }
-  /* 과정의 수업일(입교 기간 평일, 사이버·실습 기간 제외) */
+  /* 과정의 수업일(입교 기간 평일, 실습 기간 제외) */
   function gapDayList(p){
     var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a, out = [];
     if (!a) return out;
-    var skip = [[normYmd(p['사이버 시작일']), normYmd(p['사이버 종료일'])], [normYmd(p['실습(외부) 시작일']), normYmd(p['실습(외부) 종료일'])]];
+    var skip = [[normYmd(p['실습(외부) 시작일']), normYmd(p['실습(외부) 종료일'])]];
     for (var d = a, n = 0; d <= b && n < 400; d = addDays(d, 1), n++) {
       var q = parseYmd(d); if (!q || q.dow === 0 || q.dow === 6) continue;
       if (skip.some(function(r){ return r[0] && r[1] && d >= r[0] && d <= r[1]; })) continue;
@@ -4220,7 +4213,7 @@
     if ($('iPick')) $('iPick').addEventListener('click', function(){ pickInstructor(id); });
   }
   /* --- 연간계획 변경 창(일정 변경·기수 취소·취소 해제) --- */
-  var CHG_FIELDS = [['입교 시작일', '입교 종료일', '입교'], ['사이버 시작일', '사이버 종료일', '사이버'], ['실습(외부) 시작일', '실습(외부) 종료일', '실습(외부)']];
+  var CHG_FIELDS = [['입교 시작일', '입교 종료일', '입교'], ['실습(외부) 시작일', '실습(외부) 종료일', '실습(외부)']];
   var CHG_CHIPS = {
     dates: ['월 이동', '기간 단축·연장', '강의실 사정', '교육대상 일정 조정', '기타'],
     cancel: ['수요 부족', '과정 통합', '강사·강의실 사정', '예산·기타'],
@@ -4710,7 +4703,7 @@
   }
 
   /* --- 이전 기수 교과목 복사 --- */
-  var CP_RANGES = [['입교 시작일', '입교 종료일', '입교'], ['사이버 시작일', '사이버 종료일', '사이버'], ['실습(외부) 시작일', '실습(외부) 종료일', '실습(외부)']];
+  var CP_RANGES = [['입교 시작일', '입교 종료일', '입교'], ['실습(외부) 시작일', '실습(외부) 종료일', '실습(외부)']];
   var cp = { src: '', instr: true, room: 'src', busy: false };
   var ops = { keys: [], busy: false, abort: false, items: [], off: {} };
   function closeCopy(){ $('pOverlay').style.display = 'none'; cp.busy = false; ops.abort = true; }
@@ -4731,7 +4724,7 @@
     if (!best && list.length) best = list[0]['과정+기수'];
     return best;
   }
-  // 구간(입교·사이버·실습)별로 평일 n번째 날을 새 기수의 같은 구간 n번째 평일로 옮김. 주말 일정은 날짜 간격대로 옮김.
+  // 구간(입교·실습)별로 평일 n번째 날을 새 기수의 같은 구간 n번째 평일로 옮김. 주말 일정은 날짜 간격대로 옮김.
   function mapCopyDate(src, dst, dateStr){
     var d = ymdToDate(dateStr);
     if (!d) return { err: '날짜 형식 오류' };
@@ -4756,7 +4749,7 @@
       if (out < s1 || out > e1) return { date: out, err: '새 ' + g[2] + ' 기간 밖(' + md(out) + ')' };
       return { date: out, note: note };
     }
-    return { err: '원본 과정의 입교·사이버·실습 기간 밖 일정' };
+    return { err: '원본 과정의 입교·실습 기간 밖 일정' };
   }
   function buildCopyRows(){
     var p = planByKey(currentKey), src = planByKey(cp.src);
