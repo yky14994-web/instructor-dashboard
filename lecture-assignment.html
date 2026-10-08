@@ -802,7 +802,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 51</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-08 배정 52</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -854,7 +854,7 @@
     });
   }
   /* 조회 전용 요청(겹쳐 보내기): 응답이 늦으면 앞 요청을 끊지 않고 같은 요청을 하나 더 보내 먼저 도착한 응답을 사용.
-     0초·6초·15초에 최대 3건, 연결 실패 시 즉시 다음 요청, 전체 50초 제한. (끊고 다시 보내면 서버가 처리하던 일을 버리게 되어 더 늦어짐) */
+     0초·6초·15초에 최대 3건, 연결 실패·오류 화면이면 2초·5초 뒤 다음 요청, 전체 50초 제한. (끊고 다시 보내면 서버가 처리하던 일을 버리게 되어 더 늦어짐) */
   function hedgedPost(body, onRetry){
     var AT = [0, 6000, 15000], LIMIT = 50000, payload = JSON.stringify(body);
     var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
@@ -871,7 +871,7 @@
             if (done) return;
             failed++; lastErr = err;
             if (failed >= AT.length) { finish(false, err); return; }
-            if (failed >= started) timers.push(setTimeout(launch, 800));
+            if (failed >= started) timers.push(setTimeout(launch, failed === 1 ? 2000 : 5000));   /* 구글 쪽 순간 오류가 지나가도록 2초·5초 간격 */
           });
       }
       AT.forEach(function(ms){ timers.push(setTimeout(launch, ms)); });
