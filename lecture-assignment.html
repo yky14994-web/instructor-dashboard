@@ -814,6 +814,7 @@
   var shown = [];      // 현재 필터 결과
   var periods = [];    // 교시표 [{n, start, end}]
   var resv = [];       // 강의실 예약(사전확보·대관, 상태 '예약'인 것만)
+  var docReqs = [];                   // 강사카드·동의서 교체 요청(관리자만 내려옴, 승인은 강사관리 카드에서)
   var reqs = [], reqsOk = true;       // 강의실 대관 신청(상태 '신청중', 관리자 승인 대기). reqsOk=false: 서버가 아직 대관 신청 기능으로 업데이트되지 않음
   var rooms = [];      // 강의실명 목록
   var allSessions = []; // 교과목시간표 전체 행
@@ -1282,6 +1283,7 @@
       history = a['변경이력'] || [];
       resv = a['강의실예약'] || [];
       reqsOk = Array.isArray(a['강의실신청']); reqs = reqsOk ? a['강의실신청'] : [];
+      docReqs = a['서류교체'] || [];
       gapLoad(a['빈교시확인']);
       periods = (a['교시표'] || []).map(function(r){
         return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || ''), kind: String(r['구분'] || '') };
@@ -3547,6 +3549,17 @@
           title: pill + ' ' + esc(r['사유·사용부서']), sub: esc(md(dd)) + ' ' + esc(ptx) + ' · ' + esc(who || '연락처 없음') + ' · 신청 ' + esc(rqWhen(r)), extra: btn };
       }),
       note: '행을 누르면 빈 강의실 화면의 해당 날짜로 이동해 신청 내용과 그날 강의실 사용 현황을 볼 수 있습니다.' + (viewer ? '' : ' 승인 시 같은 시간에 이미 편성·예약이 있으면 알려 드립니다(겹쳐도 승인은 가능).') };
+    var dq = docReqs.slice().sort(function(a, b){ return String(a['요청일시']) < String(b['요청일시']) ? -1 : 1; });
+    D.docreq = { label: '서류 교체 요청', n: viewer ? 0 : dq.length,
+      sum: '강사카드·개인정보 동의서 교체 승인 대기 <b>' + dq.length + '건</b> · 강사 카드에서 새 파일을 보고 승인·반려합니다',
+      cols: ['요청일시', '강사', '교체 서류', ''],
+      items: dq.map(function(x){
+        var what = [x['강사카드'] ? '강사카드' : '', x['동의서'] ? '개인정보 동의서' : ''].filter(String).join(' · '),
+            btn = '<a class="btn sm inm" style="text-decoration:none;" href="instructor-dashboard.html#i=' + encodeURIComponent(x['강사ID']) + '">새 파일 보고 승인·반려</a>';
+        return { key: '', cells: ['<span class="nw">' + esc(x['요청일시'] || '') + '</span>', esc(x['성명'] || x['강사ID']), esc(what), btn],
+          title: pillHtml('wn', '교체 요청') + ' ' + esc(x['성명'] || x['강사ID']), sub: esc(what) + ' · 요청 ' + esc(x['요청일시'] || ''), extra: btn };
+      }),
+      note: '승인하면 이전 서류는 바로 영구 삭제되며 되돌릴 수 없습니다. 반려하면 기존 서류가 그대로 유지됩니다.' };
     var cg = chgRecent();
     D.chg = { label: '최근 변경 7일', n: cg.length, info: true,
       sum: '최근 7일 동안 연간계획·교과목 편성에 변경이 있었던 건 <b>' + cg.length + '건</b> · 이 건수는 위 "처리할 일" 합계에 넣지 않습니다(알림용)',
@@ -3577,7 +3590,12 @@
       return o;
     }).sort(function(a, b){ return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
   }
-  var TODO_ORDER = ['plan', 'unas', 'cfl', 'docs', 'resv', 'rvreq', 'gap', 'chg', 'gapdone'];
+  var TODO_ORDER = ['plan', 'unas', 'cfl', 'docs', 'resv', 'rvreq', 'docreq', 'gap', 'chg', 'gapdone'];
+  /* 강사 카드(위에 겹쳐 뜨는 화면)에서 서류 교체를 승인·반려하면 처리할 일에서도 바로 뺌 */
+  window.addEventListener('jsfa-docreplace-done', function(e){
+    docReqs = docReqs.filter(function(x){ return String(x['강사ID']) !== String(e.detail); });
+    try { renderTodo(); } catch (err) {}
+  });
   function renderTodo(){
     var box = $('todo');
     if (!box) return;
@@ -3588,7 +3606,7 @@
     var total = TODO_ORDER.reduce(function(a, k){ return a + (D[k].info ? 0 : (D[k].n || 0)); }, 0);
     var nInfo = D.chg.n + D.gapdone.n;
     if (!total && !nInfo && instructors !== null) {
-      box.innerHTML = '<div class="th"><h3>처리할 일</h3></div><div class="tnone">처리할 일이 없습니다. 강의계획서 기한, 강사 미지정(' + TODO_DAYS + '일 이내), 겹침 경고, 강사 서류, 사전확보 미편성, 대관 신청, 빈 교시에 해당하는 항목이 없고 최근 7일 변경도 없습니다.</div>';
+      box.innerHTML = '<div class="th"><h3>처리할 일</h3></div><div class="tnone">처리할 일이 없습니다. 강의계획서 기한, 강사 미지정(' + TODO_DAYS + '일 이내), 겹침 경고, 강사 서류, 사전확보 미편성, 대관 신청, 서류 교체 요청, 빈 교시에 해당하는 항목이 없고 최근 7일 변경도 없습니다.</div>';
       return;
     }
     if (!todoCat || !D[todoCat]) todoCat = '';
@@ -5273,6 +5291,7 @@
     if (m.type === 'jsfa-card-ready') { ready = true; send(); }
     else if (m.type === 'jsfa-card-shown') { shown = true; clearTimeout(timer); ov.querySelector('.icLoad').style.display = 'none'; }
     else if (m.type === 'jsfa-card-close') { hide(); }
+    else if (m.type === 'jsfa-docreplace-done') { try { window.dispatchEvent(new CustomEvent('jsfa-docreplace-done', { detail: m.id })); } catch (err) {} }
     else if (m.type === 'jsfa-card-notfound') { window.alert('해당 강사를 강사관리 목록에서 찾지 못했습니다. (강사ID: ' + m.id + ')'); }
   });
   document.addEventListener('click', function(e){

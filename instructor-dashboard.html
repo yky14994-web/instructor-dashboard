@@ -184,6 +184,10 @@
   .route-badge.self{background:var(--border);color:var(--text-sub);}
   .route-badge.invite{background:#DCE8F5;color:#1B3A5F;}
   .route-badge.newbie{background:#FDE8E8;color:#A32D2D;}
+  .route-badge.docreq{background:#E3ECF7;color:#1B3A5F;}
+  .dr-open{border:1px solid #1B3A5F;background:#fff;color:#1B3A5F;border-radius:14px;padding:2px 12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin:0 2px;}
+  .dr-open:hover{background:#E3ECF7;}
+  .dr-link{background:none;border:none;padding:0;color:var(--navy);font-weight:700;cursor:pointer;font-family:inherit;font-size:inherit;margin-right:14px;}
   .pending-badge{font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;white-space:nowrap;}
   .badge-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
   .pending-badge.assigned{background:#EDE4F7;color:#5B2A9E;}
@@ -451,6 +455,7 @@
     <div id="loadErrorText" style="margin-bottom:8px;"></div>
     <button type="button" id="loadRetryBtn" style="border:1px solid #1B3A5F;background:#1B3A5F;color:#fff;border-radius:6px;height:34px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;">다시 불러오기</button>
   </div>
+  <div id="docReplaceNotice" style="display:none;background:#EEF3F9;border:1px solid #B9CBE0;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:13.5px;color:#1B3A5F;line-height:1.8;"></div>
   <div id="mailNotice" style="display:none;background:#FFF4E5;border:1px solid #F0C98A;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:13.5px;color:#7A4B00;line-height:1.6;"></div>
   <div id="empty" style="display:none;">조건에 맞는 강사가 없습니다.</div>
 
@@ -641,6 +646,91 @@
     var days = (new Date().setHours(0,0,0,0) - new Date(+m[1], +m[2] - 1, +m[3]).getTime()) / 86400000;
     return days >= 0 && days <= 7 ? '<span class="route-badge newbie">신규</span>' : '';
   }
+  /* ---------- 강사카드·동의서 교체 요청 (관리자 전용) ----------
+     강사가 제출 화면에서 새 PDF를 올리면 '서류교체요청' 시트에 대기로 쌓이고, 목록 응답(docReplace)으로 내려옴.
+     담당자는 새 파일을 미리 본 뒤 승인(현재 서류로 교체, 이전 파일 영구 삭제) 또는 반려(기존 서류 유지) */
+  var docReplaceMap = {};
+  function setDocReplace(list){
+    docReplaceMap = {};
+    (list || []).forEach(function(r){ docReplaceMap[String(r.강사ID)] = r; });
+    var box = document.getElementById('docReplaceNotice');
+    if (!box) return;
+    var items = list || [];
+    if (isViewerRole() || !items.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    box.innerHTML = '<b>서류 교체 요청 ' + items.length + '건이 확인을 기다립니다.</b> ' +
+      items.map(function(r){
+        return '<button type="button" class="dr-open" data-drinst="' + escapeAttr(r.강사ID) + '">' + esc(r.성명 || r.강사ID) + '</button>';
+      }).join(' ') + '<span style="display:block;font-size:12px;color:#5F6877;margin-top:4px;">이름을 누르면 강사 상세에서 새 파일을 미리 보고 승인·반려할 수 있습니다.</span>';
+    box.style.display = 'block';
+  }
+  document.addEventListener('click', function(ev){
+    var b = ev.target && ev.target.closest ? ev.target.closest('.dr-open') : null;
+    if (!b) return;
+    var id = b.getAttribute('data-drinst');
+    var d = allData.filter(function(x){ return String(x.강사ID) === String(id); })[0];
+    if (d) openDetail(d);
+  });
+  function docBadge(d){
+    return docReplaceMap[String(d.강사ID)] ? '<span class="route-badge docreq">교체요청</span>' : '';
+  }
+  function docReplaceBoxHtml(d, isViewer){
+    var r = docReplaceMap[String(d.강사ID)];
+    if (isViewer || !r) return '';
+    function pv(label, fid){
+      return '<div style="margin-bottom:6px;"><span style="display:inline-block;min-width:92px;color:var(--text-sub);">' + label + '</span>' +
+        (fid ? '<button type="button" data-pf="' + escapeAttr(fid) + '" data-pfm="view" class="dr-link">미리보기</button>' +
+               '<button type="button" data-pf="' + escapeAttr(fid) + '" data-pfm="dl" class="dr-link">다운로드</button>'
+             : '<span style="color:var(--text-muted);">교체 없음</span>') + '</div>';
+    }
+    return '<div id="docReplaceBox" style="margin-top:18px;border:1.5px solid #1B3A5F;border-radius:10px;padding:14px 16px;background:#F4F7FA;font-size:13px;">' +
+      '<div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:8px;">서류 교체 요청 <span style="font-weight:400;color:var(--text-sub);">(' + esc(r.요청일시) + ')</span></div>' +
+      pv('새 강사카드', r.강사카드) + pv('새 동의서', r.동의서) +
+      '<div style="font-size:12px;color:#A32D2D;margin:8px 0 12px;line-height:1.6;">승인하면 위 파일이 현재 서류가 되고 <b>이전 서류는 영구 삭제</b>됩니다(되돌릴 수 없음). 반려하면 기존 서류가 그대로 유지됩니다. 등록일 기준 3년 보유기간은 바뀌지 않습니다.</div>' +
+      '<div style="display:flex;gap:10px;">' +
+        '<button id="drApproveBtn" type="button" style="flex:1;height:42px;border:none;border-radius:6px;background:#1B3A5F;color:#fff;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">교체 승인 (이전 서류 삭제)</button>' +
+        '<button id="drRejectBtn" type="button" style="flex:1;height:42px;border:1.5px solid #A32D2D;border-radius:6px;background:#fff;color:#A32D2D;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">반려</button>' +
+      '</div></div>';
+  }
+  function bindDocReplaceButtons(d){
+    var r = docReplaceMap[String(d.강사ID)];
+    var ap = document.getElementById('drApproveBtn'), rj = document.getElementById('drRejectBtn');
+    if (!r || !ap || !rj) return;
+    function send(decision, reason){
+      var adminPw = getAdminPw();
+      if (adminPw === null || adminPw === '') return;
+      var pw = sessionStorage.getItem('jsfa_dash_pw');
+      ap.disabled = true; rj.disabled = true;
+      listCacheClear(); fetch(WEBAPP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'decideDocReplace', 요청ID: r.요청ID, decision: decision, 사유: reason || '', password: pw, adminPassword: adminPw }) })
+      .then(function(res){ return res.json(); })
+      .then(function(json){
+        if (json.status === 'ok') {
+          var msg = decision === '승인' ? '교체가 반영되었습니다.' : '반려 처리되었습니다. 기존 서류는 그대로입니다.';
+          if (decision === '승인' && json.삭제결과) msg += '\n이전 서류: ' + json.삭제결과;
+          if (decision === '승인' && /휴지통|실패/.test(json.삭제결과 || '')) msg += '\n※ 영구 삭제가 되지 않았습니다. Apps Script 편집기의 "서비스"에서 Drive API를 추가한 뒤, 휴지통의 이전 파일을 직접 비워 주세요.';
+          alert(msg);
+          if (EMBED) postParent({type:'jsfa-docreplace-done', id:d.강사ID});
+          document.getElementById('overlay').style.display = 'none';
+          loadData(pw);
+        } else {
+          if ((json.message || '').indexOf('권한 비밀번호') > -1) sessionStorage.removeItem('jsfa_admin_pw');
+          alert(json.message || '처리 중 오류가 발생했습니다.');
+          ap.disabled = false; rj.disabled = false;
+        }
+      })
+      .catch(function(){ alert('처리 중 오류가 발생했습니다.'); ap.disabled = false; rj.disabled = false; });
+    }
+    ap.addEventListener('click', function(){
+      if (!confirm('"' + (d.성명 || '') + '" 강사의 서류 교체를 승인하시겠습니까?\n이전 서류는 영구 삭제되며 되돌릴 수 없습니다.')) return;
+      send('승인', '');
+    });
+    rj.addEventListener('click', function(){
+      var reason = prompt('반려 사유를 입력해 주세요 (선택, 강사에게 안내 메일로 전달됩니다):', '');
+      if (reason === null) return;
+      send('반려', reason);
+    });
+  }
+
   function routeBadge(routeVal){
     var v = routeVal || '자진등록';
     var cls = v === '자진등록' ? 'self' : 'invite';
@@ -704,7 +794,7 @@
       tr.innerHTML =
         '<td>' + esc(d.소속||'') + '</td>' +
         '<td>' + thumb + '</td>' +
-        '<td>' + esc(d.성명||'') + routeBadge(d.등록경로) + newBadge(d) +
+        '<td>' + esc(d.성명||'') + routeBadge(d.등록경로) + newBadge(d) + docBadge(d) +
           pendingBadgesHtml(d) +
         '</td>' +
         '<td style="white-space:nowrap;">' + (d._stale ? '<span style="color:#9AA3AF;">…</span>' : esc(d.연락처||'')) + '</td>' +
@@ -757,7 +847,7 @@
       return '<div class="mcard" data-idx="' + (start + pageItems.indexOf(d)) + '" style="display:flex;gap:12px;align-items:flex-start;">' +
         '<div>' + mThumb + '</div>' +
         '<div style="flex:1;min-width:0;">' +
-          '<div class="mname">' + esc(d.성명||'') + routeBadge(d.등록경로) + newBadge(d) + ' <span class="status ' + statusClass(d.상태) + '" style="vertical-align:middle;">' + esc(d.상태||'') + '</span>' +
+          '<div class="mname">' + esc(d.성명||'') + routeBadge(d.등록경로) + newBadge(d) + docBadge(d) + ' <span class="status ' + statusClass(d.상태) + '" style="vertical-align:middle;">' + esc(d.상태||'') + '</span>' +
           '</div>' +
           '<div class="mmeta">' + esc(d.소속||'') + '</div>' +
           '<div class="mmeta" style="white-space:nowrap;">' + (d._stale ? '<span style="color:#9AA3AF;">…</span>' : esc(d.연락처||'')) + '</div>' +
@@ -833,6 +923,7 @@
         '<div class="fi full"><div class="fk">강사카드</div><div class="fv">' + profileLinkHtml + '</div></div>' +
         '<div class="fi full"><div class="fk">개인정보 동의서</div><div class="fv">' + consentLinkHtml + '</div></div>' +
       '</div>' +
+      docReplaceBoxHtml(d, isViewer) +
       (!isViewer && (d.상태 === '승인대기' || d.상태 === '보류중')
         ? '<div id="approvalActions" style="display:flex;gap:10px;margin-top:20px;">' +
             '<button id="approveBtn" style="flex:1;height:44px;border:none;border-radius:6px;background:#1B3A5F;color:#fff;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">승인</button>' +
@@ -859,6 +950,8 @@
     document.getElementById('detailCloseBottomBtn').addEventListener('click', function(){
       document.getElementById('overlay').style.display = 'none';
     });
+
+    bindDocReplaceButtons(d);
 
     if (document.getElementById('reconsentBtn')) {
       document.getElementById('reconsentBtn').addEventListener('click', function(){
@@ -1424,6 +1517,7 @@
     document.getElementById('retentionFilterLabel').style.display = isViewerRole() ? 'none' : 'flex';
 
     allData = json.data || [];
+    if (!stale) setDocReplace(json.docReplace);
     document.getElementById('loading').style.display = 'none';
 
     updateSummaryStats();

@@ -117,6 +117,23 @@
   }
   .form-download:hover { background: #e3e9ee; }
 
+  /* 서류 교체 요청(선택) */
+  #docReplaceCard { padding: 0; }
+  #docReplaceCard summary { cursor: pointer; padding: 20px 24px; font-size: 15px; font-weight: 700; color: var(--navy); list-style: none; }
+  #docReplaceCard summary::-webkit-details-marker { display: none; }
+  #docReplaceCard summary::before { content: "▸ "; }
+  #docReplaceCard[open] summary::before { content: "▾ "; }
+  #docReplaceCard .dr-body { padding: 4px 24px 24px; border-top: 1px solid var(--bg-light); padding-top: 20px; }
+  .btn-secondary {
+    width: 100%; height: 48px; border: 1.5px solid var(--navy); border-radius: 10px; background: #fff; color: var(--navy);
+    font-size: 15px; font-weight: 700; font-family: 'Pretendard', sans-serif; cursor: pointer; transition: all 0.2s; margin-top: 8px;
+  }
+  .btn-secondary:hover { background: #f4f7fa; }
+  .btn-secondary:disabled { border-color: #9AA5B1; color: #9AA5B1; cursor: not-allowed; background: #fff; }
+  #drMsg { margin-top: 16px; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; display: none; line-height: 1.6; }
+  #drMsg.ok { background: #e6f4ea; color: var(--success); border: 1px solid #cce8d6; }
+  #drMsg.err { background: #fce8e6; color: var(--danger); border: 1px solid #fad2cf; }
+
   #msg { margin-top: 20px; padding: 16px; border-radius: 8px; font-size: 15px; font-weight: 600; text-align: center; display: none; }
   #msg.ok { background: #e6f4ea; color: var(--success); border: 1px solid #cce8d6; }
   #msg.err { background: #fce8e6; color: var(--danger); border: 1px solid #fad2cf; }
@@ -273,6 +290,29 @@
       <button type="submit" id="submitBtn">제출하기</button>
       <div id="msg"></div>
     </form>
+
+    <!-- 등록된 강사 전용(선택): 강사카드·개인정보 동의서 교체 요청. 강의자료 제출과 별개로 따로 보냄 -->
+    <details class="card" id="docReplaceCard" style="display:none;margin-top:28px;">
+      <summary>강사카드·개인정보 동의서를 바꾸고 싶으신가요? (선택)</summary>
+      <div class="dr-body">
+        <div class="hint" style="margin-top:0;margin-bottom:16px;">
+          바꾸실 서류만 PDF로 올려 주세요. 담당자가 확인한 뒤 반영하며, 확인 전까지는 기존 서류가 유지됩니다.
+          반영되면 <b>이전 서류는 삭제</b>됩니다. 이 요청은 강의자료 제출과 별개이므로, 강의자료는 위 "제출하기"로 따로 보내 주세요.
+        </div>
+        <div class="field">
+          <label for="drCardFile">새 강사카드 (PDF)</label>
+          <input type="file" id="drCardFile" accept=".pdf,application/pdf">
+          <a class="form-download" href="forms/instructor-card.hwpx" download="강사관리카드_양식.hwpx">↓ 강사카드 양식 다운로드</a>
+        </div>
+        <div class="field">
+          <label for="drConsentFile">새 개인정보 수집·이용 동의서 (서명본, PDF)</label>
+          <input type="file" id="drConsentFile" accept=".pdf,application/pdf">
+          <a class="form-download" href="forms/consent.hwpx" download="개인정보수집활용동의서_양식.hwpx">↓ 동의서 양식 다운로드</a>
+        </div>
+        <button type="button" id="drSendBtn" class="btn-secondary">교체 요청 보내기</button>
+        <div id="drMsg"></div>
+      </div>
+    </details>
   </div>
 
 </div>
@@ -365,6 +405,7 @@
     document.getElementById('profileFile').required = false;
     document.getElementById('consentFile').required = false;
     document.getElementById('ageBadge').textContent = '';
+    document.getElementById('docReplaceCard').style.display = 'block';
   }
 
   function showFullForm(){
@@ -400,6 +441,7 @@
     g.innerHTML = '안녕하세요, <b>' + escHtml(name || '강사') + '</b>님.';
     ['profileSection','consentSection','lectureInfoSection'].forEach(function(id){ document.getElementById(id).style.display = 'none'; });
     ['name','birth','phone','email','org','specialty','photo','profileFile','consentFile','lectureName','lectureDate','startHour','endHour','category'].forEach(function(id){ document.getElementById(id).required = false; });
+    document.getElementById('docReplaceCard').style.display = 'block';
     document.getElementById('assignedInfoBox').style.display = 'block';
     document.getElementById('aiName').textContent = d.과정 || '-';
     document.getElementById('aiDateTime').textContent = (d.일자 || '') + (d.시간 ? ' · ' + d.시간 : '');
@@ -612,6 +654,39 @@
       btn.disabled = false;
       btn.textContent = '제출하기';
     });
+  });
+
+  // 강사카드·동의서 교체 요청(선택): 강의자료 제출과 별개로 전송
+  document.getElementById('drSendBtn').addEventListener('click', function(){
+    var m = document.getElementById('drMsg');
+    function show(text, cls){ m.textContent = text; m.className = cls; m.style.display = 'block'; }
+    var cardF = document.getElementById('drCardFile').files[0];
+    var consF = document.getElementById('drConsentFile').files[0];
+    if (!cardF && !consF) { show('바꾸실 파일을 하나 이상 선택해 주세요.', 'err'); return; }
+    var bad = [cardF, consF].filter(Boolean).filter(function(f){ return !/\.pdf$/i.test(f.name) && !/pdf/i.test(f.type); });
+    if (bad.length) { show('PDF 파일만 올릴 수 있습니다.', 'err'); return; }
+    var big = [cardF, consF].filter(Boolean).filter(function(f){ return f.size > 10 * 1024 * 1024; });
+    if (big.length) { show('파일이 너무 큽니다. 10MB 이하로 올려 주세요.', 'err'); return; }
+    var what = [cardF ? '강사카드' : '', consF ? '개인정보 동의서' : ''].filter(String).join('와 ');
+    if (!confirm(what + ' 교체를 요청하시겠습니까?\n담당자가 확인해 반영하면 이전 서류는 삭제됩니다.')) return;
+    var btn = document.getElementById('drSendBtn');
+    btn.disabled = true; btn.textContent = '보내는 중...';
+    Promise.all([fileToBase64(cardF), fileToBase64(consF)]).then(function(r){
+      var payload = { action: 'requestDocReplace', 강사ID: instructorId };
+      if (r[0]) { payload.프로필base64 = r[0]; payload.프로필타입 = 'application/pdf'; }
+      if (r[1]) { payload.동의서base64 = r[1]; payload.동의서타입 = 'application/pdf'; }
+      return postJson(payload);
+    }).then(function(data){
+      if (data.status === 'ok') {
+        show('교체 요청이 접수되었습니다. 담당자가 확인한 뒤 반영하며, 그때까지 기존 서류가 유지됩니다.', 'ok');
+        document.getElementById('drCardFile').value = '';
+        document.getElementById('drConsentFile').value = '';
+      } else {
+        show(/unknown action/i.test(data.message || '') ? '아직 이 기능을 사용할 수 없습니다. 담당자에게 문의해 주세요.' : (data.message || '요청 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'), 'err');
+      }
+    }).catch(function(){
+      show('요청 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.', 'err');
+    }).finally(function(){ btn.disabled = false; btn.textContent = '교체 요청 보내기'; });
   });
 
   init();
