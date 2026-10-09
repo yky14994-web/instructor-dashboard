@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>전남소방학교 외부강사 등록신청</title>
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <style>
   :root {
     --navy: #1B3A5F;
@@ -110,6 +110,7 @@
 
   .hint { font-size: 13px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
   .hint-danger { color: var(--danger); font-weight: 600; }
+  .age-badge:empty { display: none; }
   .age-badge {
     display: inline-block; margin-left: 8px; font-size: 13px; font-weight: 700;
     color: var(--navy); background: #e3e9ee; padding: 2px 8px; border-radius: 12px;
@@ -180,7 +181,7 @@
   </div>
 
   <div class="notice-box">
-    ※ 강사풀 DB 등록에 협조해 주시면, 앞으로 강사 관리·강의 배정 안내가 전산으로 자동 처리되어 더 빠르고 정확하게 소통드릴 수 있습니다.
+    ※ 강사 명단 등록에 협조해 주시면, 앞으로 강사 관리·강의 배정 안내가 전산으로 자동 처리되어 더 빠르고 정확하게 소통드릴 수 있습니다.
   </div>
 
   <form id="regForm">
@@ -522,5 +523,6 @@
   }
 </script>
 
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-09 강사등록 1</div>
 </body>
 </html>
