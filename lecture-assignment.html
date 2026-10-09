@@ -831,7 +831,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-09 배정 59</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-09 배정 60</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1472,8 +1472,8 @@
       XLSX.writeFile(wb, name + '.xlsx');
     });
   }
-  /* 인쇄 용지 방향(A4 세로/가로): 화면별로 선택하고 접속 중 기억. 기본은 연간계획 표·월 캘린더·교과목 목록=세로(공문 첨부용), 격자=가로 */
-  var ORI_DEF = { table: 'portrait', cal: 'portrait', list: 'portrait', grid: 'landscape' };
+  /* 인쇄 용지 방향(A4 세로/가로): 화면별로 선택하고 접속 중 기억. 기본은 모든 화면 세로(공문 첨부용), 필요하면 가로로 바꿔 인쇄 */
+  var ORI_DEF = { table: 'portrait', cal: 'portrait', list: 'portrait', grid: 'portrait' };
   function oriGet(sf){
     try { var v = sessionStorage.getItem('jsfa_la_ori_' + sf); if (v === 'portrait' || v === 'landscape') return v; } catch (e) {}
     return ORI_DEF[sf] || 'portrait';
