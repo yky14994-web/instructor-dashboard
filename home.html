@@ -216,6 +216,7 @@
   .tdl .n{font-size:18px;font-weight:800;}
   .tdl .n small{font-size:12px;font-weight:700;color:var(--text-muted);margin-left:2px;}
   .tdl .bad .n{color:var(--err-fg);} .tdl .wn .n{color:var(--warn-fg);} .tdl .inf .n{color:var(--navy);} .tdl .zero .n{color:var(--text-muted);}
+  .tdl .l .t{display:block;font-size:15px;font-weight:800;color:var(--navy);margin-bottom:2px;}
   .tdl .l small{display:block;font-size:13px;color:var(--text);}
   .nsl{list-style:none;margin:0;padding:0;}
   .nsl li{padding:8px 0;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:flex-start;font-size:14px;}
@@ -314,7 +315,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-09 홈 63</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-09 홈 64</div>
 </div>
 </div>
 
@@ -913,14 +914,14 @@
         if (d !== null && d >= 0 && d <= 14) unas++;
       }
     });
-    function row(cls, n, label, sub, dk, full){ if (!n) return ''; var pk = full ? dk : 'todo:' + dk; return '<li><a class="' + (n ? cls : 'zero') + '" href="#d=' + pk + '" data-dt="' + pk + '"><span class="l">' + esc(label) + (sub ? '<small>(' + esc(sub) + ')</small>' : '') + '</span><span class="n">' + n + '<small>건</small></span></a></li>'; }
+    function row(cls, n, label, sub, dk, full){ if (!n) return ''; var pk = full ? dk : 'todo:' + dk; return '<li><a class="' + (n ? cls : 'zero') + '" href="#d=' + pk + '" data-dt="' + pk + '"><span class="l"><span class="t">' + esc(label) + '</span>' + (sub ? '<small>(' + esc(sub) + ')</small>' : '') + '</span><span class="n">' + n + '<small>건</small></span></a></li>'; }
     var gapN = gapCourses(7).length;
     var rqN = reqs.length, chgN = chgRecent().length, docN = docs.length, lgN = lodges.length;
     /* 교과목이 한 건도 없는 과정 중 이미 진행 중이거나 14일 이내 시작하는 과정 */
     var nsN = sessionsOk ? noSubjList().filter(function(p){ var dd = dayDiff(today, normYmd(p['입교 시작일'])); return dd !== null && dd <= 14; }).length : 0;
     var pinN = Number(pendInst) || 0;
     var total = soon + unas + nsN + rvn + gapN + rqN + docN + lgN + pinN;
-    var tdRows = (pinN ? '<li><span class="wn" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 2px;font-size:14px;"><span class="l">강사 등록 승인 대기<small>(강사 등록 화면으로 신청 · 강사 검색에서 승인)</small></span><span class="n">' + pinN + '<small>건</small></span></span></li>' : '') + row('wn', soon, '강의계획서 제출 기한 임박', '강의일 7일 전까지 제출 · 기한이 14일 이내', 'plan') + row('wn', unas, '교과목 강사 미지정', '교과목은 있고 강사가 비어 있음 · 강의일 14일 이내', 'unas') + row('wn', nsN, '교과목 없는 과정', '교과목이 한 건도 없는 과정 · 진행 중이거나 14일 이내 시작', 'nosubj', true) + row('wn', rvn, '교과목 미정 (사전확보 교시)', '교시·강의실만 잡아 둔 건 · 예약일 14일 이내', 'resv') + row('wn', rqN, '강의실 대관 승인 대기', '직원이 신청한 강의실 대관', 'rvreq') + row('wn', docN, '강사 서류 교체 승인 대기', '강사카드·동의서 교체', 'docreq') + (lgN ? row('wn', lgN, '강사 숙소 신청 확인 대기', '강사 임시숙소 · 사용일 확인', 'lodge') : '') + row('wn', gapN, '빈 교시가 있는 과정', '교과목이 없는 교시 · 비워둠 처리 전 · 7일 이내', 'gap') + row('inf', chgN, '최근 7일 일정 변경', '알림용 · 건수 합계 제외', 'chg');
+    var tdRows = (pinN ? '<li><span class="wn" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 2px;font-size:14px;"><span class="l"><span class="t">강사 등록 승인 대기</span><small>(강사 등록 화면으로 신청 · 강사 검색에서 승인)</small></span><span class="n">' + pinN + '<small>건</small></span></span></li>' : '') + row('wn', soon, '강의계획서 제출 기한 임박', '강의일 7일 전까지 제출 · 기한이 14일 이내', 'plan') + row('wn', unas, '교과목 강사 미지정', '교과목은 있고 강사가 비어 있음 · 강의일 14일 이내', 'unas') + row('wn', nsN, '교과목 없는 과정', '교과목이 한 건도 없는 과정 · 진행 중이거나 14일 이내 시작', 'nosubj', true) + row('wn', rvn, '교과목 미정 (사전확보 교시)', '교시·강의실만 잡아 둔 건 · 예약일 14일 이내', 'resv') + row('wn', rqN, '강의실 대관 승인 대기', '직원이 신청한 강의실 대관', 'rvreq') + row('wn', docN, '강사 서류 교체 승인 대기', '강사카드·동의서 교체', 'docreq') + (lgN ? row('wn', lgN, '강사 숙소 신청 확인 대기', '강사 임시숙소 · 사용일 확인', 'lodge') : '') + row('wn', gapN, '빈 교시가 있는 과정', '교과목이 없는 교시 · 비워둠 처리 전 · 7일 이내', 'gap') + row('inf', chgN, '최근 7일 일정 변경', '알림용 · 건수 합계 제외', 'chg');
     el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + (chgN ? ' · 최근 변경 ' + chgN + '건' : '') + '</span></div>' +
       (tdRows ? '<ul class="tdl">' + tdRows + '</ul>' : '<div class="empty">처리할 일이 없습니다.</div>') +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><button type="button" class="btn sm" data-dt="todo">처리할 일 보기</button></div>';
