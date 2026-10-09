@@ -1566,7 +1566,17 @@
   }
 
   function openFromHash(){
-    var m = /^#i=([^&]+)/.exec(location.hash || '');
+    var h = location.hash || '';
+    /* 홈 "강사 등록 승인 대기"에서 들어온 경우: 상태 필터를 걸어 해당 목록만 표시 */
+    var ms = /(?:^#|&)st=([^&]+)/.exec(h);
+    if (ms) {
+      var st = ''; try { st = decodeURIComponent(ms[1]); } catch (e) { st = ''; }
+      var sel = document.getElementById('filterStatus');
+      var ok = st && sel && Array.prototype.some.call(sel.options, function(o){ return o.value === st; });
+      if (ok) { sel.value = st; updateStatCardActiveStates(); render(); }
+      try { window.history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {}
+    }
+    var m = /^#i=([^&]+)/.exec(h);
     if (!m) return;
     var id = ''; try { id = decodeURIComponent(m[1]); } catch (e) { return; }
     try { window.history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {}
