@@ -204,9 +204,7 @@
   .chips .tag{background:var(--ok-bg);color:var(--ok-fg);}
 
   /* 현황 요약 3카드 */
-  .trio{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0 0 16px;align-items:start;}
-  /* 중복 카드 숨김(2026-10-09): 교과목 미편성 과정 → 처리할 일에서 확인, 오늘 빈 강의실 → 강의실 메뉴에서 확인 */
-  #cNoSubj,#cRoom{display:none !important;}
+  .trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:0 0 16px;align-items:stretch;}
   @media (max-width:980px){ .trio{grid-template-columns:minmax(0,1fr);} }
   .trio .card{display:flex;flex-direction:column;}
   .trio .foot{margin-top:auto;padding-top:10px;}
@@ -225,7 +223,7 @@
   .nsl a{color:var(--navy);font-weight:700;text-decoration:none;} .nsl a:hover{text-decoration:underline;}
   .nsl small{display:block;font-size:12px;color:var(--text-muted);margin-top:2px;}
   .mst{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .trio .mst{flex:0 0 auto;}
+  .trio .mst{flex:1 1 auto;grid-auto-rows:1fr;}
   .trio .mst .c b{font-size:28px;}
   .mst .c{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg-soft);display:flex;flex-direction:column;justify-content:center;}
   .mst .c span{display:block;font-size:12px;color:var(--text-muted);font-weight:600;}
@@ -316,7 +314,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 59</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-09 홈 60</div>
 </div>
 </div>
 
@@ -915,14 +913,15 @@
         if (d !== null && d >= 0 && d <= 14) unas++;
       }
     });
-    function row(cls, n, label, sub, dk, full){ var pk = full ? dk : 'todo:' + dk; return '<li><a class="' + (n ? cls : 'zero') + '" href="#d=' + pk + '" data-dt="' + pk + '"><span class="l">' + esc(label) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="n">' + n + '<small>건</small></span></a></li>'; }
+    function row(cls, n, label, sub, dk, full){ if (!n) return ''; var pk = full ? dk : 'todo:' + dk; return '<li><a class="' + (n ? cls : 'zero') + '" href="#d=' + pk + '" data-dt="' + pk + '"><span class="l">' + esc(label) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="n">' + n + '<small>건</small></span></a></li>'; }
     var gapN = gapCourses(7).length;
     var rqN = reqs.length, chgN = chgRecent().length, docN = docs.length, lgN = lodges.length;
     /* 교과목이 한 건도 없는 과정 중 이미 진행 중이거나 14일 이내 시작하는 과정 */
     var nsN = sessionsOk ? noSubjList().filter(function(p){ var dd = dayDiff(today, normYmd(p['입교 시작일'])); return dd !== null && dd <= 14; }).length : 0;
     var total = soon + unas + nsN + rvn + gapN + rqN + docN + lgN;
+    var tdRows = row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전', 'plan') + row('wn', unas, '강사 미지정', '강의일이 14일 이내', 'unas') + row('wn', nsN, '교과목 미편성 과정', '진행 중이거나 14일 이내 시작·교과목 0건', 'nosubj', true) + row('wn', rvn, '사전확보 미편성', '예약일이 14일 이내', 'resv') + row('wn', rqN, '대관 신청', '승인 대기 중인 강의실 대관 신청', 'rvreq') + row('wn', docN, '서류 교체 요청', '강사카드·동의서 교체 승인 대기', 'docreq') + (lgN ? row('wn', lgN, '숙소 사용 신청', '강사 임시숙소 · 확인 대기', 'lodge') : '') + row('wn', gapN, '빈 교시', '일부만 편성·7일 이내 빈 교시가 있는 과정', 'gap') + row('inf', chgN, '최근 7일 변경', '연간계획·교과목 편성 변경(알림용, 건수 합계 제외)', 'chg');
     el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + (chgN ? ' · 최근 변경 ' + chgN + '건' : '') + '</span></div>' +
-      '<ul class="tdl">' + row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전', 'plan') + row('wn', unas, '강사 미지정', '강의일이 14일 이내', 'unas') + row('wn', nsN, '교과목 미편성 과정', '진행 중이거나 14일 이내 시작·교과목 0건', 'nosubj', true) + row('wn', rvn, '사전확보 미편성', '예약일이 14일 이내', 'resv') + row('wn', rqN, '대관 신청', '승인 대기 중인 강의실 대관 신청', 'rvreq') + row('wn', docN, '서류 교체 요청', '강사카드·동의서 교체 승인 대기', 'docreq') + (lgN ? row('wn', lgN, '숙소 사용 신청', '강사 임시숙소 · 확인 대기', 'lodge') : '') + row('wn', gapN, '빈 교시', '일부만 편성·7일 이내 빈 교시가 있는 과정', 'gap') + row('inf', chgN, '최근 7일 변경', '연간계획·교과목 편성 변경(알림용, 건수 합계 제외)', 'chg') + '</ul>' +
+      (tdRows ? '<ul class="tdl">' + tdRows + '</ul>' : '<div class="empty">처리할 일이 없습니다.</div>') +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><button type="button" class="btn sm" data-dt="todo">처리할 일 보기</button></div>';
   }
 
