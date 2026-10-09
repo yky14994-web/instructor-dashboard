@@ -316,7 +316,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 58</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-08 홈 59</div>
 </div>
 </div>
 
@@ -331,7 +331,7 @@
   var OPS_NAME = '교육운영팀';
   var DOW = ['일','월','화','수','목','금','토'];
 
-  var plans = [], periods = [], rooms = [], roomSkip = {}, allSessions = [], resv = [], reqs = [], docs = [], histRows = [];
+  var plans = [], periods = [], rooms = [], roomSkip = {}, allSessions = [], resv = [], reqs = [], docs = [], lodges = [], histRows = [];
   var sessionsOk = false;
   var yearSel = '';      // 연간 통계 연도('' = 자동)
   var weekOffset = 0;    // 이번 주 기준 주 이동
@@ -917,12 +917,12 @@
     });
     function row(cls, n, label, sub, dk, full){ var pk = full ? dk : 'todo:' + dk; return '<li><a class="' + (n ? cls : 'zero') + '" href="#d=' + pk + '" data-dt="' + pk + '"><span class="l">' + esc(label) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="n">' + n + '<small>건</small></span></a></li>'; }
     var gapN = gapCourses(7).length;
-    var rqN = reqs.length, chgN = chgRecent().length, docN = docs.length;
+    var rqN = reqs.length, chgN = chgRecent().length, docN = docs.length, lgN = lodges.length;
     /* 교과목이 한 건도 없는 과정 중 이미 진행 중이거나 14일 이내 시작하는 과정 */
     var nsN = sessionsOk ? noSubjList().filter(function(p){ var dd = dayDiff(today, normYmd(p['입교 시작일'])); return dd !== null && dd <= 14; }).length : 0;
-    var total = soon + unas + nsN + rvn + gapN + rqN + docN;
+    var total = soon + unas + nsN + rvn + gapN + rqN + docN + lgN;
     el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + (chgN ? ' · 최근 변경 ' + chgN + '건' : '') + '</span></div>' +
-      '<ul class="tdl">' + row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전', 'plan') + row('wn', unas, '강사 미지정', '강의일이 14일 이내', 'unas') + row('wn', nsN, '교과목 미편성 과정', '진행 중이거나 14일 이내 시작·교과목 0건', 'nosubj', true) + row('wn', rvn, '사전확보 미편성', '예약일이 14일 이내', 'resv') + row('wn', rqN, '대관 신청', '승인 대기 중인 강의실 대관 신청', 'rvreq') + row('wn', docN, '서류 교체 요청', '강사카드·동의서 교체 승인 대기', 'docreq') + row('wn', gapN, '빈 교시', '일부만 편성·7일 이내 빈 교시가 있는 과정', 'gap') + row('inf', chgN, '최근 7일 변경', '연간계획·교과목 편성 변경(알림용, 건수 합계 제외)', 'chg') + '</ul>' +
+      '<ul class="tdl">' + row('wn', soon, '강의계획서 14일 이내 임박', '기한은 강의일 7일 전', 'plan') + row('wn', unas, '강사 미지정', '강의일이 14일 이내', 'unas') + row('wn', nsN, '교과목 미편성 과정', '진행 중이거나 14일 이내 시작·교과목 0건', 'nosubj', true) + row('wn', rvn, '사전확보 미편성', '예약일이 14일 이내', 'resv') + row('wn', rqN, '대관 신청', '승인 대기 중인 강의실 대관 신청', 'rvreq') + row('wn', docN, '서류 교체 요청', '강사카드·동의서 교체 승인 대기', 'docreq') + (lgN ? row('wn', lgN, '숙소 사용 신청', '강사 임시숙소 · 확인 대기', 'lodge') : '') + row('wn', gapN, '빈 교시', '일부만 편성·7일 이내 빈 교시가 있는 과정', 'gap') + row('inf', chgN, '최근 7일 변경', '연간계획·교과목 편성 변경(알림용, 건수 합계 제외)', 'chg') + '</ul>' +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><button type="button" class="btn sm" data-dt="todo">처리할 일 보기</button></div>';
   }
 
@@ -1222,6 +1222,17 @@
               '<a class="btn sm inm" style="text-decoration:none;" href="instructor-dashboard.html#i=' + encodeURIComponent(x['강사ID']) + '">새 파일 보고 승인·반려</a>'];
           }), '승인 대기 중인 서류 교체 요청이 없습니다.') + '<div class="hint">버튼을 누르면 강사 정보 카드가 열리고, 새 파일을 미리 본 뒤 승인 또는 반려할 수 있습니다. <b>승인하면 이전 서류는 바로 영구 삭제</b>되며 되돌릴 수 없습니다. 반려하면 기존 서류가 그대로 유지됩니다.</div>';
       },
+      lodge: function(){
+        if (!lodges.length && !sub) return '';   /* 전체 목록에서는 신청이 있을 때만 표시 */
+        var ls = lodges.slice().sort(function(x, y){ return String(x['사용시작일']) < String(y['사용시작일']) ? -1 : 1; });
+        return '<div class="dsec">숙소 사용 신청<small>' + ls.length + '건 · 강사 임시숙소 · 확인 대기</small></div>' +
+          dtTable(['사용일까지', '사용일', '과정명', '신청인', '연락처', '비고', '신청일시', ''], ls.map(function(x){
+            var a = normYmd(x['사용시작일']), b = normYmd(x['사용종료일']) || a, d = dayDiff(today, a), ph = String(x['연락처'] || '').replace(/^'/, '');
+            return [esc(d !== null && d < 0 ? '날짜 지남' : dl(d)), '<span class="nw">' + esc(md(a) + (b && b !== a ? ' ~ ' + md(b) : '')) + '</span>', esc(x['과정명'] || ''), esc(x['신청인'] || ''),
+              '<a class="nw" href="tel:' + esc(ph.replace(/[^0-9]/g, '')) + '">' + esc(ph) + '</a>', esc(x['비고'] || '-'), '<span class="nw">' + esc(x['신청일시'] || '') + '</span>',
+              viewer ? '' : '<button type="button" class="btn primary sm" data-hlg="' + esc(x['신청ID']) + '">확인</button>'];
+          }), '확인 대기 중인 숙소 사용 신청이 없습니다.') + '<div class="hint">강사가 학교 소개 화면에서 신청한 건입니다. 숙소 배정·연락 후 "확인"을 누르면 목록에서 빠집니다(기록은 숙소신청 시트에 남습니다).</div>';
+      },
       chg: function(){
         var cg = chgRecent();
         return '<div class="dsec">최근 7일 변경<small>' + cg.length + '건 · 연간계획 일정·취소, 교과목 추가·수정·삭제, 편성 복사</small></div>' +
@@ -1237,11 +1248,11 @@
           }), '해당하는 건이 없습니다.') + '<div class="hint">교과목·강사를 못 구해 일부러 비워 둔 칸은 "비워둠 처리"로 사유를 남기면 위 목록에서 빠지고, 아래 "비워둠 처리한 칸"에 계속 표시됩니다(처리 취소 가능). 나중에 교과목을 편성하면 자동으로 빠집니다.</div>' + gapDoneSection(viewer);
       }
     };
-    var total = soon.length + unas.length + rv.length + g7.length + reqs.length + docs.length;
+    var total = soon.length + unas.length + rv.length + g7.length + reqs.length + docs.length + lodges.length;
     if (sub && SEC[sub]) return SEC[sub]();
     html = '<div class="chead"><h2>처리할 일 전체</h2><span class="meta">총 ' + total + '건</span></div>' +
       '<div class="cdesc">홈 카드와 같은 기준입니다. 겹침 경고·강사 서류는 강의배정 화면의 처리할 일에서 확인합니다.</div>';
-    ['plan', 'unas', 'resv', 'rvreq', 'docreq', 'gap', 'chg'].forEach(function(k){ html += SEC[k](); });
+    ['plan', 'unas', 'resv', 'rvreq', 'docreq', 'lodge', 'gap', 'chg'].forEach(function(k){ html += SEC[k](); });
     return html;
   }
   function renderDetail(kind){
@@ -1291,6 +1302,19 @@
       renderAll(); if (curDetail) showDetailKeep();
     });
   }
+  /* 숙소 사용 신청 "확인": 숙소신청 시트의 상태를 확인으로 바꾸고 목록에서 뺌 */
+  function hLodgeOk(id, btn){
+    if (homeViewer()) return;
+    var x = lodges.filter(function(o){ return String(o['신청ID']) === String(id); })[0]; if (!x) return;
+    var a = normYmd(x['사용시작일']), b = normYmd(x['사용종료일']) || a;
+    if (!confirm('이 숙소 사용 신청을 확인 처리할까요?\n' + (x['신청인'] || '') + ' · ' + (x['과정명'] || '') + '\n사용일 ' + md(a) + (b !== a ? ' ~ ' + md(b) : '') + '\n\n확인하면 처리할 일에서 빠집니다.')) return;
+    btn.disabled = true;
+    api({ action: 'confirmLodging', password: getPw(), 신청IDs: [id] }).then(function(res){
+      if (res.status !== 'ok') { btn.disabled = false; alert(res.message || '처리하지 못했습니다'); return; }
+      lodges = lodges.filter(function(o){ return String(o['신청ID']) !== String(id); });
+      renderTrio(); if (curDetail) { if (!lodges.length && curDetail === 'todo:lodge') showDetail('todo'); else showDetailKeep(); }
+    }).catch(function(){ btn.disabled = false; alert('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'); });
+  }
   /* 강사 카드(아래 겹쳐 뜨는 화면)에서 서류 교체를 승인·반려하면 이 화면의 처리할 일에서도 바로 뺌 */
   window.addEventListener('jsfa-docreplace-done', function(e){
     docs = docs.filter(function(x){ return String(x['강사ID']) !== String(e.detail); });
@@ -1325,6 +1349,8 @@
     if (ud) { hGapUndo(ud.getAttribute('data-hundo'), ud); return; }
     var gp = ev.target && ev.target.closest ? ev.target.closest('[data-hgap]') : null;
     if (gp) { hGapMark(gp.getAttribute('data-hgap'), gp); return; }
+    var lg = ev.target && ev.target.closest ? ev.target.closest('[data-hlg]') : null;
+    if (lg) { hLodgeOk(lg.getAttribute('data-hlg'), lg); return; }
     var rq = ev.target && ev.target.closest ? ev.target.closest('[data-hrq]') : null;
     if (rq) { hRqDecide(rq.getAttribute('data-hrq'), rq); return; }
     var t = ev.target && ev.target.closest ? ev.target.closest('[data-dt]') : null;
@@ -1397,6 +1423,7 @@
       resv = a['강의실예약'] || [];
       reqs = a['강의실신청'] || [];
       docs = a['서류교체'] || [];   // 강사카드·동의서 교체 요청(관리자만 내려옴)
+      lodges = a['숙소신청'] || [];   // 강사 임시숙소 사용 신청(확인 대기, 관리자만 내려옴)
       histRows = a['변경이력'] || [];
       gapLoad(a['빈교시확인']);
       periods = (a['교시표'] || []).map(function(r){
