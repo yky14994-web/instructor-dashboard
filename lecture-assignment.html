@@ -667,7 +667,7 @@
     body.pcal.ppt table.calt{font-size:8.5px;} body.pcal.ppt table.calt td{height:64px;} body.pcal.ppt .cc{font-size:8.5px;padding:1px 3px;}
     body.pgrid.ppt table.g{font-size:9px;} body.pgrid.ppt .gc{font-size:9px;padding:3px 4px;} body.pgrid.ppt .gc .t{display:none;} body.pgrid.ppt table.g th.pc{width:52px;}
     body.pgrid .db,body.plist .db{display:none !important;}
-    body.plist #planView,body.plist header .hbtns,body.plist #backBtn,body.plist #viewerNote,body.plist #sBlock,body.plist #sFormPanel,body.plist .vtabs,body.plist #sReload,body.plist #sPrintBox,body.plist #sHead .act,body.plist #sHead .sum,body.plist #sCards,body.plist #sGridWrap,body.plist #verStamp,body.plist #fBackdrop,body.plist #sEmpty,body.plist .sact,body.plist #sListPanel h3 .hint{display:none !important;}
+    body.plist #planView,body.plist header .hbtns,body.plist #viewerNote,body.plist #sBlock,body.plist #sFormPanel,body.plist .vtabs,body.plist #sReload,body.plist #sPrintBox,body.plist #sHead .act,body.plist #sHead .sum,body.plist #sCards,body.plist #sGridWrap,body.plist #verStamp,body.plist #fBackdrop,body.plist #sEmpty,body.plist .sact,body.plist #sListPanel h3 .hint{display:none !important;}
     body.plist #editView{display:block !important;}
     body.plist #sTableWrap{display:block !important;}
     body.plist .panel{box-shadow:none;padding:6px 0;}
@@ -688,7 +688,7 @@
     body.pgrid .gnavbar,body.pgrid .gnp,body.pgrid #verStamp,body.pgrid #sEmpty,body.pgrid #sTableWrap,body.pgrid #sCards,body.pgrid #fBackdrop,body.pgrid .eb,body.pgrid .mvb,body.pgrid .mvbar,body.pgrid .mvnote{display:none !important;}
     body.pgrid .wrap{padding:0;}
     body.pgrid #sListPanel h3{display:none !important;}
-    body.pgrid #planView,body.pgrid header .hbtns,body.pgrid #backBtn,body.pgrid #viewerNote,body.pgrid #sBlock,body.pgrid #sHead,body.pgrid #sFormPanel,body.pgrid .vtabs,body.pgrid #sReload,body.pgrid .gnavbar button,body.pgrid .gnavbar select,body.pgrid .gdays{display:none !important;}
+    body.pgrid #planView,body.pgrid header .hbtns,body.pgrid #viewerNote,body.pgrid #sBlock,body.pgrid #sHead,body.pgrid #sFormPanel,body.pgrid .vtabs,body.pgrid #sReload,body.pgrid .gnavbar button,body.pgrid .gnavbar select,body.pgrid .gdays{display:none !important;}
     body.pgrid #editView{display:block !important;}
     body.pgrid #sListPanel{box-shadow:none;padding:0;}
     body.pgrid #sGridWrap{display:block !important;}
@@ -809,7 +809,6 @@
   </div>
 
   <div id="editView">
-    <button class="btn" id="backBtn" type="button" style="margin-bottom:10px;"><svg class="ic l" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>연간계획으로</button>
     <div id="viewerNote" class="viewer-note" style="display:none;">조회 전용 계정입니다. 교과목 편성 내용은 볼 수만 있고 추가·수정·삭제는 할 수 없습니다.</div>
     <div id="sBlock" class="note-err" style="display:none;margin-bottom:12px;"></div>
     <div class="panel" id="sHead"></div>
@@ -831,7 +830,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-09 배정 60</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-09 배정 61</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1707,7 +1706,6 @@
     $('hTitle').textContent = '교과목 편성';
     $('hSub').textContent = '과정을 선택하면 교시 단위로 교과목·강사·강의실을 편성합니다.';
     renderCrumb();
-    $('backBtn').innerHTML = ic('arrowL', 'l') + (cameFrom === 'home' ? '홈으로' : cameFrom === 'dash' ? '강사관리로' : planMode === 'cal' ? '월 캘린더로' : planMode === 'room' ? '강의실로' : '연간계획으로');
     $('viewerNote').style.display = isViewer() ? 'block' : 'none';
     var blk = $('sBlock');
     if (!sessionsOk) { blk.style.display = 'block'; blk.textContent = '교과목 편성 목록을 불러오지 못해 저장할 수 없습니다. 새로고침 후 다시 시도해 주세요.'; }
@@ -5312,11 +5310,6 @@
     if ($('iOverlay').style.display === 'flex') closeInstructor();
     else if ($('bOverlay').style.display === 'flex') closeBrowse();
     else closeFormModal();
-  });
-  $('backBtn').addEventListener('click', function(){
-    if (cameFrom === 'home') { location.href = 'home.html'; return; }
-    if (cameFrom === 'dash') { location.href = 'instructor-dashboard.html'; return; }
-    location.hash = '';
   });
   $('fBackdrop').addEventListener('click', closeFormModal);
   $('vList').addEventListener('click', function(){ setView('list'); });
