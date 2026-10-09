@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>전남소방학교 강사관리</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <style>
   :root{
@@ -26,7 +23,7 @@
   *{box-sizing:border-box;}
   body{
     margin:0;
-    font-family:'Pretendard', 'Nanum Gothic', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
     background:#F0F2F5;
     color:var(--text);
     -webkit-font-smoothing:antialiased;
@@ -121,7 +118,7 @@
     border-radius:6px;
     padding:0 14px;
     font-size:14px;
-    font-family:'Pretendard', 'Nanum Gothic', sans-serif;
+    font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
     transition:border-color .15s, box-shadow .15s;
   }
   #search:focus{
@@ -135,7 +132,7 @@
     border-radius:6px;
     padding:0 10px;
     font-size:14px;
-    font-family:'Pretendard', 'Nanum Gothic', sans-serif;
+    font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
     color:var(--text-sub);
     background:#fff;
     transition:border-color .15s, box-shadow .15s;
@@ -283,7 +280,7 @@
     border:1.5px solid rgba(255,255,255,0.45);
     border-radius:10px;
     font-size:26px;
-    font-family:'Pretendard', 'Nanum Gothic', sans-serif;
+    font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
     text-align:center;
     box-sizing:border-box;
     background:rgba(255,255,255,0.92);
@@ -369,11 +366,12 @@
   <div class="crumb"><a href="home.html">홈</a><span class="sep">›</span><a href="instructor-dashboard.html">강사관리</a><span class="sep">›</span><span class="cur">강사 조회·검색</span></div>
 
   <header>
-    <div class="title">강사관리 · 강사 조회·검색</div>
+    <div class="title">강사 조회·검색</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button id="reloadListBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">새로고침</button>
       <button id="inviteOpenBtn" class="badge" style="border:1px solid var(--navy);cursor:pointer;font-family:inherit;background:var(--navy);color:#fff;">강사 초대</button>
       <button id="copyPublicLinkBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">강사등록 링크</button>
+      <button id="logoutBtn" class="badge" type="button" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">로그아웃</button>
     </div>
   </header>
 
@@ -514,6 +512,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-09 강사관리 1</div>
 </div>
 
 <script>
@@ -688,8 +687,8 @@
       pv('새 강사카드', r.강사카드) + pv('새 동의서', r.동의서) +
       '<div style="font-size:12px;color:#A32D2D;margin:8px 0 12px;line-height:1.6;">승인하면 위 파일이 현재 서류가 되고 <b>이전 서류는 영구 삭제</b>됩니다(되돌릴 수 없음). 반려하면 기존 서류가 그대로 유지됩니다. 등록일 기준 3년 보유기간은 바뀌지 않습니다.</div>' +
       '<div style="display:flex;gap:10px;">' +
-        '<button id="drApproveBtn" type="button" style="flex:1;height:42px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">교체 승인 (이전 서류 삭제)</button>' +
-        '<button id="drRejectBtn" type="button" style="flex:1;height:42px;border:1.5px solid #A32D2D;border-radius:6px;background:#fff;color:#A32D2D;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">반려</button>' +
+        '<button id="drApproveBtn" type="button" style="flex:1;height:42px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">교체 승인 (이전 서류 삭제)</button>' +
+        '<button id="drRejectBtn" type="button" style="flex:1;height:42px;border:1.5px solid #A32D2D;border-radius:6px;background:#fff;color:#A32D2D;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">반려</button>' +
       '</div></div>';
   }
   function bindDocReplaceButtons(d){
@@ -927,9 +926,9 @@
       docReplaceBoxHtml(d, isViewer) +
       (!isViewer && (d.상태 === '승인대기' || d.상태 === '보류중')
         ? '<div id="approvalActions" style="display:flex;gap:10px;margin-top:20px;">' +
-            '<button id="approveBtn" style="flex:1;height:44px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">승인</button>' +
-            '<button id="holdBtn" style="flex:1;height:44px;border:1.5px solid #9AA5B1;border-radius:6px;background:#fff;color:#5F5E5A;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">보류</button>' +
-            '<button id="rejectBtn" style="flex:1;height:44px;border:1.5px solid #A32D2D;border-radius:6px;background:#fff;color:#A32D2D;font-size:14px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;">반려</button>' +
+            '<button id="approveBtn" style="flex:1;height:44px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">승인</button>' +
+            '<button id="holdBtn" style="flex:1;height:44px;border:1.5px solid #9AA5B1;border-radius:6px;background:#fff;color:#5F5E5A;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">보류</button>' +
+            '<button id="rejectBtn" style="flex:1;height:44px;border:1.5px solid #A32D2D;border-radius:6px;background:#fff;color:#A32D2D;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">반려</button>' +
           '</div>'
         : '') +
       '<div style="font-size:13px;font-weight:700;color:var(--navy);margin-top:24px;margin-bottom:8px;">강의 이력</div>' +
@@ -937,13 +936,13 @@
       '<div style="margin-top:28px;padding-top:16px;border-top:1px solid #F5F4F1;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
         '<div style="display:flex;gap:14px;align-items:center;">' +
           (isViewer ? '' :
-            '<button id="dormantBtn" style="border:none;background:none;color:#5F5E5A;font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">휴면 처리 (관리자 전용)</button>' +
-            '<button id="reconsentBtn" style="border:none;background:none;color:var(--navy);font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">재동의 확인 기록 (관리자 전용)</button>' +
+            '<button id="dormantBtn" style="border:none;background:none;color:#5F5E5A;font-size:12px;font-family:inherit;cursor:pointer;text-decoration:underline;">휴면 처리 (관리자 전용)</button>' +
+            '<button id="reconsentBtn" style="border:none;background:none;color:var(--navy);font-size:12px;font-family:inherit;cursor:pointer;text-decoration:underline;">재동의 확인 기록 (관리자 전용)</button>' +
             ((d.이력있음 !== undefined ? d.이력있음 : d.강의회차 > 0)
               ? '<span style="font-size:11px;color:var(--text-muted);">강의 이력이 있는 강사는 삭제할 수 없습니다</span>'
-              : '<button id="deleteBtn" style="border:none;background:none;color:#A32D2D;font-size:12px;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;text-decoration:underline;">강사카드 삭제 (관리자 전용)</button>')) +
+              : '<button id="deleteBtn" style="border:none;background:none;color:#A32D2D;font-size:12px;font-family:inherit;cursor:pointer;text-decoration:underline;">강사카드 삭제 (관리자 전용)</button>')) +
         '</div>' +
-        '<button id="detailCloseBottomBtn" style="border:1px solid var(--border);background:#fff;border-radius:6px;height:38px;padding:0 20px;font-size:13px;font-weight:700;font-family:\'Nanum Gothic\',sans-serif;cursor:pointer;margin-left:auto;">닫기</button>' +
+        '<button id="detailCloseBottomBtn" style="border:1px solid var(--border);background:#fff;border-radius:6px;height:38px;padding:0 20px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin-left:auto;">닫기</button>' +
       '</div>';
 
     document.getElementById('overlay').style.display = 'flex';
@@ -1107,7 +1106,7 @@
             '강의계획서 다운로드 링크:\n' + planDownloadUrl;
           links += '<a href="' + planPreviewUrl + '" target="_blank" style="color:var(--navy);font-weight:700;font-size:12px;margin-right:12px;">강의계획서 미리보기</a>' +
             '<a href="' + planDownloadUrl + '" target="_blank" style="color:var(--navy);font-weight:700;font-size:12px;margin-right:12px;">다운로드</a>' +
-            '<button type="button" class="mailForwardBtn" data-subject="' + escapeAttr(mailSubjectText) + '" data-body="' + escapeAttr(mailBodyText) + '" style="border:none;background:none;color:var(--navy);font-weight:700;font-size:12px;margin-right:12px;cursor:pointer;text-decoration:underline;padding:0;font-family:\'Nanum Gothic\',sans-serif;">메일 내용 복사</button>';
+            '<button type="button" class="mailForwardBtn" data-subject="' + escapeAttr(mailSubjectText) + '" data-body="' + escapeAttr(mailBodyText) + '" style="border:none;background:none;color:var(--navy);font-weight:700;font-size:12px;margin-right:12px;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit;">메일 내용 복사</button>';
         }
         var isCancelled = h.상태 === '취소됨';
         var isSubRole = h.역할 === '보조강사';
@@ -1696,6 +1695,12 @@
       .finally(function(){ if (manual) { btn.disabled = false; btn.textContent = '새로고침'; } });
   }
   document.getElementById('reloadListBtn').addEventListener('click', function(){ refreshList(true); });
+  /* 로그아웃: 이 탭에 저장된 비밀번호·권한·목록을 지우고 로그인 화면으로 */
+  document.getElementById('logoutBtn').addEventListener('click', function(){
+    try { sessionStorage.removeItem('jsfa_dash_pw'); sessionStorage.removeItem('jsfa_dash_role'); sessionStorage.removeItem('jsfa_admin_pw'); } catch (e) {}
+    listCacheClear();
+    location.reload();
+  });
   document.addEventListener('visibilitychange', function(){
     if (document.visibilityState === 'visible' && Date.now() - lastListLoad > 60000) refreshList(false);
   });

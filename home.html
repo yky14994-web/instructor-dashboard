@@ -218,6 +218,12 @@
   .tdl .bad .n{color:var(--err-fg);} .tdl .wn .n{color:var(--warn-fg);} .tdl .inf .n{color:var(--navy);} .tdl .zero .n{color:var(--text-muted);}
   .tdl .l .t{display:block;font-size:15px;font-weight:800;color:var(--navy);margin-bottom:2px;}
   .tdl .l small{display:block;font-size:13px;color:var(--text);}
+  .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;font-size:16px;color:var(--text-muted);margin:2px 0 12px;font-weight:600;}
+  .crumb a{color:var(--navy);text-decoration:none;font-weight:800;padding:5px 9px;border-radius:8px;cursor:pointer;background:none;border:none;font-family:inherit;font-size:inherit;}
+  .crumb a:hover{background:#E4ECF5;text-decoration:none;}
+  .crumb .sep{margin:0 2px;color:#9AA3AF;font-size:18px;font-weight:700;}
+  .crumb .cur{color:#fff;background:var(--navy);font-weight:800;padding:5px 12px;border-radius:8px;}
+  @media (max-width:640px){ .crumb{font-size:14px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} }
   .nsl{list-style:none;margin:0;padding:0;}
   .nsl li{padding:8px 0;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:flex-start;font-size:14px;}
   .nsl li:first-child{border-top:none;}
@@ -283,12 +289,16 @@
 <div id="app" style="display:none;">
 <nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">강의실</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
+  <div class="crumb" id="crumb"></div>
   <header>
     <div>
       <div class="title">홈</div>
       <div class="sub" id="clock"></div>
     </div>
-    <button type="button" class="btn" id="reloadBtn">새로고침</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button type="button" class="btn" id="reloadBtn">새로고침</button>
+      <button type="button" class="btn" id="logoutBtn">로그아웃</button>
+    </div>
   </header>
 
   <div class="quick">
@@ -315,7 +325,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-09 홈 65</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-09 홈 66</div>
 </div>
 </div>
 
@@ -729,7 +739,7 @@
       var rm = String(o.p['예정 강의실'] || '').trim();
       var st = '';
       if (o.subj) st += '<span class="tag t-none">이번 주 교과목 ' + o.subj + '개</span>' + (o.un ? '<span class="tag t-warn">강사 미지정 ' + o.un + '</span>' : '<span class="tag t-ok">강사 모두 배정</span>');
-      else st += '<span class="tag t-none">교과목 미편성</span>';
+      else st += '<span class="tag t-none">교과목 없음</span>';
       return '<li style="border-left:5px solid ' + courseColor(String(o.p['과정명'] || '')) + ';padding-left:10px;"><div><span class="tag ' + typeCls(o.p['구분']) + '">' + esc(o.p['구분'] || '기타') + '</span> <a class="cn" href="lecture-assignment.html#c=' + encodeURIComponent(o.key) + '&from=home">' + esc(nameOf(o.key)) + '<span class="go">교과목 편성' + ic('arrowR', 'r') + '</span></a>' +
         '<div class="ds">' + esc(seg) + (rm ? ' · ' + esc(rm) : '') + '</div></div><div class="st">' + st + '</div></li>';
     }).join('') + '</ul>' +
@@ -823,7 +833,7 @@
   function renderYear(){
     var years = planYears(), ys = Object.keys(years).sort();
     if (!yearSel || !years[yearSel]) yearSel = pickYear(years);
-    var html = '<div class="chead"><h2>연간 교육훈련 계획</h2>' + (ys.length ? '<select id="yearSel" aria-label="연도">' + ys.map(function(y){ return '<option value="' + y + '"' + (y === yearSel ? ' selected' : '') + '>' + y + '년</option>'; }).join('') + '</select>' : '') + '</div><div class="cdesc">연간 교육훈련계획 기준 과정·기수·인원입니다.</div>';
+    var html = '<div class="chead"><h2>연간 교육훈련계획</h2>' + (ys.length ? '<select id="yearSel" aria-label="연도">' + ys.map(function(y){ return '<option value="' + y + '"' + (y === yearSel ? ' selected' : '') + '>' + y + '년</option>'; }).join('') + '</select>' : '') + '</div><div class="cdesc">연간 교육훈련계획 기준 과정·기수·인원입니다.</div>';
     if (!ys.length) { $('cYear').innerHTML = html + '<div class="empty">연간계획 데이터가 없습니다.</div>'; $('cYear').style.display = ''; return; }
     var names = {}, byType = {}, cancelled = 0, total = { c: 0, n: 0, p: 0 };
     plans.forEach(function(p){
@@ -1110,7 +1120,7 @@
       var n = o.gaps.reduce(function(a, g){ return a + g.nums.length; }, 0), cf = courseFill(o.p, gapIndex());
       return [cLink(String(o.p['과정+기수'])), esc(ipgyoLine(o.p).replace(/^입교 /, '')), esc(cf.filled + '/' + cf.total + '교시 편성' + (cf.done ? ' (비워둠 ' + cf.done + ')' : '')), esc(n + '교시 · ' + o.gaps.length + '일'), det];
     });
-    return '<div class="dsec">빈 교시가 있는 과정 (일부만 편성)<small>' + gc.length + '과정</small></div><div class="hint" style="margin-bottom:6px;">교과목이 한 건도 없으면 위의 "미편성", 일부만 편성되어 군데군데 비어 있으면 "빈 교시"로 구분합니다. ' + esc(scope) + ' 중, 입교 기간 평일(실습 기간 제외)의 수업 교시에 교과목이 없는 칸이며 빈 날짜가 오늘부터 14일 이내인 것만 셉니다. 입교 기간이 5주를 넘는 과정은 제외합니다. 일부러 비운 칸은 "비워둠 처리"하면 빈 교시에서 빠지고 아래 "비워둠 처리한 칸"에 남습니다.</div>' +
+    return '<div class="dsec">빈 교시가 있는 과정 (교과목 없는 교시)<small>' + gc.length + '과정</small></div><div class="hint" style="margin-bottom:6px;">교과목이 한 건도 없으면 위의 "교과목 없는 과정", 일부만 편성되어 군데군데 비어 있으면 "빈 교시"로 구분합니다. ' + esc(scope) + ' 중, 입교 기간 평일(실습 기간 제외)의 수업 교시에 교과목이 없는 칸이며 빈 날짜가 오늘부터 14일 이내인 것만 셉니다. 입교 기간이 5주를 넘는 과정은 제외합니다. 일부러 비운 칸은 "비워둠 처리"하면 빈 교시에서 빠지고 아래 "비워둠 처리한 칸"에 남습니다.</div>' +
       dtTable(['과정 · 기수', '입교 기간', '편성 현황(전체)', '빈 교시(14일 이내)', '날짜별 빈 교시'], rows, '빈 교시가 있는 과정이 없습니다.') + gapDoneSection(homeViewer());
   }
   /* 입교 시작일 기준 월별로 끊어서 표시(월 제목 띠 + 월별 표, 맨 위에 월별 건수 요약) */
@@ -1258,8 +1268,7 @@
   }
   function renderDetail(kind){
     var box = $('detail');
-    var sub = kind.indexOf('todo:') === 0;
-    box.innerHTML = '<div style="margin-bottom:10px;"><button type="button" class="btn sm" data-dt="">' + ic('arrowL', 'l') + (sub ? '홈 처리할 일로' : '홈으로') + '</button></div>' + detailHtml(kind);
+    box.innerHTML = detailHtml(kind);
   }
   function hGapMark(v, btn){
     var m = /^(.+)\|(\d{4}-\d{2}-\d{2})$/.exec(v); if (!m) return;
@@ -1321,6 +1330,23 @@
     docs = docs.filter(function(x){ return String(x['강사ID']) !== String(e.detail); });
     renderTrio(); if (curDetail) showDetailKeep();
   });
+  /* 상단 경로: 홈 › (처리할 일) › 상세 이름 */
+  var CRUMB_NAME = { 'todo': '처리할 일', 'nosubj': '교과목 없는 과정', 'month': '이번 달 교육 현황',
+    'plan': '강의계획서 제출 기한 임박', 'unas': '교과목 강사 미지정', 'resv': '교과목 미정 (사전확보 교시)',
+    'rvreq': '강의실 대관 승인 대기', 'docreq': '강사 서류 교체 승인 대기', 'lodge': '강사 숙소 신청 확인 대기',
+    'gap': '빈 교시가 있는 과정', 'chg': '최근 7일 일정 변경' };
+  function renderCrumb(){
+    var el = $('crumb'); if (!el) return;
+    var sep = '<span class="sep">›</span>', k = curDetail || '';
+    if (!k) { el.innerHTML = '<span class="cur">홈</span>'; return; }
+    var out = '<a data-dt="">홈</a>' + sep;
+    if (k.indexOf('todo:') === 0) {
+      out += '<a data-dt="todo">처리할 일</a>' + sep + '<span class="cur">' + esc(CRUMB_NAME[k.split(':')[1]] || '상세') + '</span>';
+    } else {
+      out += '<span class="cur">' + esc(CRUMB_NAME[k] || '상세') + '</span>';
+    }
+    el.innerHTML = out;
+  }
   function showDetailKeep(){ var k = curDetail, y = window.scrollY; renderDetail(k); window.scrollTo(0, y); var home = ['trio', 'main', 'cYear']; home.forEach(function(id){ var el = $(id); if (el) el.style.display = 'none'; }); }
   function showDetail(kind, noHash){
     var prevDetail = curDetail; curDetail = kind || '';
@@ -1329,6 +1355,7 @@
     if (quick) quick.style.display = curDetail ? 'none' : '';
     $('detail').style.display = curDetail ? '' : 'none';
     if (curDetail) { renderDetail(curDetail); window.scrollTo(0, 0); } else if (prevDetail.indexOf('todo') === 0 && $('cTodo') && $('cTodo').scrollIntoView) { try { $('cTodo').scrollIntoView({ block: 'start' }); } catch (e) {} }
+    renderCrumb();
     if (!noHash) { try { if (curDetail) location.hash = 'd=' + curDetail; else history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
   }
   document.addEventListener('click', function(ev){
@@ -1467,6 +1494,12 @@
     var b = this; b.disabled = true; b.textContent = '불러오는 중...';
     loadAll(getPw(), true).catch(function(err){ showMsg('err', err.message || '불러오지 못했습니다'); }).finally(function(){ b.disabled = false; b.textContent = '새로고침'; });
   });
+  /* 로그아웃: 이 탭에 저장된 비밀번호·권한·임시 목록을 지우고 로그인 화면으로 */
+  $('logoutBtn').addEventListener('click', function(){
+    delSess(KEY_PW); delSess(KEY_ROLE); bootClear();
+    location.reload();
+  });
+  renderCrumb();
 
   /* ---------- 로그인 ---------- */
   var pinBoxes = Array.prototype.slice.call(document.querySelectorAll('.pin-box'));
