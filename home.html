@@ -325,7 +325,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-09 홈 68</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-09 홈 69</div>
 </div>
 </div>
 
@@ -1192,6 +1192,10 @@
     gapRows.sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
     var per = function(r){ var a = Number(r['시작교시']), b = Number(r['끝교시']); return a === b ? a + '교시' : a + '~' + b + '교시'; };
     var dl = function(n){ return n === 0 ? '오늘' : n + '일 후'; };
+    /* 사용일이 이미 지난 승인 대기 건 표시(승인해도 의미가 없으므로 눈에 띄게) */
+    var pastTag = '<span class="tag t-err">지난 일정</span>';
+    var pastN = function(rows, f){ return rows.filter(function(x){ var d = dayDiff(today, normYmd(f(x))); return d !== null && d < 0; }).length; };
+    var pastNote = function(n){ return n ? ' · 지난 일정 ' + n + '건' : ''; };
     var SEC = {
       plan: function(){
         return '<div class="dsec">강의계획서 제출 기한 임박<small>' + soon.length + '건 · 강의일 7일 전까지 제출 · 기한이 14일 이내</small></div>' +
@@ -1214,13 +1218,13 @@
       },
       rvreq: function(){
         var rl = rqSorted();
-        return '<div class="dsec">강의실 대관 승인 대기<small>' + rl.length + '건 · 직원이 신청한 강의실 대관</small></div>' +
+        return '<div class="dsec">강의실 대관 승인 대기<small>' + rl.length + '건 · 직원이 신청한 강의실 대관' + pastNote(pastN(rl, function(x){ return x['일자']; })) + '</small></div>' +
           dtTable(['사용일까지', '일자', '교시 · 강의실', '사유 · 사용부서', '담당자 · 연락처 · 비고', '신청일시', viewer ? '' : '겹침 확인', ''], rl.map(function(r){
             var dd = normYmd(r['일자']), d = dayDiff(today, dd), cl = viewer ? [] : rqClash(r), id = esc(r['예약ID']);
-            var pill = d !== null && d < 0 ? '날짜 지남' : dl(d);
+            var pill = d !== null && d < 0 ? pastTag : dl(d);
             var go = '<a class="btn sm" href="lecture-assignment.html#v=room&d=' + dd + '">빈 강의실에서 보기</a>';
             var btn = viewer ? go : '<button type="button" class="btn primary sm" data-hrq="ok|' + id + '">승인</button> <button type="button" class="btn sm" data-hrq="no|' + id + '">반려</button> ' + go;
-            var row = [esc(pill), '<span class="nw">' + esc(md(dd)) + '</span>', esc(per(r) + ' · ' + r['강의실']), esc(r['사유·사용부서'] || ''), esc([r['담당자·연락처'], r['비고']].filter(Boolean).join(' · ') || '-'), '<span class="nw">' + esc(rqWhen(r)) + '</span>'];
+            var row = [pill === pastTag ? pill : esc(pill), '<span class="nw">' + esc(md(dd)) + '</span>', esc(per(r) + ' · ' + r['강의실']), esc(r['사유·사용부서'] || ''), esc([r['담당자·연락처'], r['비고']].filter(Boolean).join(' · ') || '-'), '<span class="nw">' + esc(rqWhen(r)) + '</span>'];
             if (!viewer) row.push(cl.length ? '<span style="color:var(--err-fg);">' + esc(cl.slice(0, 2).join(', ')) + (cl.length > 2 ? ' 외 ' + (cl.length - 2) + '건' : '') + '</span>' : '<span style="color:#1F6B2B;">겹침 없음</span>');
             row.push(btn);
             return row;
@@ -1236,10 +1240,11 @@
       lodge: function(){
         if (!lodges.length && !sub) return '';   /* 전체 목록에서는 신청이 있을 때만 표시 */
         var ls = lodges.slice().sort(function(x, y){ return String(x['사용시작일']) < String(y['사용시작일']) ? -1 : 1; });
-        return '<div class="dsec">강사 숙소 신청 확인 대기<small>' + ls.length + '건 · 강사 임시숙소</small></div>' +
+        return '<div class="dsec">강사 숙소 신청 확인 대기<small>' + ls.length + '건 · 강사 임시숙소' + pastNote(pastN(ls, function(x){ return x['사용종료일'] || x['사용시작일']; })) + '</small></div>' +
           dtTable(['사용일까지', '사용일', '과정명', '신청인', '연락처', '비고', '신청일시', ''], ls.map(function(x){
             var a = normYmd(x['사용시작일']), b = normYmd(x['사용종료일']) || a, d = dayDiff(today, a), ph = String(x['연락처'] || '').replace(/^'/, '');
-            return [esc(d !== null && d < 0 ? '날짜 지남' : dl(d)), '<span class="nw">' + esc(md(a) + (b && b !== a ? ' ~ ' + md(b) : '')) + '</span>', esc(x['과정명'] || ''), esc(x['신청인'] || ''),
+            var db = dayDiff(today, b);
+            return [(db !== null && db < 0) ? pastTag : esc(dl(d)), '<span class="nw">' + esc(md(a) + (b && b !== a ? ' ~ ' + md(b) : '')) + '</span>', esc(x['과정명'] || ''), esc(x['신청인'] || ''),
               '<a class="nw" href="tel:' + esc(ph.replace(/[^0-9]/g, '')) + '">' + esc(ph) + '</a>', esc(x['비고'] || '-'), '<span class="nw">' + esc(x['신청일시'] || '') + '</span>',
               viewer ? '' : '<button type="button" class="btn primary sm" data-hlg="' + esc(x['신청ID']) + '">확인</button>'];
           }), '확인 대기 중인 숙소 사용 신청이 없습니다.') + '<div class="hint">강사가 학교 소개 화면에서 신청한 건입니다. 숙소 배정·연락 후 "확인"을 누르면 목록에서 빠집니다(기록은 숙소신청 시트에 남고, 성명·연락처는 사용일로부터 1년 뒤 자동 파기됩니다).</div>';
