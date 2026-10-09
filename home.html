@@ -1231,7 +1231,7 @@
             return [esc(d !== null && d < 0 ? '날짜 지남' : dl(d)), '<span class="nw">' + esc(md(a) + (b && b !== a ? ' ~ ' + md(b) : '')) + '</span>', esc(x['과정명'] || ''), esc(x['신청인'] || ''),
               '<a class="nw" href="tel:' + esc(ph.replace(/[^0-9]/g, '')) + '">' + esc(ph) + '</a>', esc(x['비고'] || '-'), '<span class="nw">' + esc(x['신청일시'] || '') + '</span>',
               viewer ? '' : '<button type="button" class="btn primary sm" data-hlg="' + esc(x['신청ID']) + '">확인</button>'];
-          }), '확인 대기 중인 숙소 사용 신청이 없습니다.') + '<div class="hint">강사가 학교 소개 화면에서 신청한 건입니다. 숙소 배정·연락 후 "확인"을 누르면 목록에서 빠집니다(기록은 숙소신청 시트에 남습니다).</div>';
+          }), '확인 대기 중인 숙소 사용 신청이 없습니다.') + '<div class="hint">강사가 학교 소개 화면에서 신청한 건입니다. 숙소 배정·연락 후 "확인"을 누르면 목록에서 빠집니다(기록은 숙소신청 시트에 남고, 성명·연락처는 사용일로부터 1년 뒤 자동 파기됩니다).</div>';
       },
       chg: function(){
         var cg = chgRecent();
