@@ -830,7 +830,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 64</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 65</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2649,6 +2649,7 @@
     resv.forEach(function(r){
       if (normYmd(r['일자']) !== date) return;
       var key = String(r['개설키'] || '');
+      var rp = key ? planByKey(key) : null; if (rp && isCancelled(rp)) return;   // 취소된 기수의 사전확보는 강의실을 쓰지 않으므로 제외
       if (opt && opt.skipPlanKey && key && key === opt.skipPlanKey) return;   // 입력 중인 과정의 사전확보는 저장 시 편성으로 전환되므로 겹침으로 보지 않음
       var a = Number(r['시작교시']), b = Number(r['끝교시']); if (!isFinite(a) || !isFinite(b)) { a = 0; b = 99; }
       if (b < s || a > e) return;
@@ -3903,6 +3904,13 @@
     $('sFormPanel').classList.remove('fmodal');
     $('fBackdrop').style.display = 'none';
   }
+  /* 이 과정 앞으로 날짜의 살아 있는 강의실 예약(사전확보·대관 모두) */
+  function liveResvOf(key){
+    var t0 = ymd(new Date());
+    return resv.filter(function(x){
+      return String(x['상태']) === '예약' && String(x['개설키'] || '') === String(key) && normYmd(x['일자']) >= t0;
+    });
+  }
   /* 이 과정이 그 일자·교시에 사전확보해 둔 강의실 예약(상태 '예약')을 찾는다 */
   function preHoldAt(key, date, s, e){
     if (!key || !date) return [];
@@ -4570,8 +4578,11 @@
       box.innerHTML = '<div class="box ' + (impact ? 'w' : 'i') + '"><b>영향 미리보기</b><ul>' + items.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul></div>' +
         '<div class="box i"><b>기수 번호</b>: 변경 후에도 이 과정의 기수는 <b>' + esc(p['기수'] || '') + '</b> 그대로 유지됩니다. 처음 변경할 때 시트의 기수 열(수식)을 값으로 고정하고 변경이력에 기록합니다.</div>';
     } else if (chg.mode === 'cancel') {
-      var n = sess.length;
+      var n = sess.length, rvs = liveResvOf(chg.key);
       box.innerHTML = '<div class="box w"><b>영향 미리보기</b><ul><li>편성된 교과목 <b>' + (sessionsOk ? n + '건' : '확인 불가') + '</b>' + (n ? '(지워지지 않고 남습니다)' : '') + '</li>' +
+        (rvs.length ? '<li>앞으로 날짜의 <b>강의실 예약 ' + rvs.length + '건이 함께 취소</b>됩니다(강의실을 비웁니다).<br>' +
+          rvs.slice(0, 5).map(function(x){ return '· ' + esc(md(normYmd(x['일자']))) + ' ' + esc(reservePerText(x)) + ' · ' + esc(String(x['강의실'] || '')) + ' (' + esc(String(x['유형'] || '')) + ')'; }).join('<br>') +
+          (rvs.length > 5 ? '<br>· 외 ' + (rvs.length - 5) + '건' : '') + '</li>' : '<li>앞으로 날짜의 강의실 예약은 없습니다.</li>') +
         '<li>취소하면 연간계획 합계(계획인원 등)와 강의실 겹침 확인에서 <b>제외</b>되고, 표에서는 회색 "취소됨"으로 표시됩니다. 기수 번호는 그대로 유지됩니다.</li></ul></div>';
     } else {
       box.innerHTML = '<div class="box i">취소를 해제하면 다시 진행 중인 기수로 표시되고, 교과목을 추가할 수 있습니다.</div>';
@@ -4597,7 +4608,9 @@
       monthMoved = !!(m0 && m1 && (m0.m !== m1.m || m0.y !== m1.y));
     }
     if (!reason) { chgMsg('note-err', '사유를 입력해 주세요.'); return; }
-    if (chg.mode === 'cancel' && !confirm('"' + p['과정명'] + ' ' + (p['기수'] || '') + '"을(를) 취소됨으로 표시할까요?\n(행은 지워지지 않으며 나중에 취소 해제할 수 있습니다.)')) return;
+    var dropRv = chg.mode === 'cancel' ? liveResvOf(chg.key) : [];
+    if (chg.mode === 'cancel' && !confirm('"' + p['과정명'] + ' ' + (p['기수'] || '') + '"을(를) 취소됨으로 표시할까요?\n(행은 지워지지 않으며 나중에 취소 해제할 수 있습니다.)' +
+      (dropRv.length ? '\n\n앞으로 날짜의 강의실 예약 ' + dropRv.length + '건도 함께 취소됩니다.' : ''))) return;
     chg.busy = true;
     var btn = $('cSave'); btn.disabled = true; btn.textContent = '저장 중...';
     chgMsg('', '');
@@ -4609,9 +4622,12 @@
         text = '일정을 변경했습니다: ' + (j.변경 || []).map(function(c){ return c.항목 + ' ' + c.전 + ' → ' + c.후; }).join(', ') + '. 변경이력 시트에 기록했습니다.' +
           (j.기수고정 ? ' (기수 열 ' + j.기수고정 + '줄을 값으로 고정했습니다.)' : '') +
           (monthMoved && $('fMonth').value ? ' 월이 바뀌어 현재 월 필터에서는 보이지 않을 수 있습니다.' : '');
-      } else if (j.종류 === 'cancel') text = '기수를 취소됨으로 표시했습니다. 변경이력 시트에 기록했습니다.';
+      } else if (j.종류 === 'cancel') text = '기수를 취소됨으로 표시했습니다.' + (dropRv.length ? ' 강의실 예약 ' + dropRv.length + '건도 취소했습니다.' : '') + ' 변경이력 시트에 기록했습니다.';
       else text = '취소를 해제했습니다. 변경이력 시트에 기록했습니다.';
-      return loadAll(getPw(), true).then(function(){ showMsg('ok', text); window.scrollTo(0, 0); }).catch(function(e){ showMsg('err', '저장은 되었으나 다시 불러오지 못했습니다. 새로고침을 눌러 주세요. ' + (e && e.message || '')); });
+      var pre = dropRv.length
+        ? api({ action: 'cancelReservation', password: getPw(), 예약IDs: dropRv.map(function(x){ return String(x['예약ID']); }) }).catch(function(){})
+        : Promise.resolve();
+      return pre.then(function(){ return loadAll(getPw(), true); }).then(function(){ showMsg('ok', text); window.scrollTo(0, 0); }).catch(function(e){ showMsg('err', '저장은 되었으나 다시 불러오지 못했습니다. 새로고침을 눌러 주세요. ' + (e && e.message || '')); });
     }).catch(function(){
       chg.busy = false; btn.disabled = false; btn.textContent = '변경 저장';
       chgMsg('note-err', '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.');
