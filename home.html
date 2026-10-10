@@ -325,7 +325,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-09 홈 69</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-10 홈 70</div>
 </div>
 </div>
 
@@ -482,7 +482,8 @@
   }
   function nameOf(key){ var p = planByKey(key); return p ? String(p['과정명'] || '') + ' ' + String(p['기수'] || '') : String(key || ''); }
   function hasInstr(r){ return !!(String(r['강사ID'] || '').trim() || String(r['강사명'] || '').trim()); }
-  function isOps(r){ return !String(r['강사ID'] || '').trim() && String(r['강사명'] || '').trim() === OPS_NAME; }
+  var OPS_TEAMS = ['교육운영팀', '교육훈련팀'];
+  function isOps(r){ return !String(r['강사ID'] || '').trim() && OPS_TEAMS.indexOf(String(r['강사명'] || '').trim()) > -1; }
   function isSubRole(r){ return String(r['강사 역할'] || '') === '보조강사'; }
   function periodInfo(n){
     for (var i = 0; i < periods.length; i++) if (periods[i].n === n) return periods[i];
@@ -542,7 +543,7 @@
     var multi = named.length > 1;
     var seen = {};
     return named.filter(function(r){ var k = (r['강사ID'] || '') + '|' + (r['강사명'] || '') + '|' + (r['강사 역할'] || ''); if (seen[k]) return false; seen[k] = 1; return true; }).map(function(r){
-      if (isOps(r)) return '<span class="tag t-ops">' + esc(OPS_NAME) + '</span>';
+      if (isOps(r)) return '<span class="tag t-ops">' + esc(String(r['강사명']).trim() + (String(r['비고'] || '').trim() ? '(' + String(r['비고']).trim() + ')' : '')) + '</span>';
       var nmTxt = esc(String(r['강사명'] || r['강사ID'])), iid = String(r['강사ID'] || '').trim();
       if (iid) nmTxt = '<a class="inm" href="instructor-dashboard.html#i=' + encodeURIComponent(iid) + '" title="누르면 강사 정보 카드(상세)가 열립니다">' + nmTxt + '</a>';
       return nmTxt + (multi && isSubRole(r) ? ' <span class="tag t-none">보조</span>' : '');

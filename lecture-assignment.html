@@ -830,7 +830,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 65</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 66</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1016,7 +1016,12 @@
   function hasInstr(r){ return !!(String(r['강사ID'] || '').trim() || String(r['강사명'] || '').trim()); }
   /* 교육운영팀 운영 교시(입교안내·성과측정 등): 강사ID 없이 강사명이 '교육운영팀'인 줄. 강사 배정된 것으로 보고, 강사 서류·계획서·강사 겹침 검사에서는 제외 */
   var OPS_NAME = '교육운영팀';
-  function isOps(r){ return !String(r['강사ID'] || '').trim() && String(r['강사명'] || '').trim() === OPS_NAME; }
+  var OPS_TEAMS = ['교육운영팀', '교육훈련팀'];   // 강사 없이 팀이 운영하는 교시(입교안내·성과측정 등). 자동 추가는 교육운영팀만
+  function isOpsName(n){ return OPS_TEAMS.indexOf(String(n || '').trim()) > -1; }
+  function isOps(r){ return !String(r['강사ID'] || '').trim() && isOpsName(r['강사명']); }
+  /* 팀 교시 표시: 팀명 + (비고 전체를 대표자 이름으로 표시). 팀 교시의 비고는 이름 전용이라 별도 비고로는 표시하지 않음 */
+  function opsText(r){ var n = String(r['강사명'] || '').trim(), who = String(r['비고'] || '').trim(); return n + (who ? '(' + who + ')' : ''); }
+  function opsTag(r){ return '<span class="tag t-ops">' + esc(opsText(r)) + '</span>'; }
   // 같은 일자·교시·교과목은 분반(A/B)이어도 교과목 1개로 셈. 모든 반에 강사가 있어야 배정됨.
   function groupSessions(list){
     var map = {}, order = [];
@@ -1880,14 +1885,14 @@
         '<button type="button" class="btn" id="sRoomFreeBtn" style="height:26px;padding:0 10px;font-size:12px;" title="위에 입력한 일자·교시에 비어 있는 강의실을 보여 줍니다">빈 강의실 보기</button></div>' +
         '<div id="sRoomFree" class="rfpanel" style="display:none;"></div><select id="sRoom">' + roomOptions(defRoom) + '</select>' +
         '<input type="text" id="sRoomText" maxlength="100" placeholder="강의실 이름 직접 입력" style="display:none;margin-top:6px;"></div>' +
-      '<div class="span2" style="position:relative;"><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin-bottom:3px;"><label for="sInstr" style="margin:0;">강사</label>' +
-        '<span style="display:flex;gap:6px;"><button type="button" class="btn" id="sOps" style="height:26px;padding:0 10px;font-size:12px;" title="입교안내·성과측정처럼 강사 없이 학교(교육운영팀)가 운영하는 교시">교육운영팀 운영</button>' +
+      '<div class="span2" style="position:relative;"><div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:6px 8px;margin-bottom:3px;"><label for="sInstr" style="margin:0;white-space:nowrap;">강사</label>' +
+        '<span style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;"><button type="button" class="btn" id="sOps" style="height:26px;padding:0 10px;font-size:12px;" title="입교안내·성과측정처럼 강사 없이 학교(교육운영팀)가 운영하는 교시">교육운영팀 운영</button><button type="button" class="btn" id="sOps2" style="height:26px;padding:0 10px;font-size:12px;" title="강사 없이 교육훈련팀이 운영하는 교시">교육훈련팀 운영</button>' +
         '<button type="button" class="btn" id="sBrowse" style="height:26px;padding:0 10px;font-size:12px;">강사 찾아보기 (사진·이력)</button></span></div><div id="sChip"></div>' +
         '<div id="sRoleWrap" style="display:none;margin:6px 0;"><span class="hint" style="margin-right:6px;font-weight:700;">역할</span><select id="sRole" style="width:auto;"><option>주강사</option><option>보조강사</option></select> ' +
         '<span class="hint">강사가 2명 이상이면 목록에 주/보조로 표시됩니다. 누적 횟수·시수는 주강사만 집계합니다.</span></div>' +
         '<input type="text" id="sInstr" autocomplete="off" placeholder="이름·소속·분야·교과목으로 검색"><div id="sPicker" class="picker" style="display:none;"></div>' +
         '</div>' +
-      '<div class="span2"><label for="sNote">비고</label><input type="text" id="sNote" maxlength="200" placeholder="선택 입력"></div>' +
+      '<div class="span2"><label for="sNote" id="sNoteLbl">비고</label><input type="text" id="sNote" maxlength="200" placeholder="선택 입력"></div>' +
       '</div>' +
       '<div class="fbtn"><button type="button" class="btn primary" id="sSave">저장</button>' +
       '<button type="button" class="btn" id="sReset">입력 지우기</button>' +
@@ -1930,6 +1935,7 @@
     $('sInstr').addEventListener('focus', showPicker);
     $('sBrowse').addEventListener('click', openBrowse);
     $('sOps').addEventListener('click', function(){ form.iid = ''; form.iname = OPS_NAME; $('sInstr').value = ''; hidePicker(); renderChip(); });
+    $('sOps2').addEventListener('click', function(){ form.iid = ''; form.iname = '교육훈련팀'; $('sInstr').value = ''; hidePicker(); renderChip(); });
     $('sSave').addEventListener('click', saveForm);
     $('sReset').addEventListener('click', function(){ var wasEdit = !!form.id; resetForm(); showFormMsg('', ''); if (wasEdit) closeFormModal(); });
     $('sClose').addEventListener('click', closeFormModal);
@@ -2004,8 +2010,8 @@
       var ins = instrById[form.iid];
       var label = ins ? ins.name + (ins.org ? ' · ' + ins.org : '') : (form.iname || form.iid);
       box.innerHTML = '<span class="tag t-ok chip">' + esc(label) + ' <button type="button" id="sChipX" aria-label="강사 지우기">×</button></span>';
-    } else if (form.iname === OPS_NAME) {
-      box.innerHTML = '<span class="tag t-ops chip">교육운영팀 운영 <button type="button" id="sChipX" aria-label="지우기">×</button></span>';
+    } else if (isOpsName(form.iname)) {
+      box.innerHTML = '<span class="tag t-ops chip">' + esc(form.iname) + ' 운영 <button type="button" id="sChipX" aria-label="지우기">×</button></span>';
     } else if (form.iname) {
       box.innerHTML = '<span class="tag t-info chip">' + esc(form.iname) + ' (직접 입력) <button type="button" id="sChipX" aria-label="강사 지우기">×</button></span>';
     } else box.innerHTML = '';
@@ -2017,7 +2023,10 @@
     var x = $('sChipX');
     if (x) x.addEventListener('click', function(){ form.iid = ''; form.iname = ''; renderChip(); });
     var rw = $('sRoleWrap');
-    if (rw) rw.style.display = (form.iid || (form.iname && form.iname !== OPS_NAME)) ? '' : 'none';
+    if (rw) rw.style.display = (form.iid || (form.iname && !isOpsName(form.iname))) ? '' : 'none';
+    var nt = $('sNote'), nl = $('sNoteLbl');   // 팀 교시는 비고에 대표자 이름을 적음
+    if (nt) nt.placeholder = isOpsName(form.iname) && !form.iid ? '대표자 이름 (예: 홍길동)' : '선택 입력';
+    if (nl) nl.textContent = isOpsName(form.iname) && !form.iid ? '비고 (대표자 이름)' : '비고';
   }
   function showPicker(){
     var pk = $('sPicker');
@@ -3266,7 +3275,7 @@
       var ins = instrById[r['강사ID']];
       return roleTag(r) + (ins ? '<span class="tag t-ok nmk" data-detail="' + esc(r['강사ID']) + '" title="강사 정보 보기">' + esc(ins.name) + '</span> ' + docBadge(ins, r) : '<span class="tag t-ok">' + esc(r['강사명'] || r['강사ID']) + '</span>');
     }
-    if (isOps(r)) return '<span class="tag t-ops">교육운영팀</span>';
+    if (isOps(r)) return opsTag(r);
     if (r['강사명']) return roleTag(r) + '<span class="tag t-info">' + esc(r['강사명']) + ' (직접 입력)</span>';
     return (viewer || cx) ? '<span class="tag t-none">미지정</span>' : '<button type="button" class="btn sm" data-cquick="' + esc(r['편성ID']) + '">강사 지정</button>';
   }
@@ -3786,7 +3795,7 @@
       return roleTag(r) + (ins ? '<span class="tag t-ok nmk" data-detail="' + esc(r['강사ID']) + '" title="강사 정보 보기">' + esc(ins.name) + '</span> ' + docBadge(ins, r)
         : '<span class="tag t-ok">' + esc(r['강사명'] || r['강사ID']) + '</span>');
     }
-    if (isOps(r)) return '<span class="tag t-ops">교육운영팀</span>';
+    if (isOps(r)) return opsTag(r);
     if (r['강사명']) return roleTag(r) + '<span class="tag t-info">' + esc(r['강사명']) + ' (직접 입력)</span>';
     return (isViewer() || isCancelled(planByKey(currentKey))) ? '<span class="tag t-none">미지정</span>' : '<button type="button" class="btn sm" data-act="assign" data-id="' + esc(r['편성ID']) + '">강사 지정</button>';
   }
@@ -3859,7 +3868,7 @@
         '<td>' + esc(r['반'] || '전체') + '</td>' +
         '<td>' + insHtml + '</td>' +
         '<td>' + esc(r['강의실'] || '-') + '</td>' +
-        '<td>' + esc(r['비고'] || '') + '</td>' +
+        '<td>' + esc(isOps(r) ? '' : (r['비고'] || '')) + '</td>' +
         (viewer ? '' : '<td class="sact">' + actHtml + '</td>') + '</tr>';
       var cardActs = viewer ? '' : (multi ? '' : '<div style="margin-top:8px;">' + actCell(r) + '</div>');
       var cardIns = multi
@@ -3867,7 +3876,7 @@
         : '';
       cards += '<div class="src"><div class="h"><div class="n">' + esc(pt.txt) + ' · ' + esc(r['교과목']) + '</div>' + (multi ? '' : '<div>' + instrCell(r) + '</div>') + '</div>' +
         '<div class="m">' + esc([pt.time, r['교과목 구분'], (r['반'] && r['반'] !== '전체') ? r['반'] + '반' : ''].filter(Boolean).join(' · ')) +
-        '<br>' + esc(r['강의실'] || '강의실 미정') + (r['비고'] ? ' · ' + esc(r['비고']) : '') + '</div>' + cardIns + wHtml + cardActs + '</div>';
+        '<br>' + esc(r['강의실'] || '강의실 미정') + (r['비고'] && !isOps(r) ? ' · ' + esc(r['비고']) : '') + '</div>' + cardIns + wHtml + cardActs + '</div>';
     });
     $('sTableWrap').innerHTML = '<table><thead><tr><th>교시</th><th>교과목</th><th>구분</th><th>반</th><th>강사</th><th>강의실</th><th>비고</th>' +
       (viewer ? '' : '<th class="sact">작업</th>') + '</tr></thead><tbody>' + rows + '</tbody></table>';
@@ -4150,7 +4159,7 @@
       if (x['강사ID']) {
         var o = instrById[x['강사ID']];
         nm = o ? '<span class="nmk" data-detail="' + esc(x['강사ID']) + '" title="강사 정보 보기">' + esc(o.name) + '</span>' + docBadge(o, x) : esc(x['강사명'] || x['강사ID']);
-      } else if (isOps(x)) nm = '<span class="tag t-ops">교육운영팀</span>';
+      } else if (isOps(x)) nm = opsTag(x);
       else nm = esc(x['강사명']) + ' <span class="hint">(직접 입력)</span>';
       var eb = (multi && canEdit) ? '<button type="button" class="eb" data-act="edit" data-id="' + esc(x['편성ID']) + '" title="이 강사 줄 수정">' + ic('pencil') + '</button>' : '';
       return '<div class="i">' + roleTag(x) + nm + eb + '</div>';
@@ -4537,7 +4546,7 @@
   }
   function nameOfInstr(r){
     if (r['강사ID'] && instrById[r['강사ID']]) return instrById[r['강사ID']].name;
-    if (isOps(r)) return OPS_NAME;
+    if (isOps(r)) return String(r['강사명'] || '').trim();
     return (r['강사명'] || r['강사ID'] || '') + (r['강사ID'] ? '' : '(수기)');
   }
   function updateChangePreview(){
@@ -4647,7 +4656,7 @@
   function instrIdent(r){
     var id = String(r['강사ID'] || '').trim(), nm = String(r['강사명'] || '').trim();
     if (id) return 'i:' + id;
-    if (nm === OPS_NAME) return '';   // 교육운영팀은 팀 단위라 동시 진행 과정이 있어도 겹침으로 보지 않음
+    if (isOpsName(nm)) return '';   // 교육운영팀·교육훈련팀은 팀 단위라 동시 진행 과정이 있어도 겹침으로 보지 않음
     if (nm) return 'n:' + nm;
     return '';
   }
