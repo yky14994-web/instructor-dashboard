@@ -830,7 +830,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 70</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 71</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1655,7 +1655,7 @@
   function route(){
     if ($('app').style.display === 'none') return;
     var key = hashKey();
-    var vm = /^#v=(table|cal|room)((?:&(?:d|y|t|w)=[^&]*)*)$/.exec(location.hash || '');
+    var vm = /^#v=(table|cal|room)((?:&(?:d|y|t|w|m)=[^&]*)*)$/.exec(location.hash || '');
     if (vm) {
       try { window.history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {}
       var vp = hashParams(vm[2]);
@@ -1671,9 +1671,10 @@
         weekFilter = mon;
       }
       if (vp.d && /^\d{4}-\d{2}-\d{2}$/.test(vp.d) && normYmd(vp.d)) { if (planMode === 'room') roomDate = vp.d; else if (planMode === 'cal') { calMonth = vp.d.slice(0, 7); calManual = true; } }
-      if (planMode === 'table' && (vp.y || vp.t)) {   // 홈의 연간 통계에서 넘어온 경우: 연도·구분만 적용하고 나머지 조건은 비움
+      if (planMode === 'table' && (vp.y || vp.t || vp.m)) {   // 홈의 연간 통계·상단 경로에서 넘어온 경우: 연도·구분·월만 적용하고 나머지 조건은 비움
         $('fMonth').value = ''; $('fCheck').value = ''; $('fStatus').value = ''; $('fText').value = '';
         $('fYear').value = vp.y || ''; $('fType').value = vp.t || '';
+        if (vp.m && /^\d{1,2}$/.test(vp.m)) $('fMonth').value = String(Number(vp.m));   // 월 필터(목록에 없는 값이면 '전체 월'로 남음)
       }
       try { sessionStorage.setItem('jsfa_la_pmode', planMode); } catch (e) {}
       showPlan(); return;
@@ -1711,7 +1712,7 @@
     }
     var fy = $('fYear').value, fm = $('fMonth').value, ft = $('fType').value;
     var lab = (fm ? fm + '월' : '연간') + ' ' + (ft ? ft + '교육과정' : fm ? '교육과정' : '교육훈련계획');
-    var h = '#v=table' + (fy ? '&y=' + encodeURIComponent(fy) : '') + (ft ? '&t=' + encodeURIComponent(ft) : '');
+    var h = '#v=table' + (fy ? '&y=' + encodeURIComponent(fy) : '') + (ft ? '&t=' + encodeURIComponent(ft) : '') + (fm ? '&m=' + encodeURIComponent(fm) : '');
     return { t: lab, s: (fy ? fy + '년 · ' : '') + '과정명이나 강사 배정 현황을 누르면 교과목 편성 화면이 열립니다.', h: h };
   }
   function applyPlanHead(){
@@ -1721,7 +1722,8 @@
   }
   var lastList = null;
   function renderCrumb(){
-    var sep = '<span class="sep">›</span>', out = '<a href="home.html">홈</a>' + sep + '<a href="lecture-assignment.html#v=table">강의배정</a>' + sep;
+    /* 경로 = 홈 › 지금 보는 화면. 상단 메뉴 이름(강의배정 등)은 메뉴 강조가 알려 주므로 넣지 않음 */
+    var sep = '<span class="sep">›</span>', out = '<a href="home.html">홈</a>' + sep;
     if (currentKey) {
       var p = planByKey(currentKey);
       if (listShown && lastList) out += '<a href="lecture-assignment.html' + lastList.h + '">' + esc(lastList.t) + '</a>' + sep;
