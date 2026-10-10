@@ -486,7 +486,7 @@
           if (res.status !== 'ok') throw new Error('server');
           if (!res.found) { showSessionPlanError(res.message || '제출 링크가 올바르지 않습니다. 담당자에게 문의해 주세요.'); return; }
           if (res.cancelled) { showSessionPlanError('취소된 기수의 교과목이라 제출할 수 없습니다. 담당자에게 문의해 주세요.'); return; }
-          if (!res.required) { showSessionPlanError('보조강사는 강의계획서를 제출하지 않아도 됩니다.'); return; }
+          if (!res.required) { showSessionPlanError(res.exempt ? '이 교과목은 강의계획서를 제출하지 않아도 됩니다.' : '보조강사는 강의계획서를 제출하지 않아도 됩니다.'); return; }
           return postJson({ action: 'checkInstructor', 강사ID: instructorId })
             .catch(function(){ return {}; })
             .then(function(c){ showSessionPlanMode(res.data, c && c.found ? c.성명 : ''); });
@@ -692,6 +692,6 @@
 
   init();
 </script>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-09 제출 1</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-10 제출 2</div>
 </body>
 </html>

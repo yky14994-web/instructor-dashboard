@@ -325,7 +325,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-10 홈 70</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-10 홈 71</div>
 </div>
 </div>
 
@@ -863,6 +863,36 @@
     if (!p || !q) return null;
     return Math.round((Date.UTC(q.y, q.m - 1, q.d) - Date.UTC(p.y, p.m - 1, p.d)) / 86400000);
   }
+  /* 강의계획서 제출 기한 = 과정 개강일(입교 시작일) 14일 전. 책자를 과정별 한 권으로 만들어 인쇄(약 7일)하는 일정 기준이며,
+     같은 과정의 모든 교과목이 같은 기한입니다. '계획서 불필요'로 표시한 교과목·보조강사·강사 미지정 줄은 대상이 아닙니다.
+     과정 단위로 묶어 돌려줌: 기한이 14일 이내이거나 이미 지났는데 미제출 교과목이 남은 과정(기한 지난 건도 계속 표시) */
+  var PLAN_DUE_DAYS = 14;
+  function isNoPlan(r){ return String(r['계획서 불필요'] || '') === '불필요'; }
+  function planDueGroups(today){
+    var by = {}, order = [];
+    allSessions.forEach(function(r){
+      var key = String(r['개설키'] || '');
+      var pp = planByKey(key); if (pp && isCancelled(pp)) return;
+      if (!String(r['강사ID'] || '').trim() || isSubRole(r) || isNoPlan(r)) return;
+      var date = normYmd(r['일자']); if (!date) return;
+      var g = by[key];
+      if (!g) { g = by[key] = { key: key, rows: [], total: 0, done: 0, start: (pp && normYmd(pp['입교 시작일'])) || '', first: date }; order.push(key); }
+      g.total++;
+      if (date < g.first) g.first = date;
+      if (String(r['계획서파일ID'] || '')) g.done++;
+      else if (date >= today) g.rows.push({ r: r, date: date });
+    });
+    var out = [];
+    order.forEach(function(k){
+      var g = by[k]; if (!g.rows.length) return;
+      g.due = addDays(g.start || g.first, -PLAN_DUE_DAYS); g.left = dayDiff(today, g.due);
+      if (g.left === null || g.left > PLAN_DUE_DAYS) return;
+      g.rows.sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : Number(a.r['시작교시']) - Number(b.r['시작교시']); });
+      out.push(g);
+    });
+    out.sort(function(a, b){ return a.left !== b.left ? a.left - b.left : (a.key < b.key ? -1 : 1); });
+    return out;
+  }
   /* 대관 신청(승인 대기)·최근 7일 변경 */
   function rqSorted(){
     return reqs.slice().sort(function(x, y){
@@ -912,15 +942,11 @@
         var d = dayDiff(today, normYmd(r['일자'])); if (d !== null && d >= 0 && d <= 14) rvn++;
       });
     })();
+    soon = planDueGroups(today).length;   // 과정 단위(기한 지난 미제출 포함)
     allSessions.forEach(function(r){
       var pp = planByKey(String(r['개설키'] || '')); if (pp && isCancelled(pp)) return;
       var date = normYmd(r['일자']); if (!date) return;
-      if (hasInstr(r)) {
-        if (!String(r['강사ID'] || '').trim() || isSubRole(r) || String(r['계획서파일ID'] || '') || date < today) return;
-        var left = dayDiff(today, addDays(date, -7));
-        if (left === null || left < 0 || left > 14) return;
-        soon++;
-      } else {
+      if (!hasInstr(r)) {
         var d = dayDiff(today, date);
         if (d !== null && d >= 0 && d <= 14) unas++;
       }
@@ -932,7 +958,7 @@
     var nsN = sessionsOk ? noSubjList().filter(function(p){ var dd = dayDiff(today, normYmd(p['입교 시작일'])); return dd !== null && dd <= 14; }).length : 0;
     var pinN = Number(pendInst) || 0;
     var total = soon + unas + nsN + rvn + gapN + rqN + docN + lgN + pinN;
-    var tdRows = (pinN ? '<li><a class="wn" href="instructor-dashboard.html#st=승인대기"><span class="l"><span class="t">강사 등록 승인 대기</span><small>(누르면 강사 검색의 승인대기 목록으로 이동)</small></span><span class="n">' + pinN + '<small>건</small></span></a></li>' : '') + row('wn', soon, '강의계획서 제출 기한 임박', '강의일 7일 전까지 제출 · 기한이 14일 이내', 'plan') + row('wn', unas, '교과목 강사 미지정', '교과목은 있고 강사가 비어 있음 · 강의일 14일 이내', 'unas') + row('wn', nsN, '교과목 없는 과정', '교과목이 한 건도 없는 과정 · 진행 중이거나 14일 이내 시작', 'nosubj', true) + row('wn', rvn, '교과목 미정 (사전확보 교시)', '교시·강의실만 잡아 둔 건 · 예약일 14일 이내', 'resv') + row('wn', rqN, '강의실 대관 승인 대기', '직원이 신청한 강의실 대관', 'rvreq') + row('wn', docN, '강사 서류 교체 승인 대기', '강사카드·동의서 교체', 'docreq') + (lgN ? row('wn', lgN, '강사 숙소 신청 확인 대기', '강사 임시숙소 · 사용일 확인', 'lodge') : '') + row('wn', gapN, '빈 교시가 있는 과정', '교과목이 없는 교시 · 비워둠 처리 전 · 7일 이내', 'gap') + row('inf', chgN, '최근 7일 일정 변경', '알림용 · 건수 합계 제외', 'chg');
+    var tdRows = (pinN ? '<li><a class="wn" href="instructor-dashboard.html#st=승인대기"><span class="l"><span class="t">강사 등록 승인 대기</span><small>(누르면 강사 검색의 승인대기 목록으로 이동)</small></span><span class="n">' + pinN + '<small>건</small></span></a></li>' : '') + row('wn', soon, '강의계획서 제출 기한 임박 과정', '개강 14일 전까지 제출 · 기한 지난 미제출 포함', 'plan') + row('wn', unas, '교과목 강사 미지정', '교과목은 있고 강사가 비어 있음 · 강의일 14일 이내', 'unas') + row('wn', nsN, '교과목 없는 과정', '교과목이 한 건도 없는 과정 · 진행 중이거나 14일 이내 시작', 'nosubj', true) + row('wn', rvn, '교과목 미정 (사전확보 교시)', '교시·강의실만 잡아 둔 건 · 예약일 14일 이내', 'resv') + row('wn', rqN, '강의실 대관 승인 대기', '직원이 신청한 강의실 대관', 'rvreq') + row('wn', docN, '강사 서류 교체 승인 대기', '강사카드·동의서 교체', 'docreq') + (lgN ? row('wn', lgN, '강사 숙소 신청 확인 대기', '강사 임시숙소 · 사용일 확인', 'lodge') : '') + row('wn', gapN, '빈 교시가 있는 과정', '교과목이 없는 교시 · 비워둠 처리 전 · 7일 이내', 'gap') + row('inf', chgN, '최근 7일 일정 변경', '알림용 · 건수 합계 제외', 'chg');
     el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + (chgN ? ' · 최근 변경 ' + chgN + '건' : '') + '</span></div>' +
       (tdRows ? '<ul class="tdl">' + tdRows + '</ul>' : '<div class="empty">처리할 일이 없습니다.</div>') +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><button type="button" class="btn sm" data-dt="todo">처리할 일 보기</button></div>';
@@ -1167,16 +1193,11 @@
     /* todo (전체) 또는 todo:plan / todo:unas / todo:resv / todo:gap (항목별) */
     var sub = kind.indexOf(':') > -1 ? kind.split(':')[1] : '', viewer = (function(){ try { return sessionStorage.getItem(KEY_ROLE) === 'viewer'; } catch (e) { return false; } })();
     var has = {}; allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; });
-    var soon = [], unas = [], rv = [];
+    var soon = planDueGroups(today), unas = [], rv = [];
     allSessions.forEach(function(r){
       var pp = planByKey(String(r['개설키'] || '')); if (pp && isCancelled(pp)) return;
       var date = normYmd(r['일자']); if (!date) return;
-      if (hasInstr(r)) {
-        if (!String(r['강사ID'] || '').trim() || isSubRole(r) || String(r['계획서파일ID'] || '') || date < today) return;
-        var due = addDays(date, -7), left = dayDiff(today, due);
-        if (left === null || left < 0 || left > 14) return;
-        soon.push({ r: r, date: date, due: due, left: left });
-      } else {
+      if (!hasInstr(r)) {
         var d = dayDiff(today, date); if (d !== null && d >= 0 && d <= 14) unas.push({ r: r, date: date, d: d });
       }
     });
@@ -1186,7 +1207,6 @@
       if (!key || has[key] || (pp && isCancelled(pp))) return;
       var d = dayDiff(today, normYmd(r['일자'])); if (d !== null && d >= 0 && d <= 14) rv.push({ r: r, d: d });
     });
-    soon.sort(function(x, y){ return x.due < y.due ? -1 : x.due > y.due ? 1 : 0; });
     unas.sort(function(x, y){ return x.date < y.date ? -1 : x.date > y.date ? 1 : 0; });
     rv.sort(function(x, y){ return normYmd(x.r['일자']) < normYmd(y.r['일자']) ? -1 : 1; });
     var g7 = gapCourses(7), gapRows = [].concat.apply([], g7.map(function(o){ return o.gaps; }));
@@ -1197,13 +1217,25 @@
     var pastTag = '<span class="tag t-err">지난 일정</span>';
     var pastN = function(rows, f){ return rows.filter(function(x){ var d = dayDiff(today, normYmd(f(x))); return d !== null && d < 0; }).length; };
     var pastNote = function(n){ return n ? ' · 지난 일정 ' + n + '건' : ''; };
+    /* 과정 단위 표: 좁은 화면에서도 두 열이 모두 보이도록 열 너비를 직접 지정 */
+    var planTable = function(rows, empty){
+      if (!rows.length) return '<div class="empty">' + esc(empty) + '</div>';
+      return '<div class="dtx"><table class="dtt" style="min-width:0;"><colgroup><col style="width:112px;"><col></colgroup><thead><tr><th>기한 · 마감일</th><th>과정 · 제출 현황 · 미제출 교과목</th></tr></thead><tbody>' +
+        rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+    };
     var SEC = {
       plan: function(){
-        return '<div class="dsec">강의계획서 제출 기한 임박<small>' + soon.length + '건 · 강의일 7일 전까지 제출 · 기한이 14일 이내</small></div>' +
-          dtTable(['기한까지', '기한', '과정 · 기수', '교과목 (강의일)', '강사', ''], soon.map(function(o){
-            var btn = viewer ? '' : '<button type="button" class="btn sm" data-hcopy="' + esc(o.r['편성ID']) + '">안내 재발송</button>';
-            return [esc(dl(o.left)), '<span class="nw">' + esc(md(o.due)) + '</span>', cLink(String(o.r['개설키'])), esc(o.r['교과목'] || '') + ' (' + esc(md(o.date)) + ')', esc(o.r['강사명'] || o.r['강사ID'] || ''), btn];
-          }), '해당하는 건이 없습니다.') + (viewer ? '' : '<div class="hint">배정 안내(메일·문자)는 편성을 저장할 때 자동 발송됩니다. 강사가 메일을 못 받았다면 "안내 재발송"을 눌러 주세요.</div>');
+        var overN = soon.filter(function(g){ return g.left < 0; }).length, subN = soon.reduce(function(s, g){ return s + g.rows.length; }, 0);
+        return '<div class="dsec">강의계획서 제출 기한 임박 과정<small>' + soon.length + '과정 · 미제출 ' + subN + '건' + (overN ? ' · 기한 지남 ' + overN + '과정' : '') + ' · 개강 14일 전까지 제출(책자 제작 기준) · 기한 지난 미제출 포함</small></div>' +
+          planTable(soon.map(function(g){
+            var pill = g.left < 0 ? '<span class="tag t-err">' + Math.abs(g.left) + '일 지남</span>' : esc(dl(g.left));
+            var lines = g.rows.map(function(o){
+              var btn = viewer ? '' : ' <button type="button" class="btn sm" data-hcopy="' + esc(o.r['편성ID']) + '">안내 재발송</button>';
+              return '<div>' + esc(o.r['교과목'] || '') + ' (' + esc(md(o.date)) + ') · ' + esc(o.r['강사명'] || o.r['강사ID'] || '') + btn + '</div>';
+            }).join('');
+            return [pill + '<div class="nw" style="margin-top:4px;' + (g.left < 0 ? 'color:var(--err-fg);font-weight:700;' : '') + '">마감 ' + esc(md(g.due)) + '</div>',
+              cLink(g.key) + ' <span class="nw" style="margin-left:6px;color:var(--text-muted);">제출 ' + g.done + ' / 대상 ' + g.total + '</span><div style="margin-top:6px;">' + lines + '</div>'];
+          }), '해당하는 건이 없습니다.') + '<div class="hint">같은 과정은 모든 교과목의 마감일이 같습니다(과정 개강일 14일 전). 계획서가 필요 없는 교과목은 강의배정 화면의 교과목 입력창에서 "강의계획서 제출 불필요"를 체크하면 여기서 빠집니다.' + (viewer ? '' : ' 배정 안내(메일·문자)는 편성을 저장할 때 자동 발송되며, 강사가 메일을 못 받았다면 "안내 재발송"을 눌러 주세요.') + '</div>';
       },
       unas: function(){
         return '<div class="dsec">교과목 강사 미지정<small>' + unas.length + '건 · 교과목은 있고 강사가 비어 있음 · 강의일 14일 이내</small></div>' +
@@ -1338,7 +1370,7 @@
   });
   /* 상단 경로: 홈 › (처리할 일) › 상세 이름 */
   var CRUMB_NAME = { 'todo': '처리할 일', 'nosubj': '교과목 없는 과정', 'month': '이번 달 교육 현황',
-    'plan': '강의계획서 제출 기한 임박', 'unas': '교과목 강사 미지정', 'resv': '교과목 미정 (사전확보 교시)',
+    'plan': '강의계획서 제출 기한 임박 과정', 'unas': '교과목 강사 미지정', 'resv': '교과목 미정 (사전확보 교시)',
     'rvreq': '강의실 대관 승인 대기', 'docreq': '강사 서류 교체 승인 대기', 'lodge': '강사 숙소 신청 확인 대기',
     'gap': '빈 교시가 있는 과정', 'chg': '최근 7일 일정 변경' };
   function renderCrumb(){
