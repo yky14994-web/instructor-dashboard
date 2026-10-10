@@ -830,7 +830,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-09 배정 63</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 64</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2194,6 +2194,15 @@
     var klass = $('sKlass').value;
     var cat = $('sCat').value;
     var room = roomValue();
+    /* 사전확보해 둔 칸인데 다른 강의실로 저장하면: 확인 후 그 사전확보 예약을 취소한다
+       (같은 강의실이면 서버가 자동으로 '전환됨' 처리하므로 그대로 둔다) */
+    var holds = form.id ? [] : preHoldAt(currentKey, date, s, e);
+    var dropHolds = holds.filter(function(x){ return String(x['강의실'] || '') !== room; });
+    if (dropHolds.length) {
+      if (!confirm('이 칸은 ' + preHoldText(dropHolds) + '로 사전확보해 두었습니다.\n\n"' + (room || '강의실 미정') + '"으로 저장하면 아래 사전확보 예약은 취소됩니다.\n· ' +
+        dropHolds.map(function(x){ return md(normYmd(x['일자'])) + ' ' + reservePerText(x) + ' · ' + String(x['강의실'] || ''); }).join('\n· ') +
+        '\n\n계속할까요?')) return;
+    }
     var body = {
       action: 'saveSession', password: getPw(), 개설키: currentKey, 반: klass, 일자: date,
       시작교시: s, 끝교시: e, 교과목: subj, '교과목 구분': cat, 강사ID: form.iid, 강사명: form.iid ? '' : form.iname,
@@ -2209,6 +2218,11 @@
       upsertSession(res.data);
       refreshConflicts();
       lastDate = date; lastKlass = klass; lastCat = cat; lastRoom = room;
+      if (dropHolds.length) {
+        api({ action: 'cancelReservation', password: getPw(), 예약IDs: dropHolds.map(function(x){ return String(x['예약ID']); }) })
+          .then(function(rc){ if (rc && rc.status === 'ok') return rvReload().then(function(){ renderSessionList(); }); })
+          .catch(function(){});
+      }
       var warns = res.warnings || [];
       var next = e + 1;
       renderHead(planByKey(currentKey));
@@ -3889,13 +3903,33 @@
     $('sFormPanel').classList.remove('fmodal');
     $('fBackdrop').style.display = 'none';
   }
+  /* 이 과정이 그 일자·교시에 사전확보해 둔 강의실 예약(상태 '예약')을 찾는다 */
+  function preHoldAt(key, date, s, e){
+    if (!key || !date) return [];
+    return resv.filter(function(x){
+      if (String(x['유형']) !== '사전확보' || String(x['상태']) !== '예약') return false;
+      if (String(x['개설키'] || '') !== String(key) || normYmd(x['일자']) !== normYmd(date)) return false;
+      var rs = Number(x['시작교시']), re = Number(x['끝교시']);
+      return !(rs > e || s > re);
+    });
+  }
+  function preHoldText(list){
+    return list.map(function(x){ return String(x['강의실'] || '') + ' ' + reservePerText(x); }).join(', ');
+  }
+  function reservePerText(x){
+    var a = Number(x['시작교시']), b = Number(x['끝교시']);
+    return a === b ? a + '교시' : a + '~' + b + '교시';
+  }
   function prefillNew(date, n){
     if (sessEnded(date)) { alert('종료된 일정(' + date + ', 강의일 당일 17:50 이후)에는 교과목을 배정할 수 없습니다.'); return; }
     var p = planByKey(currentKey);
     if (!p || formState !== 'ok') return;
     lastDate = date;
     form = { id: '', iid: '', iname: '', role: '주강사' };
+    var hold = preHoldAt(currentKey, date, n, n);
+    if (hold.length && String(hold[0]['강의실'] || '')) lastRoom = String(hold[0]['강의실']);   // 사전확보해 둔 강의실을 기본값으로
     renderForm(p);
+    if (hold.length) showFormMsg('note-ok', ic('check', 'l') + '이 칸은 <b>' + esc(preHoldText(hold)) + '</b>로 사전확보해 둔 자리입니다. 그대로 저장하면 사전확보가 편성으로 바뀝니다.');
     var nn = periodInfo(n) ? n : (periods.length ? periods[0].n : 1);
     $('sStart').value = String(nn); $('sEnd').value = String(nn);
     updateDow(); renderChip();
