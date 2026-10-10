@@ -830,7 +830,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 69</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 70</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2384,11 +2384,17 @@
      기한 = 과정 개강일(입교 시작일) 14일 전(책자 인쇄 기간 고려, 같은 과정은 모두 같은 기한). 개강일이 없으면 그 강의일을 기준으로 함.
      이미 지난 강의는 '강의 종료'로 표시만 하고 미비 집계에서는 뺀다. */
   var PLAN_DUE_DAYS = 14;
+  var PLAN_LEGACY_DAYS = 7;
+  var PLAN_NEW_RULE_FROM = '2027-01-01';   // 입교 시작일이 이 날짜 이후인 과정부터 새 기준. 그 전(기존) 과정은 강의일 7일 전 기준 유지
   var NOPLAN = '불필요';
   function isNoPlan(r){ return !!r && String(r['계획서 불필요'] || '') === NOPLAN; }
+  function planLegacy(r){
+    var pp = planByKey(String(r['개설키'] || '')), s = pp ? normYmd(pp['입교 시작일']) : '';
+    return !(s && s >= PLAN_NEW_RULE_FROM);
+  }
   function planDueOf(r){
     var pp = planByKey(String(r['개설키'] || '')), s = pp ? normYmd(pp['입교 시작일']) : '';
-    return addDays(s || normYmd(r['일자']), -PLAN_DUE_DAYS);
+    return planLegacy(r) ? addDays(normYmd(r['일자']), -PLAN_LEGACY_DAYS) : addDays(s, -PLAN_DUE_DAYS);
   }
   function dayDiff(a, b){
     var p = parseYmd(a), q = parseYmd(b);
@@ -2401,7 +2407,7 @@
     if (pp && isCancelled(pp)) return null;
     var date = String(r['일자'] || ''), today = ymd(new Date());
     var st = { sid: String(r['편성ID'] || ''), iid: String(r['강사ID']), subj: String(r['교과목'] || ''), date: date,
-      done: !!r['계획서파일ID'], fid: String(r['계획서파일ID'] || ''), at: String(r['계획서제출일시'] || ''), due: '', left: null, ended: false, over: false };
+      done: !!r['계획서파일ID'], fid: String(r['계획서파일ID'] || ''), at: String(r['계획서제출일시'] || ''), due: '', left: null, ended: false, over: false, legacy: planLegacy(r) };
     if (parseYmd(date)) {
       st.due = planDueOf(r);
       st.left = dayDiff(today, st.due);
@@ -3621,7 +3627,8 @@
     var out = [];
     allSessions.forEach(function(r){
       var st = planState(r);
-      if (!st || st.done || st.ended || st.left === null || st.left > PLAN_DUE_DAYS) return;   // 기한이 지났는데 미제출인 건(left<0)도 계속 표시
+      if (!st || st.done || st.ended || st.left === null || st.left > PLAN_DUE_DAYS) return;
+      if (st.legacy && st.left < 0) return;   // 기존 과정(강의일 7일 전 기준)은 예전처럼 기한 지난 건을 표시하지 않음. 새 기준 과정은 기한 지난 미제출도 계속 표시
       out.push({ r: r, st: st });
     });
     out.sort(function(a, b){
@@ -3675,7 +3682,7 @@
     var plList = pl;
     function copyBtn(o){ return viewer ? '' : '<button type="button" class="btn sm" data-tplink="' + esc(o.st.sid) + '">안내 재발송</button>'; }
     D.plan = { label: '강의계획서 제출 기한 임박', n: pl.length, nOver: nOver, nSoon: pl.length - nOver,
-      sum: '기한 지남 <b style="color:var(--err-fg)">' + nOver + '건</b> · 14일 이내 임박 <b style="color:var(--warn-fg)">' + (pl.length - nOver) + '건</b> · 기한은 과정 개강일 14일 전(책자 제작 기준) · 계획서 불필요로 표시한 교과목은 제외',
+      sum: '기한 지남 <b style="color:var(--err-fg)">' + nOver + '건</b> · 14일 이내 임박 <b style="color:var(--warn-fg)">' + (pl.length - nOver) + '건</b> · 기한은 2027년 개강 과정부터 개강일 14일 전(책자 제작 기준), 그 전 과정은 강의일 7일 전 · 계획서 불필요로 표시한 교과목은 제외',
       cols: ['상태', '기한', '과정 · 기수', '교과목 (강의일)', '강사', ''],
       items: plList.map(function(o){
         return { key: o.r['개설키'], cells: [todoPill(o.st), '<span class="nw">' + esc(md(o.st.due)) + '</span>', esc(o.r['개설키']), esc(o.st.subj) + ' (' + esc(md(o.st.date)) + ')', nameOf(o.r, o.r), copyBtn(o)],
@@ -4453,7 +4460,7 @@
     if (!x.consent) items.push({ name: '개인정보 동의서', ok: false, text: '미제출', fid: '' });
     else items.push({ priv: true, name: '개인정보 동의서', ok: !ret.over, warn: d.due, text: ret.over ? '보유기간 만료(' + ret.expire + ')' : d.due ? '보유기간 임박(' + ret.expire + ' 만료)' : '제출 · 보유 ~' + ret.expire, fid: x.consent, hint: x.reconsent ? '재동의 확인 ' + x.reconsent + ' 기준' : '등록일 ' + (ret.base || '-') + ' 기준 3년' });
     if (ps) items.push({ name: '강의계획서 · ' + (ps.subj || '교과목') + ' (' + md(ps.date) + ')', ok: ps.done || ps.ended, warn: !ps.done && !ps.ended && !ps.over, text: planText(ps), fid: ps.fid,
-      hint: '교과목별 제출 · 기한은 과정 개강일 14일 전', neutral: !ps.done && ps.ended });
+      hint: '교과목별 제출 · 기한은 2027년 개강 과정부터 개강일 14일 전, 그 전 과정은 강의일 7일 전', neutral: !ps.done && ps.ended });
     items.sort(function(a, b){ return (a.ok && !a.warn ? 1 : 0) - (b.ok && !b.warn ? 1 : 0); });
     var need = items.filter(function(i){ return !i.ok || i.warn; });
     var rows = items.map(function(i){
@@ -4480,7 +4487,7 @@
       .sort(function(a, b){ return String(a.st.date).localeCompare(String(b.st.date)); });
     if (!list.length) return '';
     var n = list.filter(function(o){ return !o.st.done && !o.st.ended; }).length;
-    return '<div class="sec">강의계획서 <span class="hint">(주강사 교과목별 · 기한 과정 개강일 14일 전)</span> ' + (n ? '<span class="db wn">미제출 ' + n + '</span>' : '<span class="db ok">모두 제출</span>') + '</div>' +
+    return '<div class="sec">강의계획서 <span class="hint">(주강사 교과목별 · 기한 2027년 개강 과정부터 개강일 14일 전, 그 전 과정은 강의일 7일 전)</span> ' + (n ? '<span class="db wn">미제출 ' + n + '</span>' : '<span class="db ok">모두 제출</span>') + '</div>' +
       '<div class="hbox">' + list.map(function(o){
         var st = o.st, cls = st.done ? 'ok' : st.over ? 'bad' : st.ended ? '' : 'wn';
         return '<div class="hi">' + esc(md(st.date)) + ' · ' + esc(st.subj) + ' <span class="db ' + cls + '">' + esc(planText(st)) + '</span>' + (st.fid ? fileLinks(st.fid) : '') +
