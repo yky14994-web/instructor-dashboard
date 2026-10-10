@@ -830,7 +830,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 66</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 67</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1067,7 +1067,24 @@
     var s = sessionsByKey[key];
     if (!s || !s.total) return { kind: 'none', text: '교과목 없음' };
     var cls = s.assigned >= s.total ? 'ok' : 'info';
-    return { kind: cls, text: subjText(s, false) };
+    var n = subjCount(s), a = s.assigned - (s.ops || 0);
+    if (!n) return { kind: cls, text: subjText(s, false) };   // 운영 교시만 편성된 과정은 기존 표시 유지
+    var b = normYmd(p['입교 종료일']) || normYmd(p['입교 시작일']);
+    if (b && b < ymd(new Date())) return { kind: 'end', text: '종료 (교과목 ' + n + '개 중 ' + a + '개 배정)', short: '종료' };
+    if (cls === 'ok') {
+      if (gapIsLong(p)) return { kind: 'ok', text: subjText(s, false) };   // 5주 초과 과정은 빈 교시를 따지지 않으므로 '편성 완료'로 표시하지 않음
+      if (!gapMissCount(p)) return { kind: 'done', text: '편성 완료 (교과목 ' + n + '개)', short: '✓ 편성 완료', sub: '교과목 ' + n + '개' };
+    }
+    var miss = gapMissCount(p);
+    var pt = '편성 중 · 강사 ' + a + '/' + n + (miss ? ' · 빈 교시 ' + miss : '');
+    return { kind: 'info', text: pt + (s.ops ? ' · 운영 교시 ' + s.ops : ''), short: pt };
+  }
+  /* 오늘 이후 처리하지 않은 빈 교시 칸 수(교시 단위). 5주 초과 과정·편성이 없는 과정은 0 */
+  var gapIdxM = null;   // 한 번 그리는 동안 편성 색인을 재사용(화면을 새로 그릴 때·내보낼 때 비움)
+  function gapMissCount(p){
+    var n = 0;
+    try { gapsOf(p, ymd(new Date()), gapIdxM || (gapIdxM = gapIndex())).forEach(function(g){ n += g.nums.length; }); } catch (e) { return 0; }
+    return n;
   }
 
   function isCancelled(p){
@@ -1244,12 +1261,14 @@
       if (!st0 || !st0.total) return '<span class="legend">-</span>';
       return '<button type="button" class="tag tagbtn t-none" data-open="' + esc(p['과정+기수']) + '" title="남아 있는 편성 보기">' + (subjCount(st0) ? '남은 교과목 ' + subjCount(st0) + '개' : '남은 운영 교시 ' + st0.ops + '개') + ' ›</button>' + chgLastLine(p['과정+기수']);
     }
-    var cls = s.kind === 'none' ? 't-none' : s.kind === 'ok' ? 't-ok' : 't-info';
-    var stx = s.kind === 'ok' ? subjText(sessionsByKey[p['과정+기수']] || { total: 0, assigned: 0, ops: 0 }, true) : s.text;
+    var cls = s.kind === 'none' || s.kind === 'end' ? 't-none' : (s.kind === 'ok' || s.kind === 'done') ? 't-ok' : 't-info';
+    var stx = s.kind === 'ok' ? subjText(sessionsByKey[p['과정+기수']] || { total: 0, assigned: 0, ops: 0 }, true) : (s.short || s.text);
+    if (s.kind === 'done' && sessionsByKey[p['과정+기수']] && sessionsByKey[p['과정+기수']].ops) stx += ' · 운영 교시 ' + sessionsByKey[p['과정+기수']].ops;
     return '<button type="button" class="tag tagbtn ' + cls + '" data-open="' + esc(p['과정+기수']) + '" title="교과목 편성 화면 열기">' + esc(stx) + ' ›</button>' + cflTag(p) + chgLastLine(p['과정+기수']);
   }
 
   function render(){
+    gapIdxM = null;
     $('loading').style.display = 'none';
     updateWeekNote();
     renderTodo();
@@ -1416,6 +1435,7 @@
     '합숙여부', '입교 시수', '편성 담당', '실습(외부) 시작일', '실습(외부) 종료일', '보조 장소', '비고',
     '상태', '강사 배정 현황', '검사 결과'];
   function exportRows(){
+    gapIdxM = null;
     var aoa = [EXPORT_HEAD];
     shown.forEach(function(p){
       aoa.push(EXPORT_HEAD.map(function(k){
@@ -1769,14 +1789,21 @@
 
   /* --- 머리 카드 --- */
   function renderHead(p){
+    gapIdxM = null;
     var st = sessionsByKey[currentKey] || { total: 0, assigned: 0, hours: 0 };
     var unassigned = st.total - st.assigned;
     var tags = '';
     if (!st.total) tags += '<span class="tag t-none">교과목 없음</span>';
-    else tags += '<span class="tag ' + (unassigned ? 't-info' : 't-ok') + '">' + esc(subjText(st, false)) + '</span>' +
+    else tags += (function(){
+        var ss = subjState(p);
+        if (ss.kind === 'done') return '<span class="tag t-ok">' + esc(ss.short) + ' · ' + esc(ss.sub) + (st.ops ? ' · 운영 교시 ' + st.ops : '') + '</span>';
+        if (ss.kind === 'end') return '<span class="tag t-none">종료</span><span class="tag ' + (unassigned ? 't-info' : 't-ok') + '">' + esc(subjText(st, false)) + '</span>';
+        return '<span class="tag ' + (unassigned ? 't-info' : 't-ok') + '">' + esc(subjText(st, false)) + '</span>';
+      })() +
       '<span class="tag t-none">편성 시수 합계 ' + st.hours + '시간</span>' +
       (subjCount(st) >= SUBJ_HRS_MIN ? '<button type="button" class="tag tagbtn t-info" data-shrs="1" aria-expanded="false">교과목별' + ic('chevD', 'r') + '</button>' : '') +
-      (unassigned ? '<span class="tag t-warn">강사 미지정 ' + unassigned + '건</span>' : '');
+      (unassigned ? '<span class="tag t-warn">강사 미지정 ' + unassigned + '건</span>' : '') +
+      (function(){ if (isCancelled(p)) return ''; var ss = subjState(p), m = (ss.kind === 'info' || ss.kind === 'ok') ? gapMissCount(p) : 0; return m ? '<span class="tag t-warn">빈 교시 ' + m + '칸</span>' : ''; })();
     var co = cflByKey[currentKey];
     if (co && co.open) tags += '<span class="tag t-err">겹침 경고 ' + co.open + '건 (미확인)</span>';
     if (co && co.done) tags += '<span class="tag t-none">겹침 ' + co.done + '건 확인됨</span>';
