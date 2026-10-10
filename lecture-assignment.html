@@ -830,7 +830,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 67</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-10 배정 68</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1071,13 +1071,33 @@
     if (!n) return { kind: cls, text: subjText(s, false) };   // 운영 교시만 편성된 과정은 기존 표시 유지
     var b = normYmd(p['입교 종료일']) || normYmd(p['입교 시작일']);
     if (b && b < ymd(new Date())) return { kind: 'end', text: '종료 (교과목 ' + n + '개 중 ' + a + '개 배정)', short: '종료' };
-    if (cls === 'ok') {
-      if (gapIsLong(p)) return { kind: 'ok', text: subjText(s, false) };   // 5주 초과 과정은 빈 교시를 따지지 않으므로 '편성 완료'로 표시하지 않음
-      if (!gapMissCount(p)) return { kind: 'done', text: '편성 완료 (교과목 ' + n + '개)', short: '✓ 편성 완료', sub: '교과목 ' + n + '개' };
+    var sl = slotStats(p), un = n - a;   // sl: {t 전체 수업 교시, f 채운 교시, fut 오늘 이후 빈 교시} / 5주 초과 과정은 null
+    if (!sl || !sl.t) {
+      if (cls === 'ok') return { kind: 'ok', text: subjText(s, false) };   // 5주 초과 과정은 교시를 따지지 않으므로 '편성 완료'로 표시하지 않음
+      var pt0 = '편성 중 · 강사 ' + a + '/' + n;
+      return { kind: 'info', text: pt0 + (s.ops ? ' · 운영 교시 ' + s.ops : ''), short: pt0 };
     }
-    var miss = gapMissCount(p);
-    var pt = '편성 중 · 강사 ' + a + '/' + n + (miss ? ' · 빈 교시 ' + miss : '');
-    return { kind: 'info', text: pt + (s.ops ? ' · 운영 교시 ' + s.ops : ''), short: pt };
+    var fr = '교시 ' + sl.f + '/' + sl.t;
+    if (cls === 'ok' && !sl.fut) return { kind: 'done', text: '편성 완료 (교과목 ' + n + '개 · ' + fr + ')', short: '✓ 편성 완료 · ' + fr, sub: '교과목 ' + n + '개', fr: fr, f: sl.f, t: sl.t };
+    var pt = '편성 중 · ' + fr + (un ? ' · 강사 미지정 ' + un : '');
+    return { kind: 'info', text: pt + (s.ops ? ' · 운영 교시 ' + s.ops : ''), short: pt, fr: fr, f: sl.f, t: sl.t };
+  }
+  /* 교시 분수: 전체 수업 교시(수업일 × 하루 수업 교시)와 채운 교시(편성·비워둠 처리·팀 교시). 지난 날의 빈 교시도 센다. 5주 초과 과정·편성 없는 과정은 null */
+  function slotStats(p){
+    var key = String(p['과정+기수'] || '');
+    if (!key || gapIsLong(p)) return null;
+    var idx = gapIdxM || (gapIdxM = gapIndex());
+    if (!idx[key]) return null;
+    var cls = gapClassNums(), days = gapDayList(p), today = ymd(new Date()), t = 0, f = 0, fut = 0;
+    days.forEach(function(d){
+      var have = idx[key][d] || {};
+      cls.forEach(function(x){
+        t++;
+        if (have[x] || gapChk[key + '|' + d + '|' + x]) f++;
+        else if (d >= today) fut++;
+      });
+    });
+    return { t: t, f: f, fut: fut };
   }
   /* 오늘 이후 처리하지 않은 빈 교시 칸 수(교시 단위). 5주 초과 과정·편성이 없는 과정은 0 */
   var gapIdxM = null;   // 한 번 그리는 동안 편성 색인을 재사용(화면을 새로 그릴 때·내보낼 때 비움)
@@ -1803,7 +1823,7 @@
       '<span class="tag t-none">편성 시수 합계 ' + st.hours + '시간</span>' +
       (subjCount(st) >= SUBJ_HRS_MIN ? '<button type="button" class="tag tagbtn t-info" data-shrs="1" aria-expanded="false">교과목별' + ic('chevD', 'r') + '</button>' : '') +
       (unassigned ? '<span class="tag t-warn">강사 미지정 ' + unassigned + '건</span>' : '') +
-      (function(){ if (isCancelled(p)) return ''; var ss = subjState(p), m = (ss.kind === 'info' || ss.kind === 'ok') ? gapMissCount(p) : 0; return m ? '<span class="tag t-warn">빈 교시 ' + m + '칸</span>' : ''; })();
+      (function(){ if (isCancelled(p)) return ''; var ss = subjState(p), m = (ss.kind === 'info' || ss.kind === 'ok') ? gapMissCount(p) : 0; return (ss.kind === 'info' && ss.fr ? '<span class="tag t-info">' + esc(ss.fr) + '</span>' : '') + (m ? '<span class="tag t-warn">빈 교시 ' + m + '칸</span>' : ''); })();
     var co = cflByKey[currentKey];
     if (co && co.open) tags += '<span class="tag t-err">겹침 경고 ' + co.open + '건 (미확인)</span>';
     if (co && co.done) tags += '<span class="tag t-none">겹침 ' + co.done + '건 확인됨</span>';
