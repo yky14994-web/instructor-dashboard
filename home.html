@@ -1138,8 +1138,12 @@
   function cLink(key, txt){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '&from=home">' + esc(txt == null ? nameOf(key) : txt) + '</a>'; }
   function planRow(p, extra){
     var key = String(p['과정+기수'] || ''), a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a, today = todayStr();
-    var st = dateOver(b) ? '종료' : a <= today ? '진행 중' : 'D-' + dayDiff(today, a);
-    return [cLink(key), esc(p['구분'] || ''), esc(ipgyoLine(p).replace(/^입교 /, '')), esc(p['계획인원'] || ''), esc(p['예정 강의실'] || '미정'), esc(st)].concat(extra || []);
+    var d = a ? dayDiff(today, a) : 0, st, cls;
+    if (isCancelled(p)) { st = '취소'; cls = 't-none'; }
+    else if (dateOver(b)) { st = '종료'; cls = 't-none'; }
+    else if (a <= today) { st = '진행 중'; cls = 't-ok'; }
+    else { st = 'D-' + d; cls = d <= 14 ? 't-warn' : 't-none'; }
+    return [cLink(key), esc(p['구분'] || ''), esc(ipgyoLine(p).replace(/^입교 /, '')), esc(p['계획인원'] || ''), esc(p['예정 강의실'] || '미정'), '<span class="tag ' + cls + '">' + esc(st) + '</span>'].concat(extra || []);
   }
   var PCOLS = ['과정 · 기수', '구분', '입교 기간', '계획인원', '예정 강의실', '상태'];
   function gapDoneSection(viewer){
@@ -1193,9 +1197,12 @@
       var cx = plans.filter(function(p){ return isCancelled(p) && normYmd(p['입교 시작일']).slice(0, 7) === ym; }).sort(srt);
       html = '<div class="chead"><h2>이번 달 교육 현황 상세</h2><span class="meta">' + q.y + '년 ' + q.m + '월</span></div>' +
         '<div class="cdesc">입교 시작일 기준입니다. 과정명을 누르면 교과목 편성 화면으로 이동합니다. 월 캘린더는 상단 "월 일정 보기" 버튼에서 볼 수 있습니다.</div>';
-      [['이번 달 개강 기수', open, '이번 달에 시작하는 과정이 없습니다.'], ['지금 진행 중', run, '진행 중인 과정이 없습니다.'], ['다음 달 개강', next, '다음 달에 시작하는 과정이 없습니다.']].forEach(function(g){
-        html += '<div class="dsec">' + g[0] + '<small>' + g[1].length + '회</small></div>' + dtTable(PCOLS, g[1].map(function(p){ return planRow(p); }), g[2]);
-      });
+      /* 이번 달 개강 기수 + 이전 달에 시작해 아직 진행 중인 기수를 한 표로(시작일 순). 진행 중은 상태 열 색으로 구분 */
+      var openKeys = {}; open.forEach(function(p){ openKeys[String(p['과정+기수'])] = 1; });
+      var carry = run.filter(function(p){ return !openKeys[String(p['과정+기수'])]; });
+      var cur = open.concat(carry).sort(srt);
+      html += '<div class="dsec">이번 달 교육 과정<small>이번 달 개강 ' + open.length + '회' + (carry.length ? ' · 이전 달부터 진행 중 ' + carry.length + '회' : '') + '</small></div>' + dtTable(PCOLS, cur.map(function(p){ return planRow(p); }), '이번 달에 시작하거나 진행 중인 과정이 없습니다.');
+      html += '<div class="dsec">다음 달 개강<small>' + next.length + '회</small></div>' + dtTable(PCOLS, next.map(function(p){ return planRow(p); }), '다음 달에 시작하는 과정이 없습니다.');
       if (cx.length) html += '<div class="dsec">이번 달 취소된 기수<small>' + cx.length + '회</small></div>' + dtTable(PCOLS, cx.map(function(p){ return planRow(p); }), '');
       return html;
     }
