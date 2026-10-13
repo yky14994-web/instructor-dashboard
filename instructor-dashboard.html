@@ -198,6 +198,7 @@
   .badge-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
   .pending-badge.assigned{background:#EEF2F7;color:var(--navy);}   /* I2: 강의확정은 중립(남색 옅은 바탕) */
   .pending-badge.unsubmitted{background:#FAEEDA;color:#633806;box-shadow:inset 0 0 0 1px #E5C48A;}   /* I2: 미제출만 강조색 */
+  .pending-badge.finished{background:#E3F1E4;color:#1F5A2B;}   /* 강의 종료: 진행 중 배지와 같은 녹색 계열 */
   .pending-badge.done{background:#F1F3F5;color:var(--text-muted);}   /* I2: 제출완료는 회색(처리 끝난 상태) */
 
   #empty, #loading{
@@ -466,7 +467,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 강사관리 6</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 강사관리 7</div>
 </div>
 
 <script>
@@ -588,7 +589,9 @@
     var unsub = d.확정미제출건수 || 0;
     var sub = d.확정제출건수 !== undefined ? d.확정제출건수 : Math.max(0, total - unsub);
     var html = '';
+    var fin = d.강의완료건수 || 0;
     if (total > 0) html += '<span class="pending-badge assigned">강의확정' + (total > 1 ? ' ' + total + '건' : '') + '</span>';
+    if (fin > 0) html += '<span class="pending-badge finished">강의완료' + (fin > 1 ? ' ' + fin + '건' : '') + '</span>';
     if (unsub > 0) html += '<span class="pending-badge unsubmitted">미제출' + (unsub > 1 ? ' ' + unsub + '건' : '') + '</span>';
     if (sub > 0) html += '<span class="pending-badge done">제출완료' + (sub > 1 ? ' ' + sub + '건' : '') + '</span>';
     return html ? '<div class="badge-row">' + html + '</div>' : '';
@@ -1373,7 +1376,7 @@
           var v = d[k];
           if (v === undefined || v === null) return '';
           if (driveKeys.indexOf(k) > -1 && v) return 'https://drive.google.com/file/d/' + v + '/view';
-          if (k === '강의회차' || k === '강의확정건수' || k === '확정미제출건수' || k === '확정제출건수' || k === '편성건수') return Number(v) || 0;
+          if (k === '강의회차' || k === '강의확정건수' || k === '확정미제출건수' || k === '확정제출건수' || k === '강의완료건수' || k === '편성건수') return Number(v) || 0;
           return String(v);
         }));
       });
@@ -1445,7 +1448,7 @@
      탭을 닫거나 로그아웃·인증 실패·강사 정보 변경(승인·휴면·삭제·재동의·초대) 시 삭제, 15분 지난 것은 사용하지 않음 */
   var KEY_LIST = 'jsfa_list_v1', LIST_MAX_AGE = 15 * 60 * 1000;
   var LIST_CACHE_FIELDS = ['강사ID', '성명', '소속', '직위', '강사구분', '전문분야', '활동지역', '상태', '등록경로', '등록일', '재동의확인일', '사진링크',
-    '강의회차', '강의확정건수', '확정미제출건수', '확정제출건수', '강의확정', '확정미제출', '편성건수', '이력있음'];
+    '강의회차', '강의확정건수', '확정미제출건수', '확정제출건수', '강의완료건수', '강의확정', '확정미제출', '편성건수', '이력있음'];
   function pwFp(pw){ var h = 5381, t = String(pw || ''); for (var i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return String(h); }
   function listCacheClear(){ try { sessionStorage.removeItem(KEY_LIST); } catch (e) {} }
   function listCacheSave(pw, rows, role){
