@@ -339,7 +339,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 홈 77</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 홈 78</div>
 </div>
 </div>
 
@@ -1419,7 +1419,8 @@
   function renderCrumb(){
     var el = $('crumb'); if (!el) return;
     var sep = '<span class="sep">›</span>', k = curDetail || '';
-    if (!k) { el.innerHTML = '<span class="cur">홈</span>'; return; }
+    if (!k) { el.innerHTML = ''; el.style.display = 'none'; return; }   // 홈 첫 화면: 상단 메뉴에 홈이 이미 있으므로 경로 줄을 숨김(상세 화면에서만 표시)
+    el.style.display = '';
     var out = '<a data-dt="">홈</a>' + sep;
     if (k.indexOf('todo:') === 0) {
       out += '<a data-dt="todo">처리할 일</a>' + sep + '<span class="cur">' + esc(CRUMB_NAME[k.split(':')[1]] || '상세') + '</span>';
