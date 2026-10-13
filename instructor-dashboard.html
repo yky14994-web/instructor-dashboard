@@ -11,12 +11,12 @@
     --text:#2C2C2A;
     --text-sub:#4A4946;
     --text-muted:#5F6877;
-    --border:#EFEDE7;
+    --border:#D5DCE6;
     --border-input:#D9D6CF;
     /* C4: 공통 색 변수(2026-10-09) */
     --bg-hover:#F4F7FA;
-    --bg-soft:#F7F8FA;
-    --line:#E5E8EC;
+    --bg-soft:#F3F6FA;
+    --line:#D5DCE6;
     --none-bg:#ECEEF1;
     --text-faint:#8A8F98;
   }
@@ -24,7 +24,7 @@
   body{
     margin:0;
     font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
-    background:#F0F2F5;
+    background:#E3E8EF;
     color:var(--text);
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
@@ -74,10 +74,10 @@
   /* 요약 카드: 강의배정·홈과 같은 모양(숫자가 위, 설명이 아래). 마크업 순서는 그대로 두고 표시 순서만 바꿈 */
   .card{
     background:#fff;
-    border:1px solid transparent;
+    border:1px solid #CBD4E0;
     border-radius:10px;
     padding:14px 16px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    box-shadow:none;
     display:flex;flex-direction:column-reverse;
     transition:border-color .15s ease, background-color .15s ease;
   }
@@ -251,7 +251,7 @@
   #detail .field-grid .fv{font-size:14px;margin:2px 0 0 0;word-break:break-word;}
 
   /* 로그인 화면 */
-  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#F0F2F5;box-sizing:border-box;}
+  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#E3E8EF;box-sizing:border-box;}
   #loginCard{background:#fff;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,0.08);padding:34px 30px;width:100%;max-width:360px;text-align:center;}
   #loginCard .title{font-size:20px;font-weight:800;color:var(--navy);margin-bottom:6px;}
   #loginCard .sub{font-size:13px;color:var(--text-muted);margin-bottom:22px;}
@@ -262,7 +262,8 @@
   #loginMsg{display:none;color:#A32D2D;font-size:13px;margin-top:12px;}
 
   /* 공통 상단 메뉴 (강사 조회·강의배정 페이지 동일) */
-  .gnav{background:var(--navy);color:#fff;}
+  .gnav{background:#10263F;color:#fff;}
+  .gnav-brand .on{color:#FFB38A;margin-left:.3em;}
   .gnav-in{display:flex;align-items:stretch;gap:2px;padding:0 20px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .gnav-in::-webkit-scrollbar{display:none;}
   .gnav-brand{display:flex;align-items:center;font-size:13px;font-weight:800;letter-spacing:-0.2px;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
@@ -316,7 +317,7 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">소방학교 외래강사 ON</span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i on" aria-current="page" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" id="gnavRoom" href="lecture-assignment.html#v=room">강의실</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">소방학교 외래강사 <span class="on">ON</span></span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i on" aria-current="page" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" id="gnavRoom" href="lecture-assignment.html#v=room">강의실</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
   <div class="crumb"><a href="home.html">홈</a><span class="sep">›</span><span class="cur">강사 조회·검색</span></div>
 
@@ -467,7 +468,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 강사관리 9</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 강사관리 10</div>
 </div>
 
 <script>

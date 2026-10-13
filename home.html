@@ -11,7 +11,7 @@
     --text:#2C2C2A;
     --text-sub:#4A4946;
     --text-muted:#5F6877;
-    --border:#EFEDE7;
+    --border:#D5DCE6;
     --border-input:#D9D6CF;
     --ok-bg:#E3F1E4; --ok-fg:#1F6B2B;
     --warn-bg:#FFF2C9; --warn-fg:#7A5B00;
@@ -20,17 +20,17 @@
     --info-bg:#E3EBF5; --info-fg:#1B3A5F;
     /* C4: 공통 색 변수(2026-10-09) */
     --bg-hover:#F4F7FA;
-    --bg-soft:#F7F8FA;
-    --line:#E5E8EC;
+    --bg-soft:#F3F6FA;
+    --line:#D5DCE6;
   }
   *{box-sizing:border-box;}
-  body{margin:0;font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#F0F2F5;color:var(--text);-webkit-font-smoothing:antialiased;}
+  body{margin:0;font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#E3E8EF;color:var(--text);-webkit-font-smoothing:antialiased;}
   .wrap{max-width:1280px;margin:0 auto;padding:20px 16px 60px 16px;}
   header{padding:18px 22px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
   header .title{font-size:20px;font-weight:800;color:var(--navy);}
   /* 시스템 명칭 배너(홈 상단) */
   .serifname{font-family:'Nanum Myeongjo','Noto Serif KR','Batang','AppleMyungjo',serif;font-weight:800;}
-  header.brandhead{padding:26px 30px;background:linear-gradient(100deg,#1B3A5F 0%,#24507F 100%);color:#fff;}
+  header.brandhead{padding:26px 30px;background:linear-gradient(100deg,#1B3A5F 0%,#2B5C8F 100%);color:#fff;}
   .brandhead .bh-name{font-size:36px;line-height:1.2;letter-spacing:-.5px;}
   .brandhead .bh-name .on{color:#FFB38A;}
   .brandhead .bh-name small{font-family:'Pretendard','Malgun Gothic',sans-serif;font-weight:700;font-size:15px;opacity:.75;margin-left:8px;letter-spacing:1px;vertical-align:middle;}
@@ -72,7 +72,8 @@
   #loginMsg{display:none;color:var(--err-fg);font-size:13px;margin-top:12px;}
 
   /* 공통 상단 메뉴 */
-  .gnav{background:var(--navy);color:#fff;}
+  .gnav{background:#10263F;color:#fff;}
+  .gnav-brand .on{color:#FFB38A;margin-left:.3em;}
   .gnav-in{display:flex;align-items:stretch;gap:2px;padding:0 20px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .gnav-in::-webkit-scrollbar{display:none;}
   .gnav-brand{display:flex;align-items:center;font-size:13px;font-weight:800;letter-spacing:-0.2px;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
@@ -108,7 +109,7 @@
   @media (max-width:980px){ .grid2{grid-template-columns:minmax(0,1fr);} .grid2 #cRoom{grid-column:auto;} }
   .col{display:flex;flex-direction:column;gap:16px;min-width:0;}
   @media (max-width:980px){ .grid{grid-template-columns:minmax(0,1fr);} }
-  .card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);padding:16px 18px;word-break:keep-all;overflow-wrap:break-word;}
+  .card{background:#fff;border-radius:12px;border:1px solid #CBD4E0;padding:16px 18px;word-break:keep-all;overflow-wrap:break-word;}
   .card h2{margin:0;font-size:16px;font-weight:800;color:var(--navy);}
   .card .chead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
   .card .chead .meta{font-size:13px;color:var(--text-muted);font-weight:600;}
@@ -300,7 +301,7 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">소방학교 외래강사 ON</span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">강의실</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">소방학교 외래강사 <span class="on">ON</span></span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">강의실</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
   <div class="crumb" id="crumb"></div>
   <header class="brandhead">
@@ -339,7 +340,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 홈 78</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 홈 79</div>
 </div>
 </div>
 
