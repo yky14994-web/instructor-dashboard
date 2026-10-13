@@ -466,7 +466,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-12 강사관리 5</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 강사관리 6</div>
 </div>
 
 <script>
@@ -1028,6 +1028,18 @@
       });
     }
 
+    /* 강의 1건의 상태: 날짜가 지났으면 완료, 오늘이면 '시간' 값(예: 09:00~11:50)의 시작·종료 시각과 현재 시각을 비교 */
+    function lectureState(h, today){
+      var d = String(h.일자 || '');
+      if (!d) return 'done';
+      if (d < today) return 'done';
+      if (d > today) return 'before';
+      var m = /(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/.exec(String(h.시간 || ''));
+      var t = new Date(), nowMin = t.getHours() * 60 + t.getMinutes();
+      if (!m) return nowMin >= 17 * 60 + 50 ? 'done' : 'before';   // 시각이 없으면 당일 17:50 기준(강의배정과 같음)
+      var s0 = Number(m[1]) * 60 + Number(m[2]), e0 = Number(m[3]) * 60 + Number(m[4]);
+      return nowMin >= e0 ? 'done' : nowMin >= s0 ? 'now' : 'before';
+    }
     function localToday(){
       var t = new Date();
       return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
@@ -1076,14 +1088,20 @@
         }
         var isCancelled = h.상태 === '취소됨';
         var isSubRole = h.역할 === '보조강사';
-        var isPast = !(h.일자 && String(h.일자) >= today);
-        var displayLabel = isCancelled ? '취소됨' : (isPast ? '강의완료' : '예정');
+        // 상태는 날짜만이 아니라 그 강의의 시작·종료 시각으로 판정(시각이 없으면 오늘 17:50 기준)
+        var lecState = lectureState(h, today);   // 'before' 예정 · 'now' 진행 중 · 'done' 강의완료
+        var isPast = lecState === 'done';
+        var displayLabel = isCancelled ? '취소됨' : (lecState === 'done' ? '강의완료' : lecState === 'now' ? '진행 중' : '예정');
         var statusStyle = displayLabel === '강의완료' ? 'background:var(--line);color:#243B53;'
           : displayLabel === '취소됨' ? 'background:#FCEBEB;color:#A32D2D;'
+          : displayLabel === '진행 중' ? 'background:#E3F1E4;color:#1F5A2B;'
           : 'background:#FAEEDA;color:#633806;';
         var roleBadge = isSubRole ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#F2F1EC;color:#5F5E5A;margin-left:6px;">보조</span>' : '';
+        // 이미 끝난 강의의 미제출은 강의배정 화면과 같이 중립색 '강의 종료 · 미제출'로 표시(미비로 세지 않음)
         var missedSubmitBadge = (!isCancelled && !isSubRole && !h.계획서링크)
-          ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#FCEBEB;color:#A32D2D;margin-left:6px;">계획서 미제출</span>'
+          ? (isPast
+            ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#F2F1EC;color:#5F5E5A;margin-left:6px;">강의 종료 · 미제출</span>'
+            : '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#FCEBEB;color:#A32D2D;margin-left:6px;">계획서 미제출</span>')
           : '';
         var when = (h.교시 ? h.교시 : '') + (h.시간 ? (h.교시 ? ' (' + h.시간 + ')' : h.시간) : '');
         var openUrl = 'lecture-assignment.html#c=' + encodeURIComponent(h.강의명 || '') + '&from=dash';

@@ -326,7 +326,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-10 홈 72</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 홈 73</div>
 </div>
 </div>
 
@@ -492,6 +492,12 @@
   }
   function validTime(t){ return /^\d{1,2}:\d{2}$/.test(String(t || '')); }
   function toMin(t){ var m = /^(\d{1,2}):(\d{2})$/.exec(String(t || '')); return m ? Number(m[1]) * 60 + Number(m[2]) : null; }
+  /* 개별 강의가 끝났는지(상태 표시용): 지난 날짜는 종료, 오늘은 끝 교시 종료 시각 이후(교시표 시각이 없으면 17:50 기준) */
+  function lectureEnded(d, endPeriod){
+    var t = todayStr(); if (d < t) return true; if (d > t) return false;
+    var pe = periodInfo(Number(endPeriod)), em = pe && validTime(pe.end) ? toMin(pe.end) : null, n = new Date();
+    return em === null ? nowIsOver() : n.getHours() * 60 + n.getMinutes() >= em;
+  }
   function periodText(a, b){
     var txt = a === b ? a + '교시' : a + '~' + b + '교시';
     var ps = periodInfo(a), pe = periodInfo(b);
@@ -664,6 +670,11 @@
       if (pt.s != null && pt.e != null) { if (nowMin >= pt.e) return 'done'; if (nowMin >= pt.s) return 'now'; }
       return '';
     }
+    /* 과정 머리 '종료' 표시: 그 과정의 오늘 수업이 모두 끝났을 때(수업이 없으면 17:50 이후) */
+    function colEnded(blocks){
+      if (!blocks.length) return nowIsOver();
+      return blocks.every(function(b){ var pt = periodText(b.a, b.b); return pt.e != null ? nowMin >= pt.e : nowIsOver(); });
+    }
     function klassTag(o){ return o.klass && o.klass !== '전체' ? ' <span class="tag t-none">' + esc(o.klass) + '반</span>' : ''; }
     function stateTag(st){ return st === 'now' ? ' <span class="tag t-ok">진행 중</span>' : st === 'done' ? ' <span class="tag t-none">종료</span>' : ''; }
     var curRow = null, nextRow = null;
@@ -671,7 +682,7 @@
     rows.forEach(function(n){ var pi = periodInfo(n); if (nextRow === null && pi && validTime(pi.start) && toMin(pi.start) > nowMin) nextRow = n; });
     var th = '<tr><th class="pn">교시</th>' + cols.map(function(c){
       var nm = courseName(c.key);
-      return '<th class="cn" style="background:' + courseBg(nm) + ';border-top:4px solid ' + courseColor(nm) + ';">' + (c.lane === 0 ? courseLink(c.key, nameOf(c.key), today) : '<span class="hint">' + esc(nameOf(c.key)) + ' (동시 진행)</span>') + (c.lane === 0 && ipgyoLine(planByKey(c.key)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(c.key))) + '</small>' : '') + (!c.blocks.length ? '<span class="tag t-warn" style="display:inline-block;margin-top:4px;margin-right:4px;">오늘 교과목 미편성</span>' : '') + (nowIsOver() ? '<span class="tag t-none" style="display:inline-block;margin-top:4px;">종료</span>' : '') + '</th>';
+      return '<th class="cn" style="background:' + courseBg(nm) + ';border-top:4px solid ' + courseColor(nm) + ';">' + (c.lane === 0 ? courseLink(c.key, nameOf(c.key), today) : '<span class="hint">' + esc(nameOf(c.key)) + ' (동시 진행)</span>') + (c.lane === 0 && ipgyoLine(planByKey(c.key)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(c.key))) + '</small>' : '') + (!c.blocks.length ? '<span class="tag t-warn" style="display:inline-block;margin-top:4px;margin-right:4px;">오늘 교과목 미편성</span>' : '') + (colEnded(c.blocks) ? '<span class="tag t-none" style="display:inline-block;margin-top:4px;">종료</span>' : '') + '</th>';
     }).join('') + '</tr>';
     var body = rows.map(function(n){
       var pi = periodInfo(n), tm = pi && validTime(pi.start) ? pi.start + (validTime(pi.end) ? '~' + pi.end : '') : '';
@@ -692,7 +703,7 @@
     var keys = []; cols.forEach(function(c){ if (keys.indexOf(c.key) < 0) keys.push(c.key); });
     var cards = keys.map(function(k){
       var nm = courseName(k), items = list.filter(function(o){ return o.key === k; });
-      return '<div class="tcard" style="border-left:5px solid ' + courseColor(nm) + ';background:' + courseBg(nm) + ';"><div class="tch">' + courseLink(k, nameOf(k), today) + (ipgyoLine(planByKey(k)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(k))) + '</small>' : '') + (nowIsOver() ? '<span class="tag t-none" style="display:inline-block;margin-top:4px;">종료</span>' : '') + '</div>' + (items.length ? '' : '<div class="tcr"><div class="sj"><span class="tag t-warn">오늘 교과목 미편성</span></div></div>') + items.map(function(o){
+      return '<div class="tcard" style="border-left:5px solid ' + courseColor(nm) + ';background:' + courseBg(nm) + ';"><div class="tch">' + courseLink(k, nameOf(k), today) + (ipgyoLine(planByKey(k)) ? '<small class="ipl">' + esc(ipgyoLine(planByKey(k))) + '</small>' : '') + (colEnded(items) ? '<span class="tag t-none" style="display:inline-block;margin-top:4px;">종료</span>' : '') + '</div>' + (items.length ? '' : '<div class="tcr"><div class="sj"><span class="tag t-warn">오늘 교과목 미편성</span></div></div>') + items.map(function(o){
         var pt = periodText(o.a, o.b), st = stateOf(o);
         return '<div class="tcr ' + st + '"><div class="tm">' + esc(pt.txt) + (pt.time ? '<small>' + esc(pt.time) + '</small>' : '') + '</div><div><div class="sj">' + esc(o.subj) + klassTag(o) + stateTag(st) + '</div>' +
           '<div class="ro">' + (o.room ? esc(o.room) : '<span class="hint">강의실 미정</span>') + ' · ' + instrHtml(o.rows) + '</div></div></div>';
@@ -883,7 +894,7 @@
       g.total++;
       if (date < g.first) g.first = date;
       if (String(r['계획서파일ID'] || '')) g.done++;
-      else if (date >= today) g.rows.push({ r: r, date: date });
+      else if (date >= today && !lectureEnded(date, r['끝교시'])) g.rows.push({ r: r, date: date });   // 오늘 이미 끝난 강의는 제외
     });
     var out = [];
     order.forEach(function(k){
