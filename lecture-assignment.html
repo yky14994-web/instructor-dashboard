@@ -617,6 +617,7 @@
   .gc .t{font-size:11px;color:var(--text-muted);}
   .gc .i{margin-top:2px;display:flex;align-items:center;gap:3px;flex-wrap:wrap;}
   .gc .r{margin-top:2px;font-size:12px;color:var(--text-sub);}
+  .gc .n{margin-top:3px;padding-top:2px;border-top:1px dashed #9fb4cf;font-size:11.5px;font-weight:700;color:#7A3E00;word-break:keep-all;}
   .gc.none{background:#fff;border:1.5px dashed #c9a400;}
   .gc.none .i{color:var(--warn-fg);font-weight:700;}
   .gc.err{background:var(--err-bg);border:2px solid #D8574B;}
@@ -694,7 +695,18 @@
     body.pgrid #sListPanel{box-shadow:none;padding:0;}
     body.pgrid #sGridWrap{display:block !important;}
     body.pgrid .gscroll{overflow:visible;}
-    body.pgrid table.g{min-width:0;font-size:10.5px;}
+    body.pgrid table.g{min-width:0;font-size:10.5px;border-collapse:collapse;border:1.5px solid #222;page-break-inside:avoid;break-inside:avoid;}
+    body.pgrid table.g th,body.pgrid table.g td{border:1px solid #444 !important;}
+    body.pgrid table.g thead th{background:#DDE3EA !important;color:#000;border-bottom:1.5px solid #222 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body.pgrid table.g th.pc{background:#EEF1F5 !important;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body.pgrid table.g tr.lunch td{background:#E4E4E4 !important;color:#222;border-top:1.5px solid #222 !important;border-bottom:1.5px solid #222 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body.pgrid .gc{border:1px solid #555;background:#fff !important;border-radius:3px;}
+    body.pgrid .gc .n{border-top:1px dashed #666;color:#000;}
+    body.pgrid .gc .s{color:#000;}
+    body.pgrid .gprinthead,body.pgrid .gcourses,body.pgrid .glegend{page-break-inside:avoid;break-inside:avoid;}
+    body.pgrid.ppt table.g td.c{height:auto;min-height:20mm;}
+    body.pgrid.ppt table.g{font-size:10px;} body.pgrid.ppt .gc{font-size:10px;padding:3px 5px;} body.pgrid.ppt table.g th.pc{width:64px;} body.pgrid.ppt table.g th.pc small{font-size:8px;white-space:nowrap;}
+    body.pgrid #navBar,body.pgrid .navbar,body.plist #navBar,body.plist .navbar{display:none !important;}
   }
 
   /* 저장된 로그인이 있으면 로그인 화면(배경)을 보여주지 않고 바로 불러오기 */
@@ -836,7 +848,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-14 배정 81</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-14 배정 82</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -4310,7 +4322,7 @@
       return '<div class="i">' + roleTag(x) + nm + eb + '</div>';
     }).join('');
     var body = (cx ? '<div class="gcn" style="color:' + cx.color + '">' + esc(cx.label) + '</div>' : '') + '<div class="s">' + klass + esc(r['교과목']) + (warns.length ? ' <span title="' + esc(warns.join(' / ')) + '">' + ic('alert') + '</span>' : '') + flag + '</div>' +
-      '<div class="t">' + esc(pt.txt) + '</div>' + ins + '<div class="r">' + esc(r['강의실'] || '강의실 미정') + '</div>';
+      '<div class="t">' + esc(pt.txt) + '</div>' + ins + '<div class="r">' + esc(r['강의실'] || '강의실 미정') + '</div>' + (!isOps(r) && String(r['비고'] || '').trim() ? '<div class="n">' + esc(String(r['비고']).trim()) + '</div>' : '');
     var other = cx && !cx.own;
     var act = canEdit ? ' data-act="edit" data-id="' + esc(r['편성ID']) + '"' : (other ? ' data-gopen="' + esc(cx.key) + '" title="누르면 이 과정의 교과목 편성 화면으로 이동합니다"' : '');
     var mvc = '';
