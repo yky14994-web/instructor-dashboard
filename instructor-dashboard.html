@@ -467,7 +467,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 강사관리 7</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 강사관리 8</div>
 </div>
 
 <script>
@@ -1101,10 +1101,12 @@
           : 'background:#FAEEDA;color:#633806;';
         var roleBadge = isSubRole ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#F2F1EC;color:#5F5E5A;margin-left:6px;">보조</span>' : '';
         // 이미 끝난 강의의 미제출은 강의배정 화면과 같이 중립색 '강의 종료 · 미제출'로 표시(미비로 세지 않음)
-        var missedSubmitBadge = (!isCancelled && !isSubRole && !h.계획서링크)
+        var missedSubmitBadge = (!isCancelled && !isSubRole && !h.계획서링크 && h.계획서불필요)
+          ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#F2F1EC;color:#5F5E5A;margin-left:6px;">강의계획서 불필요</span>'
+          : (!isCancelled && !isSubRole && !h.계획서링크)
           ? (isPast
             ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#F2F1EC;color:#5F5E5A;margin-left:6px;">강의 종료 · 미제출</span>'
-            : '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#FCEBEB;color:#A32D2D;margin-left:6px;">계획서 미제출</span>')
+            : '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#FCEBEB;color:#A32D2D;margin-left:6px;">강의계획서 미제출</span>')
           : '';
         var when = (h.교시 ? h.교시 : '') + (h.시간 ? (h.교시 ? ' (' + h.시간 + ')' : h.시간) : '');
         var openUrl = 'lecture-assignment.html#c=' + encodeURIComponent(h.강의명 || '') + '&from=dash';
