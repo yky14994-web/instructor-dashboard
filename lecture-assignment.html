@@ -701,6 +701,9 @@
   html.autologin #loginScreen{display:none !important;}
   html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:var(--text-muted);font-size:14px;}
 
+  .navbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 4px;padding:12px 14px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+  .navbar .nlab{font-size:13px;font-weight:800;color:var(--navy);margin-right:4px;}
+  @media (max-width:640px){ .navbar .btn{height:auto;min-height:36px;padding:6px 12px;white-space:normal;text-align:left;} }
   .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;font-size:16px;color:var(--text-muted);margin:2px 0 12px;font-weight:600;}
   .crumb a{color:var(--navy);text-decoration:none;font-weight:800;padding:5px 9px;border-radius:8px;}
   .crumb a:hover{background:#E4ECF5;text-decoration:none;}
@@ -810,7 +813,6 @@
   </div>
 
   <div id="editView">
-    <div id="backBar" style="display:none;margin:0 0 10px;"></div>
     <div id="viewerNote" class="viewer-note" style="display:none;">조회 전용 계정입니다. 교과목 편성 내용은 볼 수만 있고 추가·수정·삭제는 할 수 없습니다.</div>
     <div id="sBlock" class="note-err" style="display:none;margin-bottom:12px;"></div>
     <div class="panel" id="sHead"></div>
@@ -824,6 +826,7 @@
       <div id="sCards"></div>
       <div id="sEmpty" class="empty" style="display:none;"></div>
     </div>
+    <div id="navBar" class="navbar" style="display:none;"></div>
   </div>
 </div>
 </div>
@@ -832,7 +835,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-13 배정 76</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-13 배정 77</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1709,14 +1712,13 @@
     closeBrowse(); closeInstructor(); closeChange(); closeCopy(); closeFormModal();
     $('editView').style.display = 'none';
     $('planView').style.display = '';
-    cameFrom = ''; cameBack = ''; wantNext = false;
+    cameFrom = ''; cameBack = '';
     applyPlanHead();
     applyFilters();
   }
   /* 화면 이동 출발지(홈·강사관리에서 링크로 들어온 경우만), 현재 위치 표시 */
   var cameFrom = (/[#&]from=(home|dash)(?:&|$)/.exec(location.hash || '') || [])[1] || '';   // 주소의 &from= 값으로 출발지 전달(저장소 미사용)
   var cameBack = (/[#&]b=(todo(?::[a-z]+)?|nosubj|month)(?:&|$)/.exec(location.hash || '') || [])[1] || '';   // 홈의 어느 상세 화면에서 왔는지(돌아가기용)
-  var wantNext = /[#&]n=1(?:&|$)/.test(location.hash || '');   // 홈 '교과목 없는 과정'에서 들어온 경우: 다음 교과목 없는 과정 버튼 표시
   var BACK_NAME = { 'todo': '처리할 일', 'nosubj': '교과목 없는 과정', 'month': '이번 달 교육 현황', 'todo:plan': '강의계획서 제출 기한 임박 과정', 'todo:unas': '교과목 강사 미지정', 'todo:resv': '교과목 미정 (사전확보 교시)', 'todo:gap': '빈 교시가 있는 과정', 'todo:rvreq': '강의실 대관 승인 대기', 'todo:docreq': '강사 서류 교체 승인 대기', 'todo:lodge': '강사 숙소 신청 확인 대기', 'todo:chg': '최근 7일 일정 변경' };
   function backHref(){ return 'home.html' + (cameBack ? '#d=' + cameBack : ''); }
   function backLabel(){ return cameBack ? (BACK_NAME[cameBack] || '이전 목록') + ' 목록으로' : '홈으로'; }
@@ -1777,18 +1779,19 @@
     var after = list.filter(function(p){ var x = normYmd(p['입교 시작일']); return x > ca || (x === ca && String(p['과정+기수']) > currentKey); });
     return { next: after[0] || list[0] || null, n: list.length };
   }
+  /* 교과목 목록·격자 아래 이동 줄: 다음 교과목 없는 과정 / 교과목 없는 과정 전체 보기 / 홈으로 */
   function renderBackBar(){
-    var bb = $('backBar'); if (!bb) return;
-    if (cameFrom !== 'home' || !currentKey) { bb.style.display = 'none'; bb.innerHTML = ''; return; }
-    var html = '';
-    if (wantNext && sessionsOk) {
+    var nb = $('navBar'); if (!nb) return;
+    if (!currentKey) { nb.style.display = 'none'; nb.innerHTML = ''; return; }
+    var html = '<span class="nlab">이동</span>';
+    if (sessionsOk) {
       var nx = nextNoSubj();
       html += nx.next
-        ? '<a class="btn primary" href="#c=' + encodeURIComponent(String(nx.next['과정+기수'])) + '" title="교과목이 아직 없는 다음 과정의 편성 화면으로 이동합니다">다음 교과목 없는 과정으로 → ' + esc(String(nx.next['과정명'] || '') + ' ' + String(nx.next['기수'] || '')) + ' (남은 ' + nx.n + '과정)</a> '
-        : '<span class="hint" style="margin-right:8px;">남은 교과목 없는 과정이 없습니다.</span>';
+        ? '<a class="btn primary" href="#c=' + encodeURIComponent(String(nx.next['과정+기수'])) + '" title="교과목이 아직 없는 다음 과정의 편성 화면으로 이동합니다">다음 교과목 없는 과정 → ' + esc(String(nx.next['과정명'] || '') + ' ' + String(nx.next['기수'] || '')) + ' (남은 ' + nx.n + '과정)</a>'
+        : '<span class="btn" style="cursor:default;color:var(--text-muted);" aria-disabled="true">남은 교과목 없는 과정 없음</span>';
     }
-    html += '<a class="btn" href="' + backHref() + '">← ' + esc(backLabel()) + ' 돌아가기</a>';
-    bb.style.display = ''; bb.innerHTML = html;
+    html += '<a class="btn" href="home.html#d=nosubj">교과목 없는 과정 전체 보기</a><a class="btn" href="home.html">홈으로</a>';
+    nb.style.display = ''; nb.innerHTML = html;
   }
   function showEdit(key){
     var p = planByKey(key);
