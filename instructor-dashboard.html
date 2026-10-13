@@ -282,7 +282,8 @@
   /* 저장된 로그인이 있으면 로그인 화면(배경)을 보여주지 않고 바로 불러오기 */
   #boot{display:none;}
   html.autologin #loginScreen{display:none !important;}
-  html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:var(--text-muted);font-size:14px;}
+  html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:var(--text-muted);font-size:14px;opacity:0;animation:bootin .2s ease .4s forwards;}
+  @keyframes bootin{to{opacity:1;}}   /* 0.4초 안에 로드되면 '불러오는 중' 문구를 보이지 않게 */
 
   .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;font-size:16px;color:var(--text-muted);margin:2px 0 12px;font-weight:600;}
   .crumb a{color:var(--navy);text-decoration:none;font-weight:800;padding:5px 9px;border-radius:8px;}
@@ -292,7 +293,7 @@
   @media (max-width:640px){ .crumb{font-size:14px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} }
 </style>
 <script src="busy-indicator.js" defer></script>
-<script src="swipe-nav.js?v=1" defer></script>
+<script src="swipe-nav.js?v=2" defer></script>
 </head>
 <body>
 <script>try{if(/(^|[#&])embed=1/.test(location.hash))document.documentElement.classList.add('embed');}catch(e){}</script>
@@ -469,7 +470,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 강사관리 12</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 강사관리 13</div>
 </div>
 
 <script>

@@ -720,7 +720,8 @@
   /* 저장된 로그인이 있으면 로그인 화면(배경)을 보여주지 않고 바로 불러오기 */
   #boot{display:none;}
   html.autologin #loginScreen{display:none !important;}
-  html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:var(--text-muted);font-size:14px;}
+  html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:var(--text-muted);font-size:14px;opacity:0;animation:bootin .2s ease .4s forwards;}
+  @keyframes bootin{to{opacity:1;}}   /* 0.4초 안에 로드되면 '불러오는 중' 문구를 보이지 않게 */
 
   .navbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 4px;padding:12px 14px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
   .navbar .nlab{font-size:13px;font-weight:800;color:var(--navy);margin-right:4px;}
@@ -733,7 +734,7 @@
   @media (max-width:640px){ .crumb{font-size:14px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} }
 </style>
 <script src="busy-indicator.js" defer></script>
-<script src="swipe-nav.js?v=1" defer></script>
+<script src="swipe-nav.js?v=2" defer></script>
 </head>
 <body>
 <script>try{if(sessionStorage.getItem('jsfa_dash_pw'))document.documentElement.classList.add('autologin');}catch(e){}window.__autoDone=function(){document.documentElement.classList.remove('autologin');};</script>
@@ -857,7 +858,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-14 배정 86</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-14 배정 87</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>

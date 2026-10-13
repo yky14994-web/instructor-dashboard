@@ -271,12 +271,13 @@
   /* 저장된 로그인이 있으면 로그인 화면(배경)을 보여주지 않고 바로 불러오기 */
   #boot{display:none;}
   html.autologin #loginScreen{display:none !important;}
-  html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:var(--text-muted);font-size:14px;}
+  html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:var(--text-muted);font-size:14px;opacity:0;animation:bootin .2s ease .4s forwards;}
+  @keyframes bootin{to{opacity:1;}}   /* 0.4초 안에 로드되면 '불러오는 중' 문구를 보이지 않게 */
   .cdesc{font-size:13px;color:var(--text-muted);margin:-2px 0 10px;}
   .go{font-weight:400;font-size:12px;color:var(--text-muted);margin-left:6px;white-space:nowrap;}
 </style>
 <script src="busy-indicator.js" defer></script>
-<script src="swipe-nav.js?v=1" defer></script>
+<script src="swipe-nav.js?v=2" defer></script>
 </head>
 <body>
 <script>try{if(sessionStorage.getItem('jsfa_dash_pw'))document.documentElement.classList.add('autologin');}catch(e){}window.__autoDone=function(){document.documentElement.classList.remove('autologin');};</script>
@@ -341,7 +342,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 홈 81</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 홈 82</div>
 </div>
 </div>
 
@@ -773,7 +774,7 @@
       return '<li style="border-left:5px solid ' + courseColor(String(o.p['과정명'] || '')) + ';padding-left:10px;"><div><span class="tag ' + typeCls(o.p['구분']) + '">' + esc(o.p['구분'] || '기타') + '</span> <a class="cn" href="lecture-assignment.html#c=' + encodeURIComponent(o.key) + fromQ() + '">' + esc(nameOf(o.key)) + '<span class="go">교과목 편성' + ic('arrowR', 'r') + '</span></a>' +
         '<div class="ds">' + esc(seg) + (rm ? ' · ' + esc(rm) : '') + '</div></div><div class="st">' + st + '</div></li>';
     }).join('') + '</ul>' +
-      '<div style="margin-top:10px;"><a class="btn sm primary" href="lecture-assignment.html#v=table&w=' + base + '">교과목 편성하기</a></div>';
+      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table&w=' + base + '">교과목 편성하기</a></div>';
     $('cWeek').innerHTML = html;
   }
 

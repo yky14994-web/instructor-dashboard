@@ -106,7 +106,6 @@
     var to = dx < 0 ? cur + 1 : cur - 1;   // 왼쪽으로 밀면 다음 메뉴, 오른쪽으로 밀면 이전 메뉴
     if (to < 0) { toast('첫 번째 메뉴입니다'); return; }
     if (to >= list.length) { toast('마지막 메뉴입니다'); return; }
-    toast((dx < 0 ? '다음 · ' : '이전 · ') + label(list[to]));
-    setTimeout(function () { try { list[to].click(); } catch (er) {} }, 120);
+    try { list[to].click(); } catch (er) {}   // 안내 문구 없이 바로 이동(문구가 깜빡이며 보이는 문제 방지). 끝 메뉴일 때만 문구 표시
   }, { passive: true });
 })();
