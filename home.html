@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>전남소방학교 강의 마스터 · 홈</title>
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<title>소방학교 외래강사 ON(JNFA) · 홈</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/nanum-myeongjo@5.3.0/korean-800.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/nanum-myeongjo@5.3.0/latin-800.css"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
   :root{
     --navy:#1B3A5F;
@@ -28,6 +28,17 @@
   .wrap{max-width:1280px;margin:0 auto;padding:20px 16px 60px 16px;}
   header{padding:18px 22px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
   header .title{font-size:20px;font-weight:800;color:var(--navy);}
+  /* 시스템 명칭 배너(홈 상단) */
+  .serifname{font-family:'Nanum Myeongjo','Noto Serif KR','Batang','AppleMyungjo',serif;font-weight:800;}
+  header.brandhead{padding:26px 30px;background:linear-gradient(100deg,#1B3A5F 0%,#24507F 100%);color:#fff;}
+  .brandhead .bh-name{font-size:36px;line-height:1.2;letter-spacing:-.5px;}
+  .brandhead .bh-name .on{color:#FFB38A;}
+  .brandhead .bh-name small{font-family:'Pretendard','Malgun Gothic',sans-serif;font-weight:700;font-size:15px;opacity:.75;margin-left:8px;letter-spacing:1px;vertical-align:middle;}
+  .brandhead .bh-sub{font-size:15px;font-weight:700;opacity:.92;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.3);display:inline-block;letter-spacing:.3px;}
+  .brandhead .sub{color:rgba(255,255,255,.72);margin-top:8px;}
+  .brandhead .btn{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.4);}
+  .brandhead .btn:hover{background:rgba(255,255,255,.22);}
+  @media (max-width:640px){ header.brandhead{padding:18px 16px;flex-direction:column;align-items:flex-start;} header.brandhead>div:first-child{width:100%;} .brandhead .bh-name{font-size:26px;} .brandhead .bh-name small{font-size:12px;display:block;margin:4px 0 0;} .brandhead .bh-sub{font-size:13px;} }
   header .sub{font-size:13px;color:var(--text-sub);margin-top:3px;font-weight:600;}
   @media (max-width:640px){
     /* M1: 휴대폰에서 새로고침을 제목 오른쪽 위 작은 버튼으로 */
@@ -272,7 +283,8 @@
 
 <div id="loginScreen">
   <div id="loginCard">
-    <div class="title">전남소방학교 강의 마스터</div>
+    <div class="title serifname" style="font-size:24px;line-height:1.25;">소방학교 외래강사 <span style="color:#E8590C;">ON</span></div>
+    <div class="sub" style="margin-bottom:4px;font-weight:700;">전남소방학교 교육운영 관리 시스템</div>
     <div class="sub">담당자 전용 · 비밀번호를 입력해 주세요</div>
     <form id="loginForm">
       <div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px;">
@@ -288,12 +300,13 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">전남소방학교 강의 마스터</span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">강의실</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">소방학교 외래강사 ON</span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">강의실</a><span class="gnav-i off" aria-disabled="true">설정<small>준비 중</small></span></div></nav>
 <div class="wrap">
   <div class="crumb" id="crumb"></div>
-  <header>
+  <header class="brandhead">
     <div>
-      <div class="title">홈</div>
+      <div class="bh-name serifname">소방학교 외래강사 <span class="on">ON</span><small>(JNFA)</small></div>
+      <div class="bh-sub">전남소방학교 교육운영 관리 시스템</div>
       <div class="sub" id="clock"></div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
@@ -326,7 +339,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 홈 76</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-13 홈 77</div>
 </div>
 </div>
 
