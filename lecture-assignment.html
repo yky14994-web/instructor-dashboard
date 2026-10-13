@@ -706,6 +706,7 @@
     body.pgrid .gprinthead,body.pgrid .gcourses,body.pgrid .glegend{page-break-inside:avoid;break-inside:avoid;}
     body.pgrid.ppt table.g td.c{height:auto;min-height:20mm;}
     body.pgrid.ppt table.g{font-size:10px;} body.pgrid.ppt .gc{font-size:10px;padding:3px 5px;} body.pgrid.ppt table.g th.pc{width:64px;} body.pgrid.ppt table.g th.pc small{font-size:8px;white-space:nowrap;}
+    body.pgrid .docleg{display:none !important;}
     body.pgrid #navBar,body.pgrid .navbar,body.plist #navBar,body.plist .navbar{display:none !important;}
   }
 
@@ -848,7 +849,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-14 배정 82</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-14 배정 83</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -4453,7 +4454,7 @@
       '<span style="margin-left:auto;display:inline-flex;gap:6px;">' + (isViewer() ? '' : '<button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>' + '<button type="button" class="btn sm mvm' + (gpOn() ? ' on' : '') + '" data-gpmode="1" title="켜면 빈 교시 칸마다 비워둠 처리 버튼이 나타납니다. 평소에는 숨겨 둡니다">비워둠 처리 ' + (gpOn() ? '끄기' : '켜기') + '</button>') + oriSelect('grid') + '<button type="button" class="btn sm" data-gw="print">인쇄</button></span></div>' + ctab +
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:var(--err-bg);border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span><span><i style="background:repeating-linear-gradient(135deg,#FFF1BF,#FFF1BF 3px,#fff 3px,#fff 6px);border:1px solid #D9B100"></i>빈 교시</span><span><i style="background:repeating-linear-gradient(135deg,#D9DCE0,#D9DCE0 3px,var(--bg-hover) 3px,var(--bg-hover) 6px)"></i>비워둠 처리(편성 아님)</span>' +
-      '<span><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
+      '<span class="docleg"><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
       mvBarHtml() + empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
       '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
