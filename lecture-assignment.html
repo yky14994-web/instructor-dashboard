@@ -810,6 +810,7 @@
   </div>
 
   <div id="editView">
+    <div id="backBar" style="display:none;margin:0 0 10px;"></div>
     <div id="viewerNote" class="viewer-note" style="display:none;">조회 전용 계정입니다. 교과목 편성 내용은 볼 수만 있고 추가·수정·삭제는 할 수 없습니다.</div>
     <div id="sBlock" class="note-err" style="display:none;margin-bottom:12px;"></div>
     <div class="panel" id="sHead"></div>
@@ -831,7 +832,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-13 배정 72</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-13 배정 73</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1707,12 +1708,16 @@
     closeBrowse(); closeInstructor(); closeChange(); closeCopy(); closeFormModal();
     $('editView').style.display = 'none';
     $('planView').style.display = '';
-    cameFrom = '';
+    cameFrom = ''; cameBack = '';
     applyPlanHead();
     applyFilters();
   }
   /* 화면 이동 출발지(홈·강사관리에서 링크로 들어온 경우만), 현재 위치 표시 */
   var cameFrom = (/[#&]from=(home|dash)(?:&|$)/.exec(location.hash || '') || [])[1] || '';   // 주소의 &from= 값으로 출발지 전달(저장소 미사용)
+  var cameBack = (/[#&]b=(todo(?::[a-z]+)?|nosubj|month)(?:&|$)/.exec(location.hash || '') || [])[1] || '';   // 홈의 어느 상세 화면에서 왔는지(돌아가기용)
+  var BACK_NAME = { 'todo': '처리할 일', 'nosubj': '교과목 없는 과정', 'month': '이번 달 교육 현황', 'todo:plan': '강의계획서 제출 기한 임박 과정', 'todo:unas': '교과목 강사 미지정', 'todo:resv': '교과목 미정 (사전확보 교시)', 'todo:gap': '빈 교시가 있는 과정', 'todo:rvreq': '강의실 대관 승인 대기', 'todo:docreq': '강사 서류 교체 승인 대기', 'todo:lodge': '강사 숙소 신청 확인 대기', 'todo:chg': '최근 7일 일정 변경' };
+  function backHref(){ return 'home.html' + (cameBack ? '#d=' + cameBack : ''); }
+  function backLabel(){ return cameBack ? (BACK_NAME[cameBack] || '이전 목록') + ' 목록으로' : '홈으로'; }
   var listShown = false;   // 이 화면에서 목록(표·캘린더·빈 강의실)을 한 번이라도 보여준 뒤에만 경로에 목록 단계를 넣음
   /* 현재 목록 화면의 제목·안내·되돌아갈 주소 */
   function headInfo(){
@@ -1738,7 +1743,8 @@
     var sep = '<span class="sep">›</span>', out = '<a href="home.html">홈</a>' + sep;
     if (currentKey) {
       var p = planByKey(currentKey);
-      if (listShown && lastList) out += '<a href="lecture-assignment.html' + lastList.h + '">' + esc(lastList.t) + '</a>' + sep;
+      if (cameFrom === 'home') { if (cameBack) out += '<a href="' + backHref() + '">' + esc(BACK_NAME[cameBack] || '이전 목록') + '</a>' + sep; }   // 홈에서 링크로 들어온 경우: 홈의 그 목록으로 돌아가는 경로
+      else if (listShown && lastList) out += '<a href="lecture-assignment.html' + lastList.h + '">' + esc(lastList.t) + '</a>' + sep;
       out += '<span class="cur">교과목 편성' + (p ? ' · ' + esc(String(p['과정명'] || '') + ' ' + String(p['기수'] || '')) : '') + '</span>';
     } else {
       var h = headInfo(); lastList = h; listShown = true;
@@ -1765,6 +1771,11 @@
     $('hTitle').textContent = '교과목 편성';
     $('hSub').textContent = '과정을 선택하면 교시 단위로 교과목·강사·강의실을 편성합니다.';
     renderCrumb();
+    var bb = $('backBar');
+    if (bb) {
+      if (cameFrom === 'home') { bb.style.display = ''; bb.innerHTML = '<a class="btn" href="' + backHref() + '">← ' + esc(backLabel()) + ' 돌아가기</a>'; }
+      else { bb.style.display = 'none'; bb.innerHTML = ''; }
+    }
     $('viewerNote').style.display = isViewer() ? 'block' : 'none';
     var blk = $('sBlock');
     if (!sessionsOk) { blk.style.display = 'block'; blk.textContent = '교과목 편성 목록을 불러오지 못해 저장할 수 없습니다. 새로고침 후 다시 시도해 주세요.'; }
