@@ -343,7 +343,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 홈 83</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 홈 84</div>
 </div>
 </div>
 
@@ -995,10 +995,11 @@
     var gapN = gapCourses(7).length;
     var rqN = reqs.length, chgN = chgRecent().length, docN = docs.length, lgN = lodges.length;
     /* 교과목이 한 건도 없는 과정 중 이미 진행 중이거나 14일 이내 시작하는 과정 */
-    var nsN = sessionsOk ? noSubjList().filter(function(p){ var dd = dayDiff(today, normYmd(p['입교 시작일'])); return dd !== null && dd <= 14; }).length : 0;
+    var gapKeys = {}; gapCourses(7).forEach(function(o){ gapKeys[String(o.p['과정+기수'])] = true; });   // 빈 교시(7일 이내) 항목에서 이미 세는 과정은 중복 집계 방지
+    var nsN = sessionsOk ? needList(false).filter(function(p){ var dd = dayDiff(today, normYmd(p['입교 시작일'])); return dd !== null && dd <= 14 && !gapKeys[String(p['과정+기수'])]; }).length : 0;
     var pinN = Number(pendInst) || 0;
     var total = soon + unas + nsN + rvn + gapN + rqN + docN + lgN + pinN;
-    var tdRows = (pinN ? '<li><a class="wn" href="instructor-dashboard.html#st=승인대기"><span class="l"><span class="t">강사 등록 승인 대기</span><small>(누르면 강사 검색의 승인대기 목록으로 이동)</small></span><span class="n">' + pinN + '<small>건</small></span></a></li>' : '') + row('wn', soon, '강의계획서 제출 기한 임박 과정', '2027년 개강 과정은 개강 14일 전, 그 전 과정은 강의일 7일 전', 'plan') + row('wn', unas, '교과목 강사 미지정', '교과목은 있고 강사가 비어 있음 · 강의일 14일 이내', 'unas') + row('wn', nsN, '교과목 없는 과정', '교과목이 한 건도 없는 과정 · 진행 중이거나 14일 이내 시작', 'nosubj', true) + row('wn', rvn, '교과목 미정 (사전확보 교시)', '교시·강의실만 잡아 둔 건 · 예약일 14일 이내', 'resv') + row('wn', rqN, '강의실 대관 승인 대기', '직원이 신청한 강의실 대관', 'rvreq') + row('wn', docN, '강사 서류 교체 승인 대기', '강사카드·동의서 교체', 'docreq') + (lgN ? row('wn', lgN, '강사 숙소 신청 확인 대기', '강사 임시숙소 · 사용일 확인', 'lodge') : '') + row('wn', gapN, '빈 교시가 있는 과정', '교과목이 없는 교시 · 비워둠 처리 전 · 7일 이내', 'gap') + row('inf', chgN, '최근 7일 일정 변경', '알림용 · 건수 합계 제외', 'chg');
+    var tdRows = (pinN ? '<li><a class="wn" href="instructor-dashboard.html#st=승인대기"><span class="l"><span class="t">강사 등록 승인 대기</span><small>(누르면 강사 검색의 승인대기 목록으로 이동)</small></span><span class="n">' + pinN + '<small>건</small></span></a></li>' : '') + row('wn', soon, '강의계획서 제출 기한 임박 과정', '2027년 개강 과정은 개강 14일 전, 그 전 과정은 강의일 7일 전', 'plan') + row('wn', unas, '교과목 강사 미지정', '교과목은 있고 강사가 비어 있음 · 강의일 14일 이내', 'unas') + row('wn', nsN, '편성이 필요한 과정', '교과목이 없거나 일부만 편성 · 진행 중이거나 14일 이내 시작', 'nosubj', true) + row('wn', rvn, '교과목 미정 (사전확보 교시)', '교시·강의실만 잡아 둔 건 · 예약일 14일 이내', 'resv') + row('wn', rqN, '강의실 대관 승인 대기', '직원이 신청한 강의실 대관', 'rvreq') + row('wn', docN, '강사 서류 교체 승인 대기', '강사카드·동의서 교체', 'docreq') + (lgN ? row('wn', lgN, '강사 숙소 신청 확인 대기', '강사 임시숙소 · 사용일 확인', 'lodge') : '') + row('wn', gapN, '빈 교시가 있는 과정', '교과목이 없는 교시 · 비워둠 처리 전 · 7일 이내', 'gap') + row('inf', chgN, '최근 7일 일정 변경', '알림용 · 건수 합계 제외', 'chg');
     el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + (chgN ? ' · 최근 변경 ' + chgN + '건' : '') + '</span></div>' +
       (tdRows ? '<ul class="tdl">' + tdRows + '</ul>' : '<div class="empty">처리할 일이 없습니다.</div>') +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><button type="button" class="btn sm" data-dt="todo">처리할 일 보기</button></div>';
@@ -1115,22 +1116,53 @@
       return !has[String(p['과정+기수'] || '')];
     });
   }
+  /* 편성이 필요한 과정: 아직 끝나지 않았고 입교 시작일이 오늘부터 2개월 이내인 과정 중
+     ① 교과목이 한 건도 없거나 ② 오늘 이후 날짜에 편성도 비워둠 처리도 안 된 수업 교시가 남아 있는 과정(5주 넘는 과정 포함).
+     과정별 편성 현황은 needMap[개설키] = {filled, total, done, left} 에 담음(filled·total은 과정 전체 기준, left는 오늘 이후 남은 교시) */
+  var needMap = {};
+  function needList(keepOver){
+    var today = todayStr(), tq = parseYmd(today), to2 = ymd(new Date(tq.y, tq.m + 1, tq.d)), idx = gapIndex(), cls = gapClassNums();
+    var minDate = nowIsOver() ? addDays(today, 1) : today, has = {};
+    allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; });
+    needMap = {};
+    return plans.filter(function(p){
+      if (isCancelled(p)) return false;
+      var a = normYmd(p['입교 시작일']); if (!a) return false;
+      var b = normYmd(p['입교 종료일']) || a;
+      if ((keepOver ? b < today : dateOver(b)) || a > to2) return false;
+      var key = String(p['과정+기수'] || ''), tot = 0, fill = 0, done = 0, left = 0;
+      gapDayList(p).forEach(function(d){
+        var have = (idx[key] || {})[d] || {};
+        cls.forEach(function(n){
+          tot++;
+          if (have[n]) fill++;
+          else if (gapChk[key + '|' + d + '|' + n]) done++;
+          else if (d >= minDate) left++;
+        });
+      });
+      needMap[key] = { filled: fill, total: tot, done: done, left: left };
+      return !has[key] || left > 0;
+    });
+  }
+  function needText(p){
+    var m = needMap[String(p['과정+기수'] || '')];
+    if (!m || !m.total) return '';
+    return '편성 ' + m.filled + '/' + m.total + '교시' + (m.done ? ' (비워둠 ' + m.done + ')' : '');
+  }
   function renderNoSubjCard(){
     var el = $('cNoSubj'), today = todayStr();
-    if (!sessionsOk) { el.innerHTML = '<div class="chead"><h2>교과목 없는 과정</h2></div><div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
-    var has = {}; allSessions.forEach(function(r){ has[String(r['개설키'] || '')] = true; });
-    var list = noSubjList(has, true);
+    if (!sessionsOk) { el.innerHTML = '<div class="chead"><h2>편성이 필요한 과정</h2></div><div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
+    var list = needList(true);
     list.sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : normYmd(x['입교 시작일']) > normYmd(y['입교 시작일']) ? 1 : 0; });
-    var html = '<div class="chead"><h2>교과목 없는 과정</h2><span class="meta">' + (list.length ? '2개월 이내 시작 · 총 ' + list.length + '과정' + (list.length > 5 ? ' 중 빠른 5과정 표시' : '') : '없음') + '</span></div>';
-    var gcN = gapCourses(7).length;
-    var gcLine = '<div class="hint" style="margin-top:8px;">빈 교시가 있는 과정(교과목 없는 교시) <b>' + gcN + '</b>과정' + (gcN ? ' · 7일 이내 · <a href="#d=nosubj" data-dt="nosubj">빈 교시 보기</a>' : '') + '</div>';
-    if (!list.length) { el.innerHTML = html + '<div class="empty">오늘부터 2개월 이내에 시작하는 과정은 모두 교과목이 편성되어 있습니다.</div>' + gcLine + '<div class="foot"><button type="button" class="btn sm" data-dt="nosubj">전체 과정 보기</button></div>'; return; }
+    var html = '<div class="chead"><h2>편성이 필요한 과정</h2><span class="meta">' + (list.length ? '2개월 이내 시작 · 총 ' + list.length + '과정' + (list.length > 5 ? ' 중 빠른 5과정 표시' : '') : '없음') + '</span></div>';
+    var gcLine = '<div class="hint" style="margin-top:8px;">교과목이 한 건도 없거나, 오늘 이후 편성할 교시가 남은 과정입니다. 모든 교시가 편성되거나 비워둠 처리되면 빠집니다.</div>';
+    if (!list.length) { el.innerHTML = html + '<div class="empty">오늘부터 2개월 이내에 시작하는 과정은 모두 편성되어 있습니다.</div>' + gcLine + '<div class="foot"><button type="button" class="btn sm" data-dt="nosubj">전체 과정 보기</button></div>'; return; }
     var shownN = Math.min(list.length, 5);
     html += '<ul class="nsl">' + list.slice(0, shownN).map(function(p){
       var key = String(p['과정+기수']), a = normYmd(p['입교 시작일']), d = dayDiff(today, a);
       var b2 = normYmd(p['입교 종료일']) || a;
       var tag = dateOver(b2) ? '<span class="tag t-none">종료·편성 불가</span>' : d <= 0 ? '<span class="tag t-err">진행 중</span>' : '<span class="tag ' + (d <= 14 ? 't-err' : d <= 30 ? 't-warn' : 't-none') + '">D-' + d + '</span>';
-      return '<li><div><a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '&from=home">' + esc(nameOf(key)) + '</a><small>' + esc(ipgyoLine(p).replace(/^입교 /, '')) + '</small></div>' + tag + '</li>';
+      return '<li><div><a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '&from=home">' + esc(nameOf(key)) + '</a><small>' + esc(ipgyoLine(p).replace(/^입교 /, '')) + (needText(p) ? ' · ' + esc(needText(p)) : '') + '</small></div>' + tag + '</li>';
     }).join('') + '</ul>' +
       gcLine + '<div class="foot">' + (list.length > shownN ? '<div class="hint" style="margin-bottom:8px;">시작일이 빠른 순서로 ' + shownN + '과정만 표시했습니다.</div>' : '') + '<button type="button" class="btn sm" data-dt="nosubj">전체 과정 보기</button></div>';
     el.innerHTML = html;
@@ -1206,16 +1238,16 @@
     var lab = function(k){ var y = k.slice(0, 4), m = Number(k.slice(5, 7)); return y + '년 ' + m + '월'; };
     return '<div class="mchips">' + groups.map(function(g){ return '<span>' + esc(Number(g.k.slice(5, 7)) + '월 ' + g.items.length + '과정') + '</span>'; }).join('') + '</div>' +
       groups.map(function(g){
-        return '<div class="mhd">' + esc(lab(g.k)) + ' 시작<small>' + g.items.length + '과정</small></div>' + dtTable(PCOLS, g.items.map(function(p){ return planRow(p); }), '');
+        return '<div class="mhd">' + esc(lab(g.k)) + ' 시작<small>' + g.items.length + '과정</small></div>' + dtTable(PCOLS.concat(['편성 현황']), g.items.map(function(p){ return planRow(p, [esc(needText(p) || '-')]); }), '');
       }).join('');
   }
   function detailHtml(kind){
     var today = todayStr(), html = '';
     if (!sessionsOk) return '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>';
     if (kind === 'nosubj') {
-      var list = noSubjList(null, true).sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : 1; });
-      return '<div class="chead"><h2>교과목 없는 과정 전체 (한 건도 편성 안 됨)</h2><span class="meta">' + list.length + '과정</span></div>' +
-        '<div class="cdesc">입교 시작일이 오늘부터 2개월 이내이고 아직 끝나지 않은 과정 중, 교과목이 하나도 편성되지 않은 과정입니다. 입교 시작일의 월별로 나누어 보여 줍니다. 과정명을 누르면 교과목 편성 화면으로 이동합니다.</div>' +
+      var list = needList(true).sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : 1; });
+      return '<div class="chead"><h2>편성이 필요한 과정 전체</h2><span class="meta">' + list.length + '과정</span></div>' +
+        '<div class="cdesc">입교 시작일이 오늘부터 2개월 이내이고 아직 끝나지 않은 과정 중, 교과목이 하나도 없거나 오늘 이후 편성할 교시가 남은 과정입니다(5주 넘는 과정 포함). 편성 현황은 과정 전체 수업 교시 기준이며, 모든 교시가 편성되거나 비워둠 처리되면 목록에서 빠집니다. 입교 시작일의 월별로 나누어 보여 줍니다. 과정명을 누르면 교과목 편성 화면으로 이동합니다.</div>' +
         byMonthTables(list) + gapSection(gapCourses(7), '오늘부터 2개월 이내에 시작하거나 진행 중인 과정');
     }
     if (kind === 'month') {
@@ -1416,7 +1448,7 @@
     renderTrio(); if (curDetail) showDetailKeep();
   });
   /* 상단 경로: 홈 › (처리할 일) › 상세 이름 */
-  var CRUMB_NAME = { 'todo': '처리할 일', 'nosubj': '교과목 없는 과정', 'month': '이번 달 교육 현황',
+  var CRUMB_NAME = { 'todo': '처리할 일', 'nosubj': '편성이 필요한 과정', 'month': '이번 달 교육 현황',
     'plan': '강의계획서 제출 기한 임박 과정', 'unas': '교과목 강사 미지정', 'resv': '교과목 미정 (사전확보 교시)',
     'rvreq': '강의실 대관 승인 대기', 'docreq': '강사 서류 교체 승인 대기', 'lodge': '강사 숙소 신청 확인 대기',
     'gap': '빈 교시가 있는 과정', 'chg': '최근 7일 일정 변경' };
