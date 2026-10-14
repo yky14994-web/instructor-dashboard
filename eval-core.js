@@ -69,9 +69,10 @@
       .replace(/^(\d+[.)]?\s*)/, '')
       .replace(/\s+/g, ' ').trim();
   }
+  /* 머리글에서 문항을 찾고, 나머지 조각(교과목명·강사명, 순서 무관)을 names로 돌려줌. 문항은 보통 맨 뒤에 있으므로 뒤에서부터 찾음 */
   function classifyHeader(h) {
     var parts = splitHeader(h), q = null, qi = -1, i, k;
-    for (i = 0; i < parts.length && !q; i++) {
+    for (i = parts.length - 1; i >= 0 && !q; i--) {
       for (k = 0; k < QPAT.length; k++) if (QPAT[k][1].test(parts[i])) { q = QPAT[k][0]; qi = i; break; }
     }
     if (!q) return null;
@@ -81,18 +82,19 @@
       var m = parts[qi].match(/^(.*?)\s*(강의|강사|교수)?\s*(태도|열의|성실|목표|목적|전달|이해|명확|설명|효과|도움|유용|적용|활용|의견|서술|건의)/);
       if (m && m[1]) rest = [m[1]];
     }
-    return { q: q, subject: cleanSubject(rest.join(' ')) };
+    var names = rest.map(cleanSubject).filter(Boolean);
+    return { q: q, names: names, subject: names.join(' ') };
   }
-  /* 반환: [{subject, cols:{태도:열번호,…,서술:열번호}}] (머리글 순서 유지) */
+  /* 반환: [{subject, names, cols:{태도:열번호,…,서술:열번호}}] (머리글 순서 유지) */
   function detectGroups(headers) {
     var groups = [], byKey = {}, last = null;
     headers.forEach(function (h, idx) {
       var c = classifyHeader(h);
       if (!c) return;
-      var key = c.subject;
-      if (!key && last) key = last.subject;   // 교과목명이 없는 열은 직전 묶음에 붙임
+      var names = c.names, key = names.join('|');
+      if (!key && last) { names = last.names; key = names.join('|'); }   // 이름이 없는 열은 직전 묶음에 붙임
       var g = byKey[key];
-      if (!g || g.cols[c.q] !== undefined) { g = { subject: key, cols: {} }; groups.push(g); byKey[key] = g; }
+      if (!g || g.cols[c.q] !== undefined) { g = { subject: names.join(' '), names: names, cols: {} }; groups.push(g); byKey[key] = g; }
       g.cols[c.q] = idx;
       last = g;
     });
@@ -131,7 +133,7 @@
       Q.forEach(function (k) {
         if (cnts[k] > 0) { avg[k] = round2(sums[k] / cnts[k]); tot += sums[k] / cnts[k]; } else { avg[k] = null; ok = false; }   // 종합은 반올림 전 문항 평균으로 계산
       });
-      return { subject: g.subject, n: n, avg: avg, overall: ok ? round2(tot / 4) : null, comments: comments, hasAll: ok };
+      return { subject: g.subject, names: g.names, n: n, avg: avg, overall: ok ? round2(tot / 4) : null, comments: comments, hasAll: ok };
     }).filter(function (it) { return it.n > 0 || it.comments.length > 0; });
     return { headers: headers, groups: groups, fileCount: data.length, items: items, skipped: skipped };
   }
@@ -174,6 +176,70 @@
     if (mains.length === 1) return { state: 'auto', picks: [{ id: mains[0].id, name: mains[0].name }], label: o.label };
     return { state: 'ambiguous', picks: o.list.map(function (x) { return { id: x.id, name: x.name }; }), label: o.label };
   }
+  /* ---------- 강사명 우선 연결 ----------
+   * names: 머리글에서 읽은 이름 조각(교과목명·강사명, 순서 무관). 먼저 편성의 강사 이름과 맞춰 보고, 안 맞으면 교과목명으로 맞춤.
+   * 결과: {state:'auto'|'ambiguous'|'none', picks:[{id,name}], label(교과목명), how:'강사명'|'교과목'|''} */
+  function normPerson(s) {
+    return normSubject(String(s || '').replace(/\s*(교수님|강사님|선생님|교수|강사|박사|님)\s*$/, ''));
+  }
+  function resolveGroup(sessions, names) {
+    names = (names || []).filter(Boolean);
+    var map = subjectMap(sessions);
+    var people = {};   // 강사ID → {id,name,subjects:[라벨]}
+    sessions.forEach(function (s) {
+      var id = String(s['강사ID'] || '').trim();
+      if (!id || String(s['강사 역할'] || '').trim() === '보조강사') return;
+      var o = people[id] || (people[id] = { id: id, name: String(s['강사명'] || ''), subjects: [] });
+      var sub = String(s['교과목'] || '');
+      if (sub && o.subjects.indexOf(sub) < 0) o.subjects.push(sub);
+    });
+    var list = Object.keys(people).map(function (k) { return people[k]; });
+    var hit = [], subjPart = [];
+    names.forEach(function (nm) {
+      var f = list.filter(function (p) { return p.name && normPerson(p.name) === normPerson(nm); });
+      if (f.length) f.forEach(function (p) { if (hit.indexOf(p) < 0) hit.push(p); });
+      else subjPart.push(nm);
+    });
+    if (hit.length) {
+      /* 교과목 조각이 있으면 그 교과목을 맡은 강사로 좁힘(동명이인 구분) */
+      var narrowed = hit;
+      if (hit.length > 1 && subjPart.length) {
+        var k2 = subjPart.map(normSubject);
+        narrowed = hit.filter(function (p) { return p.subjects.some(function (sb) { return k2.indexOf(normSubject(sb)) > -1; }); });
+        if (!narrowed.length) narrowed = hit;
+      }
+      var label = '', mm = subjPart.length ? map[normSubject(subjPart[0])] : null;
+      if (mm) label = mm.label;                                                                      // 파일의 교과목명이 편성과 같음
+      else if (narrowed.length === 1 && narrowed[0].subjects.length === 1) label = narrowed[0].subjects[0];   // 틀려 썼어도 그 강사의 편성 교과목명을 사용
+      else label = subjPart[0] || '';
+      var fileSubject = subjPart[0] || '';
+      if (narrowed.length === 1) return { state: 'auto', picks: [{ id: narrowed[0].id, name: narrowed[0].name }], label: label, how: '강사명', fileSubject: fileSubject };
+      return { state: 'ambiguous', picks: narrowed.map(function (p) { return { id: p.id, name: p.name }; }), label: label, how: '강사명', fileSubject: fileSubject };
+    }
+    var m = matchInstructor(map, names.join(' '));
+    if (m.state === 'none' && names.length > 1) {
+      for (var i = 0; i < names.length && m.state === 'none'; i++) m = matchInstructor(map, names[i]);
+    }
+    m.how = m.state === 'none' ? '' : '교과목';
+    return m;
+  }
+  /* 설문 열 제목 목록용: 과정 편성의 (교과목, 강사) 쌍을 날짜·교시 순으로, 주강사만 */
+  function surveyPairs(sessions) {
+    var rows = sessions.filter(function (s) { return String(s['강사ID'] || '').trim() && String(s['교과목'] || '').trim() && String(s['강사 역할'] || '').trim() !== '보조강사'; })
+      .sort(function (a, b) { return (String(a['일자']) + ('0' + a['시작교시']).slice(-2)).localeCompare(String(b['일자']) + ('0' + b['시작교시']).slice(-2)); });
+    var seen = {}, out = [];
+    rows.forEach(function (s) {
+      var k = normSubject(s['교과목']) + '|' + String(s['강사ID']);
+      if (!seen[k]) { seen[k] = 1; out.push({ subject: String(s['교과목']), id: String(s['강사ID']), name: String(s['강사명'] || '') }); }
+    });
+    return out;
+  }
+  function surveyHeader(pairs) {
+    var h = ['타임스탬프'];
+    pairs.forEach(function (p) { ['태도', '목표', '전달', '효과', '의견'].forEach(function (q) { h.push(p.subject + ' | ' + p.name + ' | ' + q); }); });
+    return h;
+  }
+
   function allInstructors(sessions) {
     var seen = {}, out = [];
     sessions.forEach(function (s) {
@@ -197,7 +263,7 @@
     MIN_SESSION: MIN_SESSION, MIN_CUM: MIN_CUM, Q: Q,
     parseCSV: parseCSV, answerScore: answerScore, classifyHeader: classifyHeader, detectGroups: detectGroups,
     aggregate: aggregate, stars: stars, starPct: starPct, to50: to50, cumulative: cumulative,
-    normSubject: normSubject, subjectMap: subjectMap, matchInstructor: matchInstructor, allInstructors: allInstructors,
+    normSubject: normSubject, subjectMap: subjectMap, matchInstructor: matchInstructor, allInstructors: allInstructors, resolveGroup: resolveGroup, surveyPairs: surveyPairs, surveyHeader: surveyHeader,
     checkCounts: checkCounts, round2: round2
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

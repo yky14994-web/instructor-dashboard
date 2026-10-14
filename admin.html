@@ -146,11 +146,11 @@
           <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
             <button type="button" class="btn primary" id="btnPick">파일 선택</button>
             <button type="button" class="btn" id="btnSample">예시 파일로 미리보기</button>
-            <button type="button" class="btn" id="btnTpl">양식 예시 내려받기</button>
+            <button type="button" class="btn" id="btnTpl">설문 열 제목 목록 내려받기</button>
           </div>
           <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv" hidden>
         </div>
-        <div class="hint" style="margin-top:8px;">엑셀 파일은 "다른 이름으로 저장 &rarr; CSV"로 저장한 뒤 올려 주세요. 열 제목은 "교과목명 | 태도", "교과목명 | 목표", "교과목명 | 전달", "교과목명 | 효과", "교과목명 | 의견"처럼 교과목명과 문항이 함께 보이면 자동으로 찾습니다. 응답은 매우만족~매우불만족 문구, ①~⑤(① = 5점 … ⑤ = 1점), 숫자 1~5를 인식합니다. 같은 파일은 다시 올릴 수 없고, 응답 원본 줄은 저장하지 않으며 집계값과 서술형 의견만 저장합니다.</div>
+        <div class="hint" style="margin-top:8px;">엑셀 파일은 "다른 이름으로 저장 &rarr; CSV"로 저장한 뒤 올려 주세요. 열 제목은 "교과목명 | 강사명 | 태도"(목표·전달·효과·의견도 같은 방식)처럼 교과목명, 강사명, 문항이 함께 보이면 자동으로 찾고, 강사는 이름을 먼저 맞춰 연결합니다. "설문 열 제목 목록 내려받기"로 받은 이름을 설문에 그대로 쓰면 틀리지 않습니다. 응답은 매우만족~매우불만족 문구, ①~⑤(① = 5점 … ⑤ = 1점), 숫자 1~5를 인식합니다. 같은 파일은 다시 올릴 수 없고, 응답 원본 줄은 저장하지 않으며 집계값과 서술형 의견만 저장합니다.</div>
         <div id="upMsg" class="note err" hidden></div>
       </div>
 
@@ -214,7 +214,7 @@
     </div>
   </section>
 
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 관리자 1</div>
+  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 관리자 2</div>
 </div>
 
 <script src="eval-core.js"></script>
@@ -337,34 +337,27 @@
   ['dragleave', 'drop'].forEach(function(n){ drop.addEventListener(n, function(e){ e.preventDefault(); drop.classList.remove('over'); }); });
   drop.addEventListener('drop', function(e){ if (e.dataTransfer && e.dataTransfer.files.length) takeFile(e.dataTransfer.files[0]); });
 
-  var TPL_SUBJ = ['교과목A', '교과목B'];
-  function tplCsv(subjects){
-    var head = ['타임스탬프'], r1 = ['2026-01-01 10:00'], r2 = ['2026-01-01 10:02'];
-    var A = ['매우만족', '만족', '보통'];
-    subjects.forEach(function(s, i){
-      ['태도', '목표', '전달', '효과', '의견'].forEach(function(q, k){
-        head.push(s + ' | ' + q);
-        r1.push(k < 4 ? A[(i + k) % 2] : '실습 시간이 더 길었으면 좋겠습니다.');
-        r2.push(k < 4 ? A[(i + k + 1) % 3] : '');
-      });
-    });
-    return [head, r1, r2].map(function(r){ return r.map(function(c){ return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(','); }).join('\r\n');
-  }
+  function csvLine(r){ return r.map(function(c){ return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(','); }
   $('btnTpl').onclick = function(){
-    var subj = Object.keys(smap).map(function(k){ return smap[k].label; }).slice(0, 3);
-    var csv = '﻿' + tplCsv(subj.length ? subj : TPL_SUBJ);
-    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = '평가결과_양식예시.csv';
+    show($('upMsg'), 'err', '');
+    if (!$('selCourse').value) { show($('upMsg'), 'err', '먼저 과정을 선택해 주세요.'); return; }
+    var pairs = E.surveyPairs(courseSessions($('selCourse').value));
+    if (!pairs.length) { show($('upMsg'), 'warn', '이 과정에는 강사가 지정된 교과목 편성이 없어 열 제목 목록을 만들 수 없습니다. 강의배정에서 편성과 강사를 먼저 지정해 주세요.'); return; }
+    var csv = '\uFEFF' + csvLine(E.surveyHeader(pairs)) + '\r\n';
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = '설문_열제목_' + $('selCourse').value.replace(/[\\/:*?"<>|]/g, '') + '.csv';
     document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    show($('upMsg'), 'ok', '교과목 ' + pairs.length + '건의 열 제목을 내려받았습니다. 설문을 만들 때 이 이름을 그대로 쓰면 강사가 자동으로 연결됩니다(주강사 기준).');
   };
   $('btnSample').onclick = function(){
     show($('upMsg'), 'err', '');
     if (!$('selCourse').value) { show($('upMsg'), 'err', '먼저 과정을 선택해 주세요.'); return; }
     if (!num($('inEnter').value)) { show($('upMsg'), 'err', '입교 인원을 입력해 주세요.'); return; }
-    var subj = Object.keys(smap).map(function(k){ return smap[k].label; }).slice(0, 3);
-    subj = subj.length ? subj : TPL_SUBJ;
+    var pairs = E.surveyPairs(courseSessions($('selCourse').value)).slice(0, 3);
+    if (!pairs.length) pairs = [{ subject: '교과목A', name: '강사A' }, { subject: '교과목B', name: '강사B' }];
     var L = ['매우만족', '만족', '만족', '보통', '매우만족'];
-    var head = ['타임스탬프'];
-    subj.forEach(function(s){ ['태도', '목표', '전달', '효과', '의견'].forEach(function(q){ head.push(s + ' | ' + q); }); });
+    var head = E.surveyHeader(pairs);
+    var subj = pairs.map(function(p){ return p.subject; });
     var out = [head];
     var enter = Math.min(num($('inEnter').value), 40);
     for (var i = 0; i < enter; i++) {
@@ -385,8 +378,8 @@
       return;
     }
     var items = agg.items.map(function(it){
-      var m = E.matchInstructor(smap, it.subject);
-      var o = { subject: it.subject, n: it.n, avg: it.avg, overall: it.overall, comments: it.comments, hasAll: it.hasAll, state: m.state, picks: m.picks, label: m.label || it.subject, inst: '' };
+      var m = E.resolveGroup(courseSessions(courseKey), it.names);
+      var o = { subject: it.subject, n: it.n, avg: it.avg, overall: it.overall, comments: it.comments, hasAll: it.hasAll, state: m.state, picks: m.picks, how: m.how || '', fileSubject: m.fileSubject || '', label: m.label || it.subject, inst: '' };
       if (m.state === 'auto') o.inst = m.picks[0].id + '|' + m.picks[0].name;
       return o;
     });
@@ -412,7 +405,7 @@
     $('sampleTag').hidden = !pv.sample;
     $('pvBody').innerHTML = pv.items.map(function(it, i){
       var lowRow = it.n < E.MIN_SESSION, sk = it.inst === 'x';
-      var subjCell = it.state === 'none' ? esc(it.subject || '(교과목명 없음)') + '<div class="hint">편성에서 찾지 못함</div>' : esc(it.label);
+      var subjCell = it.state === 'none' ? esc(it.subject || '(이름 없음)') + '<div class="hint">편성에서 찾지 못함</div>' : (esc(it.label || it.subject) + (it.how ? '<div class="hint">' + it.how + '으로 연결' + (it.fileSubject && E.normSubject(it.fileSubject) !== E.normSubject(it.label) ? ' · 파일 표기: ' + esc(it.fileSubject) : '') + '</div>' : ''));
       var tagHtml = !it.hasAll ? '<span class="tag t-err">문항 열 부족</span>' : lowRow ? '<span class="tag t-warn">응답 10명 미만</span>' : '<span class="tag t-ok">표시</span>';
       var qs = E.Q.map(function(q){ return '<td class="n">' + fmt(it.avg[q]) + '</td>'; }).join('');
       return '<tr class="' + (lowRow ? 'low ' : '') + (sk ? 'skip' : '') + '"><td>' + subjCell + '</td><td><select data-i="' + i + '" aria-label="강사 선택">' + instOptions(it) + '</select></td><td class="n">' + it.n + '</td>' + qs +
