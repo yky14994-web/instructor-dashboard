@@ -1,5 +1,5 @@
 /* 주 메뉴 스와이프 이동 — 공통 스크립트 (태블릿·휴대폰 터치 전용)
- * 홈 · 강의배정 · 강사관리 · 강의실 화면에서, 화면을 손가락으로 좌우로 길게 밀면 상단 주 메뉴의 이전/다음 메뉴로 이동한다.
+ * 홈 · 강의배정 · 강사관리 · 강의실 · 관리자 화면에서, 화면을 손가락으로 좌우로 길게 밀면 상단 주 메뉴의 이전/다음 메뉴로 이동한다.
  * 충돌 위험이 있는 경우에는 작동하지 않는다:
  *   - 가로로 스크롤되는 영역(격자·표 등) 안에서 시작한 동작, 입력창·선택창·슬라이더 위에서 시작한 동작
  *   - 팝업(오버레이)이 열려 있을 때, 입력 중(포커스·작성한 내용 있음)일 때, 글자를 선택 중일 때, 확대(핀치) 상태일 때
@@ -20,6 +20,7 @@
     var out = [];
     Array.prototype.forEach.call(document.querySelectorAll('.gnav .gnav-i'), function (el) {
       if (el.classList.contains('off') || el.getAttribute('aria-disabled') === 'true') return;
+      if (!el.getClientRects().length) return;   // 숨겨진 메뉴(관리자 로그인 전의 '관리자' 등)는 건너뜀
       out.push(el);
     });
     return out;
