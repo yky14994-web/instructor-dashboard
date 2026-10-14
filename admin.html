@@ -176,7 +176,7 @@
           </div>
           <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv" hidden>
         </div>
-        <div class="hint" style="margin-top:8px;">엑셀 파일은 "다른 이름으로 저장 &rarr; CSV"로 저장한 뒤 올려 주세요. 열 제목은 "교과목명 | 강사명 | 태도"(목표·전달·효과·의견도 같은 방식)처럼 교과목명, 강사명, 문항이 함께 보이면 자동으로 찾고, 강사는 이름을 먼저 맞춰 연결합니다. "설문 열 제목 목록 내려받기"로 받은 이름을 설문에 그대로 쓰면 틀리지 않습니다. 응답은 매우만족~매우불만족 문구, ①~⑤(① = 5점 … ⑤ = 1점), 숫자 1~5를 인식합니다. 같은 파일은 다시 올릴 수 없고, 응답 원본 줄은 저장하지 않으며 집계값과 서술형 의견만 저장합니다.</div>
+        <div class="hint" style="margin-top:8px;">엑셀 파일은 "다른 이름으로 저장 &rarr; CSV"로 저장한 뒤 올려 주세요. 열 제목은 "교과목명 | 강사명 | 태도"(목표·전달·효과·의견도 같은 방식, 현장교관은 준비성·전문성·적용성)처럼 교과목명, 강사명, 문항이 함께 보이면 자동으로 찾고, 강사는 이름을 먼저 맞춰 연결합니다. "설문 열 제목 목록 내려받기"로 받은 이름을 설문에 그대로 쓰면 틀리지 않습니다. 응답은 매우만족~매우불만족 문구, ①~⑤(① = 5점 … ⑤ = 1점), 숫자 1~5를 인식합니다. 같은 파일은 다시 올릴 수 없고, 응답 원본 줄은 저장하지 않으며 집계값과 서술형 의견만 저장합니다.</div>
         <div id="upMsg" class="note err" hidden></div>
       </div>
 
@@ -188,7 +188,19 @@
           <div class="tx" style="margin-top:8px;"><table class="t">
             <thead><tr><th>교과목</th><th>강사</th><th class="n">응답</th><th class="n">태도</th><th class="n">목표</th><th class="n">전달</th><th class="n">효과</th><th class="n">종합(5점)</th><th class="n">50점 환산</th><th>표시</th></tr></thead>
             <tbody id="pvBody"></tbody></table></div>
-          <div class="note">강사는 선택한 과정의 교과목 편성에서 자동으로 찾습니다. 주강사가 둘 이상이거나 편성에 없는 교과목은 직접 선택해 주세요. "저장하지 않음"을 고르면 그 줄은 저장되지 않습니다. 응답이 10명 미만인 교과목은 점수를 저장하되 별점과 환류에는 쓰지 않습니다. 종합은 4개 문항(태도·목표·전달·효과) 평균이고, 50점 환산은 종합×10입니다(현행 BSC 점수 기준).</div>
+          <div id="pvTWrap" hidden>
+            <h3 style="margin:16px 0 4px;font-size:15px;">훈련(현장교관) 문항 <span class="tag t-info">편성에서 현장교관(대표)로 표시한 줄</span></h3>
+            <div class="tx"><table class="t">
+              <thead><tr><th>교과목</th><th>교수</th><th class="n">응답</th><th class="n">태도</th><th class="n">준비성</th><th class="n">전문성</th><th class="n">적용성</th><th class="n">종합(5점)</th><th class="n">50점 환산</th><th>표시</th></tr></thead>
+              <tbody id="pvBodyT"></tbody></table></div>
+          </div>
+          <div id="pvCWrap" hidden>
+            <h3 style="margin:16px 0 4px;font-size:15px;">공통 문항 <span class="tag t-info">과정 전체에 한 번씩 묻는 문항</span></h3>
+            <div class="tx"><table class="t">
+              <thead><tr><th>분야</th><th>항목</th><th class="n">응답</th><th class="n">평균(5점)</th></tr></thead>
+              <tbody id="pvBodyC"></tbody></table></div>
+          </div>
+          <div class="note">강사는 선택한 과정의 교과목 편성에서 자동으로 찾습니다. 주강사가 둘 이상이거나 편성에 없는 교과목은 직접 선택해 주세요. "저장하지 않음"을 고르면 그 줄은 저장되지 않습니다. 응답이 10명 미만인 교과목은 점수를 저장하되 별점과 환류에는 쓰지 않습니다. 종합은 4개 문항 평균(강의: 태도·목표·전달·효과 / 훈련: 태도·준비성·전문성·적용성)이고, 50점 환산은 종합×10입니다(현행 BSC 점수 기준). 공통 문항(교육시설환경·구내식당)은 문항별 평균만 저장하며 구내식당은 응답한 사람만 평균에 넣습니다.</div>
         </div>
 
         <div class="card">
@@ -258,10 +270,10 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 관리자 3</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 관리자 4</div>
 </div>
 
-<script src="eval-core.js"></script>
+<script src="eval-core.js?v=2"></script>
 <script src="busy-indicator.js" defer></script>
 <script src="swipe-nav.js?v=3" defer></script>
 <script>
@@ -303,7 +315,7 @@
     el.className = el.className.replace(/\b(err|ok|warn)\b/g, '').trim() + ' ' + kind; el.innerHTML = text;
   }
 
-  var plans = [], sessions = [], courseKey = '', smap = {}, courseInst = [];
+  var plans = [], sessions = [], courseKey = '', smap = {}, courseInst = [], courseInstT = [];
   var pv = null;          // 미리보기 상태
   var results = null;     // 저장된 결과(listEvalResults)
 
@@ -382,32 +394,38 @@
   ['dragleave', 'drop'].forEach(function(n){ drop.addEventListener(n, function(e){ e.preventDefault(); drop.classList.remove('over'); }); });
   drop.addEventListener('drop', function(e){ if (e.dataTransfer && e.dataTransfer.files.length) takeFile(e.dataTransfer.files[0]); });
 
+  function commonHeaders(){
+    var h = [];
+    E.COMMON_SECTIONS.forEach(function(sec){ sec.items.forEach(function(it){ h.push(sec.title + ' [' + it + ']'); }); });
+    return h;
+  }
   function csvLine(r){ return r.map(function(c){ return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(','); }
   $('btnTpl').onclick = function(){
     show($('upMsg'), 'err', '');
     if (!$('selCourse').value) { show($('upMsg'), 'err', '먼저 과정을 선택해 주세요.'); return; }
     var pairs = E.surveyPairs(courseSessions($('selCourse').value));
     if (!pairs.length) { show($('upMsg'), 'warn', '이 과정에는 강사가 지정된 교과목 편성이 없어 열 제목 목록을 만들 수 없습니다. 강의배정에서 편성과 강사를 먼저 지정해 주세요.'); return; }
-    var csv = '\uFEFF' + csvLine(E.surveyHeader(pairs)) + '\r\n';
+    var csv = '\uFEFF' + csvLine(E.surveyHeader(pairs).concat(commonHeaders())) + '\r\n';
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     a.download = '설문_열제목_' + $('selCourse').value.replace(/[\\/:*?"<>|]/g, '') + '.csv';
     document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
-    show($('upMsg'), 'ok', '교과목 ' + pairs.length + '건의 열 제목을 내려받았습니다. 설문을 만들 때 이 이름을 그대로 쓰면 강사가 자동으로 연결됩니다(주강사 기준).');
+    show($('upMsg'), 'ok', '교과목·강사 ' + pairs.length + '건(훈련 ' + pairs.filter(function(p){ return p.set === 'T'; }).length + '건)과 공통 문항의 열 제목을 내려받았습니다. 설문을 만들 때 이 이름을 그대로 쓰면 강사가 자동으로 연결됩니다(주강사 기준, 현장교관은 대표만).');
   };
   $('btnSample').onclick = function(){
     show($('upMsg'), 'err', '');
     if (!$('selCourse').value) { show($('upMsg'), 'err', '먼저 과정을 선택해 주세요.'); return; }
     if (!num($('inEnter').value)) { show($('upMsg'), 'err', '입교 인원을 입력해 주세요.'); return; }
-    var pairs = E.surveyPairs(courseSessions($('selCourse').value)).slice(0, 3);
-    if (!pairs.length) pairs = [{ subject: '교과목A', name: '강사A' }, { subject: '교과목B', name: '강사B' }];
+    var all = E.surveyPairs(courseSessions($('selCourse').value));
+    var pairs = all.filter(function(p){ return p.set !== 'T'; }).slice(0, 3).concat(all.filter(function(p){ return p.set === 'T'; }).slice(0, 1));
+    if (!pairs.length) pairs = [{ subject: '교과목A', name: '강사A', set: 'L' }, { subject: '교과목B', name: '강사B', set: 'L' }];
     var L = ['매우만족', '만족', '만족', '보통', '매우만족'];
-    var head = E.surveyHeader(pairs);
-    var subj = pairs.map(function(p){ return p.subject; });
+    var head = E.surveyHeader(pairs).concat(commonHeaders());
     var out = [head];
     var enter = Math.min(num($('inEnter').value), 40);
     for (var i = 0; i < enter; i++) {
       var r = ['2026-01-01 10:' + ('0' + (i % 60)).slice(-2)];
-      subj.forEach(function(s, si){ for (var k = 0; k < 4; k++) r.push(L[(i + k + si) % L.length]); r.push(i % 5 === 0 ? '예시 의견입니다(' + s + ').' : ''); });
+      pairs.forEach(function(p, si){ for (var k = 0; k < 4; k++) r.push(L[(i + k + si) % L.length]); r.push(i % 5 === 0 ? '예시 의견입니다(' + p.subject + ').' : ''); });
+      commonHeaders().forEach(function(h, hi){ r.push(h.indexOf('구내식당') === 0 && i % 4 === 3 ? '' : L[(i + hi) % L.length]); });
       out.push(r);
     }
     var csv = out.map(function(r){ return r.join(','); }).join('\n');
@@ -423,19 +441,19 @@
       return;
     }
     var items = agg.items.map(function(it){
-      var m = E.resolveGroup(courseSessions(courseKey), it.names);
-      var o = { subject: it.subject, n: it.n, avg: it.avg, overall: it.overall, comments: it.comments, hasAll: it.hasAll, state: m.state, picks: m.picks, how: m.how || '', fileSubject: m.fileSubject || '', label: m.label || it.subject, inst: '' };
+      var m = E.resolveGroup(courseSessions(courseKey), it.names, it.set);
+      var o = { set: it.set, subject: it.subject, n: it.n, avg: it.avg, overall: it.overall, comments: it.comments, hasAll: it.hasAll, state: m.state, picks: m.picks, how: m.how || '', fileSubject: m.fileSubject || '', label: m.label || it.subject, inst: '' };
       if (m.state === 'auto') o.inst = m.picks[0].id + '|' + m.picks[0].name;
       return o;
     });
-    pv = { fp: fp, name: name, sample: sample, fileCount: agg.fileCount, skipped: agg.skipped, items: items };
+    pv = { fp: fp, name: name, sample: sample, fileCount: agg.fileCount, skipped: agg.skipped, items: items, commons: agg.commons || [] };
     $('inConfirm').value = String(agg.fileCount);
     renderPreview(); $('preview').hidden = false;
     $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function instOptions(it){
-    var list = it.state === 'auto' || it.state === 'ambiguous' ? it.picks : courseInst;
+    var list = it.state === 'auto' || it.state === 'ambiguous' ? it.picks : (it.set === 'T' ? courseInstT : courseInst);
     var h = '<option value="">선택해 주세요</option>';
     list.forEach(function(p){ var v = p.id + '|' + p.name; h += '<option value="' + esc(v) + '"' + (v === it.inst ? ' selected' : '') + '>' + esc(p.name || p.id) + '</option>'; });
     h += '<option value="x"' + (it.inst === 'x' ? ' selected' : '') + '>저장하지 않음</option>';
@@ -446,16 +464,25 @@
     var enter = num($('inEnter').value);
     var low = pv.items.filter(function(it){ return it.n < E.MIN_SESSION; }).length;
     var ncm = pv.items.reduce(function(s, it){ return s + it.comments.length; }, 0);
-    $('sumRow').innerHTML = '<span>파일 응답 ' + pv.fileCount + '건 / 입교 ' + enter + '명 (' + rate(pv.fileCount, enter) + '%)</span><span>교과목 ' + pv.items.length + '개</span><span>서술형 의견 ' + ncm + '건</span><span>응답 10명 미만 ' + low + '개</span>' + (pv.skipped ? '<span>인식하지 못한 응답 ' + pv.skipped + '칸</span>' : '');
+    var nT = pv.items.filter(function(it){ return it.set === 'T'; }).length;
+    $('sumRow').innerHTML = '<span>파일 응답 ' + pv.fileCount + '건 / 입교 ' + enter + '명 (' + rate(pv.fileCount, enter) + '%)</span><span>교과목 ' + pv.items.length + '개' + (nT ? ' (훈련 ' + nT + ')' : '') + '</span>' + ((pv.commons || []).length ? '<span>공통 문항 ' + pv.commons.length + '개</span>' : '') + '<span>서술형 의견 ' + ncm + '건</span><span>응답 10명 미만 ' + low + '개</span>' + (pv.skipped ? '<span>인식하지 못한 응답 ' + pv.skipped + '칸</span>' : '');
     $('sampleTag').hidden = !pv.sample;
-    $('pvBody').innerHTML = pv.items.map(function(it, i){
+    function rowHtml(it, i){
       var lowRow = it.n < E.MIN_SESSION, sk = it.inst === 'x';
       var subjCell = it.state === 'none' ? esc(it.subject || '(이름 없음)') + '<div class="hint">편성에서 찾지 못함</div>' : (esc(it.label || it.subject) + (it.how ? '<div class="hint">' + it.how + '으로 연결' + (it.fileSubject && E.normSubject(it.fileSubject) !== E.normSubject(it.label) ? ' · 파일 표기: ' + esc(it.fileSubject) : '') + '</div>' : ''));
       var tagHtml = !it.hasAll ? '<span class="tag t-err">문항 열 부족</span>' : lowRow ? '<span class="tag t-warn">응답 10명 미만</span>' : '<span class="tag t-ok">표시</span>';
-      var qs = E.Q.map(function(q){ return '<td class="n">' + fmt(it.avg[q]) + '</td>'; }).join('');
+      var qs = E.qList(it.set).map(function(q){ return '<td class="n">' + fmt(it.avg[q]) + '</td>'; }).join('');
       return '<tr class="' + (lowRow ? 'low ' : '') + (sk ? 'skip' : '') + '"><td>' + subjCell + '</td><td><select data-i="' + i + '" aria-label="강사 선택">' + instOptions(it) + '</select></td><td class="n">' + it.n + '</td>' + qs +
         '<td class="n">' + (it.overall == null ? '–' : (lowRow ? fmt(it.overall) : starHtml(it.overall))) + '</td><td class="n">' + (it.overall == null ? '–' : Math.round(E.to50(it.overall)) + '점') + '</td><td>' + tagHtml + '</td></tr>';
-    }).join('');
+    }
+    var hL = '', hT = '';
+    pv.items.forEach(function(it, i){ if (it.set === 'T') hT += rowHtml(it, i); else hL += rowHtml(it, i); });
+    $('pvBody').innerHTML = hL || '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:14px;">강의 문항으로 읽힌 교과목이 없습니다.</td></tr>';
+    $('pvBodyT').innerHTML = hT; $('pvTWrap').hidden = !hT;
+    var cs = pv.commons || [];
+    $('pvBodyC').innerHTML = cs.map(function(c){ return '<tr><td>' + esc(c.section) + '</td><td>' + esc(c.item) + '</td><td class="n">' + c.n + '</td><td class="n">' + fmt(c.avg) + '</td></tr>'; }).join('');
+    $('pvCWrap').hidden = !cs.length;
+    $('pvBodyT').querySelectorAll('select').forEach(function(s){ s.onchange = function(){ pv.items[+s.getAttribute('data-i')].inst = s.value; renderPreview(); }; });
     $('pvBody').querySelectorAll('select').forEach(function(s){ s.onchange = function(){ pv.items[+s.getAttribute('data-i')].inst = s.value; renderPreview(); }; });
     $('cmTag').textContent = '교과목별 · ' + ncm + '건';
     $('cmBody').innerHTML = pv.items.filter(function(it){ return it.comments.length; }).map(function(it){
@@ -472,7 +499,7 @@
     var open = pv.items.filter(function(it){ return !it.inst && it.hasAll; }).length;
     if (open) p.push('강사를 선택하지 않은 교과목이 ' + open + '개 있습니다.');
     var usable = pv.items.filter(function(it){ return it.hasAll && it.inst && it.inst !== 'x'; }).length;
-    if (!open && !usable) p.push('저장할 교과목이 없습니다.');
+    if (!open && !usable && !(pv.commons || []).length) p.push('저장할 교과목이 없습니다.');
     if (pv.sample) p.push('예시 파일은 저장할 수 없습니다.');
     return p;
   }
@@ -494,7 +521,7 @@
   $('selCourse').onchange = function(){
     courseKey = $('selCourse').value; pv = null; $('preview').hidden = true;
     var ss = courseSessions(courseKey);
-    smap = E.subjectMap(ss); courseInst = E.allInstructors(ss);
+    smap = E.subjectMap(ss); courseInst = E.allInstructors(ss); courseInstT = E.allInstructors(ss, 'T');
     show($('upMsg'), 'err', '');
     if (courseKey && !ss.length) { show($('upMsg'), 'warn', '이 과정에는 교과목 편성이 없어 강사를 자동으로 찾을 수 없습니다. 미리보기에서 강사를 직접 선택할 수도 없습니다. 먼저 강의배정에서 편성해 주세요.'); }
   };
@@ -505,9 +532,14 @@
     pv.items.forEach(function(it){
       if (!it.hasAll || !it.inst || it.inst === 'x') return;
       var p = it.inst.split('|');
-      rows.push({ 교과목: it.label || it.subject, 강사ID: p[0], 강사명: p.slice(1).join('|'), 응답수: it.n, 태도: it.avg['태도'], 목표: it.avg['목표'], 전달: it.avg['전달'], 효과: it.avg['효과'] });
-      it.comments.forEach(function(c){ comments.push({ 교과목: it.label || it.subject, 내용: c }); });
+      var nm = p.slice(1).join('|'), isT = it.set === 'T';
+      /* 훈련 문항은 태도·준비성·전문성·적용성을 저장 칸(태도·목표·전달·효과)에 차례로 넣고 유형을 '훈련'으로 표시 */
+      rows.push(isT
+        ? { 교과목: it.label || it.subject, 강사ID: p[0], 강사명: nm, 응답수: it.n, 태도: it.avg['태도'], 목표: it.avg['준비성'], 전달: it.avg['전문성'], 효과: it.avg['적용성'], 유형: '훈련' }
+        : { 교과목: it.label || it.subject, 강사ID: p[0], 강사명: nm, 응답수: it.n, 태도: it.avg['태도'], 목표: it.avg['목표'], 전달: it.avg['전달'], 효과: it.avg['효과'], 유형: '강의' });
+      it.comments.forEach(function(c){ comments.push({ 교과목: (it.label || it.subject) + (nm ? ' (' + nm + ')' : ''), 내용: c }); });
     });
+    (pv.commons || []).forEach(function(c){ rows.push({ 교과목: c.section, 항목: c.item, 응답수: c.n, 종합: c.avg, 유형: '공통' }); });
     return { action: 'saveEvalResult', password: getPw(), 개설키: courseKey, 파일지문: pv.fp, 파일명: pv.name, 입교인원: num($('inEnter').value), 파일응답수: pv.fileCount, 확정응답수: num($('inConfirm').value), rows: rows, comments: comments, 교체: !!replace };
   }
   function doSave(replace){
@@ -546,7 +578,8 @@
     if (!results) return;
     var um = upMap(), by = {};
     results.rows.forEach(function(r){
-      var id = String(r['강사ID'] || ''); if (!id) return;
+      if (String(r['유형'] || '') === '공통') return;
+      var id = String(r['강사ID'] || '') || (r['강사명'] ? 'N:' + String(r['강사명']) : ''); if (!id) return;
       (by[id] = by[id] || { id: id, name: String(r['강사명'] || id), rows: [] }).rows.push(r);
     });
     var list = Object.keys(by).map(function(id){
@@ -555,6 +588,7 @@
       g.latest = g.rows[0]; g.cum = E.cumulative(g.rows);
       g.subjects = g.rows.map(function(r){ return String(r['교과목']); }).filter(function(v, i, a){ return a.indexOf(v) === i; });
       g.up = um[String(g.latest['업로드ID'])] || {};
+      g.trainer = g.rows.every(function(r){ return String(r['유형'] || '') === '훈련'; });
       return g;
     });
     var q = $('inFind').value.trim().toLowerCase();
@@ -568,7 +602,7 @@
     });
     $('vwBody').innerHTML = list.length ? list.map(function(g){
       var shown = g.cum.n >= E.MIN_CUM, latestOk = Number(g.latest['응답수']) >= E.MIN_SESSION;
-      return '<tr class="' + (shown ? '' : 'low') + '"><td>' + esc(g.name) + '</td><td>' + esc(g.subjects.join(', ')) + '</td><td>' + esc(String(g.latest['개설키'])) + '<div class="hint">' + esc(String(g.latest['저장일시']).slice(0, 10)) + ' 저장</div></td>' +
+      return '<tr class="' + (shown ? '' : 'low') + '"><td>' + esc(g.name) + (g.trainer ? ' <span class="tag t-info">현장교관</span>' : '') + '</td><td>' + esc(g.subjects.join(', ')) + '</td><td>' + esc(String(g.latest['개설키'])) + '<div class="hint">' + esc(String(g.latest['저장일시']).slice(0, 10)) + ' 저장</div></td>' +
         '<td class="n">' + (latestOk ? fmt(Number(g.latest['종합'])) : '–') + '</td><td>' + (shown ? starHtml(g.cum.avg) : '–') + '</td><td class="n">' + g.cum.n + '</td>' +
         '<td>' + (shown ? '<span class="tag t-ok">표시</span>' : '<span class="tag t-warn">응답이 적어 참고하기 어려움</span>') + '</td></tr>';
     }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:22px;">저장된 평가 결과가 없습니다. "결과 올리기"에서 올려 주세요.</td></tr>';
@@ -603,31 +637,44 @@
     var key = $('repCourse').value, doc = $('repDoc');
     $('btnPdf').disabled = !key;
     if (!key || !results) { doc.innerHTML = ''; $('repMsg').textContent = ''; return; }
-    var rows = results.rows.filter(function(r){ return String(r['개설키']) === key; });
+    var all = results.rows.filter(function(r){ return String(r['개설키']) === key; });
+    var kindOf = function(r){ var t = String(r['유형'] || ''); return t === '훈련' ? 'T' : (t === '공통' ? 'C' : 'L'); };
+    var rows = all.filter(function(r){ return kindOf(r) !== 'C'; });
+    var rowsL = all.filter(function(r){ return kindOf(r) === 'L'; }), rowsT = all.filter(function(r){ return kindOf(r) === 'T'; }), rowsC = all.filter(function(r){ return kindOf(r) === 'C'; });
     var up = results.uploads.filter(function(u){ return String(u['개설키']) === key; })[0] || {};
     var cms = results.comments.filter(function(c){ return String(c['개설키']) === key; });
     var show50 = $('repShow50').checked, showCm = $('repShowCm').checked;
     var en = Number(up['입교인원']), cf = Number(up['확정응답수']);
-    var cum = E.cumulative(rows);
     var low = rows.filter(function(r){ return Number(r['응답수']) < E.MIN_SESSION; }).length;
     var f2 = function(x){ return x == null || x === '' || isNaN(Number(x)) ? '–' : (Math.round(Number(x) * 100) / 100).toFixed(2); };
     var h = '<h2 class="rt1">교육 만족도(강의 평가) 결과</h2><div class="rsub">' + esc(key) + '</div>';
     h += '<div class="rmeta"><span>기관: 전남소방학교</span><span>입교 인원: ' + (en || '–') + '명</span><span>응답 인원: ' + (cf || '–') + '명</span><span>응답률: ' + (en > 0 ? Math.round(cf / en * 100) : 0) + '%</span><span>집계일: ' + esc(String(up['저장일시'] || '').slice(0, 10)) + '</span></div>';
-    h += '<table class="rt"><thead><tr><th>연번</th><th>교과목</th><th>강사</th><th>응답</th><th>태도</th><th>목표</th><th>전달</th><th>효과</th><th>종합(5점)</th>' + (show50 ? '<th>50점 환산</th>' : '') + '</tr></thead><tbody>';
-    rows.forEach(function(r, i){
-      var lowRow = Number(r['응답수']) < E.MIN_SESSION;
-      h += '<tr><td>' + (i + 1) + '</td><td class="l">' + esc(r['교과목']) + '</td><td>' + esc(r['강사명']) + '</td><td>' + esc(r['응답수']) + (lowRow ? '※' : '') + '</td>' +
-        ['태도', '목표', '전달', '효과'].map(function(q){ return '<td>' + f2(r[q]) + '</td>'; }).join('') + '<td><b>' + f2(r['종합']) + '</b></td>' + (show50 ? '<td>' + (isNaN(Number(r['종합'])) ? '–' : Math.round(E.to50(Number(r['종합'])) * 10) / 10) + '점</td>' : '') + '</tr>';
-    });
-    h += '<tr class="tot"><td colspan="3">전체 평균(응답 수 가중)</td><td>' + cum.n + '</td><td colspan="4"></td><td>' + f2(cum.avg) + '</td>' + (show50 ? '<td>' + (cum.avg == null ? '–' : Math.round(E.to50(cum.avg) * 10) / 10) + '점</td>' : '') + '</tr></tbody></table>';
-    h += '<div class="rnote">산출 기준: 5점 척도(매우만족 5점, 만족 4점, 보통 3점, 불만족 2점, 매우불만족 1점)의 문항별 평균이며, 종합은 태도·목표·전달·효과 4개 문항 평균입니다.' + (show50 ? ' 50점 환산은 종합×10입니다.' : '') + (low ? '<br>※ 응답이 ' + E.MIN_SESSION + '명 미만인 교과목은 참고용입니다.' : '') + '</div>';
+    function scoreTable(list, heads, who){
+      var cum = E.cumulative(list), t = '<table class="rt"><thead><tr><th>연번</th><th>교과목</th><th>' + who + '</th><th>응답</th>' + heads.map(function(x){ return '<th>' + x + '</th>'; }).join('') + '<th>종합(5점)</th>' + (show50 ? '<th>50점 환산</th>' : '') + '</tr></thead><tbody>';
+      list.forEach(function(r, i){
+        var lowRow = Number(r['응답수']) < E.MIN_SESSION;
+        t += '<tr><td>' + (i + 1) + '</td><td class="l">' + esc(r['교과목']) + '</td><td>' + esc(r['강사명']) + '</td><td>' + esc(r['응답수']) + (lowRow ? '※' : '') + '</td>' +
+          ['태도', '목표', '전달', '효과'].map(function(q){ return '<td>' + f2(r[q]) + '</td>'; }).join('') + '<td><b>' + f2(r['종합']) + '</b></td>' + (show50 ? '<td>' + (isNaN(Number(r['종합'])) ? '–' : Math.round(E.to50(Number(r['종합'])) * 10) / 10) + '점</td>' : '') + '</tr>';
+      });
+      return t + '<tr class="tot"><td colspan="3">전체 평균(응답 수 가중)</td><td>' + cum.n + '</td><td colspan="4"></td><td>' + f2(cum.avg) + '</td>' + (show50 ? '<td>' + (cum.avg == null ? '–' : Math.round(E.to50(cum.avg) * 10) / 10) + '점</td>' : '') + '</tr></tbody></table>';
+    }
+    if (rowsL.length) { h += (rowsT.length || rowsC.length ? '<h3 class="rh">1. 교과목·강사별 강의 평가</h3>' : '') + scoreTable(rowsL, ['태도', '목표', '전달', '효과'], '강사'); }
+    if (rowsT.length) { h += '<h3 class="rh">' + (rowsL.length ? '2. ' : '') + '훈련(현장교관) 평가</h3>' + scoreTable(rowsT, ['태도', '준비성', '전문성', '적용성'], '교수'); }
+    if (rowsC.length) {
+      var secs = [], bySec = {};
+      rowsC.forEach(function(r){ var k = String(r['교과목']); if (!bySec[k]) { bySec[k] = []; secs.push(k); } bySec[k].push(r); });
+      h += '<h3 class="rh">' + ((rowsL.length ? 1 : 0) + (rowsT.length ? 1 : 0) + 1) + '. 교육시설환경·구내식당 (공통 문항)</h3><table class="rt"><thead><tr><th>분야</th><th>항목</th><th>응답</th><th>평균(5점)</th></tr></thead><tbody>';
+      secs.forEach(function(k){ bySec[k].forEach(function(r, i){ h += '<tr>' + (i === 0 ? '<td rowspan="' + bySec[k].length + '">' + esc(k) + '</td>' : '') + '<td class="l">' + esc(r['항목']) + '</td><td>' + esc(r['응답수']) + '</td><td><b>' + f2(r['종합']) + '</b></td></tr>'; }); });
+      h += '</tbody></table>';
+    }
+    h += '<div class="rnote">산출 기준: 5점 척도(매우만족 5점, 만족 4점, 보통 3점, 불만족 2점, 매우불만족 1점)의 문항별 평균입니다. 종합은 강의 평가는 태도·목표·전달·효과, 훈련 평가는 태도·준비성·전문성·적용성 4개 문항 평균입니다.' + (rowsT.length ? ' 훈련 평가는 교과목별 대표 현장교관 1명 기준입니다.' : '') + (rowsC.length ? ' 구내식당 문항은 이용한 응답자만 집계합니다.' : '') + (show50 ? ' 50점 환산은 종합×10입니다.' : '') + (low ? '<br>※ 응답이 ' + E.MIN_SESSION + '명 미만인 교과목은 참고용입니다.' : '') + '</div>';
     if (showCm) {
       h += '<h3 class="rh">서술형 의견</h3>';
       var by = {}, order = [];
       cms.forEach(function(c){ var k = String(c['교과목']); if (!by[k]) { by[k] = []; order.push(k); } by[k].push(String(c['내용'])); });
       h += order.length ? order.map(function(k){
         var who = rows.filter(function(r){ return String(r['교과목']) === k; })[0];
-        return '<div class="rcm"><b>' + esc(k) + (who && who['강사명'] ? ' (' + esc(who['강사명']) + ')' : '') + '</b><ul>' + by[k].map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
+        return '<div class="rcm"><b>' + esc(k) + (!/\)\s*$/.test(k) && who && who['강사명'] ? ' (' + esc(who['강사명']) + ')' : '') + '</b><ul>' + by[k].map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
       }).join('') : '<div class="rnote">서술형 의견이 없습니다.</div>';
     }
     doc.innerHTML = h;

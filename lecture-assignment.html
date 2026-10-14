@@ -112,6 +112,7 @@
   .rb{display:inline-block;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;line-height:1.5;margin-right:5px;vertical-align:1px;}
   .rb.m{background:#E3ECF8;color:#1F4B8F;}
   .rb.s{background:var(--border);color:#4A4946;}
+  .rb.fld{background:#FBE9C9;color:#6E4300;}
   .ins{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;white-space:nowrap;min-height:34px;}
   .ins .act{flex-wrap:nowrap;}
   .t-ok{background:var(--ok-bg);color:var(--ok-fg);}
@@ -2019,6 +2020,8 @@
         '<button type="button" class="btn" id="sBrowse" style="height:26px;padding:0 10px;font-size:12px;">강사 찾아보기 (사진·이력)</button></span></div><div id="sChip"></div>' +
         '<div id="sRoleWrap" style="display:none;margin:6px 0;"><span class="hint" style="margin-right:6px;font-weight:700;">역할</span><select id="sRole" style="width:auto;"><option>주강사</option><option>보조강사</option></select> ' +
         '<span class="hint">강사가 2명 이상이면 목록에 주/보조로 표시됩니다. 누적 횟수·시수는 주강사만 집계합니다.</span></div>' +
+        '<div id="sTrainerWrap" style="display:none;margin:6px 0;"><span class="hint" style="margin-right:6px;font-weight:700;">현장교관</span><select id="sTrainer" style="width:auto;"><option value="">아니오 (일반 강의)</option><option value="대표">예 · 설문 평가 대상 (대표)</option><option value="제외">예 · 설문 평가 제외</option></select> ' +
+        '<span class="hint">현장교관이 맡은 시간이면 선택하세요. 한 교과목에서 설문으로 평가할 현장교관은 대표 1명만 지정합니다.</span></div>' +
         '<input type="text" id="sInstr" autocomplete="off" placeholder="이름·소속·분야·교과목으로 검색"><div id="sPicker" class="picker" style="display:none;"></div>' +
         '</div>' +
       '<div class="span2"><label for="sNote" id="sNoteLbl">비고</label><input type="text" id="sNote" maxlength="200" placeholder="선택 입력"></div>' +
@@ -2040,6 +2043,8 @@
     refreshRoomOptions();
     $('sRole').value = form.role === '보조강사' ? '보조강사' : '주강사';
     $('sRole').addEventListener('change', function(){ form.role = $('sRole').value; renderChip(); });
+    $('sTrainer').value = form.trainer || '';
+    $('sTrainer').addEventListener('change', function(){ form.trainer = $('sTrainer').value; });
     $('sNoPlan').checked = !!form.noPlan;
     $('sNoPlan').addEventListener('change', function(){ form.noPlan = $('sNoPlan').checked; form.noPlanTouched = true; });
     /* 같은 과정에서 이미 '불필요'로 표시한 교과목 이름을 입력하면 체크칸을 자동으로 켬(직접 바꾼 뒤에는 건드리지 않음) */
@@ -2169,6 +2174,8 @@
     if (x) x.addEventListener('click', function(){ form.iid = ''; form.iname = ''; renderChip(); });
     var rw = $('sRoleWrap');
     if (rw) rw.style.display = (form.iid || (form.iname && !isOpsName(form.iname))) ? '' : 'none';
+    var tw = $('sTrainerWrap');   // 현장교관 선택은 강사(또는 직접 입력한 이름)가 있을 때만(팀 운영 교시 제외)
+    if (tw) tw.style.display = (form.iid || (form.iname && !isOpsName(form.iname))) ? '' : 'none';
     var npw = $('sNoPlanWrap');   // 팀 운영 교시는 계획서 대상이 아니므로 체크칸을 숨김
     if (npw) npw.style.display = (!form.iid && isOpsName(form.iname)) ? 'none' : '';
     var nt = $('sNote'), nl = $('sNoteLbl');   // 팀 교시는 비고에 대표자 이름을 적음
@@ -2237,7 +2244,7 @@
     lastKlass = String(r['반'] || '전체');
     lastCat = String(r['교과목 구분'] || '');
     lastRoom = String(r['강의실'] || '');
-    form = { id: mode === 'edit' ? String(r['편성ID']) : '', iid: String(r['강사ID'] || ''), iname: String(r['강사명'] || ''), role: isSubRole(r) ? '보조강사' : '주강사', noPlan: isNoPlan(r), noPlanTouched: true };
+    form = { id: mode === 'edit' ? String(r['편성ID']) : '', iid: String(r['강사ID'] || ''), iname: String(r['강사명'] || ''), role: isSubRole(r) ? '보조강사' : '주강사', trainer: String(r['현장교관'] || ''), noPlan: isNoPlan(r), noPlanTouched: true };
     renderForm(p);
     $('sStart').value = String(Number(r['시작교시']));
     $('sEnd').value = String(Number(r['끝교시']));
@@ -2363,6 +2370,7 @@
       action: 'saveSession', password: getPw(), 개설키: currentKey, 반: klass, 일자: date,
       시작교시: s, 끝교시: e, 교과목: subj, '교과목 구분': cat, 강사ID: form.iid, 강사명: form.iid ? '' : form.iname,
       '강사 역할': (form.iid || form.iname) ? ($('sRole').value || '주강사') : '',
+      '현장교관': ((form.iid || (form.iname && !isOpsName(form.iname))) ? ($('sTrainer').value || '') : ''),
       강의실: room, 비고: $('sNote').value.trim(),
       '계획서 불필요': ($('sNoPlan').checked && !(!form.iid && isOpsName(form.iname))) ? NOPLAN : ''
     };
@@ -2434,10 +2442,15 @@
     roleCnt = m;
   }
   function isSubRole(r){ return String(r['강사 역할'] || '') === '보조강사'; }
+  function trainerTag(r){
+    var t = String(r['현장교관'] || '');
+    return t ? '<span class="rb fld" title="' + (t === '제외' ? '현장교관이지만 설문 평가 대상이 아닙니다' : '이 교과목에서 설문으로 평가하는 현장교관입니다') + '">' + (t === '제외' ? '현장교관·평가 제외' : '현장교관(대표)') + '</span>' : '';
+  }
   function roleTag(r){
-    if (!hasInstr(r) || (roleCnt[roleKey(r)] || 0) < 2) return '';
+    var tt = trainerTag(r);
+    if (!hasInstr(r) || (roleCnt[roleKey(r)] || 0) < 2) return tt;
     var sub = isSubRole(r);
-    return '<span class="rb ' + (sub ? 's' : 'm') + '">' + (sub ? '보조' : '주') + '</span>';
+    return tt + '<span class="rb ' + (sub ? 's' : 'm') + '">' + (sub ? '보조' : '주') + '</span>';
   }
   /* 강사 단위 서류(강사카드·개인정보 동의서·보유기간) 상태 */
   function retention(x){
@@ -5215,7 +5228,8 @@
           교과목: String(r['교과목'] || ''), '교과목 구분': String(r['교과목 구분'] || ''), 강사ID: iid, 강사명: iname,
           '강사 역할': (iid || iname) ? String(r['강사 역할'] || '') : '',
           강의실: cp.room === 'plan' ? String(p['예정 강의실'] || '') : String(r['강의실'] || ''), 비고: String(r['비고'] || ''),
-          '계획서 불필요': isNoPlan(r) ? NOPLAN : ''
+          '계획서 불필요': isNoPlan(r) ? NOPLAN : '',
+          '현장교관': (iid || iname) ? String(r['현장교관'] || '') : ''
         }
       };
     });
