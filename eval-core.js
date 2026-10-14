@@ -71,6 +71,16 @@
   }
   /* 머리글에서 문항을 찾고, 나머지 조각(교과목명·강사명, 순서 무관)을 names로 돌려줌. 문항은 보통 맨 뒤에 있으므로 뒤에서부터 찾음 */
   function classifyHeader(h) {
+    /* 구글 폼 표(그리드) 문항: "강의 태도 [소방기본법 (김가상)]" — 대괄호 앞이 문항, 안쪽이 교과목·강사 */
+    var gm = String(h || '').match(/^([^\[\]]+?)\s*\[(.+)\]\s*$/);
+    if (gm) {
+      var gq = null, gk;
+      for (gk = 0; gk < QPAT.length && !gq; gk++) if (QPAT[gk][1].test(gm[1])) gq = QPAT[gk][0];
+      if (gq) {
+        var gn = splitHeader(gm[2]).map(cleanSubject).filter(Boolean);
+        return { q: gq, names: gn, subject: gn.join(' ') };
+      }
+    }
     var parts = splitHeader(h), q = null, qi = -1, i, k;
     for (i = parts.length - 1; i >= 0 && !q; i--) {
       for (k = 0; k < QPAT.length; k++) if (QPAT[k][1].test(parts[i])) { q = QPAT[k][0]; qi = i; break; }

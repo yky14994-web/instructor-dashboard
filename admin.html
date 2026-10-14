@@ -91,6 +91,31 @@
   .note.ok{border-left-color:var(--ok-fg);background:var(--ok-bg);color:var(--ok-fg);}
   [hidden]{display:none !important;}
   .loading{padding:30px 0;text-align:center;color:var(--text-muted);font-size:14px;}
+
+  /* 결과 보고서 */
+  .repdoc{background:#fff;border:1px solid #CBD4E0;border-radius:12px;padding:28px 30px;max-width:980px;color:#1f2937;}
+  .repdoc h2.rt1{margin:0 0 2px;font-size:20px;color:#111827;text-align:center;}
+  .repdoc .rsub{text-align:center;font-size:14px;color:#374151;margin:0 0 14px;}
+  .repdoc .rmeta{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:13px;margin:0 0 12px;padding:8px 0;border-top:2px solid #111827;border-bottom:1px solid #9CA3AF;}
+  .repdoc table.rt{width:100%;border-collapse:collapse;font-size:13px;table-layout:auto;}
+  .repdoc table.rt th,.repdoc table.rt td{border:1px solid #9CA3AF;padding:6px 7px;text-align:center;}
+  .repdoc table.rt th{background:#F3F4F6;font-weight:700;}
+  .repdoc table.rt td.l{text-align:left;}
+  .repdoc table.rt tr.tot td{font-weight:700;background:#F9FAFB;}
+  .repdoc .rnote{font-size:12px;color:#4B5563;line-height:1.6;margin-top:10px;}
+  .repdoc h3.rh{font-size:15px;margin:18px 0 6px;color:#111827;}
+  .repdoc .rcm{margin:0 0 10px;}
+  .repdoc .rcm b{font-size:13px;}
+  .repdoc .rcm ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55;}
+  @media (max-width:760px){ .repdoc{padding:16px 12px;overflow-x:auto;} }
+  @page{size:A4;margin:14mm;}
+  @media print{
+    body{background:#fff;}
+    .gnav,.crumb,#vEval>h1,#vEval>.lead,.tabs,#emsg,.no-print,#verStamp{display:none !important;}
+    .wrap{padding:0;max-width:none;}
+    .repdoc{border:0;border-radius:0;padding:0;max-width:none;}
+    .repdoc table.rt tr{page-break-inside:avoid;}
+  }
 </style>
 </head>
 <body>
@@ -132,6 +157,7 @@
     <div class="tabs" role="tablist">
       <button type="button" class="tab on" data-t="up" role="tab">결과 올리기</button>
       <button type="button" class="tab" data-t="view" role="tab">점수 조회</button>
+      <button type="button" class="tab" data-t="rep" role="tab">결과 보고서</button>
     </div>
 
     <!-- 결과 올리기 -->
@@ -212,9 +238,27 @@
           <tbody id="upBody"></tbody></table></div>
       </div>
     </div>
+
+    <!-- 결과 보고서(PDF) -->
+    <div id="tRep" hidden>
+      <div class="card no-print" id="repCtl">
+        <h2>결과 보고서 (PDF)</h2>
+        <div class="hint">저장된 평가 결과로 공문에 첨부할 보고서를 만듭니다. 아래 미리보기 확인 후 "PDF로 저장"을 누르고, 인쇄 창에서 대상을 "PDF로 저장"으로 선택해 주세요.</div>
+        <div class="row" style="margin-top:10px;">
+          <div class="fld" style="min-width:260px;flex:1 1 260px;"><label for="repCourse">과정</label><select id="repCourse"></select></div>
+        </div>
+        <div class="row" style="margin-top:10px;gap:18px;">
+          <label style="font-size:14px;"><input type="checkbox" id="repShow50"> 50점 환산 점수 표시</label>
+          <label style="font-size:14px;"><input type="checkbox" id="repShowCm"> 서술형 의견 포함</label>
+        </div>
+        <div class="actions" style="justify-content:flex-start;"><button type="button" class="btn primary" id="btnPdf" disabled>PDF로 저장</button></div>
+        <div id="repMsg" class="hint"></div>
+      </div>
+      <div id="repDoc" class="repdoc"></div>
+    </div>
   </section>
 
-  <div style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 관리자 2</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 관리자 3</div>
 </div>
 
 <script src="eval-core.js"></script>
@@ -294,19 +338,20 @@
   /* ---------- 화면 전환 ---------- */
   function route(){
     var h = location.hash.replace('#', '');
-    $('vAdmin').hidden = h === 'eval' || h === 'view';
-    $('vEval').hidden = !(h === 'eval' || h === 'view');
-    if (h === 'eval' || h === 'view') tab(h === 'view' ? 'view' : 'up');
+    var inEval = h === 'eval' || h === 'view' || h === 'rep';
+    $('vAdmin').hidden = inEval;
+    $('vEval').hidden = !inEval;
+    if (inEval) tab(h === 'view' ? 'view' : (h === 'rep' ? 'rep' : 'up'));
   }
   function tab(t){
     document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-t') === t); });
-    $('tUp').hidden = t !== 'up'; $('tView').hidden = t !== 'view';
-    if (t === 'view') loadResults();
+    $('tUp').hidden = t !== 'up'; $('tView').hidden = t !== 'view'; $('tRep').hidden = t !== 'rep';
+    if (t === 'view' || (t === 'rep' && !results)) loadResults(); else if (t === 'rep') renderRepCourses();
   }
   window.addEventListener('hashchange', route);
   $('goEval').onclick = function(){ location.hash = 'eval'; };
   $('backAdmin').onclick = function(ev){ ev.preventDefault(); location.hash = ''; history.replaceState(null, '', location.pathname); route(); };
-  document.querySelectorAll('.tab').forEach(function(b){ b.onclick = function(){ var t = b.getAttribute('data-t'); history.replaceState(null, '', '#' + (t === 'view' ? 'view' : 'eval')); tab(t); }; });
+  document.querySelectorAll('.tab').forEach(function(b){ b.onclick = function(){ var t = b.getAttribute('data-t'); history.replaceState(null, '', '#' + (t === 'view' ? 'view' : (t === 'rep' ? 'rep' : 'eval'))); tab(t); }; });
 
   /* ---------- 파일 읽기 ---------- */
   function hex(buf){ return Array.prototype.map.call(new Uint8Array(buf), function(b){ return ('0' + b.toString(16)).slice(-2); }).join(''); }
@@ -493,7 +538,7 @@
     api({ action: 'listEvalResults', password: getPw() }, 3).then(function(r){
       $('vwLoading').hidden = true;
       if (r.status !== 'ok') { show($('emsg'), 'err', esc(r.message || '불러오지 못했습니다')); return; }
-      results = r; renderView(); renderUploads();
+      results = r; renderView(); renderUploads(); renderRepCourses();
     }).catch(function(err){ $('vwLoading').hidden = true; show($('emsg'), 'err', '불러오지 못했습니다: ' + esc(err.message)); });
   }
   function upMap(){ var m = {}; ((results && results.uploads) || []).forEach(function(u){ m[String(u['업로드ID'])] = u; }); return m; }
@@ -545,6 +590,58 @@
     }; });
   }
 
+
+  /* ---------- 결과 보고서(PDF) ---------- */
+  function renderRepCourses(){
+    var sel = $('repCourse'), cur = sel.value;
+    var ups = ((results && results.uploads) || []).slice().sort(function(a, b){ return String(b['저장일시']).localeCompare(String(a['저장일시'])); });
+    sel.innerHTML = ups.length ? ups.map(function(u){ return '<option value="' + esc(u['개설키']) + '">' + esc(u['개설키']) + ' (저장 ' + esc(String(u['저장일시']).slice(0, 10)) + ')</option>'; }).join('') : '<option value="">저장된 평가 결과가 없습니다</option>';
+    if (cur) sel.value = cur;
+    renderReport();
+  }
+  function renderReport(){
+    var key = $('repCourse').value, doc = $('repDoc');
+    $('btnPdf').disabled = !key;
+    if (!key || !results) { doc.innerHTML = ''; $('repMsg').textContent = ''; return; }
+    var rows = results.rows.filter(function(r){ return String(r['개설키']) === key; });
+    var up = results.uploads.filter(function(u){ return String(u['개설키']) === key; })[0] || {};
+    var cms = results.comments.filter(function(c){ return String(c['개설키']) === key; });
+    var show50 = $('repShow50').checked, showCm = $('repShowCm').checked;
+    var en = Number(up['입교인원']), cf = Number(up['확정응답수']);
+    var cum = E.cumulative(rows);
+    var low = rows.filter(function(r){ return Number(r['응답수']) < E.MIN_SESSION; }).length;
+    var f2 = function(x){ return x == null || x === '' || isNaN(Number(x)) ? '–' : (Math.round(Number(x) * 100) / 100).toFixed(2); };
+    var h = '<h2 class="rt1">교육 만족도(강의 평가) 결과</h2><div class="rsub">' + esc(key) + '</div>';
+    h += '<div class="rmeta"><span>기관: 전남소방학교</span><span>입교 인원: ' + (en || '–') + '명</span><span>응답 인원: ' + (cf || '–') + '명</span><span>응답률: ' + (en > 0 ? Math.round(cf / en * 100) : 0) + '%</span><span>집계일: ' + esc(String(up['저장일시'] || '').slice(0, 10)) + '</span></div>';
+    h += '<table class="rt"><thead><tr><th>연번</th><th>교과목</th><th>강사</th><th>응답</th><th>태도</th><th>목표</th><th>전달</th><th>효과</th><th>종합(5점)</th>' + (show50 ? '<th>50점 환산</th>' : '') + '</tr></thead><tbody>';
+    rows.forEach(function(r, i){
+      var lowRow = Number(r['응답수']) < E.MIN_SESSION;
+      h += '<tr><td>' + (i + 1) + '</td><td class="l">' + esc(r['교과목']) + '</td><td>' + esc(r['강사명']) + '</td><td>' + esc(r['응답수']) + (lowRow ? '※' : '') + '</td>' +
+        ['태도', '목표', '전달', '효과'].map(function(q){ return '<td>' + f2(r[q]) + '</td>'; }).join('') + '<td><b>' + f2(r['종합']) + '</b></td>' + (show50 ? '<td>' + (isNaN(Number(r['종합'])) ? '–' : Math.round(E.to50(Number(r['종합'])) * 10) / 10) + '점</td>' : '') + '</tr>';
+    });
+    h += '<tr class="tot"><td colspan="3">전체 평균(응답 수 가중)</td><td>' + cum.n + '</td><td colspan="4"></td><td>' + f2(cum.avg) + '</td>' + (show50 ? '<td>' + (cum.avg == null ? '–' : Math.round(E.to50(cum.avg) * 10) / 10) + '점</td>' : '') + '</tr></tbody></table>';
+    h += '<div class="rnote">산출 기준: 5점 척도(매우만족 5점, 만족 4점, 보통 3점, 불만족 2점, 매우불만족 1점)의 문항별 평균이며, 종합은 태도·목표·전달·효과 4개 문항 평균입니다.' + (show50 ? ' 50점 환산은 종합×10입니다.' : '') + (low ? '<br>※ 응답이 ' + E.MIN_SESSION + '명 미만인 교과목은 참고용입니다.' : '') + '</div>';
+    if (showCm) {
+      h += '<h3 class="rh">서술형 의견</h3>';
+      var by = {}, order = [];
+      cms.forEach(function(c){ var k = String(c['교과목']); if (!by[k]) { by[k] = []; order.push(k); } by[k].push(String(c['내용'])); });
+      h += order.length ? order.map(function(k){
+        var who = rows.filter(function(r){ return String(r['교과목']) === k; })[0];
+        return '<div class="rcm"><b>' + esc(k) + (who && who['강사명'] ? ' (' + esc(who['강사명']) + ')' : '') + '</b><ul>' + by[k].map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
+      }).join('') : '<div class="rnote">서술형 의견이 없습니다.</div>';
+    }
+    doc.innerHTML = h;
+    $('repMsg').textContent = '';
+  }
+  $('repCourse').onchange = renderReport; $('repShow50').onchange = renderReport; $('repShowCm').onchange = renderReport;
+  $('btnPdf').onclick = function(){
+    var key = $('repCourse').value; if (!key) return;
+    var old = document.title; document.title = '평가결과_' + key.replace(/[\\/:*?"<>|]/g, '');
+    var back = function(){ document.title = old; window.removeEventListener('afterprint', back); };
+    window.addEventListener('afterprint', back);
+    window.print();
+    setTimeout(back, 4000);
+  };
   boot();
 })();
 </script>
