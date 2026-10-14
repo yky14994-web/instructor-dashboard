@@ -71,6 +71,8 @@
     ['효과', /효과|도움|유용|적용|활용/],
     ['서술', /의견|서술|건의|주관|자유|기타|하고\s*싶|바라는|아쉬운|좋았던/]
   ];
+  /* 쪽별 표의 줄 이름(공백 제거) → 문항. 설문 생성기 v3 의 QUESTIONS/TRAIN_QUESTIONS row 와 같아야 함 */
+  var ROW_Q = { '태도': '태도', '목표달성': '목표', '전달력': '전달', '효과(업무도움)': '효과', '준비성': '준비성', '전문성': '전문성', '적용성': '적용성' };
   function splitHeader(h) {
     return String(h || '').split(/[\n|\/\[\]()（）:：_·]+|\s-\s|\s{2,}/).map(function (x) { return x.trim(); }).filter(Boolean);
   }
@@ -89,6 +91,12 @@
       var secKey = normSubject(gm[1]), si;
       for (si = 0; si < COMMON_SECTIONS.length; si++) {
         if (normSubject(COMMON_SECTIONS[si].title) === secKey) return { common: true, section: COMMON_SECTIONS[si].title, item: String(gm[2]).replace(/\s+/g, ' ').trim() };
+      }
+      /* 쪽별 표(설문 생성기 v3): "소방기본법 (김가상) 강의 [태도]" / "화재진압 (박교관) 훈련 [준비성]" — 대괄호 앞이 교과목·강사+강의/훈련, 안쪽이 문항 */
+      var nm = gm[1].match(/^(.*\S)\s+(강의|훈련)\s*$/);
+      if (nm && ROW_Q[String(gm[2]).replace(/\s+/g, '')]) {
+        var rn = splitHeader(nm[1]).map(cleanSubject).filter(Boolean);
+        return { q: ROW_Q[String(gm[2]).replace(/\s+/g, '')], names: rn, subject: rn.join(' '), set: nm[2] === '훈련' ? 'T' : 'L' };
       }
       var gq = null, gk;
       for (gk = 0; gk < QPAT.length && !gq; gk++) if (QPAT[gk][1].test(gm[1])) gq = QPAT[gk][0];
