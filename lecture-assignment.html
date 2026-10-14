@@ -860,7 +860,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-14 배정 88</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-14 배정 89</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2017,12 +2017,15 @@
         '<input type="text" id="sRoomText" maxlength="100" placeholder="강의실 이름 직접 입력" style="display:none;margin-top:6px;"></div>' +
       '<div class="span2" style="position:relative;"><div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:6px 8px;margin-bottom:3px;"><label for="sInstr" style="margin:0;white-space:nowrap;">강사</label>' +
         '<span style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;"><button type="button" class="btn" id="sOps" style="height:26px;padding:0 10px;font-size:12px;" title="입교안내·성과측정처럼 강사 없이 학교(교육운영팀)가 운영하는 교시">교육운영팀 운영</button><button type="button" class="btn" id="sOps2" style="height:26px;padding:0 10px;font-size:12px;" title="강사 없이 교육훈련팀이 운영하는 교시">교육훈련팀 운영</button>' +
-        '<button type="button" class="btn" id="sBrowse" style="height:26px;padding:0 10px;font-size:12px;">강사 찾아보기 (사진·이력)</button></span></div><div id="sChip"></div>' +
-        '<div id="sRoleWrap" style="display:none;margin:6px 0;"><span class="hint" style="margin-right:6px;font-weight:700;">역할</span><select id="sRole" style="width:auto;"><option>주강사</option><option>보조강사</option></select> ' +
-        '<span class="hint">강사가 2명 이상이면 목록에 주/보조로 표시됩니다. 누적 횟수·시수는 주강사만 집계합니다.</span></div>' +
-        '<div id="sTrainerWrap" style="display:none;margin:6px 0;"><span class="hint" style="margin-right:6px;font-weight:700;">현장교관</span><select id="sTrainer" style="width:auto;"><option value="">아니오 (일반 강의)</option><option value="대표">예 · 설문 평가 대상 (대표)</option><option value="제외">예 · 설문 평가 제외</option></select> ' +
-        '<span class="hint">현장교관이 맡은 시간이면 선택하세요. 한 교과목에서 설문으로 평가할 현장교관은 대표 1명만 지정합니다.</span></div>' +
+        '<button type="button" class="btn" id="sBrowse" style="height:26px;padding:0 10px;font-size:12px;">강사 찾아보기 (사진·이력)</button></span></div>' +
         '<input type="text" id="sInstr" autocomplete="off" placeholder="이름·소속·분야·교과목으로 검색"><div id="sPicker" class="picker" style="display:none;"></div>' +
+        '<div id="sChip"></div>' +
+        '<div id="sRoleRow" style="display:flex;flex-wrap:wrap;gap:8px 20px;margin:8px 0 0;align-items:flex-start;">' +
+          '<div id="sRoleWrap" style="display:none;flex:1 1 170px;min-width:0;"><div style="display:flex;align-items:center;gap:6px;"><label for="sRole" class="hint" style="margin:0;font-weight:700;">역할</label><select id="sRole" style="width:auto;"><option>주강사</option><option>보조강사</option></select></div>' +
+          '<div class="hint" style="margin-top:3px;font-size:12px;">2명 이상이면 주·보조로 표시, 누적은 주강사만 집계</div></div>' +
+          '<div id="sTrainerWrap" style="display:none;flex:1 1 220px;min-width:0;"><div style="display:flex;align-items:center;gap:6px;"><label for="sTrainer" class="hint" style="margin:0;font-weight:700;">현장교관</label><select id="sTrainer" style="width:auto;"><option value="">아니오 (일반 강의)</option><option value="대표">예 · 설문 평가 대상 (대표)</option><option value="제외">예 · 설문 평가 제외</option></select></div>' +
+          '<div class="hint" style="margin-top:3px;font-size:12px;">현장교관 시간이면 선택, 설문 평가는 교과목당 대표 1명</div></div>' +
+        '</div>' +
         '</div>' +
       '<div class="span2"><label for="sNote" id="sNoteLbl">비고</label><input type="text" id="sNote" maxlength="200" placeholder="선택 입력"></div>' +
       '<div class="span3" id="sNoPlanWrap"><label for="sNoPlan" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;"><input type="checkbox" id="sNoPlan" style="width:auto;height:auto;margin:0;">' +
