@@ -151,6 +151,9 @@
   .panel{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:16px 18px;margin-bottom:14px;}
   .panel h2{margin:0;font-size:20px;color:var(--navy);}
   .panel h3{margin:0 0 10px;font-size:15px;color:var(--navy);}
+  .cline{margin:-4px 0 12px;font-size:13px;color:var(--text-muted);line-height:1.45;word-break:keep-all;}
+  .cline b{color:var(--navy);font-weight:700;}
+  body.plist .cline{display:none !important;}
   .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 18px;margin:12px 0 0;font-size:13px;}
   .meta dt{color:var(--text-muted);font-size:12px;}
   .meta dd{margin:2px 0 0;font-weight:700;}
@@ -846,6 +849,7 @@
       <h3>교과목 목록 <span class="hint">(날짜별)</span> <button class="btn sm" id="sReload" type="button" style="margin-left:8px;">새로고침</button>
         <span id="sPrintBox" style="margin-left:6px;white-space:nowrap;"><select class="porient" id="oriList" data-ori="list" aria-label="인쇄 용지 방향" style="height:30px;"></select> <button class="btn sm" id="sPrint" type="button">인쇄</button></span>
         <span class="vtabs" role="tablist" aria-label="보기 전환"><button type="button" id="vList" class="on" role="tab">목록</button><button type="button" id="vGrid" role="tab">격자</button></span></h3>
+      <div class="cline" id="sListLine"></div>
       <div id="sGridWrap" style="display:none;"></div>
       <div id="sTableWrap" class="tw"></div>
       <div id="sCards"></div>
@@ -860,7 +864,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-15 배정 90</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-15 배정 91</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1934,6 +1938,12 @@
       '</tbody><tfoot><tr><td colspan="2"><b>교과목 합계</b></td><td class="num"><b>' + tot + '시간</b></td><td>' + (opsH ? '운영 교시 ' + opsH + '시간 별도' : '') + '</td></tr></tfoot></table></div></div>';
   }
 
+  /* 입력·목록 카드 제목 아래 과정명·기간 줄(입력 착오 방지) */
+  function courseLine(p){
+    if (!p) return '';
+    return '<b>' + esc(p['과정명'] || '') + ' ' + esc(p['기수'] || '') + '</b> <span style="white-space:nowrap;">· ' + esc(ipgyo(p)) + '</span>';
+  }
+
   /* --- 머리 카드 --- */
   function renderHead(p){
     gapIdxM = null;
@@ -2049,6 +2059,7 @@
     panel.innerHTML =
       '<button type="button" class="fclose" id="sClose" aria-label="닫기">' + ic('x') + '</button>' +
       '<h3 id="sFormTitle">교과목 추가</h3>' +
+      '<div class="cline" id="sFormLine">' + courseLine(p) + '</div>' +
       '<div class="form">' +
       '<div><label for="sDate">일자</label><input type="date" id="sDate" value="' + esc(defDate) + '"><div class="hint" id="sDow"></div></div>' +
       '<div><label for="sStart">시작 교시</label><select id="sStart">' + periodOptions('start', p1) + '</select></div>' +
@@ -4060,6 +4071,7 @@
     var p = planByKey(currentKey);
     var list = sessionsOf(currentKey);
     var viewer = isViewer();
+    $('sListLine').innerHTML = courseLine(p);
     buildRoleCnt();
     var gridOn = viewMode === 'grid';
     $('sGridWrap').style.display = gridOn ? '' : 'none';
