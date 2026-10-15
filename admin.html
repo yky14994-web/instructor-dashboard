@@ -270,7 +270,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 관리자 4</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-15 관리자 5</div>
 </div>
 
 <script src="eval-core.js?v=3"></script>
@@ -333,15 +333,22 @@
     }).catch(function(err){ $('gate').hidden = true; show($('gmsg'), 'err', esc(err.message || '불러오지 못했습니다') + ' <a href="admin.html">다시 시도</a>'); });
   }
   function dstr(v){ return String(v || '').slice(0, 10); }
+  /* 과정 선택 목록: 결과를 올릴 과정이 위에 오도록 진행 중 → 최근 종료(30일 이내) → 이전 종료 → 예정 순. 날짜는 연도를 빼서 짧게(모바일 줄바꿈 완화) */
+  function shortMd(v){ var s = dstr(v); return s ? s.slice(5, 7) + '.' + s.slice(8, 10) : ''; }
   function fillCourses(){
-    var today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
-    var list = plans.slice().sort(function(x, y){ return dstr(y['입교 시작일']).localeCompare(dstr(x['입교 시작일'])); });
-    var past = list.filter(function(p){ return dstr(p['입교 종료일']) && dstr(p['입교 종료일']) <= today; });
-    var rest = list.filter(function(p){ return past.indexOf(p) < 0; });
-    function opt(p){ return '<option value="' + esc(p['과정+기수']) + '">' + esc(p['과정+기수']) + ' (' + dstr(p['입교 시작일']) + ' ~ ' + dstr(p['입교 종료일']) + ')</option>'; }
+    var now = Date.now() + 9 * 3600e3, today = new Date(now).toISOString().slice(0, 10), ago = new Date(now - 30 * 86400e3).toISOString().slice(0, 10);
+    var byStartDesc = function(x, y){ return dstr(y['입교 시작일']).localeCompare(dstr(x['입교 시작일'])); };
+    var isEnd = function(p){ return dstr(p['입교 종료일']) && dstr(p['입교 종료일']) < today; };
+    var isFuture = function(p){ return dstr(p['입교 시작일']) > today; };
+    var all = plans.slice();
+    var ing = all.filter(function(p){ return !isEnd(p) && !isFuture(p); }).sort(byStartDesc);
+    var recent = all.filter(function(p){ return isEnd(p) && dstr(p['입교 종료일']) >= ago; }).sort(byStartDesc);
+    var older = all.filter(function(p){ return isEnd(p) && dstr(p['입교 종료일']) < ago; }).sort(byStartDesc);
+    var future = all.filter(function(p){ return !isEnd(p) && isFuture(p); }).sort(function(x, y){ return dstr(x['입교 시작일']).localeCompare(dstr(y['입교 시작일'])); });
+    function opt(p){ return '<option value="' + esc(p['과정+기수']) + '">' + esc(p['과정+기수']) + ' (' + shortMd(p['입교 시작일']) + '~' + shortMd(p['입교 종료일']) + ')</option>'; }
+    function grp(label, list){ return list.length ? '<optgroup label="' + label + '">' + list.map(opt).join('') + '</optgroup>' : ''; }
     $('selCourse').innerHTML = '<option value="">과정을 선택해 주세요</option>' +
-      (past.length ? '<optgroup label="종료된 과정">' + past.map(opt).join('') + '</optgroup>' : '') +
-      (rest.length ? '<optgroup label="진행 중·예정 과정">' + rest.map(opt).join('') + '</optgroup>' : '');
+      grp('진행 중', ing) + grp('최근 종료(30일 이내)', recent) + grp('이전 종료', older) + grp('예정(결과 없음)', future);
   }
   function planOf(key){ return plans.filter(function(p){ return String(p['과정+기수']) === key; })[0] || null; }
   function courseSessions(key){ return sessions.filter(function(s){ return String(s['개설키']) === key; }); }
@@ -629,7 +636,7 @@
   function renderRepCourses(){
     var sel = $('repCourse'), cur = sel.value;
     var ups = ((results && results.uploads) || []).slice().sort(function(a, b){ return String(b['저장일시']).localeCompare(String(a['저장일시'])); });
-    sel.innerHTML = ups.length ? ups.map(function(u){ return '<option value="' + esc(u['개설키']) + '">' + esc(u['개설키']) + ' (저장 ' + esc(String(u['저장일시']).slice(0, 10)) + ')</option>'; }).join('') : '<option value="">저장된 평가 결과가 없습니다</option>';
+    sel.innerHTML = ups.length ? ups.map(function(u){ return '<option value="' + esc(u['개설키']) + '">' + esc(u['개설키']) + ' (저장 ' + esc(String(u['저장일시']).slice(5, 10).replace('-', '.')) + ')</option>'; }).join('') : '<option value="">저장된 평가 결과가 없습니다</option>';
     if (cur) sel.value = cur;
     renderReport();
   }
