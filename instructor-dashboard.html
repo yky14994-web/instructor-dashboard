@@ -283,6 +283,24 @@
   #boot{display:none;}
   html.autologin #loginScreen{display:none !important;}
   html.autologin #boot{display:block;padding:90px 20px;text-align:center;color:var(--text-muted);font-size:14px;opacity:0;animation:bootin .2s ease .4s forwards;}
+  /* 강사 승인 진행 표시 */
+  .apv{margin-top:12px;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.55;border:1px solid #CBD4E0;background:#F3F6FA;color:var(--text);}
+  .apv.ok{background:#E3F1E4;border-color:#B9DDBD;color:#1F6B2B;}
+  .apv.err{background:#FBE0DD;border-color:#E9B8B2;color:#9B1C12;}
+  .apv-head{display:flex;align-items:center;gap:8px;font-size:14px;}
+  .apv-sec{margin-left:auto;font-size:12px;color:#5F6877;font-variant-numeric:tabular-nums;}
+  .apv-spin{width:16px;height:16px;border:2px solid var(--navy);border-right-color:transparent;border-radius:50%;animation:apvSpin .8s linear infinite;flex:0 0 auto;}
+  @keyframes apvSpin{to{transform:rotate(360deg)}}
+  .apv-bar{height:4px;border-radius:2px;background:#D5DCE6;overflow:hidden;margin:9px 0 8px;}
+  .apv-bar i{display:block;width:35%;height:100%;background:var(--navy);border-radius:2px;animation:apvBar 1.4s ease-in-out infinite;}
+  @keyframes apvBar{0%{transform:translateX(-100%)}100%{transform:translateX(290%)}}
+  .apv-steps{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .apv-st{font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px;background:#fff;border:1px solid #CBD4E0;color:#5F6877;}
+  .apv-st.run{border-color:var(--navy);color:var(--navy);}
+  .apv-st.ok{background:#fff;border-color:#B9DDBD;color:#1F6B2B;}
+  .apv-st.ok::before{content:"✓ ";}
+  .apv-note{margin-top:6px;font-size:12px;color:inherit;opacity:.9;}
+  @media (prefers-reduced-motion:reduce){.apv-spin,.apv-bar i{animation:none;}}
   @keyframes bootin{to{opacity:1;}}   /* 0.4초 안에 로드되면 '불러오는 중' 문구를 보이지 않게 */
 
   .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;font-size:16px;color:var(--text-muted);margin:2px 0 12px;font-weight:600;}
@@ -471,7 +489,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 강사관리 14</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-16 강사관리 15</div>
 </div>
 
 <script>
@@ -1013,25 +1031,20 @@
     var pw = sessionStorage.getItem('jsfa_dash_pw');
 
     if (!isViewer && (d.상태 === '승인대기' || d.상태 === '보류중')) {
+      /* 승인·보류·반려: 관리자 로그인만으로 처리(서버 w부터 권한 비밀번호를 묻지 않음). 처리 중에는 진행 표시 */
       document.getElementById('approveBtn').addEventListener('click', function(){
-        var adminPw = getAdminPw();
-        if (adminPw === null) return;
         if (!confirm('이 강사를 승인하시겠습니까? 승인하면 강사님께 안내메일이 발송됩니다(하루 메일 한도를 넘으면 대기 후 순서대로 발송됩니다).')) return;
-        submitApproval(d.강사ID, '승인', null, adminPw);
+        submitApproval(d.강사ID, '승인', null);
       });
       document.getElementById('holdBtn').addEventListener('click', function(){
-        var adminPw = getAdminPw();
-        if (adminPw === null) return;
         if (!confirm('이 강사를 보류 처리하시겠습니까? 강사에게는 메일이 발송되지 않으며, 나중에 다시 승인/반려를 결정할 수 있습니다.')) return;
-        submitApproval(d.강사ID, '보류', null, adminPw);
+        submitApproval(d.강사ID, '보류', null);
       });
       document.getElementById('rejectBtn').addEventListener('click', function(){
-        var adminPw = getAdminPw();
-        if (adminPw === null) return;
         var reason = prompt('반려 사유(선택 입력, 강사에게 메일로 전달됩니다):', '');
         if (reason === null) return; // 취소
         if (!confirm('정말 반려 처리하시겠습니까?')) return;
-        submitApproval(d.강사ID, '반려', reason, adminPw);
+        submitApproval(d.강사ID, '반려', reason);
       });
     }
 
@@ -1171,10 +1184,62 @@
     }
   }
 
+  /* 승인 처리 진행 표시: 버튼 잠금 + 진행 상자(단계·경과 시간). 처리 중에는 창을 닫지 않게 함 */
+  var approvalBusy = false;
+  function approvalBox(){
+    var box = document.getElementById('approvalProgress');
+    if (!box) {
+      var acts = document.getElementById('approvalActions');
+      if (!acts) return null;
+      box = document.createElement('div');
+      box.id = 'approvalProgress';
+      box.setAttribute('role', 'status'); box.setAttribute('aria-live', 'polite');
+      acts.parentNode.insertBefore(box, acts.nextSibling);
+    }
+    return box;
+  }
+  function setApprovalButtons(disabled, busyId, busyText){
+    ['approveBtn', 'holdBtn', 'rejectBtn'].forEach(function(id){
+      var b = document.getElementById(id); if (!b) return;
+      if (!b.getAttribute('data-label')) b.setAttribute('data-label', b.textContent);
+      b.disabled = disabled;
+      b.style.opacity = disabled && id !== busyId ? '0.45' : '';
+      b.style.cursor = disabled ? 'progress' : 'pointer';
+      b.textContent = disabled && id === busyId ? busyText : b.getAttribute('data-label');
+    });
+  }
   function submitApproval(instructorId, decision, reason, adminPw){
+    if (approvalBusy) return;
     var pw = sessionStorage.getItem('jsfa_dash_pw');
-    var payload = { action: 'decideApproval', 강사ID: instructorId, decision: decision, password: pw, adminPassword: adminPw };
+    var payload = { action: 'decideApproval', 강사ID: instructorId, decision: decision, password: pw };
+    if (adminPw) payload.adminPassword = adminPw;
     if (reason) payload.사유 = reason;
+    var mailStep = decision !== '보류';
+    var busyId = decision === '승인' ? 'approveBtn' : (decision === '보류' ? 'holdBtn' : 'rejectBtn');
+    approvalBusy = true;
+    setApprovalButtons(true, busyId, decision + ' 처리 중…');
+    var box = approvalBox(), t0 = Date.now(), timer = null, mailState = '';
+    function paint(state, msg){
+      if (!box) return;
+      var sec = Math.floor((Date.now() - t0) / 1000);
+      var steps = '<div class="apv-steps"><span class="apv-st ' + (state === 'run' ? 'run' : 'ok') + '">① ' + (decision === '승인' ? '강사 등록(활성) 처리' : decision + ' 처리') + '</span>' +
+        (mailStep ? (state === 'run' ? '<span class="apv-st wait">② 강사 안내 메일</span>' : (mailState === '발송완료' ? '<span class="apv-st ok">② 강사 안내 메일 발송</span>' : '<span class="apv-st wait">② 안내 메일 발송 대기</span>')) : '') + '</div>';
+      if (state === 'run') {
+        box.className = 'apv run';
+        box.innerHTML = '<div class="apv-head"><span class="apv-spin" aria-hidden="true"></span><b>' + decision + ' 처리 중입니다</b><span class="apv-sec">' + sec + '초</span></div>' +
+          '<div class="apv-bar"><i></i></div>' + steps +
+          '<div class="apv-note">' + (mailStep ? '안내 메일 발송까지 함께 처리하므로 10~20초 걸릴 수 있습니다. ' : '') + '끝날 때까지 이 창을 닫지 마세요.</div>';
+      } else if (state === 'ok') {
+        box.className = 'apv ok';
+        box.innerHTML = '<div class="apv-head"><b>' + msg + '</b></div>' + steps;
+      } else {
+        box.className = 'apv err';
+        box.innerHTML = '<div class="apv-head"><b>처리하지 못했습니다</b></div><div class="apv-note">' + msg + '</div>';
+      }
+    }
+    paint('run');
+    timer = setInterval(function(){ var s = box && box.querySelector('.apv-sec'); if (s) s.textContent = Math.floor((Date.now() - t0) / 1000) + '초'; }, 1000);
+    function finish(){ clearInterval(timer); approvalBusy = false; }
 
     listCacheClear(); fetch(WEBAPP_URL, {
       method: 'POST',
@@ -1184,27 +1249,45 @@
     .then(function(res){ return res.json(); })
     .then(function(json){
       if (json.status === 'ok') {
-        var doneMsg = decision === '승인' ? '승인 처리되었습니다.' : (decision === '보류' ? '보류 처리되었습니다.' : '반려 처리되었습니다.');
-        if (json.메일 === '발송완료') doneMsg += '\n안내 메일을 보냈습니다.';
-        else if (json.메일 === '대기') doneMsg += '\n오늘 메일 한도 때문에 안내 메일은 발송 대기 중입니다. 한도가 남으면 순서대로 자동 발송됩니다.';
-        alert(doneMsg);
-        document.getElementById('overlay').style.display = 'none';
+        finish();
+        mailState = String(json.메일 || '');
+        var doneMsg = decision === '승인' ? '승인 완료 · 강사풀에 정식 등록되었습니다.' : (decision === '보류' ? '보류 처리되었습니다.' : '반려 처리되었습니다.');
+        if (json.메일 === '발송완료') doneMsg += ' 안내 메일을 보냈습니다.';
+        else if (json.메일 === '대기') doneMsg += ' 오늘 메일 한도 때문에 안내 메일은 발송 대기 중이며, 한도가 남으면 순서대로 자동 발송됩니다.';
+        paint('ok', doneMsg);
+        var acts = document.getElementById('approvalActions'); if (acts) acts.style.display = 'none';
+        var newSt = decision === '승인' ? '활성' : (decision === '보류' ? '보류중' : '반려');
+        var hb = document.querySelector('#overlay h2 .status');   // 상세 창 제목 옆 상태 표시도 바로 바꿈
+        if (hb) { hb.className = 'status ' + statusClass(newSt); hb.textContent = newSt; }
         loadData(pw);
-      } else {
-        if ((json.message||'').indexOf('권한 비밀번호') > -1) sessionStorage.removeItem('jsfa_admin_pw');
-        alert('처리 중 오류가 발생했습니다: ' + (json.message || ''));
+        return;
       }
+      /* 서버가 아직 이전 버전(권한 비밀번호 필요)이면 그때만 권한 비밀번호를 묻고 다시 처리 */
+      if (!adminPw && (json.message || '').indexOf('권한 비밀번호') > -1) {
+        finish(); setApprovalButtons(false);
+        if (box) { box.className = ''; box.innerHTML = ''; }
+        var ap = getAdminPw();
+        if (ap) submitApproval(instructorId, decision, reason, ap);
+        return;
+      }
+      finish(); setApprovalButtons(false);
+      if ((json.message || '').indexOf('권한 비밀번호') > -1) sessionStorage.removeItem('jsfa_admin_pw');
+      paint('err', '처리 중 오류가 발생했습니다: ' + esc(json.message || '') + ' 다시 눌러 주세요.');
     })
     .catch(function(){
-      alert('처리 중 오류가 발생했습니다.');
+      finish(); setApprovalButtons(false);
+      paint('err', '처리 결과를 확인하지 못했습니다. 목록에서 강사 상태가 바뀌었는지 먼저 확인한 뒤, 바뀌지 않았으면 다시 눌러 주세요.');
+      loadData(pw);
     });
   }
 
+  function approvalCloseGuard(){ return !approvalBusy || confirm('승인 처리가 아직 진행 중입니다. 창을 닫아도 서버 처리는 계속되며, 결과는 목록에서 확인할 수 있습니다. 닫을까요?'); }
   document.getElementById('closeBtn').addEventListener('click', function(){
+    if (!approvalCloseGuard()) return;
     document.getElementById('overlay').style.display = 'none';
   });
   document.getElementById('overlay').addEventListener('click', function(e){
-    if (e.target.id === 'overlay') document.getElementById('overlay').style.display = 'none';
+    if (e.target.id === 'overlay' && approvalCloseGuard()) document.getElementById('overlay').style.display = 'none';
   });
 
   function fileToBase64(file){
