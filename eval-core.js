@@ -1,5 +1,6 @@
 /* 평가관리 계산 모듈 (화면과 분리한 순수 계산 코드 · 서버/네트워크 사용 안 함)
  * - 설문 결과 CSV 읽기, 문항 열 찾기, 교과목·강사별 집계, 누적 별점 계산, 편성에서 강사 찾기
+ * - (v4) 응답자 기본정보(소속·근무기간·보직) 집계, 서술형 의견 규칙 분류(주제·성격·개인정보 의심·의견 없음)
  * - 브라우저에서는 window.EvalCore, Node 시험에서는 module.exports 로 사용 */
 (function (root) {
   'use strict';
@@ -15,6 +16,13 @@
     { title: '구내식당', items: ['구내식당 이용', '음식의 간', '메뉴의 다양성', '청결도', '친절도'] }
   ];
   function qList(set) { return set === 'T' ? QT : Q; }
+  /* 응답자 기본정보(설문 첫 쪽, 필수). 설문 생성기 v4 의 BASIC_FIELDS 와 같은 이름(폼 문항 제목)을 써야 합니다. 점수 계산에는 쓰지 않음 */
+  var BASIC_FIELDS = ['소속', '근무기간', '보직'];
+  function basicField(h) {
+    var t = String(h || '').replace(/^\s*기본\s*정보\s*[|:：·\-]?\s*/, '').replace(/\s+/g, '').replace(/[()（）]/g, '');
+    for (var i = 0; i < BASIC_FIELDS.length; i++) if (t === BASIC_FIELDS[i]) return BASIC_FIELDS[i];
+    return null;
+  }
 
   /* ---------- CSV 읽기 ---------- */
   function detectDelim(text) {
@@ -74,7 +82,7 @@
   /* 쪽별 표의 줄 이름(공백 제거) → 문항. 설문 생성기 v3 의 QUESTIONS/TRAIN_QUESTIONS row 와 같아야 함 */
   var ROW_Q = { '태도': '태도', '목표달성': '목표', '전달력': '전달', '효과(업무도움)': '효과', '준비성': '준비성', '전문성': '전문성', '적용성': '적용성' };
   function splitHeader(h) {
-    return String(h || '').split(/[\n|\/\[\]()（）:：_·]+|\s-\s|\s{2,}/).map(function (x) { return x.trim(); }).filter(Boolean);
+    return String(h || '').split(/[\n|\/\[\]()（）:：_]+|\s-\s|\s{2,}/).map(function (x) { return x.trim(); }).filter(Boolean);
   }
   function cleanSubject(s) {
     return String(s || '')
@@ -84,6 +92,8 @@
   }
   /* 머리글에서 문항을 찾고, 나머지 조각(교과목명·강사명, 순서 무관)을 names로 돌려줌. 문항은 보통 맨 뒤에 있으므로 뒤에서부터 찾음 */
   function classifyHeader(h) {
+    var bf = basicField(h);
+    if (bf) return { basic: true, field: bf };
     /* 구글 폼 표(그리드) 문항: "강의 태도 [소방기본법 (김가상)]" — 대괄호 앞이 문항, 안쪽이 교과목·강사 */
     var gm = String(h || '').match(/^([^\[\]]+?)\s*\[(.+)\]\s*$/);
     if (gm) {
@@ -95,7 +105,8 @@
       /* 쪽별 표(설문 생성기 v3): "소방기본법 (김가상) 강의 [태도]" / "화재진압 (박교관) 훈련 [준비성]" — 대괄호 앞이 교과목·강사+강의/훈련, 안쪽이 문항 */
       var nm = gm[1].match(/^(.*\S)\s+(강의|훈련)\s*$/);
       if (nm && ROW_Q[String(gm[2]).replace(/\s+/g, '')]) {
-        var rn = splitHeader(nm[1]).map(cleanSubject).filter(Boolean);
+        var pm = nm[1].match(/^(.*\S)\s*[(（]([^()（）]+)[)）]\s*$/);   // "교과목 (강사)" — 교과목명 안의 기호는 그대로 둠
+        var rn = pm ? [cleanSubject(pm[1]), pm[2].trim()].filter(Boolean) : splitHeader(nm[1]).map(cleanSubject).filter(Boolean);
         return { q: ROW_Q[String(gm[2]).replace(/\s+/g, '')], names: rn, subject: rn.join(' '), set: nm[2] === '훈련' ? 'T' : 'L' };
       }
       var gq = null, gk;
@@ -105,6 +116,9 @@
         return { q: gq, names: gn, subject: gn.join(' '), set: /^\s*훈련/.test(gm[1]) ? 'T' : null };
       }
     }
+    /* 설문 생성기 v3 의견 문항: "교과목 (강사) 의견" */
+    var om = String(h || '').match(/^(.*\S)\s*[(（]([^()（）]+)[)）]\s*의견\s*$/);
+    if (om) { var on = [cleanSubject(om[1]), om[2].trim()].filter(Boolean); return { q: '서술', names: on, subject: on.join(' ') }; }
     var parts = splitHeader(h), q = null, qi = -1, i, k;
     for (i = parts.length - 1; i >= 0 && !q; i--) {
       for (k = 0; k < QPAT.length; k++) if (QPAT[k][1].test(parts[i])) { q = QPAT[k][0]; qi = i; break; }
@@ -125,7 +139,7 @@
     var groups = [], byKey = {}, last = null;
     headers.forEach(function (h, idx) {
       var c = classifyHeader(h);
-      if (!c || c.common) return;
+      if (!c || c.common || c.basic) return;
       var names = c.names;
       if (!names.join('|') && last) names = last.names;   // 이름이 없는 열은 직전 묶음에 붙임
       var nk = names.join('|');
@@ -166,13 +180,13 @@
    * rows: parseCSV 결과(머리글 포함). 반환: {headers, groups, fileCount, items:[{subject,n,avg:{태도..},overall,comments:[]}], skipped}
    * fileCount = 값이 하나라도 있는 응답 줄 수 */
   function aggregate(rows) {
-    if (!rows || rows.length < 2) return { headers: [], groups: [], fileCount: 0, items: [], commons: [], skipped: 0 };
+    if (!rows || rows.length < 2) return { headers: [], groups: [], fileCount: 0, items: [], commons: [], skipped: 0, basics: {}, basicCols: 0, noneCount: 0 };
     var headers = rows[0].map(function (h) { return String(h || ''); });
     var groups = detectGroups(headers);
     var data = rows.slice(1).filter(function (r) { return r.some(function (c) { return String(c || '').trim() !== ''; }); });
     var skipped = 0;
     var items = groups.map(function (g) {
-      var sums = {}, cnts = {}, comments = [], n = 0, QS = qList(g.set);
+      var sums = {}, cnts = {}, comments = [], nones = 0, n = 0, QS = qList(g.set);
       QS.forEach(function (k) { sums[k] = 0; cnts[k] = 0; });
       data.forEach(function (r) {
         var any = false;
@@ -185,21 +199,32 @@
         if (any) n++;
         if (g.cols['서술'] !== undefined) {
           var t = String(r[g.cols['서술']] || '').replace(/\s+/g, ' ').trim();
-          if (t) comments.push(t);
+          if (t && isNoneComment(t)) nones++;          // "없음"·"." 같은 응답은 의견 건수에서 빼고 따로 셈
+          else if (t) comments.push(t);
         }
       });
       var avg = {}, ok = true, tot = 0;
       QS.forEach(function (k) {
         if (cnts[k] > 0) { avg[k] = round2(sums[k] / cnts[k]); tot += sums[k] / cnts[k]; } else { avg[k] = null; ok = false; }   // 종합은 반올림 전 문항 평균으로 계산
       });
-      return { subject: g.subject, names: g.names, set: g.set, n: n, avg: avg, overall: ok ? round2(tot / 4) : null, comments: comments, hasAll: ok };
-    }).filter(function (it) { return it.n > 0 || it.comments.length > 0; });
+      return { subject: g.subject, names: g.names, set: g.set, n: n, avg: avg, overall: ok ? round2(tot / 4) : null, comments: comments, nones: nones, hasAll: ok };
+    }).filter(function (it) { return it.n > 0 || it.comments.length > 0 || it.nones > 0; });
     var commons = detectCommons(headers).map(function (c) {
       var sum = 0, cnt = 0;
       data.forEach(function (r) { var sc = answerScore(r[c.col]); if (sc !== null) { sum += sc; cnt++; } });
       return { section: c.section, item: c.item, n: cnt, avg: cnt ? round2(sum / cnt) : null };
     }).filter(function (c) { return c.n > 0; });
-    return { headers: headers, groups: groups, fileCount: data.length, items: items, commons: commons, skipped: skipped };
+    /* 기본정보: 열별 응답 값 → 인원 */
+    var basics = {}, basicCols = 0;
+    headers.forEach(function (h, idx) {
+      var c = classifyHeader(h);
+      if (!c || !c.basic) return;
+      basicCols++;
+      var m = basics[c.field] || (basics[c.field] = {});
+      data.forEach(function (r) { var v = String(r[idx] || '').replace(/\s+/g, ' ').trim() || '(응답 없음)'; m[v] = (m[v] || 0) + 1; });
+    });
+    var noneCount = items.reduce(function (sum, it) { return sum + it.nones; }, 0);
+    return { headers: headers, groups: groups, fileCount: data.length, items: items, commons: commons, skipped: skipped, basics: basics, basicCols: basicCols, noneCount: noneCount };
   }
 
   /* ---------- 점수 표시 ---------- */
@@ -344,12 +369,45 @@
     return { level: 'ok', text: '파일의 응답 건수와 확정 응답 인원이 같습니다.' };
   }
 
+  /* ---------- 서술형 의견 규칙 분류 (AI 없음, 낱말 규칙) ----------
+   * 주제: 아래 규칙에서 낱말이 가장 많이 걸린 주제(같으면 위에 있는 주제). 아무것도 안 걸리면 '기타'.
+   * 성격: 개선을 바라는 낱말이 있으면 '개선 요청', 칭찬 낱말만 있으면 '칭찬', 둘 다 없으면 '기타'.
+   * 규칙은 아래 표만 고치면 바뀝니다. */
+  var TOPIC_RULES = [
+    ['실습·훈련', /실습|훈련|장비|체험|실기|시연|조작|교보재/g],
+    ['현장 적용', /현장|실무|업무|활용|적용|써먹|도움/g],
+    ['강의 내용', /내용|이론|사례|자료|교재|피피티|ppt|법령|지식|정보|예시|영상/gi],
+    ['전달·진행', /설명|전달|이해|목소리|발음|속도|빠르|빨랐|빨라|느리|느렸|진행|질문|소통|집중|재미|재밌|지루|열정|열의|쉽게|어렵|어려웠|강의력|강의\s*방식/g],
+    ['시간·일정', /시간|일정|짧|길었|길어|길게|연장|늘려|늘렸|줄여|쉬는|휴식|오전|오후/g],
+    ['시설·환경', /강의실|냉방|난방|에어컨|추웠|추워|더웠|더워|의자|마이크|음향|빔|스크린|시설|환경|주차|식당|숙소|화장실/g]
+  ];
+  var TOPICS = TOPIC_RULES.map(function (r) { return r[0]; }).concat(['기타']);
+  var TONES = ['칭찬', '개선 요청', '기타'];
+  var RE_IMPROVE = /아쉬|개선|않았|않아서|못했|못해서|부족|했으면|하면\s*좋|면\s*좋겠|바랍|바람|필요|불편|힘들|지루|길었|짧았|빨랐|늘려|늘렸으면|줄여|추가|더\s*많|어려웠|어렵/;
+  var RE_PRAISE = /좋았|좋습|좋은|좋아|유익|유용|감사|최고|훌륭|만족|재미있|재밌|알찬|인상|명강|추천|도움이\s*(됐|되었|많이|됩니다|되었습니다)|잘\s*들었|잘\s*정리|쉬웠|쉽게\s*(설명|이해|알려)|명확|수\s*있었|수고|고생/;
+  var RE_PII = /01[016789][-.\s]?\d{3,4}[-.\s]?\d{4}|[\w.+-]+@[\w-]+\.[\w.]+|\d{6}[-\s]?[1-4]\d{6}/;
+  var NONE_WORDS = ['없음', '없습니다', '없어요', '없다', '없슴', '없읍니다', '없음니다', '무', 'x', 'ㄴ', 'ㅇ', 'ㅇㅇ', 'no', 'none', 'nothing', 'na', 'n/a',
+    '특이사항없음', '특이사항없습니다', '특별히없음', '특별히없습니다', '딱히없음', '딱히없습니다', '해당없음', '해당사항없음', '의견없음', '의견없습니다', '별도의견없음'];
+  function isNoneComment(t) {
+    var s = String(t || '').toLowerCase().replace(/[\s.,!~·\-_'"`。]+/g, '');
+    if (!s) return true;
+    if (NONE_WORDS.indexOf(s) > -1) return true;
+    return s.length <= 14 && /^(특이|특별히|딱히|해당|별도|별다른|특별한)?(사항|의견|건의사항|내용)?(은|는|이|도)?(없|無)(음|습니다|어요|다|슴|읍니다|네요|고요|음니다)?$/.test(s);
+  }
+  function classifyComment(t) {
+    var text = String(t || ''), best = '기타', bestN = 0;
+    TOPIC_RULES.forEach(function (r) { var m = text.match(r[1]); var n = m ? m.length : 0; if (n > bestN) { best = r[0]; bestN = n; } });
+    var tone = RE_IMPROVE.test(text) ? '개선 요청' : (RE_PRAISE.test(text) ? '칭찬' : '기타');
+    return { topic: best, tone: tone, pii: RE_PII.test(text) };
+  }
+
   var api = {
     MIN_SESSION: MIN_SESSION, MIN_CUM: MIN_CUM, Q: Q, QT: QT, COMMON_SECTIONS: COMMON_SECTIONS, qList: qList, detectCommons: detectCommons, rowSet: rowSet,
     parseCSV: parseCSV, answerScore: answerScore, classifyHeader: classifyHeader, detectGroups: detectGroups,
     aggregate: aggregate, stars: stars, starPct: starPct, to50: to50, cumulative: cumulative,
     normSubject: normSubject, subjectMap: subjectMap, matchInstructor: matchInstructor, allInstructors: allInstructors, resolveGroup: resolveGroup, surveyPairs: surveyPairs, surveyHeader: surveyHeader,
-    checkCounts: checkCounts, round2: round2
+    checkCounts: checkCounts, round2: round2,
+    BASIC_FIELDS: BASIC_FIELDS, basicField: basicField, TOPICS: TOPICS, TONES: TONES, TOPIC_RULES: TOPIC_RULES, isNoneComment: isNoneComment, classifyComment: classifyComment
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.EvalCore = api;
