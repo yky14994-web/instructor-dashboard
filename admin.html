@@ -64,6 +64,8 @@
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
   .fld{display:flex;flex-direction:column;gap:4px;min-width:0;}
   .fld label{font-size:12px;font-weight:700;color:var(--text-muted);}
+  .gen-guide{flex:1 1 100%;background:var(--info-bg);color:var(--navy);border-radius:8px;padding:9px 12px;font-size:13px;line-height:1.55;}
+  input[type=text].bad,input[type=text].bad:focus{border-color:var(--err-fg);outline:2px solid var(--err-fg);outline-offset:0;box-shadow:0 0 0 4px var(--err-bg);}
   select,input[type=text]{height:36px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;font-family:inherit;font-size:14px;background:#fff;color:var(--text);max-width:100%;}
   table.t select{height:32px;font-size:13px;}
   .drop{border:2px dashed #B7C3D4;border-radius:10px;background:var(--bg-soft);padding:18px;text-align:center;font-size:14px;color:var(--text-sub);}
@@ -245,6 +247,7 @@
           <button type="button" class="btn sm" id="btnTpl" title="설문 생성기를 쓰지 않고 네이버 폼·구글 폼을 손으로 만들 때, 이 파일의 이름을 문항 제목으로 그대로 쓰면 결과 올리기에서 점수가 자동으로 연결됩니다">문항 제목 파일 받기(폼을 직접 만들 때)</button>
         </div>
         <div id="genSet" class="row" style="margin-top:10px;" hidden>
+          <div class="gen-guide"><b>①</b> jfsa.edu 계정으로 <b>설문 생성기</b> 구글 시트를 열고 주소창 주소를 복사 → <b>②</b> 아래 칸에 붙여넣기 → <b>③</b> <b>[저장]</b></div>
           <div class="fld" style="flex:1 1 320px;"><label for="inGen">설문 생성기 시트 주소(처음 한 번만 입력, 이 브라우저에 기억)</label><input type="text" id="inGen" placeholder="https://docs.google.com/spreadsheets/d/..."></div>
           <button type="button" class="btn" id="btnGenSave">저장</button>
         </div>
@@ -388,7 +391,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 관리자 9</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 관리자 10</div>
 </div>
 
 <script src="eval-core.js?v=4"></script>
@@ -559,11 +562,17 @@
     window.open(u, '_blank', 'noopener');
   };
   $('btnGenSet').onclick = function(){ $('genSet').hidden = !$('genSet').hidden; $('inGen').value = genUrl(); if (!$('genSet').hidden) $('inGen').focus(); };
+  // 10-17 관리자 10: 주소가 없는데 빈칸으로 저장하면 막고 칸을 강조(이전에는 "지웠습니다"가 떠서 헷갈림). 저장된 주소를 지울 때만 확인 후 지움
+  function genBad(msg){ $('inGen').classList.add('bad'); $('inGen').focus(); show($('prepMsg'), 'err', msg); }
+  $('inGen').addEventListener('input', function(){ $('inGen').classList.remove('bad'); });
   $('btnGenSave').onclick = function(){
     var v = $('inGen').value.trim();
-    if (v && !/^https:\/\/docs\.google\.com\/spreadsheets\//.test(v)) { show($('prepMsg'), 'err', '구글 시트 주소(https://docs.google.com/spreadsheets/…)를 붙여 넣어 주세요.'); return; }
+    if (!v && !genUrl()) { genBad('주소 칸이 비어 있습니다. 설문 생성기 시트 주소를 <b>붙여넣은 뒤</b> [저장]을 눌러 주세요.'); return; }
+    if (v && !/^https:\/\/docs\.google\.com\/spreadsheets\//.test(v)) { genBad('구글 시트 주소(https://docs.google.com/spreadsheets/…)를 붙여 넣어 주세요. 설문(구글 폼) 주소가 아니라 <b>설문 생성기 시트</b> 주소입니다.'); return; }
+    if (!v && !confirm('저장해 둔 설문 생성기 주소를 지울까요?')) return;
+    $('inGen').classList.remove('bad');
     lsSet(KEY_GEN, v); $('genSet').hidden = true; refreshGen();
-    show($('prepMsg'), 'ok', v ? '설문 생성기 주소를 이 브라우저에 저장했습니다.' : '저장한 주소를 지웠습니다.');
+    show($('prepMsg'), 'ok', v ? '설문 생성기 주소를 이 브라우저에 저장했습니다. 이제 <b>[설문 생성기 열기]</b>를 누르면 시트가 새 창으로 열립니다.' : '저장한 주소를 지웠습니다.');
   };
   refreshGen();
 
