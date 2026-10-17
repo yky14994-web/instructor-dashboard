@@ -868,7 +868,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-17 배정 92</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-17 배정 93</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2020,6 +2020,7 @@
       ? '<button type="button" class="btn sm" data-chg="' + kk + '" data-ck="restore">취소 해제</button>'
       : '<button type="button" class="btn sm" data-chg="' + kk + '" data-ck="dates"' + (endd ? ' title="종료된 과정의 기록을 바로잡을 때만 사용합니다"' : '') + '>일정 변경</button>' +
         (endd ? '' : '<button type="button" class="btn sm danger" data-chg="' + kk + '" data-ck="cancel">기수 취소</button>'));
+    if (chgBtns && !cxd && !endd && canCopyNow(p)) chgBtns = '<button type="button" class="btn sm primary" data-cp="1" title="같은 과정의 이전 기수 편성(교과목·교시·강의실·강사)을 새 날짜로 옮겨 한 번에 만듭니다">이전 기수에서 복사</button>' + chgBtns;
     $('sHead').innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;"><h2>' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') +
       (cxd ? ' <span class="tag t-err" style="vertical-align:middle;">취소됨</span>' : (ci.changed ? ' <span class="tag t-warn" style="vertical-align:middle;">일정 변경됨</span>' : '')) + '</h2>' +
       (chgBtns ? '<div class="act">' + chgBtns + '</div>' : '') + '</div>' +
@@ -5305,6 +5306,25 @@
   function closeCopy(){ $('pOverlay').style.display = 'none'; cp.busy = false; ops.abort = true; }
   function ymdFmt(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function isWeekendDate(d){ var w = d.getDay(); return w === 0 || w === 6; }
+  /* 이 기수의 편성이 없거나 운영팀 교시(입교안내·성과측정 등)뿐이면 이전 기수 복사 가능 */
+  function onlyOpsRows(key){ return sessionsOf(key).every(isOps); }
+  function canCopyNow(p){
+    if (!p || isViewer() || !sessionsOk || isCancelled(p) || planEnded(p)) return false;
+    return onlyOpsRows(p['과정+기수']) && copyCandidates(p).length > 0;
+  }
+  /* 복사할 줄이 이 기수에 이미 있는 줄(운영팀 교시)과 같은 날·같은 교시에 걸리면 제외 사유를 돌려줌 */
+  function copyClash(b){
+    var hit = null;
+    sessionsOf(currentKey).forEach(function(r){
+      if (hit || normYmd(r['일자']) !== b.일자) return;
+      var k1 = String(r['반'] || '전체'), k2 = String(b.반 || '전체');
+      if (!(k1 === '전체' || k2 === '전체' || k1 === k2)) return;
+      if (Number(r['시작교시']) <= b.끝교시 && Number(r['끝교시']) >= b.시작교시) hit = r;
+    });
+    if (!hit) return '';
+    var sj = String(hit['교과목'] || '');
+    return sj.replace(/\s+/g, '') === String(b.교과목 || '').replace(/\s+/g, '') ? '이미 있음(' + sj + ')' : '이미 편성된 교시와 겹침(' + sj + ')';
+  }
   function copyCandidates(p){
     var list = plans.filter(function(q){
       var k = q['과정+기수'];
@@ -5354,7 +5374,7 @@
       var m = mapCopyDate(src, p, String(r['일자']));
       var iid = cp.instr ? String(r['강사ID'] || '') : '';
       var iname = cp.instr && !iid ? String(r['강사명'] || '') : '';
-      return {
+      var row = {
         src: r, date: m.date || '', err: m.err || '', note: m.note || '',
         body: {
           반: String(r['반'] || '전체'), 일자: m.date || '', 시작교시: Number(r['시작교시']), 끝교시: Number(r['끝교시']),
@@ -5365,6 +5385,8 @@
           '현장교관': (iid || iname) ? String(r['현장교관'] || '') : ''
         }
       };
+      if (!row.err) row.err = copyClash(row.body);
+      return row;
     });
   }
   // 복사하면 생길 겹침을 미리 계산(저장하지 않음)
@@ -5387,7 +5409,7 @@
     if (isViewer()) return;
     var p = planByKey(currentKey);
     if (!p || isCancelled(p)) return;
-    if (sessionsOf(currentKey).length) { alert('이 기수에는 이미 편성된 교과목이 있어 복사할 수 없습니다.'); return; }
+    if (!onlyOpsRows(currentKey)) { alert('이 기수에는 이미 편성된 교과목이 있어 복사할 수 없습니다.\n(입교안내·성과측정 같은 운영팀 교시만 있을 때는 복사할 수 있습니다)'); return; }
     var c = copyCandidates(p);
     if (!c.length) { alert('복사할 이전 기수가 없습니다. 같은 과정명의 다른 기수에 편성된 교과목이 있어야 합니다.'); return; }
     cp = { src: defaultCopySource(p, c), instr: true, room: 'src', busy: false };
@@ -5445,7 +5467,9 @@
     api({ action: 'copySessions', password: getPw(), 개설키: currentKey, 원본키: srcKey, rows: good.map(function(r){ return r.body; }) }).then(function(j){
       if (j.status !== 'ok') {
         cp.busy = false; btn.disabled = false; btn.textContent = label;
-        $('pMsg').innerHTML = '<div class="note-err">' + esc(j.message || '복사하지 못했습니다') + '</div>';
+        var em = j.message || '복사하지 못했습니다';
+        if (em.indexOf('이미 편성된 교과목이 있어') > -1 && sessionsOf(currentKey).length && onlyOpsRows(currentKey)) em = '서버가 아직 이전 버전이라 운영팀 교시가 있는 기수에는 복사할 수 없습니다. 서버(x) 배포 후 다시 시도해 주세요.';
+        $('pMsg').innerHTML = '<div class="note-err">' + esc(em) + '</div>';
         return;
       }
       closeCopy();
