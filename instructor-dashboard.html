@@ -264,18 +264,18 @@
   /* 공통 상단 메뉴 (강사 조회·강의배정 페이지 동일) */
   .gnav{background:#10263F;color:#fff;}
   .gnav-brand .on{color:#FFB38A;margin-left:.3em;}
-  .gnav-in{display:flex;align-items:stretch;gap:2px;padding:0 20px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .gnav-in{display:flex;align-items:stretch;gap:2px;padding:0 28px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .gnav-in::-webkit-scrollbar{display:none;}
-  .gnav-brand{display:flex;align-items:center;font-size:13px;font-weight:800;letter-spacing:-0.2px;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
-  .gnav-i{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;font-size:14px;font-weight:700;color:rgba(255,255,255,0.82);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;box-sizing:border-box;}
+  .gnav-brand{display:flex;align-items:center;font-size:17px;font-weight:800;letter-spacing:-0.2px;padding-right:24px;margin-right:10px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
+  .gnav-i{display:flex;align-items:center;gap:6px;min-height:56px;padding:0 20px;font-size:16px;font-weight:700;color:rgba(255,255,255,0.9);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;box-sizing:border-box;}
   a.gnav-i:hover{color:#fff;background:rgba(255,255,255,0.08);}
-  .gnav-i.on{color:#fff;border-bottom-color:#fff;}
+  .gnav-i.on{color:#fff;border-bottom:4px solid #fff;background:rgba(255,255,255,0.08);}   /* 10-17 B안: 메뉴 바 크게·선명하게 */
   .gnav-i.off{color:rgba(255,255,255,0.45);cursor:default;}
   .gnav-i small{font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,0.35);border-radius:999px;padding:1px 7px;color:rgba(255,255,255,0.6);}
   @media (max-width:640px){
     .gnav-in{padding:0 8px;}
     .gnav-brand{display:none;}
-    .gnav-i{padding:0 12px;font-size:13px;}
+    .gnav-i{min-height:48px;padding:0 12px;font-size:14px;}
   }
   @media print{ .gnav{display:none !important;} }
 
@@ -489,7 +489,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 강사관리 16</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 강사관리 17</div>
 </div>
 
 <script>
