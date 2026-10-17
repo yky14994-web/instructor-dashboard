@@ -367,6 +367,9 @@
   .todo .th{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
   .todo h3{margin:0;font-size:15px;font-weight:800;color:var(--navy);}
   .todo .sum{font-size:13px;color:var(--text-muted);}
+  .todo .tfold{cursor:pointer;} .todo .tfold .btn{margin-left:auto;}
+  .todo .tcnt{color:var(--warn-fg);} .todo .tbrief{color:var(--text-sub);}
+  .todo .tfoldbtn{margin-left:auto;}
   .todo table{width:100%;border-collapse:collapse;font-size:13px;}
   .todo th,.todo td{padding:7px 8px;border-top:1px solid var(--border);text-align:left;vertical-align:middle;background:none;position:static;}
   .todo thead th{border-top:none;font-size:12px;color:var(--text-muted);font-weight:700;}
@@ -868,7 +871,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-17 배정 94</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-17 배정 96</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1057,7 +1060,7 @@
       return api(body);
     });
   }
-  /* 종료된 일정: 강의일 당일 17:50 이후(서버와 같은 기준). 종료된 일정은 배정·수정이 막히고 삭제만 가능 */
+  /* 종료된 일정: 강의일 당일 17:50 이후(서버와 같은 기준). 종료된 일정은 배정·수정·삭제 모두 막힘(10-17 서버 y와 같은 기준, 잘못된 기록은 시트에서 직접 정리) */
   var SESS_END_HHMM = '17:50';
   function sessEnded(ymd){
     var d = normYmd(ymd); if (!d) return false;
@@ -1066,7 +1069,7 @@
     var hm = p2(k.getUTCHours()) + ':' + p2(k.getUTCMinutes());
     return d < today || (d === today && hm >= SESS_END_HHMM);
   }
-  /* 과정 전체가 끝났는지(입교 종료일 기준, 당일 17:50 이후). 끝난 과정은 추가 폼·편집 도구를 숨기고 삭제만 남긴다 */
+  /* 과정 전체가 끝났는지(입교 종료일 기준, 당일 17:50 이후). 끝난 과정은 추가 폼·편집 도구를 숨기고 기록 보기만 남긴다 */
   function planEnded(p){
     if (!p) return false;
     var b = normYmd(p['입교 종료일']) || normYmd(p['입교 시작일']);
@@ -1796,7 +1799,7 @@
       try { window.history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {}
       var vp = hashParams(vm[2]);
       planMode = vm[1]; if (planMode === 'cal' && !calManual) calMonth = '';
-      weekFilter = ''; todoFold = false;
+      weekFilter = '';
       if (planMode === 'table' && vp.w && /^\d{4}-\d{2}-\d{2}$/.test(vp.w) && normYmd(vp.w)) {   // 홈 '이번 주 과정' → 그 주 과정만 걸러서 표시, 1개면 바로 교과목 편성 화면
         var mon = mondayOf(vp.w), hit = plans.filter(function(p){ return !isCancelled(p) && planOverlapsWeek(p, mon); });
         if (hit.length === 1 && hit[0]['과정+기수']) {
@@ -2024,8 +2027,8 @@
     $('sHead').innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;"><h2>' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') +
       (cxd ? ' <span class="tag t-err" style="vertical-align:middle;">취소됨</span>' : (ci.changed ? ' <span class="tag t-warn" style="vertical-align:middle;">일정 변경됨</span>' : '')) + '</h2>' +
       (chgBtns ? '<div class="act">' + chgBtns + '</div>' : '') + '</div>' +
-      (cxd ? '<div class="note-err" style="margin-top:10px;">취소된 기수입니다' + (ci.cancelReason ? ' (사유: ' + esc(ci.cancelReason) + ')' : '') + '. 새 교과목은 추가할 수 없고, 남아 있는 편성은 삭제만 할 수 있습니다.</div>' : '') +
-      (endd && !isViewer() ? '<div class="note-info" style="margin-top:10px;">종료된 과정입니다. 새 교과목은 추가할 수 없고, 편성 기록은 목록 보기에서 삭제만 할 수 있습니다.</div>' : '') +
+      (cxd ? '<div class="note-err" style="margin-top:10px;">취소된 기수입니다' + (ci.cancelReason ? ' (사유: ' + esc(ci.cancelReason) + ')' : '') + '. 새 교과목은 추가할 수 없고, 앞으로 남은 편성은 삭제할 수 있습니다(지난 강의는 기록으로 보관).</div>' : '') +
+      (endd && !isViewer() ? '<div class="note-info" style="margin-top:10px;">종료된 과정입니다. 편성 기록은 보기만 할 수 있습니다(수정·삭제 불가).</div>' : '') +
       '<dl class="meta">' +
       '<div><dt>구분</dt><dd>' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ') || '-') + '</dd></div>' +
       '<div><dt>입교</dt><dd>' + esc(ipgyo(p)) + (og ? '<span class="orig" style="font-weight:500;">(' + esc(og) + ')</span>' : '') + '</dd></div>' +
@@ -2535,6 +2538,7 @@
   function deleteRow(id, noConfirm){
     var r = allSessions.filter(function(x){ return String(x['편성ID']) === id; })[0];
     if (!r) return;
+    if (sessEnded(r['일자'])) { alert('이미 종료된 일정(강의일 당일 17:50 이후)은 삭제할 수 없습니다.\n잘못된 기록은 강의배정DB 교과목시간표 시트에서 담당자가 직접 정리해 주세요.'); return; }
     var pt = periodText(r);
     if (!noConfirm && !confirm('이 교과목을 삭제할까요?\n' + md(r['일자']) + ' ' + pt.txt + ' ' + r['교과목'] + '\n삭제하면 되돌릴 수 없습니다.')) return;
     apiAsk(noticePlan(r, null), { action: 'deleteSession', password: getPw(), 편성ID: id }).then(function(res){
@@ -3733,7 +3737,7 @@
   }
   /* 연간계획 첫 화면 '처리할 일'(과정 필터와 무관, 취소 기수·지난 강의 제외)
      ① 강의계획서: 미제출 중 기한(과정 개강일 14일 전)이 14일 이내 임박이거나 이미 지난 건  ② 강사 미지정: 강의일 14일 이내  ③ 겹침 경고: 미확인 전체  ④ 강사 서류: 강의일 14일 이내 배정 강사 중 미비·보유 만료 */
-  var todoCat = '', todoTab = 'all', todoMore = false, todoFold = false;   // todoFold: 홈의 구분·연도·월 링크로 들어왔을 때 처리할 일을 한 줄로 접어 과정 목록을 먼저 보이게 함
+  var todoCat = '', todoTab = 'all', todoMore = false, todoFold = true;   // todoFold: 처리할 일을 한 줄로 접음. 10-17부터 기본 접힘(현황·처리할 일은 홈, 강의배정은 편성 작업에 집중). [펼쳐 보기]/[접기]로 전환
 
   /* ---------- 빈 교시 (일부만 편성된 과정의 비어 있는 수업 교시) ---------- */
   var gapChk = {};   // '개설키|일자|교시' → { r: 사유, at: 처리일시 } (비워둠 처리됨)
@@ -4047,7 +4051,8 @@
       return;
     }
     if (todoFold) {
-      box.innerHTML = '<div class="th" style="margin-bottom:0;"><h3>처리할 일</h3><span class="sum">' + (total ? '총 ' + total + '건' : '없음') + (nInfo ? ' · 알림 ' + nInfo + '건' : '') + '</span><button type="button" class="btn sm" data-tmore="unfold">펼쳐 보기</button></div>';
+      var brief = TODO_ORDER.filter(function(k){ return !D[k].info && D[k].n; }).map(function(k){ return esc(D[k].label) + ' ' + D[k].n; }).join(' · ');
+      box.innerHTML = '<div class="th tfold" style="margin-bottom:0;" data-tmore="unfold" role="button" tabindex="0" title="눌러서 처리할 일 펼쳐 보기"><h3>처리할 일</h3><span class="sum">' + (total ? '<b class="tcnt">총 ' + total + '건</b>' : '없음') + (nInfo ? ' · 알림 ' + nInfo + '건' : '') + (brief ? '<span class="tbrief"> (' + brief + ')</span>' : '') + '</span><button type="button" class="btn sm" data-tmore="unfold">펼쳐 보기' + ic('chevD', 'r') + '</button></div>';
       return;
     }
     if (!todoCat || !D[todoCat]) todoCat = '';
@@ -4071,7 +4076,7 @@
       return '<div class="mc" ' + (it.go ? 'data-rqgo' : 'data-todo') + '="' + esc(it.go || it.key) + '"><div class="t">' + it.title + '</div><div class="s">' + it.sub + '</div><div class="a">' + it.extra + '</div></div>';
     }).join('');
     var prevSL = (box.querySelector('.chips') || {}).scrollLeft || 0;   /* 휴대폰 가로 탭: 다시 그려도 스크롤 위치 유지 */
-    box.innerHTML = '<div class="th"><h3>처리할 일</h3><div class="chips">' + chips + '</div></div>' +
+    box.innerHTML = '<div class="th"><h3>처리할 일</h3><div class="chips">' + chips + '</div><button type="button" class="btn sm tfoldbtn" data-tmore="fold" title="처리할 일을 한 줄로 접습니다">접기' + ic('chevU', 'r') + '</button></div>' +
       '<div class="th2"><span class="sum">' + c.sum + '</span>' + sub + '</div>' +
       (list.length ? '<table><thead><tr>' + c.cols.map(function(h){ return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' + rows + '</tbody></table><div class="mcards">' + cards + '</div>' : '<div class="tnone">해당하는 항목이 없습니다.</div>') +
       '<div class="more">' + (list.length > 5 ? '<a data-tmore="1">' + (todoMore ? '접기' + ic('chevU', 'r') : '나머지 ' + (list.length - 5) + '건 더 보기' + ic('chevD', 'r')) + '</a> ' : '') + '<span class="tnote">· ' + c.note + '</span></div>';
@@ -4103,7 +4108,8 @@
   function actCell(r){
     if (isViewer()) return '';
     var id = esc(r['편성ID']);
-    if (isCancelled(planByKey(currentKey)) || sessEnded(r['일자'])) return '<div class="act"><button type="button" class="btn sm danger" data-act="del" data-id="' + id + '"' + (isCancelled(planByKey(currentKey)) ? '' : ' title="종료된 일정은 수정할 수 없고 삭제만 할 수 있습니다"') + '>삭제</button></div>';
+    if (sessEnded(r['일자'])) return '<span class="tag t-none" title="종료된 강의는 수정·삭제할 수 없습니다(기록 보관)">종료</span>';
+    if (isCancelled(planByKey(currentKey))) return '<div class="act"><button type="button" class="btn sm danger" data-act="del" data-id="' + id + '">삭제</button></div>';
     return '<div class="act"><button type="button" class="btn sm" data-act="edit" data-id="' + id + '">수정</button>' +
       '<button type="button" class="btn sm danger" data-act="del" data-id="' + id + '">삭제</button></div>';
   }
@@ -4615,7 +4621,7 @@
       mvBarHtml() + empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
       '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : formState === 'end' ? '종료된 과정이라 칸을 눌러도 수정창이 열리지 않습니다. 편성 기록 삭제는 목록 보기에서 할 수 있습니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
-      (sessEnded(mon) ? '<div class="hint gnp" style="margin-top:4px;">강의일 당일 17:50 이후는 종료된 일정으로 보며, 종료된 일정에는 교과목을 배정·수정할 수 없고 삭제만 할 수 있습니다.</div>' : '') + '</div>';
+      (sessEnded(mon) ? '<div class="hint gnp" style="margin-top:4px;">강의일 당일 17:50 이후는 종료된 일정으로 보며, 종료된 일정의 교과목은 배정·수정·삭제할 수 없습니다.</div>' : '') + '</div>';
   }
   /* 과정 전체(모든 주차)를 한 파일로: 주차마다 1페이지로 이어 붙여 인쇄. 파일명(브라우저 PDF 저장 기본값)은 "제N기 과정명" */
   function courseFileName(p){
@@ -5645,7 +5651,7 @@
     if (tcat) { todoCat = tcat; todoMore = false; renderTodo(); return; }
     var ttab = t.getAttribute('data-ttab');
     if (ttab) { todoTab = ttab; todoMore = false; renderTodo(); return; }
-    if (t.getAttribute('data-tmore')) { if (todoFold) { todoFold = false; todoMore = false; } else todoMore = !todoMore; renderTodo(); return; }
+    if (t.getAttribute('data-tmore')) { var tm = t.getAttribute('data-tmore'); if (tm === 'fold') { todoFold = true; todoMore = false; } else if (todoFold) { todoFold = false; todoMore = false; } else todoMore = !todoMore; renderTodo(); return; }
     var tdo = t.getAttribute('data-todo');
     if (tdo) { openCourse(tdo); return; }
     var rqg = t.getAttribute('data-rqgo');
@@ -5685,7 +5691,7 @@
     if (act === 'del') deleteRow(id);
     else if ((act === 'edit' || act === 'assign') && sessEnded(row['일자'])) {
       var ptE = periodText(row);
-      if (confirm('이미 종료된 일정입니다(강의일 당일 17:50 이후).\n교과목은 수정할 수 없고 삭제만 할 수 있습니다.\n\n' + md(row['일자']) + ' ' + ptE.txt + ' ' + row['교과목'] + '\n\n이 교과목을 삭제하시겠습니까?\n삭제하면 되돌릴 수 없습니다.')) deleteRow(id, true);
+      alert('이미 종료된 일정입니다(강의일 당일 17:50 이후).\n지난 강의는 수정·삭제할 수 없습니다.\n\n' + md(row['일자']) + ' ' + ptE.txt + ' ' + row['교과목'] + '\n\n잘못된 기록은 강의배정DB 교과목시간표 시트에서 담당자가 직접 정리해 주세요.');
     }
     else if (act === 'edit') fillForm(row, 'edit');
     else if (act === 'copy') fillForm(row, 'copy');
