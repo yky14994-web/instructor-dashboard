@@ -65,8 +65,24 @@
   .fld{display:flex;flex-direction:column;gap:4px;min-width:0;}
   .fld label{font-size:12px;font-weight:700;color:var(--text-muted);}
   .gen-guide{flex:1 1 100%;background:var(--info-bg);color:var(--navy);border-radius:8px;padding:9px 12px;font-size:13px;line-height:1.55;}
-  input[type=text].bad,input[type=text].bad:focus{border-color:var(--err-fg);outline:2px solid var(--err-fg);outline-offset:0;box-shadow:0 0 0 4px var(--err-bg);}
-  select,input[type=text]{height:36px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;font-family:inherit;font-size:14px;background:#fff;color:var(--text);max-width:100%;}
+  .mk-big{height:44px;padding:0 22px;font-size:15px;}
+  .alt-ways{margin-top:14px;border:1px solid var(--border);border-radius:8px;padding:8px 12px;background:var(--bg-soft);}
+  .alt-ways summary{cursor:pointer;font-weight:700;color:var(--text-sub);font-size:13px;padding:2px 0;}
+  .alt-ways[open] summary{margin-bottom:8px;}
+  .mk-box{margin-top:12px;border:1px solid #BFD8C6;background:var(--ok-bg);border-radius:10px;padding:14px 16px;}
+  .mk-box.old{border-color:#CBD4E0;background:var(--info-bg);}
+  .mk-head{font-size:15px;font-weight:800;color:var(--ok-fg);margin-bottom:10px;}
+  .mk-box.old .mk-head{color:var(--navy);}
+  .mk-link{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .mk-link a{font-size:17px;font-weight:800;color:var(--navy);word-break:break-all;}
+  .mk-box label{display:block;font-size:12px;font-weight:700;color:var(--text-muted);margin:12px 0 4px;}
+  .mk-box textarea{width:100%;box-sizing:border-box;min-height:120px;border:1px solid var(--border-input);border-radius:6px;padding:8px 10px;font-family:inherit;font-size:14px;line-height:1.55;background:#fff;color:var(--text);resize:vertical;}
+  .qr-ov{position:fixed;inset:0;background:#fff;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;box-sizing:border-box;text-align:center;}
+  .qr-ov h3{margin:0;font-size:26px;color:var(--navy);word-break:keep-all;}
+  .qr-ov .qr-img svg{width:min(70vh,86vw);height:auto;display:block;}
+  .qr-ov .qr-url{font-size:20px;font-weight:800;color:var(--text);word-break:break-all;}
+  input[type=text].bad,input[type=text].bad:focus,input[type=password].bad,input[type=password].bad:focus{border-color:var(--err-fg);outline:2px solid var(--err-fg);outline-offset:0;box-shadow:0 0 0 4px var(--err-bg);}
+  select,input[type=text],input[type=password]{height:36px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;font-family:inherit;font-size:14px;background:#fff;color:var(--text);max-width:100%;}
   table.t select{height:32px;font-size:13px;}
   .drop{border:2px dashed #B7C3D4;border-radius:10px;background:var(--bg-soft);padding:18px;text-align:center;font-size:14px;color:var(--text-sub);}
   .drop.over{border-color:var(--navy);background:var(--info-bg);}
@@ -235,6 +251,23 @@
       </div>
       <div class="card">
         <h2>설문 링크 만들기</h2>
+        <div class="hint">위에서 고른 과정의 설문(구글 폼)을 만들어 단체톡에 보낼 링크와 안내 문장을 드립니다. 같은 과정은 한 번만 만들어지고, 다시 누르면 이미 만든 링크를 보여 줍니다.</div>
+        <div class="row" style="margin-top:12px;">
+          <button type="button" class="btn primary mk-big" id="btnMk">설문 링크 만들기</button>
+          <button type="button" class="btn sm" id="btnApiSet" title="설문 생성기 웹 앱 주소와 비밀값을 넣거나 고칩니다(이 브라우저에 기억)">연결 설정</button>
+        </div>
+        <div id="apiSet" hidden>
+          <div class="gen-guide" style="margin-top:10px;">처음 한 번만 넣습니다. <b>①</b> 설문 생성기 Apps Script에서 <b>배포 → 새 배포(웹 앱)</b>로 받은 주소 <b>②</b> 스크립트 속성 <b>SURVEY_API_KEY</b>에 넣은 비밀값 → <b>[연결 시험 후 저장]</b></div>
+          <div class="row" style="margin-top:8px;">
+            <div class="fld" style="flex:2 1 320px;"><label for="inApi">설문 생성기 웹 앱 주소</label><input type="text" id="inApi" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"></div>
+            <div class="fld" style="flex:1 1 200px;"><label for="inApiKey">비밀값</label><input type="password" id="inApiKey" placeholder="SURVEY_API_KEY 값" autocomplete="off"></div>
+            <button type="button" class="btn" id="btnApiSave">연결 시험 후 저장</button>
+          </div>
+        </div>
+        <div id="mkMsg" class="note" hidden></div>
+        <div id="mkOut" hidden></div>
+        <details id="altWays" class="alt-ways">
+          <summary>다른 방법 (설문 생성기 시트에서 직접 만들기 · 폼을 손으로 만들기)</summary>
         <ol class="howto">
           <li id="howGen">아래 <b>[설문 생성기 열기]</b>를 누릅니다. 구글 시트가 새 창으로 열립니다.</li>
           <li>시트 위 메뉴 <b>설문 생성기 &rarr; 설문 만들기</b>에서 과정을 고르고, 오른쪽 미리보기로 문항을 확인합니다.</li>
@@ -242,7 +275,7 @@
           <li>성과측정이 끝나면 구글 폼 <b>응답</b> 탭에서 CSV로 내려받아 <b>2. 결과 올리기</b>에 올립니다.</li>
         </ol>
         <div class="row">
-          <button type="button" class="btn primary" id="btnGen">설문 생성기 열기</button>
+          <button type="button" class="btn" id="btnGen">설문 생성기 열기</button>
           <button type="button" class="btn sm" id="btnGenSet" title="저장해 둔 설문 생성기 시트 주소를 고치거나 지웁니다(엉뚱한 시트가 열리거나 생성기 시트를 새로 만들었을 때)">생성기 주소 고치기</button>
           <button type="button" class="btn sm" id="btnTpl" title="설문 생성기를 쓰지 않고 네이버 폼·구글 폼을 손으로 만들 때, 이 파일의 이름을 문항 제목으로 그대로 쓰면 결과 올리기에서 점수가 자동으로 연결됩니다">문항 제목 파일 받기(폼을 직접 만들 때)</button>
         </div>
@@ -252,7 +285,8 @@
           <button type="button" class="btn" id="btnGenSave">저장</button>
         </div>
         <div id="prepMsg" class="note" hidden></div>
-        <div class="hint" style="margin-top:10px;">질문 문장, 안내문, 기본정보(소속·근무기간·보직) 선택지는 설문 생성기 시트의 <b>설문문항</b> 탭에서 고칩니다. 항목 이름(강의: 태도·목표·전달·효과, 훈련: 태도·준비성·전문성·적용성)은 점수 계산에 쓰여 고정입니다. 고친 문장은 그 뒤에 새로 만드는 설문부터 적용됩니다.</div>
+        </details>
+        <div class="hint" style="margin-top:10px;">질문 문장, 안내문, 기본정보(소속·근무기간·보직) 선택지, 단체톡 안내 문장은 설문 생성기 시트의 <b>설문문항</b> 탭에서 고칩니다. 항목 이름(강의: 태도·목표·전달·효과, 훈련: 태도·준비성·전문성·적용성)은 점수 계산에 쓰여 고정입니다. 고친 문장은 그 뒤에 새로 만드는 설문부터 적용됩니다.</div>
       </div>
     </div>
 
@@ -391,7 +425,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 관리자 10</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 관리자 11</div>
 </div>
 
 <script src="eval-core.js?v=4"></script>
@@ -575,6 +609,107 @@
     show($('prepMsg'), 'ok', v ? '설문 생성기 주소를 이 브라우저에 저장했습니다. 이제 <b>[설문 생성기 열기]</b>를 누르면 시트가 새 창으로 열립니다.' : '저장한 주소를 지웠습니다.');
   };
   refreshGen();
+
+  /* ---------- 설문 링크 만들기 (관리자 11, B안): 설문 생성기 웹 앱(jfsa.edu)에 요청해 폼을 만들고 링크를 받음 ----------
+   * 운영 서버(외부강사 DB)는 거치지 않음(E22). 웹 앱 주소·비밀값은 이 브라우저에만 기억(코드·저장소에 넣지 않음) */
+  var KEY_API = 'jsfa_svgen_api', KEY_APIK = 'jsfa_svgen_key', mkLast = null;
+  function apiUrl(){ return lsGet(KEY_API); }
+  function apiKey(){ return lsGet(KEY_APIK); }
+  function genApi(body){
+    var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 90000) : null;
+    return fetch(apiUrl(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ key: apiKey() }, body)), signal: ctl ? ctl.signal : undefined, cache: 'no-store' })
+      .then(readJson).then(function(j){ if (timer) clearTimeout(timer); return j; }, function(err){ if (timer) clearTimeout(timer); throw err; });
+  }
+  function connFailMsg(){
+    return '설문 생성기에 연결하지 못했습니다. <b>[연결 설정]</b>의 웹 앱 주소가 맞는지, 생성기를 <b>웹 앱(액세스: 모든 사용자)</b>으로 배포했는지 확인해 주세요. 급하면 아래 <b>다른 방법</b>으로 시트에서 직접 만들 수 있습니다.';
+  }
+  function copyText(t, btn){
+    function ok(){ if (btn) { var o = btn.textContent; btn.textContent = '복사됨'; setTimeout(function(){ btn.textContent = o; }, 1500); } }
+    function old(){ var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) {} ta.remove(); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, old); else old();
+  }
+  function mkClear(){ $('mkOut').hidden = true; $('mkOut').innerHTML = ''; show($('mkMsg'), 'ok', ''); mkLast = null; }
+  function renderMk(r){
+    mkLast = r;
+    var made = !!r.created;
+    var head = made ? (r.remade ? '✔ 새 설문을 다시 만들었습니다' : '✔ 설문이 만들어졌습니다') : '이미 만든 설문입니다' + (r.createdAt ? ' (' + esc(r.createdAt) + ' 만듦)' : '');
+    var h = '<div class="mk-box' + (made ? '' : ' old') + '"><div class="mk-head">' + head + ' · ' + esc(r.course) + '</div>' +
+      '<div class="mk-link"><a href="' + esc(r.link) + '" target="_blank" rel="noopener">' + esc(r.link) + '</a> <button type="button" class="btn sm" id="mkCopyLink">링크 복사</button></div>' +
+      '<label for="mkText">단체톡에 붙여 넣을 문장</label><textarea id="mkText" readonly>' + esc(r.text || r.link) + '</textarea>' +
+      '<div class="row" style="margin-top:8px;"><button type="button" class="btn primary" id="mkCopyText">문장 복사</button>' +
+      '<button type="button" class="btn" id="mkQr" title="강의실 TV·빔프로젝터에 띄워 교육생이 휴대폰 카메라로 바로 들어가게 할 때">화면에 크게 띄우기(QR)</button>' +
+      '<a class="btn" href="' + esc(r.url || r.link) + '" target="_blank" rel="noopener">설문지 미리 열어 보기</a>' +
+      '<button type="button" class="btn sm danger" id="mkRemake" title="같은 과정의 설문을 새로 하나 더 만듭니다(링크가 바뀜)">다시 만들기</button></div>';
+    if (!made) h += '<div class="hint" style="margin-top:8px;">같은 과정은 새로 만들지 않고 이미 만든 링크를 보여 줍니다. 문항이나 편성을 고친 뒤 새 설문이 필요할 때만 [다시 만들기]를 누르세요.</div>';
+    if (r.warnings && r.warnings.length) h += '<div class="note warn"><b>설문문항 탭 확인</b><br>' + r.warnings.map(esc).join('<br>') + '</div>';
+    h += '</div>';
+    $('mkOut').innerHTML = h; $('mkOut').hidden = false;
+    $('mkCopyLink').onclick = function(){ copyText(r.link, this); };
+    $('mkCopyText').onclick = function(){ copyText($('mkText').value, this); };
+    $('mkQr').onclick = function(){ showQr(r.course, r.link); };
+    $('mkRemake').onclick = function(){
+      if (!confirm('이 과정의 설문을 새로 하나 더 만들까요?\n\n새 설문은 링크가 바뀌고, 이전 링크로 받은 응답과 합쳐지지 않습니다. 이미 단체톡에 링크를 보냈다면 새로 만들지 마세요.')) return;
+      runMk(true);
+    };
+  }
+  function runMk(force){
+    var key = $('selPrep').value;
+    show($('mkMsg'), 'ok', '');
+    if (!key) { show($('mkMsg'), 'err', '먼저 위에서 과정을 선택해 주세요.'); return; }
+    if (!prepState(courseSessions(key)).pairs.length) { show($('mkMsg'), 'warn', '이 과정에는 강사가 지정된 교과목이 없어 설문을 만들 수 없습니다. 강의배정에서 교과목과 강사를 먼저 입력해 주세요.'); return; }
+    if (!apiUrl() || !apiKey()) { openApiSet(); show($('mkMsg'), 'warn', '처음 한 번 <b>연결 설정</b>이 필요합니다. 아래 칸에 설문 생성기 웹 앱 주소와 비밀값을 넣어 주세요.'); return; }
+    var btn = $('btnMk'); btn.disabled = true; btn.textContent = '만드는 중입니다… (10~30초)';
+    genApi({ action: 'createSurvey', course: key, force: !!force }).then(function(r){
+      if (r.status !== 'ok') throw Object.assign(new Error(r.message || '설문을 만들지 못했습니다.'), { srv: true });
+      if ($('selPrep').value !== key) return;   // 그사이 과정을 바꾼 경우
+      renderMk(r);
+    }).catch(function(err){
+      show($('mkMsg'), 'err', err.srv ? esc(err.message) : connFailMsg());
+      if (!err.srv) $('altWays').open = true;
+    }).then(function(){ btn.disabled = false; btn.textContent = '설문 링크 만들기'; });
+  }
+  $('btnMk').onclick = function(){ runMk(false); };
+  $('selPrep').addEventListener('change', mkClear);
+  function openApiSet(){ $('apiSet').hidden = false; $('inApi').value = apiUrl(); $('inApiKey').value = apiKey(); $('inApi').focus(); }
+  $('btnApiSet').onclick = function(){ if ($('apiSet').hidden) openApiSet(); else $('apiSet').hidden = true; };
+  ['inApi', 'inApiKey'].forEach(function(id){ $(id).addEventListener('input', function(){ $(id).classList.remove('bad'); }); });
+  function apiBad(id, msg){ $(id).classList.add('bad'); $(id).focus(); show($('mkMsg'), 'err', msg); }
+  $('btnApiSave').onclick = function(){
+    var u = $('inApi').value.trim(), k = $('inApiKey').value.trim(), btn = this;
+    if (!u) { apiBad('inApi', '웹 앱 주소 칸이 비어 있습니다. 설문 생성기를 웹 앱으로 배포할 때 받은 주소를 붙여넣어 주세요.'); return; }
+    if (!/^https:\/\/script\.google\.com\/(a\/macros\/[^\/]+|macros)\/s\/[\w-]+\/exec$/.test(u)) { apiBad('inApi', '웹 앱 주소(https://script.google.com/macros/s/…/exec) 형식이 아닙니다. 배포 화면의 <b>웹 앱 URL</b>을 그대로 붙여넣어 주세요.'); return; }
+    if (u === WEBAPP_URL) { apiBad('inApi', '운영 서버(외부강사 DB) 주소입니다. <b>설문 생성기</b> 시트에서 배포한 웹 앱 주소를 넣어 주세요.'); return; }
+    if (k.length < 8) { apiBad('inApiKey', '비밀값을 넣어 주세요(8자 이상). 설문 생성기 스크립트 속성 SURVEY_API_KEY에 넣은 값과 같아야 합니다.'); return; }
+    btn.disabled = true; btn.textContent = '연결 시험 중…';
+    var pu = apiUrl(), pk = apiKey();
+    lsSet(KEY_API, u); lsSet(KEY_APIK, k);
+    genApi({ action: 'ping' }).then(function(r){
+      if (r.status !== 'ok') throw Object.assign(new Error(r.message || '연결 시험에 실패했습니다.'), { srv: true });
+      $('apiSet').hidden = true;
+      show($('mkMsg'), 'ok', '설문 생성기(' + esc(r.version || '') + ')에 연결했습니다. 이 브라우저에 기억합니다. 이제 <b>[설문 링크 만들기]</b>를 누르세요.');
+    }).catch(function(err){
+      lsSet(KEY_API, pu); lsSet(KEY_APIK, pk);   // 시험에 실패하면 이전 값 그대로
+      show($('mkMsg'), 'err', (err.srv ? esc(err.message) : connFailMsg()) + ' (저장하지 않았습니다)');
+    }).then(function(){ btn.disabled = false; btn.textContent = '연결 시험 후 저장'; });
+  };
+  // QR: 강의실 화면용. 같은 저장소의 qrcode.js(MIT, Kazuhiko Arase)를 처음 누를 때만 불러옴
+  function loadQr(){
+    if (window.qrcode) return Promise.resolve();
+    return new Promise(function(ok, no){ var sc = document.createElement('script'); sc.src = 'qrcode.js?v=1'; sc.onload = ok; sc.onerror = function(){ no(new Error('QR 그림 도구를 불러오지 못했습니다.')); }; document.head.appendChild(sc); });
+  }
+  function showQr(course, link){
+    loadQr().then(function(){
+      var q = window.qrcode(0, 'M'); q.addData(link); q.make();
+      var ov = document.createElement('div'); ov.className = 'qr-ov'; ov.id = 'qrOv';
+      ov.innerHTML = '<h3>' + esc(course) + ' 교육 만족도 설문</h3><div class="qr-img">' + q.createSvgTag({ cellSize: 8, margin: 2, scalable: true }) + '</div>' +
+        '<div class="qr-url">' + esc(link) + '</div><div class="hint">휴대폰 카메라로 비추면 설문이 열립니다.</div><button type="button" class="btn" id="qrClose">닫기 (Esc)</button>';
+      document.body.appendChild(ov);
+      function close(){ ov.remove(); document.removeEventListener('keydown', onKey); }
+      function onKey(e){ if (e.key === 'Escape') close(); }
+      $('qrClose').onclick = close; document.addEventListener('keydown', onKey);
+    }).catch(function(err){ show($('mkMsg'), 'err', esc(err.message) + ' 링크를 복사해 공유해 주세요.'); });
+  }
 
   function commonHeaders(){
     var h = [];
