@@ -180,6 +180,7 @@
   #sMsg{margin-top:10px;}
   .note-ok{background:var(--ok-bg);color:var(--ok-fg);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;}
   .note-warn{background:var(--warn-bg);color:var(--warn-fg);border-radius:8px;padding:8px 12px;font-size:13px;margin-top:6px;line-height:1.5;}
+  .note-info{background:var(--info-bg);color:var(--info-fg);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;}
   .note-err{background:var(--err-bg);color:var(--err-fg);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;}
   .picker{position:absolute;left:0;right:0;z-index:20;border:1px solid var(--border-input);border-radius:8px;margin-top:2px;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:13px;overflow:hidden;max-height:300px;overflow-y:auto;}
   .picker .it{padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;}
@@ -572,6 +573,9 @@
   @media print{ .clink{text-decoration:none;color:#000;} }
   #fBackdrop{display:none;position:fixed;inset:0;background:rgba(20,20,19,.45);z-index:80;}
   #sFormPanel .fclose{display:none;}
+  #sFormPanel .funfold{display:none;}
+  #sFormPanel.ffold .funfold{display:inline-flex;margin-top:4px;}
+  #sFormPanel.ffold .cline, #sFormPanel.ffold .form, #sFormPanel.ffold .fbtn, #sFormPanel.ffold #sMsg{display:none;}
   #sFormPanel.fmodal{position:fixed;z-index:85;top:50%;left:50%;transform:translate(-50%,-50%);width:min(760px,94vw);max-height:92vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);margin:0;}
   #sFormPanel.fmodal .fclose{display:flex;align-items:center;justify-content:center;position:absolute;top:10px;right:12px;width:30px;height:30px;border:1px solid var(--border-input);border-radius:6px;background:#fff;font-size:14px;cursor:pointer;color:var(--text-sub);}
   .gbox{max-width:960px;margin:0 auto;}
@@ -864,7 +868,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-15 배정 91</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-17 배정 92</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1062,6 +1066,42 @@
     var hm = p2(k.getUTCHours()) + ':' + p2(k.getUTCMinutes());
     return d < today || (d === today && hm >= SESS_END_HHMM);
   }
+  /* 과정 전체가 끝났는지(입교 종료일 기준, 당일 17:50 이후). 끝난 과정은 추가 폼·편집 도구를 숨기고 삭제만 남긴다 */
+  function planEnded(p){
+    if (!p) return false;
+    var b = normYmd(p['입교 종료일']) || normYmd(p['입교 시작일']);
+    return !!b && sessEnded(b);
+  }
+  /* 그날 이 과정의 모든 교시가 이미 편성됐는지(반 구분 없이 '전체' 기준) */
+  function dayFull(p, ymd){
+    var d = normYmd(ymd); if (!d || !p) return false;
+    var pn = periods.length ? periods.map(function(x){ return x.n; }) : [1, 2, 3, 4, 5, 6, 7], occ = {};
+    sessionsOf(String(p['과정+기수'] || '')).forEach(function(r){
+      if (normYmd(r['일자']) !== d) return;
+      for (var n = Number(r['시작교시']); n <= Number(r['끝교시']); n++) occ[n] = true;
+    });
+    return pn.every(function(n){ return occ[n]; });
+  }
+  /* 추가 폼의 기본 일자: 입교 기간 중 아직 끝나지 않았고 빈 교시가 남은 첫 평일(없으면 입교 시작일) */
+  function firstOpenDate(p){
+    var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a;
+    if (!a) return '';
+    var d = ymdToDate(a);
+    for (var i = 0; i < 70 && ymdFmt(d) <= b; i++, d.setDate(d.getDate() + 1)) {
+      var y = ymdFmt(d);
+      if (isWeekendDate(d) || sessEnded(y) || dayFull(p, y)) continue;
+      return y;
+    }
+    return a;
+  }
+  /* 운영팀 교시 자동 추가 버튼: 수정 중이 아니고, 추가·전환할 입교안내/성과측정이 남아 있을 때만 */
+  function updOpsAuto(){
+    var b = $('sOpsAuto'); if (!b) return;
+    var p = planByKey(currentKey), need = false;
+    if (p && !form.id && sessionsOk && formState === 'ok') need = opsItems(p).some(function(it){ return (it.status === 'add' || it.status === 'convert') && !sessEnded(it.date); });
+    b.style.display = need ? '' : 'none';
+  }
+  function formStateOf(p){ return isViewer() ? 'viewer' : (isCancelled(p) ? 'cx' : (planEnded(p) ? 'end' : 'ok')); }
   /* 개별 강의가 끝났는지(상태 배지용): 지난 날짜는 종료, 오늘은 그 강의의 끝 교시 종료 시각 이후 종료(교시표 시각이 없으면 17:50 기준).
      편성·수정 차단(sessEnded)은 기존대로 당일 17:50 기준을 유지한다. */
   function lectureEnded(ymdStr, endPeriod){
@@ -1650,6 +1690,8 @@
   var form = { id: '', iid: '', iname: '' };
   var lastDate = '', lastKlass = '전체', lastCat = '', lastRoom = null;
   var formState = null;
+  var formFold = true;   // 모바일: 과정을 열면 추가 폼을 접어 두고, 열기·수정·복사 때 펼침
+  function isNarrow(){ try { return window.matchMedia('(max-width: 640px)').matches; } catch (e) { return false; } }
 
   function isViewer(){ try { return sessionStorage.getItem(KEY_ROLE) === 'viewer'; } catch (e) { return false; } }
   function planByKey(key){
@@ -1862,6 +1904,7 @@
     var nb = $('navBar'); if (!nb) return;
     if (!currentKey) { nb.style.display = 'none'; nb.innerHTML = ''; return; }
     var html = '<span class="nlab">이동</span>';
+    if (isViewer()) { nb.style.display = ''; nb.innerHTML = html + '<a class="btn" href="home.html">홈으로</a>'; return; }   // 조회 전용: 편성 작업용 이동(교과목 없는 과정)은 숨김
     if (sessionsOk) {
       var nx = nextNoSubj();
       html += nx.next
@@ -1887,6 +1930,7 @@
     if (!sessionsOk) { blk.style.display = 'block'; blk.textContent = '교과목 편성 목록을 불러오지 못해 저장할 수 없습니다. 새로고침 후 다시 시도해 주세요.'; }
     else blk.style.display = 'none';
     form = { id: '', iid: '', iname: '' };
+    formFold = true;
     renderHead(p);
     renderForm(p);
     renderSessionList();
@@ -1902,7 +1946,7 @@
     var p = planByKey(currentKey);
     if (!p) { showPlan(); return; }
     renderHead(p); renderBackBar();
-    var fs0 = isViewer() ? 'viewer' : (isCancelled(p) ? 'cx' : 'ok');
+    var fs0 = formStateOf(p);
     if (fs0 !== formState) { form = { id: '', iid: '', iname: '' }; renderForm(p); }
     renderSessionList();
   }
@@ -1971,14 +2015,16 @@
     if (co && co.done) tags += '<span class="tag t-none">겹침 ' + co.done + '건 확인됨</span>';
     var cxd = isCancelled(p), ci = changeInfo(currentKey), og = origText(p);
     var kk = esc(currentKey);
+    var endd = !cxd && planEnded(p);   // 종료된 과정: 기수 취소는 숨기고, 기록 보정용 일정 변경만 남김
     var chgBtns = isViewer() ? '' : (cxd
       ? '<button type="button" class="btn sm" data-chg="' + kk + '" data-ck="restore">취소 해제</button>'
-      : '<button type="button" class="btn sm" data-chg="' + kk + '" data-ck="dates">일정 변경</button>' +
-        '<button type="button" class="btn sm danger" data-chg="' + kk + '" data-ck="cancel">기수 취소</button>');
+      : '<button type="button" class="btn sm" data-chg="' + kk + '" data-ck="dates"' + (endd ? ' title="종료된 과정의 기록을 바로잡을 때만 사용합니다"' : '') + '>일정 변경</button>' +
+        (endd ? '' : '<button type="button" class="btn sm danger" data-chg="' + kk + '" data-ck="cancel">기수 취소</button>'));
     $('sHead').innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;"><h2>' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') +
       (cxd ? ' <span class="tag t-err" style="vertical-align:middle;">취소됨</span>' : (ci.changed ? ' <span class="tag t-warn" style="vertical-align:middle;">일정 변경됨</span>' : '')) + '</h2>' +
       (chgBtns ? '<div class="act">' + chgBtns + '</div>' : '') + '</div>' +
       (cxd ? '<div class="note-err" style="margin-top:10px;">취소된 기수입니다' + (ci.cancelReason ? ' (사유: ' + esc(ci.cancelReason) + ')' : '') + '. 새 교과목은 추가할 수 없고, 남아 있는 편성은 삭제만 할 수 있습니다.</div>' : '') +
+      (endd && !isViewer() ? '<div class="note-info" style="margin-top:10px;">종료된 과정입니다. 새 교과목은 추가할 수 없고, 편성 기록은 목록 보기에서 삭제만 할 수 있습니다.</div>' : '') +
       '<dl class="meta">' +
       '<div><dt>구분</dt><dd>' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ') || '-') + '</dd></div>' +
       '<div><dt>입교</dt><dd>' + esc(ipgyo(p)) + (og ? '<span class="orig" style="font-weight:500;">(' + esc(og) + ')</span>' : '') + '</dd></div>' +
@@ -2050,15 +2096,16 @@
   }
   function renderForm(p){
     var panel = $('sFormPanel');
-    formState = isViewer() ? 'viewer' : (isCancelled(p) ? 'cx' : 'ok');
+    formState = formStateOf(p);
     if (formState !== 'ok') { panel.style.display = 'none'; panel.innerHTML = ''; return; }
     panel.style.display = '';
-    var defDate = lastDate || String(p['입교 시작일'] || '');
+    var defDate = (lastDate && !sessEnded(lastDate) && !dayFull(p, lastDate)) ? lastDate : firstOpenDate(p);
     var defRoom = lastRoom !== null ? lastRoom : String(p['예정 강의실'] || '');
     var p1 = periods.length ? periods[0].n : 1;
     panel.innerHTML =
       '<button type="button" class="fclose" id="sClose" aria-label="닫기">' + ic('x') + '</button>' +
       '<h3 id="sFormTitle">교과목 추가</h3>' +
+      '<button type="button" class="btn primary funfold" id="sUnfold">교과목 추가 열기</button>' +
       '<div class="cline" id="sFormLine">' + courseLine(p) + '</div>' +
       '<div class="form">' +
       '<div><label for="sDate">일자</label><input type="date" id="sDate" value="' + esc(defDate) + '"><div class="hint" id="sDow"></div></div>' +
@@ -2081,22 +2128,22 @@
         '<input type="text" id="sInstr" autocomplete="off" placeholder="이름·소속·분야·교과목으로 검색"><div id="sPicker" class="picker" style="display:none;"></div>' +
         '<div id="sChip"></div>' +
         '<div id="sRoleRow" style="display:flex;flex-wrap:wrap;gap:8px 20px;margin:8px 0 0;align-items:flex-start;">' +
-          '<div id="sRoleWrap" style="display:none;flex:1 1 170px;min-width:0;"><div style="display:flex;align-items:center;gap:6px;"><label for="sRole" class="hint" style="margin:0;font-weight:700;">역할</label><select id="sRole" style="width:auto;"><option>주강사</option><option>보조강사</option></select></div>' +
-          '<div class="hint" style="margin-top:3px;font-size:12px;">2명 이상이면 주·보조로 표시, 누적은 주강사만 집계</div></div>' +
+          '<div id="sRoleWrap" style="display:none;flex:1 1 170px;min-width:0;"><div style="display:flex;align-items:center;gap:6px;"><label for="sRole" class="hint" style="margin:0;font-weight:700;" title="2명 이상이면 주·보조로 표시, 누적은 주강사만 집계">역할</label><select id="sRole" style="width:auto;"><option>주강사</option><option>보조강사</option></select></div>' +
+          '<div class="hint" style="margin-top:3px;font-size:12px;">누적은 주강사만 집계</div></div>' +
           '<div id="sTrainerWrap" style="display:none;flex:1 1 220px;min-width:0;"><div style="display:flex;align-items:center;gap:6px;"><label for="sTrainer" class="hint" style="margin:0;font-weight:700;">현장교관</label><select id="sTrainer" style="width:auto;"><option value="">아니오 (일반 강의)</option><option value="대표">예 · 설문 평가 대상 (대표)</option><option value="제외">예 · 설문 평가 제외</option></select></div>' +
-          '<div class="hint" style="margin-top:3px;font-size:12px;">현장교관 시간이면 선택, 설문 평가는 교과목당 대표 1명</div></div>' +
+          '<div class="hint" style="margin-top:3px;font-size:12px;">설문 평가는 교과목당 대표 1명</div></div>' +
         '</div>' +
         '</div>' +
       '<div class="span2"><label for="sNote" id="sNoteLbl">비고</label><input type="text" id="sNote" maxlength="200" placeholder="선택 입력"></div>' +
-      '<div class="span3" id="sNoPlanWrap"><label for="sNoPlan" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;"><input type="checkbox" id="sNoPlan" style="width:auto;height:auto;margin:0;">' +
+      '<div class="span3" id="sNoPlanWrap" style="display:none;"><label for="sNoPlan" title="체크하면 이 과정의 같은 이름 교과목 전체가 강의계획서 제출 대상에서 빠지고, 마감·미제출 집계와 강사 안내 메일에도 나오지 않습니다." style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;"><input type="checkbox" id="sNoPlan" style="width:auto;height:auto;margin:0;">' +
         '<span style="font-weight:700;">강의계획서 제출 불필요</span></label>' +
-        '<div class="hint" id="sNoPlanHint">체크하면 이 과정의 같은 이름 교과목 전체가 강의계획서 제출 대상에서 빠지고, 마감·미제출 집계와 강사 안내 메일에도 나오지 않습니다.</div></div>' +
+        '<div class="hint" id="sNoPlanHint">같은 이름 교과목 전체가 계획서 제출·마감 집계·안내 메일에서 빠집니다.</div></div>' +
       '</div>' +
       '<div class="fbtn"><button type="button" class="btn primary" id="sSave">저장</button>' +
       '<button type="button" class="btn" id="sReset">입력 지우기</button>' +
       '<button type="button" class="btn danger" id="sDel" style="display:none;" title="이 교과목 편성을 삭제합니다">이 교과목 삭제</button>' +
-      '<button type="button" class="btn" id="sOpsAuto" title="이 과정의 첫날 1교시 입교안내, 마지막 날 마지막 교시 성과측정을 교육운영팀 운영으로 추가">운영팀 교시 자동 추가</button>' +
-      '<span class="hint" id="sMode">저장하면 아래 목록에 추가됩니다. 겹침·범위 밖은 막지 않고 경고로 알려 드립니다.</span></div>' +
+      '<button type="button" class="btn" id="sOpsAuto" style="display:none;" title="이 과정의 첫날 1교시 입교안내, 마지막 날 마지막 교시 성과측정을 교육운영팀 운영으로 추가">운영팀 교시 자동 추가</button>' +
+      '<span class="hint" id="sMode">겹침·기간 밖은 저장 후 경고로 알려 드립니다.</span></div>' +
       '<div id="sMsg"></div>';
     // 방 직접 입력 상태
     if (defRoom && rooms.indexOf(defRoom) === -1) { $('sRoomText').style.display = ''; $('sRoomText').value = defRoom; }
@@ -2104,6 +2151,9 @@
     $('sKlassHint').textContent = big ? '계획인원이 120명을 넘습니다. A·B 분반 운영을 검토해 보세요.' : '';
     updateDow();
     refreshRoomOptions();
+    updOpsAuto();
+    panel.classList.toggle('ffold', formFold && isNarrow() && !form.id);
+    $('sUnfold').addEventListener('click', function(){ formFold = false; panel.classList.remove('ffold'); });
     $('sRole').value = form.role === '보조강사' ? '보조강사' : '주강사';
     $('sRole').addEventListener('change', function(){ form.role = $('sRole').value; renderChip(); });
     $('sTrainer').value = form.trainer || '';
@@ -2184,6 +2234,7 @@
     var h = $('sPerHint');
     if (h) h.textContent = any ? (co ? '' : '같은 날 이미 편성된 교시(' + Object.keys(occ).map(Number).sort(function(a, b){ return a - b; }).join('·') + '교시)는 선택할 수 없습니다. 같은 교시에 보조강사를 추가하려면 역할을 "보조강사"로 바꾸세요.') : '';
     if (h) h.className = 'hint';
+    if (h && !co && !free.length && normYmd($('sDate').value)) { h.textContent = '이 날은 모든 교시가 이미 편성되어 있습니다. 다른 날짜를 선택하세요.'; h.className = 'hint warn'; }
   }
   function updateDow(){
     var p = planByKey(currentKey);
@@ -2239,8 +2290,8 @@
     if (rw) rw.style.display = (form.iid || (form.iname && !isOpsName(form.iname))) ? '' : 'none';
     var tw = $('sTrainerWrap');   // 현장교관 선택은 강사(또는 직접 입력한 이름)가 있을 때만(팀 운영 교시 제외)
     if (tw) tw.style.display = (form.iid || (form.iname && !isOpsName(form.iname))) ? '' : 'none';
-    var npw = $('sNoPlanWrap');   // 팀 운영 교시는 계획서 대상이 아니므로 체크칸을 숨김
-    if (npw) npw.style.display = (!form.iid && isOpsName(form.iname)) ? 'none' : '';
+    var npw = $('sNoPlanWrap');   // 계획서 대상(강사ID가 있는 주강사)을 고른 뒤에만 체크칸을 보여 줌
+    if (npw) npw.style.display = (form.iid && $('sRole') && $('sRole').value !== '보조강사') ? '' : 'none';
     var nt = $('sNote'), nl = $('sNoteLbl');   // 팀 교시는 비고에 대표자 이름을 적음
     if (nt) nt.placeholder = isOpsName(form.iname) && !form.iid ? '대표자 이름 (예: 홍길동)' : '선택 입력';
     if (nl) nl.textContent = isOpsName(form.iname) && !form.iid ? '비고 (대표자 이름)' : '비고';
@@ -2307,6 +2358,7 @@
     lastKlass = String(r['반'] || '전체');
     lastCat = String(r['교과목 구분'] || '');
     lastRoom = String(r['강의실'] || '');
+    formFold = false;
     form = { id: mode === 'edit' ? String(r['편성ID']) : '', iid: String(r['강사ID'] || ''), iname: String(r['강사명'] || ''), role: isSubRole(r) ? '보조강사' : '주강사', trainer: String(r['현장교관'] || ''), noPlan: isNoPlan(r), noPlanTouched: true };
     renderForm(p);
     $('sStart').value = String(Number(r['시작교시']));
@@ -2320,6 +2372,7 @@
     $('sSave').textContent = mode === 'edit' ? '수정 저장' : '저장';
     $('sReset').textContent = mode === 'edit' ? '수정 취소' : '입력 지우기';
     $('sDel').style.display = mode === 'edit' ? '' : 'none';
+    updOpsAuto();
     $('sMode').textContent = mode === 'edit'
       ? '저장하면 이 교과목이 바뀝니다. 강사를 비우고 저장하면 강사 지정이 취소됩니다.'
       : '같은 내용이 채워졌습니다. 일자·교시를 바꿔 저장하세요.';
@@ -4044,12 +4097,12 @@
     }
     if (isOps(r)) return opsTag(r);
     if (r['강사명']) return roleTag(r) + '<span class="tag t-info">' + esc(r['강사명']) + ' (직접 입력)</span>';
-    return (isViewer() || isCancelled(planByKey(currentKey))) ? '<span class="tag t-none">미지정</span>' : '<button type="button" class="btn sm" data-act="assign" data-id="' + esc(r['편성ID']) + '">강사 지정</button>';
+    return (isViewer() || isCancelled(planByKey(currentKey)) || sessEnded(r['일자'])) ? '<span class="tag t-none">미지정</span>' : '<button type="button" class="btn sm" data-act="assign" data-id="' + esc(r['편성ID']) + '">강사 지정</button>';
   }
   function actCell(r){
     if (isViewer()) return '';
     var id = esc(r['편성ID']);
-    if (isCancelled(planByKey(currentKey))) return '<div class="act"><button type="button" class="btn sm danger" data-act="del" data-id="' + id + '">삭제</button></div>';
+    if (isCancelled(planByKey(currentKey)) || sessEnded(r['일자'])) return '<div class="act"><button type="button" class="btn sm danger" data-act="del" data-id="' + id + '"' + (isCancelled(planByKey(currentKey)) ? '' : ' title="종료된 일정은 수정할 수 없고 삭제만 할 수 있습니다"') + '>삭제</button></div>';
     return '<div class="act"><button type="button" class="btn sm" data-act="edit" data-id="' + id + '">수정</button>' +
       '<button type="button" class="btn sm danger" data-act="del" data-id="' + id + '">삭제</button></div>';
   }
@@ -4071,6 +4124,7 @@
     var p = planByKey(currentKey);
     var list = sessionsOf(currentKey);
     var viewer = isViewer();
+    updOpsAuto();
     $('sListLine').innerHTML = courseLine(p);
     buildRoleCnt();
     var gridOn = viewMode === 'grid';
@@ -4553,14 +4607,14 @@
       '<button type="button" class="btn sm" data-gw="today">이번 주</button>' +
       '<span class="wk">' + (wi + 1) + '주차 / ' + weeks.length + '주 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span>' +
       (all ? '' : (function(){ var cf = courseFill(p, gapIndex()); return cf.total ? '<span class="wk gfill">편성 현황 ' + cf.filled + '/' + cf.total + '교시' + (cf.done ? ' (비워둠 ' + cf.done + ')' : '') + '</span>' : ''; })()) +
-      '<span style="margin-left:auto;display:inline-flex;gap:6px;">' + (isViewer() ? '' : '<button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>' + '<button type="button" class="btn sm mvm' + (gpOn() ? ' on' : '') + '" data-gpmode="1" title="켜면 빈 교시 칸마다 비워둠 처리 버튼이 나타납니다. 평소에는 숨겨 둡니다">비워둠 처리 ' + (gpOn() ? '끄기' : '켜기') + '</button>') + oriSelect('grid') + '<button type="button" class="btn sm" data-gw="print">인쇄</button>' + (all ? '' : '<button type="button" class="btn sm" data-gw="pdfall" title="이 과정의 모든 주차를 한 파일(주차당 1페이지)로 인쇄합니다. 인쇄창에서 PDF로 저장하면 파일명이 제N기 과정명으로 채워집니다">과정 전체 PDF</button>') + '</span></div>' + ctab +
+      '<span style="margin-left:auto;display:inline-flex;gap:6px;">' + (!canEdit ? '' : '<button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>' + '<button type="button" class="btn sm mvm' + (gpOn() ? ' on' : '') + '" data-gpmode="1" title="켜면 빈 교시 칸마다 비워둠 처리 버튼이 나타납니다. 평소에는 숨겨 둡니다">비워둠 처리 ' + (gpOn() ? '끄기' : '켜기') + '</button>') + oriSelect('grid') + '<button type="button" class="btn sm" data-gw="print">인쇄</button>' + (all ? '' : '<button type="button" class="btn sm" data-gw="pdfall" title="이 과정의 모든 주차를 한 파일(주차당 1페이지)로 인쇄합니다. 인쇄창에서 PDF로 저장하면 파일명이 제N기 과정명으로 채워집니다">과정 전체 PDF</button>') + '</span></div>' + ctab +
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:var(--err-bg);border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span><span><i style="background:repeating-linear-gradient(135deg,#FFF1BF,#FFF1BF 3px,#fff 3px,#fff 6px);border:1px solid #D9B100"></i>빈 교시</span><span><i style="background:repeating-linear-gradient(135deg,#D9DCE0,#D9DCE0 3px,var(--bg-hover) 3px,var(--bg-hover) 6px)"></i>비워둠 처리(편성 아님)</span>' +
       '<span class="docleg"><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
       mvBarHtml() + empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
-      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
-      '<div class="hint gnp" style="margin-top:4px;">강의일 당일 17:50 이후는 종료된 일정으로 보며, 종료된 일정에는 교과목을 배정·수정할 수 없고 삭제만 할 수 있습니다.</div></div>';
+      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : formState === 'end' ? '종료된 과정이라 칸을 눌러도 수정창이 열리지 않습니다. 편성 기록 삭제는 목록 보기에서 할 수 있습니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
+      (sessEnded(mon) ? '<div class="hint gnp" style="margin-top:4px;">강의일 당일 17:50 이후는 종료된 일정으로 보며, 종료된 일정에는 교과목을 배정·수정할 수 없고 삭제만 할 수 있습니다.</div>' : '') + '</div>';
   }
   /* 과정 전체(모든 주차)를 한 파일로: 주차마다 1페이지로 이어 붙여 인쇄. 파일명(브라우저 PDF 저장 기본값)은 "제N기 과정명" */
   function courseFileName(p){

@@ -219,6 +219,7 @@
   .trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:0 0 16px;align-items:stretch;}
   @media (max-width:980px){ .trio{grid-template-columns:minmax(0,1fr);} }
   .trio .card{display:flex;flex-direction:column;}
+  .trio.solo{grid-template-columns:minmax(0,1fr);}
   .trio .foot{margin-top:auto;padding-top:10px;}
   .trio .sub{font-size:12px;color:var(--text-muted);margin:-6px 0 8px;}
   .tdl{list-style:none;margin:0;padding:0;}
@@ -343,7 +344,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-14 홈 84</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 홈 85</div>
 </div>
 </div>
 
@@ -775,7 +776,7 @@
       return '<li style="border-left:5px solid ' + courseColor(String(o.p['과정명'] || '')) + ';padding-left:10px;"><div><span class="tag ' + typeCls(o.p['구분']) + '">' + esc(o.p['구분'] || '기타') + '</span> <a class="cn" href="lecture-assignment.html#c=' + encodeURIComponent(o.key) + fromQ() + '">' + esc(nameOf(o.key)) + '<span class="go">교과목 편성' + ic('arrowR', 'r') + '</span></a>' +
         '<div class="ds">' + esc(seg) + (rm ? ' · ' + esc(rm) : '') + '</div></div><div class="st">' + st + '</div></li>';
     }).join('') + '</ul>' +
-      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table&w=' + base + '">교과목 편성하기</a></div>';
+      (homeViewer() ? '' : '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table&w=' + base + '">교과목 편성하기</a></div>');
     $('cWeek').innerHTML = html;
   }
 
@@ -845,7 +846,7 @@
     var busy = target.filter(function(r){ return usedBy[r]; });
     html += '<div class="rl"><span class="k">종일 비어 있음</span>' + (whole.length ? whole.map(function(r){ return '<span class="tag t-ok">' + esc(r) + '</span>'; }).join('') : '<span class="meta">없음</span>') + '</div>' +
       (busy.length ? '<div class="rl"><span class="k">사용 중</span>' + busy.map(function(r){ return '<span class="tag t-none">' + esc(r) + ' <small>' + ranges(usedBy[r]) + '</small></span>'; }).join('') + '</div>' : '') +
-      '<div style="margin-top:10px;"><a class="btn sm" data-v="room" href="lecture-assignment.html#v=room&d=' + today + '">빈 강의실 찾기·예약</a></div>';
+      '<div style="margin-top:10px;"><a class="btn sm" data-v="room" href="lecture-assignment.html#v=room&d=' + today + '">' + (homeViewer() ? '강의실 사용 현황 보기' : '빈 강의실 찾기·예약') + '</a></div>';
     $('cRoom').innerHTML = html;
   }
 
@@ -1184,7 +1185,14 @@
       '<div class="mst">' + tile('개강 기수', open, '회') + tile('계획인원 합계', ppl, '명') + tile('지금 진행 중', run, '회') + tile('다음 달 개강', next, '회') + '</div>' +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">입교 시작일이 이번 달인 기수 기준이며 인원은 계획인원입니다.' + (cx ? ' 취소된 ' + cx + '회는 제외했습니다.' : '') + '</div><button type="button" class="btn sm" data-dt="month">월 일정 보기</button></div>';
   }
-  function renderTrio(){ renderTodoCard(); renderNoSubjCard(); renderMonthCard(); $('trio').style.display = ''; }
+  /* 조회 전용 계정: 편집 작업용 카드(처리할 일·편성이 필요한 과정)는 숨기고 이번 달 교육 현황만 넓게 */
+  function renderTrio(){
+    var v = homeViewer();
+    $('cTodo').style.display = v ? 'none' : ''; $('cNoSubj').style.display = v ? 'none' : '';
+    $('trio').classList.toggle('solo', v);
+    if (!v) { renderTodoCard(); renderNoSubjCard(); }
+    renderMonthCard(); $('trio').style.display = '';
+  }
 
   function renderAll(){
     renderTrio(); renderToday(); renderWeek(); renderRoom(); renderYear();

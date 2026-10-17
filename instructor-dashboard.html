@@ -489,7 +489,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-16 강사관리 15</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 강사관리 16</div>
 </div>
 
 <script>
@@ -1565,6 +1565,8 @@
       sessionStorage.setItem('jsfa_dash_role', json.role || 'admin');
     }
     document.getElementById('viewerModeBanner').style.display = isViewerRole() ? 'block' : 'none';
+    document.getElementById('inviteOpenBtn').style.display = isViewerRole() ? 'none' : '';   // 조회 전용: 강사 초대·등록 링크는 관리자만
+    document.getElementById('copyPublicLinkBtn').style.display = isViewerRole() ? 'none' : '';
     document.getElementById('exportRow').style.display = isViewerRole() ? 'none' : 'flex';
     document.getElementById('retentionFilterLabel').style.display = isViewerRole() ? 'none' : 'flex';
 
