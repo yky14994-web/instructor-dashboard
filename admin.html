@@ -388,7 +388,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 관리자 7</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 관리자 8</div>
 </div>
 
 <script src="eval-core.js?v=4"></script>
@@ -498,7 +498,7 @@
     else if (!results) loadResults(true);   // 검토 대기 건수 표시용(조용히)
   }
   window.addEventListener('hashchange', route);
-  $('goEval').onclick = function(){ location.hash = 'eval'; };
+  $('goEval').onclick = function(){ location.hash = 'prep'; };   // 평가관리는 1 설문 준비부터 연다(10-17)
   $('backAdmin').onclick = function(ev){ ev.preventDefault(); location.hash = ''; history.replaceState(null, '', location.pathname); route(); };
   function goTab(t){ history.replaceState(null, '', '#' + HASH[t]); tab(t); }
   document.querySelectorAll('.tab').forEach(function(b){ b.onclick = function(){ goTab(b.getAttribute('data-t')); }; });
