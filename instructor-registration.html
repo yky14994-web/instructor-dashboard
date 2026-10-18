@@ -157,6 +157,7 @@
   }
 </style>
 <script src="busy-indicator.js" defer></script>
+<script src="ai-profile.js" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -251,10 +252,10 @@
     </div>
 
     <div class="card">
-      <div class="card-title">분야</div>
+      <div class="card-title">교육 구분·활동 정보</div>
       <div class="row">
         <div class="field">
-          <label class="required" for="specialty">분야</label>
+          <label class="required" for="specialty">주 교육 구분</label>
           <select id="specialty" required>
             <option value="" disabled selected>선택하세요</option>
             <option value="직무교육">직무교육</option>
@@ -267,12 +268,6 @@
             소양교육 : 소방공무원으로서 갖춰야 할 기본 가치와 태도
           </div>
         </div>
-        <div class="field">
-          <label for="subject">강의 가능 교과목</label>
-          <input type="text" id="subject" placeholder="예 : 화재조사실무">
-        </div>
-      </div>
-      <div class="row">
         <div class="field">
           <label for="region">활동지역</label>
           <input type="text" id="region" placeholder="예 : 전남 동부권">
@@ -294,13 +289,15 @@
       </div>
     </div>
 
+    <div id="aiProfile"></div>
+
     <div class="card">
       <div class="card-title">개인정보 수집·이용 동의</div>
       <div class="consent-box">
         전남소방학교는 외부강사 등록 심사와 강사 관리를 위해 아래와 같이 개인정보를 수집·이용합니다.
         <ul>
-          <li><b>수집 항목</b>: 성명, 생년월일, 연락처, 이메일, 소속·직위, 증명사진, 강사카드, 개인정보 동의서(서명본), 학위·자격증·약력</li>
-          <li><b>이용 목적</b>: 외부강사 등록 심사, 강사 명단 관리, 강의 배정 및 안내 연락</li>
+          <li><b>수집 항목</b>: 성명, 생년월일, 연락처, 이메일, 소속·직위, 증명사진, 강사카드, 개인정보 동의서(서명본), 학위·자격증·약력, 강의 전문 정보(전문 분야·강의 가능 교과목·강의 경력 등, 선택 입력)</li>
+          <li><b>이용 목적</b>: 외부강사 등록 심사, 강사 명단 관리, 강의 배정 및 안내 연락, 교과목에 맞는 강사 찾기(AI 맞춤 추천 도입 시 포함 — 추천에는 이름·연락처 등 식별 정보를 쓰지 않음)</li>
           <li><b>보유·이용 기간</b>: 교수 인력풀 관리 및 교수 섭외 활용이 끝날 때까지 (3년마다 계속 활동 여부를 확인해 재동의를 받습니다. 삭제를 요청하시면 지체 없이 파기합니다)</li>
           <li><b>제3자 제공</b>: 강사수당 지급과 교수 인력풀 공유(섭외)를 위해 전남 소방교육과(교육운영팀·교육훈련팀) 및 전국 소방교육훈련기관 교수인력풀 담당자에게 제공할 수 있습니다(제공받는 자의 보유기간 3년). 자세한 내용은 개인정보 수집·활용 동의서를 따릅니다.</li>
           <li>동의를 거부하실 수 있으며, 거부하시면 등록 신청이 제한됩니다.</li>
@@ -415,7 +412,6 @@
       직위: document.getElementById('position').value.trim(),
       강사구분: typeEl ? typeEl.value : '',
       전문분야: document.getElementById('specialty').value.trim(),
-      교과목명: document.getElementById('subject').value.trim(),
       활동지역: document.getElementById('region').value.trim(),
       자격증학위: [
         document.getElementById('degree').value.trim() ? '학위: ' + document.getElementById('degree').value.trim() : '',
@@ -425,6 +421,7 @@
       동의: document.getElementById('consent').checked === true,
       website: document.getElementById('website').value
     };
+    if (window.AIProfile) { var aip = window.AIProfile.values(); Object.keys(aip).forEach(function(k){ payload[k] = aip[k]; }); }
 
     if (!payload.성명 || !payload.생년월일 || !payload.연락처 || !payload.이메일 || !payload.소속 || !payload.전문분야) {
       msg.textContent = '필수 항목(*)을 모두 입력해 주세요.';
@@ -525,6 +522,6 @@
   }
 </script>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-18 강사등록 3</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-18 강사등록 4</div>
 </body>
 </html>

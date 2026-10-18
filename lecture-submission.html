@@ -155,6 +155,7 @@
   }
 </style>
 <script src="busy-indicator.js" defer></script>
+<script src="ai-profile.js" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -197,7 +198,7 @@
         </div>
         <div class="row">
           <div class="field">
-            <label class="required" for="specialty">분야</label>
+            <label class="required" for="specialty">주 교육 구분</label>
             <select id="specialty" class="hourSelect" required>
               <option value="" disabled selected>선택하세요</option>
               <option value="직무교육">직무교육</option>
@@ -221,6 +222,8 @@
           <a class="form-download" href="forms/instructor-card.hwpx" download="강사관리카드_양식.hwpx">↓ 강사카드 양식 다운로드</a>
         </div>
       </div>
+
+      <div id="aiProfile"></div>
 
       <div class="card" id="consentSection">
         <div class="card-title">개인정보 동의</div>
@@ -396,6 +399,7 @@
     document.getElementById('greeting').style.display = 'block';
     document.getElementById('greeting').innerHTML = '안녕하세요, <b>' + escHtml(name) + '</b>님. 프로필 정보는 이미 저장되어 있어 이번엔 강의 자료만 제출하시면 됩니다.';
     document.getElementById('profileSection').style.display = 'none';
+    if (document.getElementById('aiProfile')) document.getElementById('aiProfile').style.display = 'none';
     document.getElementById('consentSection').style.display = 'none';
     document.getElementById('name').required = false;
     document.getElementById('birth').required = false;
@@ -441,7 +445,7 @@
     var g = document.getElementById('greeting');
     g.style.display = 'block';
     g.innerHTML = '안녕하세요, <b>' + escHtml(name || '강사') + '</b>님.';
-    ['profileSection','consentSection','lectureInfoSection'].forEach(function(id){ document.getElementById(id).style.display = 'none'; });
+    ['profileSection','consentSection','lectureInfoSection','aiProfile'].forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = 'none'; });
     ['name','birth','phone','email','org','specialty','photo','profileFile','consentFile','lectureName','lectureDate','startHour','endHour','category'].forEach(function(id){ document.getElementById(id).required = false; });
     document.getElementById('docReplaceCard').style.display = 'block';
     document.getElementById('assignedInfoBox').style.display = 'block';
@@ -631,6 +635,7 @@
         payload.전문분야 = document.getElementById('specialty').value.trim();
         payload.활동지역 = document.getElementById('region').value.trim();
         payload.약력 = document.getElementById('bio').value.trim();
+        if (window.AIProfile) { var aip = window.AIProfile.values(); Object.keys(aip).forEach(function(k){ payload[k] = aip[k]; }); }
         if (results[0]) { payload.사진base64 = results[0]; payload.사진타입 = photoFile.type; }
         if (results[1]) { payload.동의서base64 = results[1]; payload.동의서타입 = consentFile.type; }
         if (results[3]) { payload.프로필base64 = results[3]; payload.프로필타입 = profileFile.type; }
@@ -693,6 +698,6 @@
 
   init();
 </script>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-18 제출 4</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-18 제출 5</div>
 </body>
 </html>

@@ -387,7 +387,7 @@
 
   <div class="toolbar-card">
     <div class="toolbar">
-      <input type="text" id="search" placeholder="강사명, 소속, 연락처로 검색">
+      <input type="text" id="search" placeholder="강사명, 소속, 연락처, 교과목·전문 분야·키워드로 검색">
       <button type="button" id="mobileFilterToggle" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">상세 필터<svg class="ic r" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     </div>
     <div class="filter-row" id="filterOptions">
@@ -489,7 +489,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 강사관리 18</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 강사관리 19</div>
 </div>
 
 <script>
@@ -752,7 +752,7 @@
       if (fPending && !d.강의확정) return false;
       if (fRetention && !retentionInfo(d).due) return false;
       if (q) {
-        var haystack = ((d.성명||'') + (d.소속||'') + (d.연락처||'')).toLowerCase();
+        var haystack = [d.성명, d.소속, d.연락처, d.교과목명, d.전문분야상세, d.강의키워드].map(function(v){ return String(v || ''); }).join(' ').toLowerCase();
         if (haystack.indexOf(q) === -1) return false;
       }
       return true;
@@ -890,13 +890,19 @@
         '<div class="fi"><div class="fk">연락처</div><div class="fv" style="white-space:nowrap;">' + (d.연락처 ? '<a href="tel:' + String(d.연락처).replace(/[^0-9+]/g,'') + '" style="color:var(--navy);font-weight:700;">' + esc(d.연락처) + '</a>' : '-') + '</div></div>' +
         '<div class="fi full"><div class="fk">이메일</div><div class="fv">' + (d.이메일 ? '<a href="mailto:' + escapeAttr(d.이메일) + '" style="color:var(--navy);font-weight:700;">' + esc(d.이메일) + '</a>' : '-') + '</div></div>' +
         '<div class="fi"><div class="fk">강사구분</div><div class="fv">' + esc(d.강사구분||'-') + '</div></div>' +
-        '<div class="fi"><div class="fk">분야</div><div class="fv">' + esc(d.전문분야||'-') + '</div></div>' +
+        '<div class="fi"><div class="fk">주 교육 구분</div><div class="fv">' + esc(d.전문분야||'-') + '</div></div>' +
         '<div class="fi"><div class="fk">교과목명</div><div class="fv">' + esc(d.교과목명||'-') + '</div></div>' +
         '<div class="fi"><div class="fk">활동지역</div><div class="fv">' + esc(d.활동지역||'-') + '</div></div>' +
         '<div class="fi"><div class="fk">강의회차</div><div class="fv">' + (d.강의회차 || 0) + '회</div></div>' +
         '<div class="fi"><div class="fk">등록일</div><div class="fv">' + esc(d.등록일||'-') + '</div></div>' +
         (isViewer ? '' : (function(){ var r = retentionInfo(d); return '<div class="fi"><div class="fk">재동의 점검일 (3년마다)</div><div class="fv"' + (r.due ? ' style="color:#A32D2D;font-weight:700;"' : '') + '>' + esc(r.expire || '-') + (r.over ? ' (도래)' : (r.due ? ' (임박)' : '')) + '</div></div>' +
           '<div class="fi"><div class="fk">재동의 확인</div><div class="fv">' + (d.재동의확인일 ? (esc(d.재동의확인일) + (d.재동의메모 ? '<br><span style="font-size:12px;font-weight:400;">' + esc(d.재동의메모) + '</span>' : '')) : '-') + '</div></div>'; })()) +
+        (function(){   // 강의 전문 정보(선택 입력, AI 맞춤 추천 대비) — 입력된 항목만 표시
+          var rows = [['전문 분야', d.전문분야상세], ['강의 키워드', d.강의키워드], ['교육 대상 경험', d.교육대상경험], ['강의 방식', d.강의방식], ['대표 강의 경력', String(d.대표강의경력 || '').split(/\s*\|\s*/).filter(Boolean).join('\n')], ['출강 가능 시기', d.출강가능시기]]
+            .filter(function(r){ return String(r[1] || '').trim(); });
+          if (!rows.length) return '<div class="fi full"><div class="fk">강의 전문 정보</div><div class="fv" style="color:var(--text-muted);font-weight:400;">입력 안 함</div></div>';
+          return '<div class="fi full"><div class="fk">강의 전문 정보</div><div class="fv" style="font-weight:400;line-height:1.7;">' + rows.map(function(r){ return '<b>' + esc(r[0]) + '</b> · ' + esc(r[1]).replace(/\n/g, '<br>'); }).join('<br>') + '</div></div>';
+        })() +
         '<div class="fi full"><div class="fk">자격증·학위</div><div class="fv">' + esc(slashJoinLines(d.자격증학위) || '-') + '</div></div>' +
         '<div class="fi full"><div class="fk">약력</div><div class="fv">' + esc(slashJoinLines(d.약력) || '-') + '</div></div>' +
         '<div class="fi full"><div class="fk">강사카드</div><div class="fv">' + profileLinkHtml + '</div></div>' +

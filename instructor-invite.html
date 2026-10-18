@@ -132,6 +132,7 @@
   }
 </style>
 <script src="busy-indicator.js" defer></script>
+<script src="ai-profile.js" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -169,7 +170,7 @@
       </div>
       <div class="row">
         <div class="field">
-          <label class="required" for="specialty">분야</label>
+          <label class="required" for="specialty">주 교육 구분</label>
           <select id="specialty" required>
             <option value="" disabled selected>선택하세요</option>
             <option value="직무교육">직무교육</option>
@@ -193,6 +194,8 @@
       <div class="field"><label class="required" for="profileFile">강사카드 (PDF)</label><input type="file" id="profileFile" accept=".pdf,application/pdf" required><div class="hint">한글 양식을 작성한 뒤 <b>PDF로 변환(저장)</b>해서 올려 주세요. PDF 파일만 올릴 수 있습니다(10MB 이하).</div><a class="form-download" href="forms/instructor-card.hwpx" download="강사관리카드_양식.hwpx">↓ 강사카드 양식 다운로드</a></div>
     </div>
 
+    <div id="aiProfile"></div>
+
     <div class="card">
       <div class="card-title">개인정보 동의</div>
       <div class="field">
@@ -204,7 +207,7 @@
     </div>
 
     <div class="hint hint-danger" style="margin-bottom:14px;">
-      ※ 제출하신 정보는 강사 명단 관리 목적으로만 사용되며, 담당자 확인 후 필요 시 연락드릴 수 있습니다.<br>
+      ※ 제출하신 정보는 강사 명단 관리와 교과목에 맞는 강사 찾기(AI 맞춤 추천 도입 시 포함) 목적으로만 사용되며, 담당자 확인 후 필요 시 연락드릴 수 있습니다.<br>
       ※ 사진·첨부파일 용량이 크면 업로드가 지연될 수 있습니다. "등록 중..." 표시 중에는 창을 닫지 말고 기다려 주세요.
     </div>
     <div class="hint" style="margin-bottom:20px;">
@@ -324,6 +327,7 @@
         ].filter(Boolean).join(' / '),
         약력: document.getElementById('bio').value.trim()
       };
+      if (window.AIProfile) { var aip = window.AIProfile.values(); Object.keys(aip).forEach(function(k){ payload[k] = aip[k]; }); }
       if (results[0]) { payload.사진base64 = results[0]; payload.사진타입 = photoFile.type; }
       if (results[1]) { payload.동의서base64 = results[1]; payload.동의서타입 = consentFile.type; }
       if (results[2]) { payload.프로필base64 = results[2]; payload.프로필타입 = profileFile.type; }
@@ -350,6 +354,6 @@
   });
 </script>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-14 강사초대 2</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-18 강사초대 3</div>
 </body>
 </html>
