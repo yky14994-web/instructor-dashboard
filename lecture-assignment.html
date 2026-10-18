@@ -159,7 +159,15 @@
   .cline{margin:-4px 0 12px;font-size:13px;color:var(--text-muted);line-height:1.45;word-break:keep-all;}
   .cline b{color:var(--navy);font-weight:700;}
   /* 3초 점검(10-18): P1 겹침 경고 카드는 처리할 일 줄과 중복이라 숨김, P2 안내 문장 숨김, K2 과정명·기간은 과정 머리에만 */
-  #cardOv,#planLegend,#listHint{display:none !important;}
+  #planLegend,#listHint{display:none !important;}
+  /* 10-18 17:4x 금용님: 숫자 카드 4개는 그대로 보이되 숫자·이름을 한 줄로(설명은 마우스를 올리면) */
+  .cards{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));}
+  .cards .card{display:flex;align-items:baseline;gap:10px;white-space:nowrap;padding:12px 16px;min-width:0;}
+  .cards .card .n{font-size:24px;flex-shrink:0;}
+  .cards .card .l{margin-top:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;}
+  .cards .card .l b{color:var(--text);font-weight:700;}
+  .cards .card .d{display:none;}
+  @media (max-width:640px){ .cards{grid-template-columns:repeat(2,1fr);gap:8px;} .cards .card{padding:10px 12px;gap:6px;} .cards .card .n{font-size:20px;} .cards .card .l{font-size:13px;} }
   @media screen{ #pageHead{display:none !important;} }   /* C1·K1: 제목 카드는 화면에서만 숨김(인쇄 머리글로는 계속 사용) */
   @media screen{ #sFormLine,#sListLine{display:none !important;} }
   body.plist .cline{display:none !important;}
@@ -365,7 +373,8 @@
   .gnav-in::-webkit-scrollbar{display:none;}
   .gnav-out{align-self:center;flex-shrink:0;margin-left:14px;height:32px;padding:0 12px;border:1px solid rgba(255,255,255,.4);border-radius:6px;background:transparent;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
   .gnav-out:hover{background:rgba(255,255,255,.12);}
-  @media (max-width:640px){ .gnav-out{margin-left:auto;height:28px;padding:0 8px;font-size:12px;} }
+  .gnav-out .go-i{display:none;width:18px;height:18px;}
+  @media (max-width:640px){ .gnav-out{margin-left:auto;height:30px;width:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;} .gnav-out .go-t{display:none;} .gnav-out .go-i{display:block;} .gnav-i{padding:0 10px;} }
   .gnav-brand{display:flex;align-items:center;font-size:17px;font-weight:800;letter-spacing:-0.2px;padding-right:24px;margin-right:10px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
   .gnav-i{display:flex;align-items:center;gap:6px;min-height:56px;padding:0 20px;font-size:16px;font-weight:700;color:rgba(255,255,255,0.9);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;box-sizing:border-box;}
   a.gnav-i:hover{color:#fff;background:rgba(255,255,255,0.08);}
@@ -375,7 +384,7 @@
   @media (max-width:640px){
     .gnav-in{padding:0 8px;}
     .gnav-brand{display:none;}
-    .gnav-i{min-height:48px;padding:0 12px;font-size:14px;}
+    .gnav-i{min-height:48px;padding:0 10px;font-size:14px;}
   }
   @media print{ .gnav{display:none !important;} }
 
@@ -791,7 +800,7 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand"><span class="gb-name">소방교육 외래강사 <span class="on">ON</span></span><small class="gb-sub">AI 강사 추천·평가·환류 시스템</small></span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i on" id="gnavAssign" aria-current="page" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" id="gnavRoom" href="lecture-assignment.html#v=room">강의실</a><a class="gnav-i" id="navAdmin" href="admin.html" style="display:none">관리자</a><span class="gnav-school"><span class="gs-name">전남소방학교</span><small class="gs-ab">(JFSA)</small></span><button type="button" class="gnav-out" id="logoutBtn">로그아웃</button></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand"><span class="gb-name">소방교육 외래강사 <span class="on">ON</span></span><small class="gb-sub">AI 강사 추천·평가·환류 시스템</small></span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i on" id="gnavAssign" aria-current="page" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" id="gnavRoom" href="lecture-assignment.html#v=room">강의실</a><a class="gnav-i" id="navAdmin" href="admin.html" style="display:none">관리자</a><span class="gnav-school"><span class="gs-name">전남소방학교</span><small class="gs-ab">(JFSA)</small></span><button type="button" class="gnav-out" id="logoutBtn" aria-label="로그아웃" title="로그아웃"><span class="go-t">로그아웃</span><svg class="go-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></nav>
 <div class="wrap">
   <div class="crumb" id="crumb"></div>
   <header id="pageHead">
@@ -805,11 +814,11 @@
 
   <div id="planView">
   <div class="cards">
-    <div class="card"><div class="n"><span id="cCourses">0</span><span class="u">회</span></div><div class="l"><b>과정·기수</b><br><span id="cCoursesL">표시 중인 과정 수</span></div></div>
-    <div class="card"><div class="n"><span id="cPeople">0</span><span class="u">명</span></div><div class="l"><b>계획인원 합계</b><br>표시 중인 과정 기준</div></div>
-    <div class="card warn"><div class="n"><span id="cCheck">0</span><span class="u">건</span></div><div class="l"><b>확인 필요·오류</b><br>검사 결과가 OK가 아닌 과정</div></div>
-    <div class="card none" style="display:none;"><div class="n"><span id="cNoSubj">0</span><span class="u">건</span></div><div class="l"><b>교과목 없는 과정</b><br>아직 교과목이 없는 과정</div></div>
-    <div class="card" id="cardOv"><div class="n"><span id="cOverlap">0</span><span class="u">건</span></div><div class="l"><b>겹침 경고 (미확인)</b><br><span id="cOverlapL">강사·강의실·같은 반</span></div></div>
+    <div class="card" title="표시 중인 과정 수"><div class="n"><span id="cCourses">0</span><span class="u">회</span></div><div class="l"><b>과정·기수</b><span class="d" id="cCoursesL">표시 중인 과정 수</span></div></div>
+    <div class="card" title="표시 중인 과정 기준"><div class="n"><span id="cPeople">0</span><span class="u">명</span></div><div class="l"><b>계획인원 합계</b></div></div>
+    <div class="card warn" title="검사 결과가 OK가 아닌 과정"><div class="n"><span id="cCheck">0</span><span class="u">건</span></div><div class="l"><b>확인 필요·오류</b></div></div>
+    <div class="card none" title="아직 교과목이 없는 과정"><div class="n"><span id="cNoSubj">0</span><span class="u">건</span></div><div class="l"><b>교과목 없는 과정</b></div></div>
+    <div class="card" id="cardOv" title="강사·강의실·같은 반"><div class="n"><span id="cOverlap">0</span><span class="u">건</span></div><div class="l"><b>겹침 경고(미확인)</b><span class="d" id="cOverlapL">강사·강의실·같은 반</span></div></div>
   </div>
 
   <div class="todo" id="todo" style="display:none;"></div>
@@ -888,7 +897,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-18 배정 103</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-18 배정 104</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>

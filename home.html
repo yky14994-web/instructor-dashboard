@@ -94,7 +94,8 @@
   .gnav-in::-webkit-scrollbar{display:none;}
   .gnav-out{align-self:center;flex-shrink:0;margin-left:14px;height:32px;padding:0 12px;border:1px solid rgba(255,255,255,.4);border-radius:6px;background:transparent;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
   .gnav-out:hover{background:rgba(255,255,255,.12);}
-  @media (max-width:640px){ .gnav-out{margin-left:auto;height:28px;padding:0 8px;font-size:12px;} }
+  .gnav-out .go-i{display:none;width:18px;height:18px;}
+  @media (max-width:640px){ .gnav-out{margin-left:auto;height:30px;width:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;} .gnav-out .go-t{display:none;} .gnav-out .go-i{display:block;} .gnav-i{padding:0 10px;} }
   .gnav-brand{display:flex;align-items:center;font-size:17px;font-weight:800;letter-spacing:-0.2px;padding-right:24px;margin-right:10px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
   .gnav-i{display:flex;align-items:center;gap:6px;min-height:56px;padding:0 20px;font-size:16px;font-weight:700;color:rgba(255,255,255,0.9);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;box-sizing:border-box;}
   a.gnav-i:hover{color:#fff;background:rgba(255,255,255,0.08);}
@@ -104,7 +105,7 @@
   @media (max-width:640px){
     .gnav-in{padding:0 8px;}
     .gnav-brand{display:none;}
-    .gnav-i{min-height:48px;padding:0 12px;font-size:14px;}
+    .gnav-i{min-height:48px;padding:0 10px;font-size:14px;}
   }
 
   /* 바로가기 */
@@ -295,7 +296,8 @@
   @keyframes bootin{to{opacity:1;}}   /* 0.4초 안에 로드되면 '불러오는 중' 문구를 보이지 않게 */
   .cdesc{font-size:13px;color:var(--text-muted);margin:-2px 0 10px;}
   /* 3초 점검 H3(10-18): 카드 설명 문장은 기본 숨김, [설명 보기]로 표시 */
-  #app:not(.showdesc) .cdesc,#app:not(.showdesc) .trio .hint,#app:not(.showdesc) #cYear>.hint,#app:not(.showdesc) #cYear .yrnote{display:none;}
+  /* 17:52 금용님: [설명 숨기기]는 카드·상세(처리할 일 등) 안의 설명 문장을 모두 숨김 — 카드 설명(.cdesc), 안내 줄(div.hint), 처리할 일 항목의 괄호 설명(small) */
+  #app:not(.showdesc) .cdesc,#app:not(.showdesc) div.hint,#app:not(.showdesc) #cTodo li .l small,#app:not(.showdesc) #detail .l small,#app:not(.showdesc) .dsec .dx{display:none;}
   .go{font-weight:400;font-size:12px;color:var(--text-muted);margin-left:6px;white-space:nowrap;}
 </style>
 <script src="busy-indicator.js" defer></script>
@@ -327,7 +329,7 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand"><span class="gb-name">소방교육 외래강사 <span class="on">ON</span></span><small class="gb-sub">AI 강사 추천·평가·환류 시스템</small></span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">강의실</a><a class="gnav-i" id="navAdmin" href="admin.html" style="display:none">관리자</a><span class="gnav-school"><span class="gs-name">전남소방학교</span><small class="gs-ab">(JFSA)</small></span><button type="button" class="gnav-out" id="logoutBtn">로그아웃</button></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand"><span class="gb-name">소방교육 외래강사 <span class="on">ON</span></span><small class="gb-sub">AI 강사 추천·평가·환류 시스템</small></span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">강의실</a><a class="gnav-i" id="navAdmin" href="admin.html" style="display:none">관리자</a><span class="gnav-school"><span class="gs-name">전남소방학교</span><small class="gs-ab">(JFSA)</small></span><button type="button" class="gnav-out" id="logoutBtn" aria-label="로그아웃" title="로그아웃"><span class="go-t">로그아웃</span><svg class="go-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></nav>
 <div class="wrap">
   <div class="crumb" id="crumb"></div>
   <header class="homebar">
@@ -356,7 +358,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 홈 91</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 홈 92</div>
 </div>
 </div>
 
@@ -1231,7 +1233,7 @@
   var PCOLS = ['과정 · 기수', '구분', '입교 기간', '계획인원', '예정 강의실', '상태'];
   function gapDoneSection(viewer){
     var list = gapDoneList();
-    return '<div class="dsec">비워둠 처리한 칸<small>' + list.length + '건 · 편성된 것이 아니라 일부러 비워 둔 칸입니다</small></div>' +
+    return '<div class="dsec">비워둠 처리한 칸<small>' + list.length + '건<span class="dx"> · 편성된 것이 아니라 일부러 비워 둔 칸입니다</span></small></div>' +
       dtTable(['날짜', '과정 · 기수', '비워둔 교시', '사유', '처리일시', ''], list.map(function(o){
         return ['<span class="nw">' + esc(md(o.date)) + '</span>', cLink(o.key), esc(gapNumText(o.nums)), esc(o.reason || '-'), esc(o.at || ''), viewer ? '' : '<button type="button" class="btn sm" data-hundo="' + esc(o.key) + '|' + esc(o.date) + '">처리 취소</button>'];
       }), '비워둠 처리한 칸이 없습니다.');
@@ -1325,7 +1327,7 @@
     var SEC = {
       plan: function(){
         var overN = soon.filter(function(g){ return g.left < 0; }).length, subN = soon.reduce(function(s, g){ return s + g.rows.length; }, 0);
-        return '<div class="dsec">강의계획서 제출 기한 임박 과정<small>' + soon.length + '과정 · 미제출 ' + subN + '건' + (overN ? ' · 기한 지남 ' + overN + '과정' : '') + ' · 2027년 개강 과정부터 개강일 14일 전까지 제출(책자 제작 기준), 그 전 과정은 강의일 7일 전</small></div>' +
+        return '<div class="dsec">강의계획서 제출 기한 임박 과정<small>' + soon.length + '과정 · 미제출 ' + subN + '건' + (overN ? ' · 기한 지남 ' + overN + '과정' : '') + '<span class="dx"> · 2027년 개강 과정부터 개강일 14일 전까지 제출(책자 제작 기준), 그 전 과정은 강의일 7일 전</span></small></div>' +
           planTable(soon.map(function(g){
             var pill = g.left < 0 ? '<span class="tag t-err">' + Math.abs(g.left) + '일 지남</span>' : esc(dl(g.left));
             var lines = g.rows.map(function(o){
@@ -1337,20 +1339,20 @@
           }), '해당하는 건이 없습니다.') + '<div class="hint">2027년 이후 개강 과정은 모든 교과목의 마감일이 같습니다(과정 개강일 14일 전, 기한 지난 미제출도 계속 표시). 그 전(기존) 과정은 예전처럼 강의일 7일 전 기준이며 기한 지난 건은 표시하지 않습니다. 계획서가 필요 없는 교과목은 강의배정 화면의 교과목 입력창에서 "강의계획서 제출 불필요"를 체크하면 여기서 빠집니다.' + (viewer ? '' : ' 배정 안내(메일·문자)는 편성을 저장할 때 자동 발송되며, 강사가 메일을 못 받았다면 "안내 재발송"을 눌러 주세요.') + '</div>';
       },
       unas: function(){
-        return '<div class="dsec">교과목 강사 미지정<small>' + unas.length + '건 · 교과목은 있고 강사가 비어 있음 · 강의일 14일 이내</small></div>' +
+        return '<div class="dsec">교과목 강사 미지정<small>' + unas.length + '건<span class="dx"> · 교과목은 있고 강사가 비어 있음 · 강의일 14일 이내</span></small></div>' +
           dtTable(['강의일까지', '강의일', '과정 · 기수', '교과목 (교시)', '강의실', ''], unas.map(function(o){
             return [esc(dl(o.d)), '<span class="nw">' + esc(md(o.date)) + '</span>', cLink(String(o.r['개설키'])), esc(o.r['교과목'] || '') + ' (' + esc(per(o.r)) + ')', esc(o.r['강의실'] || '미정'), viewer ? '' : '<a class="btn sm" href="lecture-assignment.html#c=' + encodeURIComponent(String(o.r['개설키'])) + '&d=' + o.date + fromQ() + '">강사 지정</a>'];
           }), '해당하는 건이 없습니다.') + '<div class="hint">"강사 지정"을 누르면 해당 과정의 교과목 편성 화면이 열립니다.</div>';
       },
       resv: function(){
-        return '<div class="dsec">교과목 미정 (사전확보 교시)<small>' + rv.length + '건 · 교시·강의실만 잡아 둔 건 · 예약일 14일 이내</small></div>' +
+        return '<div class="dsec">교과목 미정 (사전확보 교시)<small>' + rv.length + '건<span class="dx"> · 교시·강의실만 잡아 둔 건 · 예약일 14일 이내</span></small></div>' +
           dtTable(['예약일까지', '예약일', '과정 · 기수', '교시', '강의실', ''], rv.map(function(o){
             return [esc(dl(o.d)), '<span class="nw">' + esc(md(normYmd(o.r['일자']))) + '</span>', cLink(String(o.r['개설키'])), esc(per(o.r)), esc(o.r['강의실'] || ''), viewer ? '' : '<a class="btn sm" href="lecture-assignment.html#c=' + encodeURIComponent(String(o.r['개설키'])) + '&d=' + normYmd(o.r['일자']) + fromQ() + '">교과목 편성</a>'];
           }), '해당하는 건이 없습니다.');
       },
       rvreq: function(){
         var rl = rqSorted();
-        return '<div class="dsec">강의실 대관 승인 대기<small>' + rl.length + '건 · 직원이 신청한 강의실 대관' + pastNote(pastN(rl, function(x){ return x['일자']; })) + '</small></div>' +
+        return '<div class="dsec">강의실 대관 승인 대기<small>' + rl.length + '건<span class="dx"> · 직원이 신청한 강의실 대관</span>' + pastNote(pastN(rl, function(x){ return x['일자']; })) + '</small></div>' +
           dtTable(['사용일까지', '일자', '교시 · 강의실', '사유 · 사용부서', '담당자 · 연락처 · 비고', '신청일시', viewer ? '' : '겹침 확인', ''], rl.map(function(r){
             var dd = normYmd(r['일자']), d = dayDiff(today, dd), cl = viewer ? [] : rqClash(r), id = esc(r['예약ID']);
             var pill = d !== null && d < 0 ? pastTag : dl(d);
@@ -1363,7 +1365,7 @@
           }), '승인 대기 중인 대관 신청이 없습니다.') + '<div class="hint">' + (viewer ? '담당자가 승인하면 강의실 예약(대관)으로 등록됩니다. 신청은 강의배정 → 빈 강의실 화면에서 합니다.' : '"승인"하면 강의실 예약(대관)으로 등록되고 "반려"하면 목록에서 빠집니다. 같은 시간에 이미 편성·예약이 있어도 승인할 수 있으며, 겹침 확인 열에 표시됩니다.') + '</div>';
       },
       docreq: function(){
-        return '<div class="dsec">강사 서류 교체 승인 대기<small>' + docs.length + '건 · 강사카드·동의서 교체</small></div>' +
+        return '<div class="dsec">강사 서류 교체 승인 대기<small>' + docs.length + '건<span class="dx"> · 강사카드·동의서 교체</span></small></div>' +
           dtTable(['요청일시', '강사', '교체 서류', ''], docs.map(function(x){
             return ['<span class="nw">' + esc(x['요청일시'] || '') + '</span>', esc(x['성명'] || x['강사ID']), esc([x['강사카드'] ? '강사카드' : '', x['동의서'] ? '개인정보 동의서' : ''].filter(String).join(' · ')),
               '<a class="btn sm inm" style="text-decoration:none;" href="instructor-dashboard.html#i=' + encodeURIComponent(x['강사ID']) + '">새 파일 보고 승인·반려</a>'];
@@ -1372,7 +1374,7 @@
       lodge: function(){
         if (!lodges.length && !sub) return '';   /* 전체 목록에서는 신청이 있을 때만 표시 */
         var ls = lodges.slice().sort(function(x, y){ return String(x['사용시작일']) < String(y['사용시작일']) ? -1 : 1; });
-        return '<div class="dsec">강사 숙소 신청 확인 대기<small>' + ls.length + '건 · 강사 임시숙소' + pastNote(pastN(ls, function(x){ return x['사용종료일'] || x['사용시작일']; })) + '</small></div>' +
+        return '<div class="dsec">강사 숙소 신청 확인 대기<small>' + ls.length + '건<span class="dx"> · 강사 임시숙소</span>' + pastNote(pastN(ls, function(x){ return x['사용종료일'] || x['사용시작일']; })) + '</small></div>' +
           dtTable(['사용일까지', '사용일', '과정명', '신청인', '연락처', '비고', '신청일시', ''], ls.map(function(x){
             var a = normYmd(x['사용시작일']), b = normYmd(x['사용종료일']) || a, d = dayDiff(today, a), ph = String(x['연락처'] || '').replace(/^'/, '');
             var db = dayDiff(today, b);
@@ -1383,13 +1385,13 @@
       },
       chg: function(){
         var cg = chgRecent();
-        return '<div class="dsec">최근 7일 일정 변경<small>' + cg.length + '건 · 연간계획 일정·취소, 교과목 추가·수정·삭제, 편성 복사</small></div>' +
+        return '<div class="dsec">최근 7일 일정 변경<small>' + cg.length + '건<span class="dx"> · 연간계획 일정·취소, 교과목 추가·수정·삭제, 편성 복사</span></small></div>' +
           dtTable(['일시', '구분', '과정 · 기수', '변경 내용'], cg.map(function(g){
             return ['<span class="nw">' + esc(g.when) + '</span>', esc((g.plan ? '연간계획 ' : '교과목 ') + g.type), cLink(g.key), g.lines.map(function(x){ return '<div>' + esc(x) + '</div>'; }).join('')];
           }), '최근 7일 동안 변경이 없습니다.') + '<div class="hint">변경 이력 전체는 강의배정 화면의 과정별 "교과목 변경 이력"과 변경이력 시트에서 볼 수 있습니다. 겹침 확인은 포함하지 않습니다.</div>';
       },
       gap: function(){
-        return '<div class="dsec">빈 교시가 있는 과정<small>' + g7.length + '과정 · ' + gapRows.length + '일 · 빈 날짜가 7일 이내</small></div>' +
+        return '<div class="dsec">빈 교시가 있는 과정<small>' + g7.length + '과정 · ' + gapRows.length + '일<span class="dx"> · 빈 날짜가 7일 이내</span></small></div>' +
           dtTable(['날짜까지', '날짜', '과정 · 기수', '빈 교시', ''], gapRows.map(function(g){
             var btn = viewer ? '' : '<button type="button" class="btn sm" data-hgap="' + esc(g.key) + '|' + esc(g.date) + '">비워둠 처리</button> <a class="btn sm" href="lecture-assignment.html#c=' + encodeURIComponent(g.key) + '&d=' + g.date + fromQ() + '">교과목 편성</a>';
             return [esc(dl(dayDiff(today, g.date))), '<span class="nw">' + esc(md(g.date)) + '</span>', cLink(g.key), esc(gapNumText(g.nums)), btn];
