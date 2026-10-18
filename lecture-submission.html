@@ -208,15 +208,10 @@
             <label class="required" for="specialty">주 교육 구분</label>
             <select id="specialty" class="hourSelect" required>
               <option value="" disabled selected>선택하세요</option>
-              <option value="직무교육">직무교육</option>
-              <option value="직무역량교육">직무역량교육</option>
-              <option value="소양교육">소양교육</option>
+              <option value="직무교육">직무교육 – 소방업무 수행에 필요한 전문역량</option>
+              <option value="직무역량교육">직무역량교육 – 직무를 더 잘 수행하기 위한 공통역량</option>
+              <option value="소양교육">소양교육 – 소방공무원으로서 갖춰야 할 기본 가치와 태도</option>
             </select>
-            <div class="hint">
-              직무교육 : 소방업무 수행에 필요한 전문역량<br>
-              직무역량교육 : 직무를 더 잘 수행하기 위한 공통역량<br>
-              소양교육 : 소방공무원으로서 갖춰야 할 기본 가치와 태도
-            </div>
           </div>
           <div class="field"><label for="region">활동지역</label><input type="text" id="region"></div>
         </div>
@@ -271,15 +266,10 @@
             <label class="required" for="category">구분</label>
             <select id="category" class="hourSelect" required>
               <option value="" disabled selected>선택하세요</option>
-              <option value="직무교육">직무교육</option>
-              <option value="직무역량">직무역량</option>
-              <option value="소양교육">소양교육</option>
+              <option value="직무교육">직무교육 – 소방업무 수행에 필요한 전문역량</option>
+              <option value="직무역량">직무역량 – 직무를 더 잘 수행하기 위한 공통역량</option>
+              <option value="소양교육">소양교육 – 소방공무원으로서 갖춰야 할 기본 가치와 태도</option>
             </select>
-            <div class="hint">
-              직무교육 : 소방업무 수행에 필요한 전문역량<br>
-              직무역량 : 직무를 더 잘 수행하기 위한 공통역량<br>
-              소양교육 : 소방공무원으로서 갖춰야 할 기본 가치와 태도
-            </div>
           </div>
           <div class="field"><label for="subject">교과목</label><input type="text" id="subject"></div>
         </div>
@@ -291,13 +281,11 @@
           <label class="required" for="planFile">강의계획서</label>
           <input type="file" id="planFile" accept=".pdf" required>
           <a class="form-download" id="planFormLink" href="#" target="_blank">↓ 강의계획서 양식 다운로드</a>
-          <div class="hint hint-danger" style="margin-top:12px;">PDF 파일만 업로드해 주세요 (10MB 이하). 양식(교안 요약서 + 이론교재, 이론교재는 10쪽 이내)을 작성해 PDF 한 파일로 올려 주세요. 별도 첨부는 받지 않습니다.</div>
+          <div class="hint" style="margin-top:12px;">PDF 파일만 업로드해 주세요 (10MB 이하). 양식(교안 요약서 + 이론교재, 이론교재는 10쪽 이내)을 작성해 PDF 한 파일로 올려 주세요. 별도 첨부는 받지 않습니다.</div>
         </div>
       </div>
 
-      <div style="font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:20px;line-height:1.6;">
-        ※ 사진·첨부파일 용량이 크면 업로드가 지연될 수 있습니다.<br>"제출 중..." 표시 중에는 창을 닫지 말고 잠시만 기다려 주세요.
-      </div>
+      <div style="font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:12px;">"제출 중..." 표시 중에는 창을 닫지 마세요</div>
 
       <button type="submit" id="submitBtn">제출하기</button>
       <div id="msg"></div>
@@ -705,6 +693,6 @@
 
   init();
 </script>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-18 제출 9</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-18 제출 10</div>
 </body>
 </html>

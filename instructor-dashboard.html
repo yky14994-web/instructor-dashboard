@@ -65,6 +65,8 @@
     #specialtyToggleRow .stoggle{flex:1;min-width:0;padding:0 4px;font-size:10px;justify-content:center;gap:3px;white-space:nowrap;overflow:hidden;}
     #specialtyToggleRow .stoggle span{margin-left:0;min-width:16px;height:16px;padding:0 4px;font-size:10px;flex-shrink:0;}
   }
+  .summary .card.attn{border-color:#E0B252;background:#FFF8E8;}
+  .summary .card.attn .num{color:#8A5A00;}
   .summary{
     display:grid;
     grid-template-columns:repeat(4,1fr);
@@ -282,6 +284,9 @@
   @media (max-width:640px){ .gnav-school{display:none;} }
   .gnav-in{display:flex;align-items:stretch;gap:2px;padding:0 28px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .gnav-in::-webkit-scrollbar{display:none;}
+  .gnav-out{align-self:center;flex-shrink:0;margin-left:14px;height:32px;padding:0 12px;border:1px solid rgba(255,255,255,.4);border-radius:6px;background:transparent;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .gnav-out:hover{background:rgba(255,255,255,.12);}
+  @media (max-width:640px){ .gnav-out{margin-left:auto;height:28px;padding:0 8px;font-size:12px;} }
   .gnav-brand{display:flex;align-items:center;font-size:17px;font-weight:800;letter-spacing:-0.2px;padding-right:24px;margin-right:10px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
   .gnav-i{display:flex;align-items:center;gap:6px;min-height:56px;padding:0 20px;font-size:16px;font-weight:700;color:rgba(255,255,255,0.9);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;box-sizing:border-box;}
   a.gnav-i:hover{color:#fff;background:rgba(255,255,255,0.08);}
@@ -357,17 +362,16 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand"><span class="gb-name">소방교육 외래강사 <span class="on">ON</span></span><small class="gb-sub">AI 강사 추천·평가·환류 시스템</small></span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i on" aria-current="page" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" id="gnavRoom" href="lecture-assignment.html#v=room">강의실</a><a class="gnav-i" id="navAdmin" href="admin.html" style="display:none">관리자</a><span class="gnav-school"><span class="gs-name">전남소방학교</span><small class="gs-ab">(JFSA)</small></span></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand"><span class="gb-name">소방교육 외래강사 <span class="on">ON</span></span><small class="gb-sub">AI 강사 추천·평가·환류 시스템</small></span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i on" aria-current="page" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" id="gnavRoom" href="lecture-assignment.html#v=room">강의실</a><a class="gnav-i" id="navAdmin" href="admin.html" style="display:none">관리자</a><span class="gnav-school"><span class="gs-name">전남소방학교</span><small class="gs-ab">(JFSA)</small></span><button type="button" class="gnav-out" id="logoutBtn">로그아웃</button></div></nav>
 <div class="wrap">
   <div class="crumb"><a href="home.html">홈</a><span class="sep">›</span><span class="cur">강사 조회·검색</span></div>
 
-  <header>
-    <div class="title">강사 조회·검색</div>
+  <header id="pageHead" style="justify-content:flex-end;padding:0;background:none;box-shadow:none;border:none;margin:-4px 0 8px;">
+    <div class="title" style="display:none;">강사 조회·검색</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button id="reloadListBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">새로고침</button>
       <button id="inviteOpenBtn" class="badge" style="border:1px solid var(--navy);cursor:pointer;font-family:inherit;background:var(--navy);color:#fff;">강사 초대</button>
       <button id="copyPublicLinkBtn" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">강사등록 링크</button>
-      <button id="logoutBtn" class="badge" type="button" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">로그아웃</button>
     </div>
   </header>
 
@@ -514,7 +518,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 강사관리 25</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 강사관리 26</div>
 </div>
 
 <script>
@@ -631,6 +635,13 @@
       .replace(/>/g, '&gt;');
   }
 
+  /* 3초 점검 I3(10-18): 목록에는 예외(계획서 미제출)만. 강의확정·완료·제출완료·등록경로는 상세에서 */
+  function listBadgesHtml(d){
+    var unsub = d.확정미제출건수 || 0;
+    return unsub > 0 ? '<div class="badge-row"><span class="pending-badge unsubmitted">미제출' + (unsub > 1 ? ' ' + unsub + '건' : '') + '</span></div>' : '';
+  }
+  /* I6: 화면 표시만 '외래강사'로(시트 값은 그대로) */
+  function kindLabel(v){ return String(v || '').replace(/외부강사/g, '외래강사'); }
   function pendingBadgesHtml(d){
     var total = d.강의확정건수 || 0;
     var unsub = d.확정미제출건수 || 0;
@@ -810,13 +821,13 @@
       tr.innerHTML =
         '<td>' + esc(d.소속||'') + '</td>' +
         '<td>' + thumb + '</td>' +
-        '<td>' + esc(d.성명||'') + routeBadge(d.등록경로) + newBadge(d) + docBadge(d) +
-          pendingBadgesHtml(d) +
+        '<td>' + esc(d.성명||'') + newBadge(d) + docBadge(d) +
+          listBadgesHtml(d) +
           (function(){ var w = unavWhy(d); return w.length ? '<span class="uvf-why">출강 불가 · ' + esc(w.join(', ')) + '</span>' : ''; })() +
         '</td>' +
         '<td style="white-space:nowrap;">' + (d._stale ? '<span style="color:#9AA3AF;">…</span>' : esc(d.연락처||'')) + '</td>' +
         '<td>' + esc(d.직위||'') + '</td>' +
-        '<td>' + esc(d.강사구분||'') + '</td>' +
+        '<td>' + esc(kindLabel(d.강사구분)) + '</td>' +
         '<td>' + esc(d.전문분야||'') + '</td>' +
         '<td>' + esc(d.활동지역||'') + '</td>' +
         '<td>' + (d.강의회차 || 0) + '회</td>' +
@@ -859,12 +870,11 @@
       var mThumb = d.사진링크
         ? '<img src="' + esc(photoUrl(d.사진링크,'thumb')) + '" class="thumb" style="width:48px;height:48px;" alt="" onerror="this.parentNode.innerHTML=\'<div class=&quot;initials-avatar&quot;>' + initials + '</div>\';">'
         : '<div class="initials-avatar">' + initials + '</div>';
-      var badgeRow = pendingBadgesHtml(d);
-      if (!badgeRow) badgeRow = '<div class="badge-row"><span class="pending-badge" style="background:#F2F1EC;color:var(--text-muted);">예정 강의 없음</span></div>';
+      var badgeRow = listBadgesHtml(d);   // I3: 휴대폰 카드도 예외(미제출)만
       return '<div class="mcard" data-idx="' + (start + pageItems.indexOf(d)) + '" style="display:flex;gap:12px;align-items:flex-start;">' +
         '<div>' + mThumb + '</div>' +
         '<div style="flex:1;min-width:0;">' +
-          '<div class="mname">' + esc(d.성명||'') + routeBadge(d.등록경로) + newBadge(d) + docBadge(d) + ' <span class="status ' + statusClass(d.상태) + '" style="vertical-align:middle;">' + esc(d.상태||'') + '</span>' +
+          '<div class="mname">' + esc(d.성명||'') + newBadge(d) + docBadge(d) + ' <span class="status ' + statusClass(d.상태) + '" style="vertical-align:middle;">' + esc(d.상태||'') + '</span>' +
           '</div>' +
           '<div class="mmeta">' + esc(d.소속||'') + '</div>' +
           '<div class="mmeta" style="white-space:nowrap;">' + (d._stale ? '<span style="color:#9AA3AF;">…</span>' : esc(d.연락처||'')) + '</div>' +
@@ -968,7 +978,7 @@
         '<div class="fi"><div class="fk">생년월일</div><div class="fv">' + birthDisplay + '</div></div>' +
         '<div class="fi"><div class="fk">연락처</div><div class="fv" style="white-space:nowrap;">' + (d.연락처 ? '<a href="tel:' + String(d.연락처).replace(/[^0-9+]/g,'') + '" style="color:var(--navy);font-weight:700;">' + esc(d.연락처) + '</a>' : '-') + '</div></div>' +
         '<div class="fi full"><div class="fk">이메일</div><div class="fv">' + (d.이메일 ? '<a href="mailto:' + escapeAttr(d.이메일) + '" style="color:var(--navy);font-weight:700;">' + esc(d.이메일) + '</a>' : '-') + '</div></div>' +
-        '<div class="fi"><div class="fk">강사구분</div><div class="fv">' + esc(d.강사구분||'-') + '</div></div>' +
+        '<div class="fi"><div class="fk">강사구분</div><div class="fv">' + esc(kindLabel(d.강사구분) || '-') + '</div></div>' +
         '<div class="fi"><div class="fk">주 교육 구분</div><div class="fv">' + esc(d.전문분야||'-') + '</div></div>' +
         '<div class="fi"><div class="fk">교과목명</div><div class="fv">' + esc(d.교과목명||'-') + '</div></div>' +
         '<div class="fi"><div class="fk">활동지역</div><div class="fv">' + esc(d.활동지역||'-') + '</div></div>' +
@@ -1755,6 +1765,11 @@
     document.getElementById('statActive').textContent = allData.filter(function(d){return d.상태==='활성';}).length + '명';
     document.getElementById('statPending').textContent = allData.filter(function(d){return d.상태==='승인대기';}).length + '명';
     document.getElementById('statRejected').textContent = allData.filter(function(d){return d.상태==='반려';}).length + '명';
+    /* 3초 점검 I1(10-18): 승인대기·반려가 0명이면 칸을 숨기고, 승인대기가 있으면 강조 */
+    var nPend = allData.filter(function(d){return d.상태==='승인대기';}).length, nRej = allData.filter(function(d){return d.상태==='반려';}).length;
+    var cPend = document.getElementById('statPending').closest('.card'), cRej = document.getElementById('statRejected').closest('.card');
+    cPend.style.display = nPend ? '' : 'none'; cPend.classList.toggle('attn', nPend > 0);
+    cRej.style.display = nRej ? '' : 'none';
     document.getElementById('statJikmu').textContent = allData.filter(function(d){return d.전문분야==='직무교육';}).length;
     document.getElementById('statYeokryang').textContent = allData.filter(function(d){return d.전문분야==='직무역량교육';}).length;
     document.getElementById('statSoyang').textContent = allData.filter(function(d){return d.전문분야==='소양교육';}).length;

@@ -124,6 +124,8 @@
   #msg.ok { display: block; background: #e6f4ea; color: var(--success); border: 1px solid #cce8d6; }
   #msg.err { display: block; background: #fce8e6; color: var(--danger); border: 1px solid #fad2cf; }
 
+  .flow1{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 10px;}
+  .flow1 i{font-style:normal;color:var(--text-muted,#8A94A0);}
   .process-guide { background: #f4f7fa; border-radius: 12px; padding: 28px 24px; margin-bottom: 24px; }
   .process-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 18px; }
   .process-steps { display: flex; flex-direction: column; gap: 0; }
@@ -172,22 +174,9 @@
   <header>
     <div class="eyebrow">외래강사 등록신청</div>
     <h1>전남소방학교 외래강사<br>등록을 신청합니다</h1>
-    <p>등록 신청 후 담당자 승인이 완료되면 강사 명단에 정식 등록됩니다.<br><b>승인 결과는 메일로 안내되니, 신청 후 메일을 꼭 확인해 주시기 바랍니다.</b><br>강의가 확정된 건에 대한 자료(동의서·강의계획서 등)는 별도 안내를 통해 제출하시게 됩니다.</p>
+    <p class="flow1"><span>등록 신청</span><i>→</i><span>담당자 심사</span><i>→</i><span><b>메일로 결과 안내</b></span></p>
   </header>
 
-  <div class="process-guide">
-    <div class="process-title">등록 절차 안내</div>
-    <div class="process-steps">
-      <div class="pstep"><div class="pnum">1</div><div class="ptext">강사 등록 신청</div></div>
-      <div class="pstep"><div class="pnum">2</div><div class="ptext">담당자 심사</div></div>
-      <div class="pstep"><div class="pnum">3</div><div class="ptext">승인 / 반려</div></div>
-      <div class="pstep"><div class="pnum">4</div><div class="ptext">메일로 결과 통보</div></div>
-      <div class="pstep">
-        <div class="pnum pnum-muted">5</div>
-        <div class="ptext">강의 배정<span class="pnote">승인된 경우, 필요할 때 진행됩니다</span></div>
-      </div>
-    </div>
-  </div>
 
 
   <form id="regForm">
@@ -262,15 +251,10 @@
           <label class="required" for="specialty">주 교육 구분</label>
           <select id="specialty" required>
             <option value="" disabled selected>선택하세요</option>
-            <option value="직무교육">직무교육</option>
-            <option value="직무역량교육">직무역량교육</option>
-            <option value="소양교육">소양교육</option>
+            <option value="직무교육">직무교육 – 소방업무 수행에 필요한 전문역량</option>
+            <option value="직무역량교육">직무역량교육 – 직무를 더 잘 수행하기 위한 공통역량</option>
+            <option value="소양교육">소양교육 – 소방공무원으로서 갖춰야 할 기본 가치와 태도</option>
           </select>
-          <div class="hint">
-            직무교육 : 소방업무 수행에 필요한 전문역량<br>
-            직무역량교육 : 직무를 더 잘 수행하기 위한 공통역량<br>
-            소양교육 : 소방공무원으로서 갖춰야 할 기본 가치와 태도
-          </div>
         </div>
         <div class="field">
           <label for="region">활동지역</label>
@@ -312,10 +296,7 @@
 
     <div class="hp-field" aria-hidden="true"><label for="website">웹사이트 (비워 두세요)</label><input type="text" id="website" tabindex="-1" autocomplete="off"></div>
 
-    <div class="hint hint-danger" style="margin-bottom:20px;">
-      ※ 심사 결과 승인되지 않은 경우, 제출하신 서류(사진, 첨부파일 등)는 별도로 반환되지 않습니다.<br>
-      ※ 사진·첨부파일 용량이 크면 업로드가 지연될 수 있습니다. "제출 중..." 표시 중에는 창을 닫지 말고 기다려 주세요.
-    </div>
+    <div class="hint" style="margin-bottom:12px;text-align:center;">"제출 중..." 표시 중에는 창을 닫지 마세요 · 승인되지 않은 경우 제출 서류는 반환되지 않습니다</div>
 
     <button type="submit" id="submitBtn">등록 신청하기</button>
     <div id="msg"></div>
@@ -526,6 +507,6 @@
   }
 </script>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-18 강사등록 8</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-18 강사등록 9</div>
 </body>
 </html>
