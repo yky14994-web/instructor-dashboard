@@ -757,6 +757,7 @@
 <script src="busy-indicator.js" defer></script>
 <script src="admin-nav.js" defer></script>
 <script src="swipe-nav.js?v=3" defer></script>
+<script src="unavail.js?v=1" defer></script>
 </head>
 <body>
 <script>try{if(sessionStorage.getItem('jsfa_dash_pw'))document.documentElement.classList.add('autologin');}catch(e){}window.__autoDone=function(){document.documentElement.classList.remove('autologin');};</script>
@@ -883,7 +884,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-18 배정 101</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-18 배정 102</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1741,8 +1742,24 @@
   function dateInRanges(p, d){
     return planRanges(p).some(function(r){ return d >= r[0] && d <= r[1]; });
   }
+  /* 출강 불가 시기: 이 강사가 이 날짜·교시에 불가로 등록했으면 걸린 규칙 글자 목록(끝난 강의는 보지 않음) */
+  function unavHits(iid, date, s, e){
+    var ins = iid ? instrById[iid] : null;
+    if (!ins || !ins.unav || !window.Unavail || !date || sessEnded(date)) return [];
+    return window.Unavail.hits(ins.unav, String(date), s, e).map(function(r){ return window.Unavail.text(r); });
+  }
+  function unavMsg(iid, date, s, e){
+    var h = unavHits(iid, date, s, e);
+    return h.length ? '강사가 출강 불가로 등록한 시간입니다(' + h.join(', ') + ')' : '';
+  }
+  function unavBadge(r){
+    var h = unavHits(r['강사ID'], r['일자'], r['시작교시'], r['끝교시']);
+    return h.length ? ' <span class="db bad" title="' + esc('출강 불가로 등록: ' + h.join(', ')) + '">출강 불가</span>' : '';
+  }
   function rowWarnings(r, p){
     var w = [];
+    var um = unavMsg(r['강사ID'], r['일자'], r['시작교시'], r['끝교시']);
+    if (um) w.push(um);
     if (p && r['일자'] && !dateInRanges(p, String(r['일자']))) w.push('일자가 이 과정의 입교·실습 기간 밖입니다');
     if (periods.length) {
       var ok = function(n){ return !!periodInfo(Number(n)); };
@@ -1774,7 +1791,8 @@
           region: String(d['활동지역'] || ''), status: String(d['상태'] || ''), subj: String(d['교과목명'] || ''),
           photo: String(d['사진링크'] || ''), bio: String(d['약력'] || ''), cert: String(d['자격증학위'] || ''), pos: String(d['직위'] || ''),
           regDate: String(d['등록일'] || '').slice(0, 10), card: String(d['프로필파일링크'] || ''), reconsent: String(d['재동의확인일'] || '').slice(0, 10),
-          consent: String(d[Object.keys(d).filter(function(k){ return /동의서/.test(k) && d[k]; })[0]] || ''), kind: String(d['강사구분'] || ''), phone: String(d['연락처'] || ''), email: String(d['이메일'] || ''), count: Number(d['강의회차']) || 0 };
+          consent: String(d[Object.keys(d).filter(function(k){ return /동의서/.test(k) && d[k]; })[0]] || ''), kind: String(d['강사구분'] || ''), phone: String(d['연락처'] || ''), email: String(d['이메일'] || ''), count: Number(d['강의회차']) || 0,
+          unav: String(d['출강불가시기'] || '') };
       });
       instructors.forEach(function(x){ instrById[x.id] = x; });
     }).catch(function(){
@@ -2299,6 +2317,8 @@
     if (form.iid) {
       var bl = busyLines(busyOf(form.iid));
       if (bl && bl.warn) box.innerHTML += '<div class="hint warn" style="margin-top:4px;">' + ic('alert', 'l') + '이 강사는 ' + bl.head + '에 ' + bl.sub + '에 이미 배정되어 있습니다(저장은 가능합니다).</div>';
+      var um = $('sDate') ? unavMsg(form.iid, $('sDate').value, $('sStart').value, $('sEnd').value) : '';
+      if (um) box.innerHTML += '<div class="hint warn" style="margin-top:4px;">' + ic('alert', 'l') + esc(um) + '. 저장은 가능합니다.</div>';
     }
     var x = $('sChipX');
     if (x) x.addEventListener('click', function(){ form.iid = ''; form.iname = ''; renderChip(); });
@@ -2350,7 +2370,7 @@
           '<div class="tx"><b>' + esc(x.name) + ' <span class="tag ' + cls + '">' + esc(x.status || '-') + '</span></b>' +
           '<small>' + esc([x.field, x.org, x.region].filter(Boolean).join(' · ') + subjLine) + '</small>' +
           '<small>강의 ' + x.count + '회' + (why.length ? ' · <span style="color:var(--navy);">일치: ' + esc(why.join('·')) + '</span>' : '') + '</small></div>' +
-          busyPickerHtml(x.id) +
+          busyPickerHtml(x.id) + unavPickerHtml(x.id) +
           '<button type="button" class="detailBtn" data-detail="' + esc(x.id) + '">상세</button></div>';
       });
       if (scored.length > hits.length) html += '<div class="info">외 ' + (scored.length - hits.length) + '명이 더 있습니다. 검색어를 더 입력해 좁혀 보세요.</div>';
@@ -2522,7 +2542,9 @@
           .then(function(rc){ if (rc && rc.status === 'ok') return rvReload().then(function(){ renderSessionList(); }); })
           .catch(function(){});
       }
-      var warns = res.warnings || [];
+      var warns = (res.warnings || []).slice();
+      var umS = unavMsg(body.강사ID, date, s, e);
+      if (umS && warns.indexOf(umS) < 0) warns.push(umS);
       var next = e + 1;
       renderHead(planByKey(currentKey));
       renderSessionList();
@@ -3584,7 +3606,7 @@
   function dayInstr(r, viewer, cx){
     if (r['강사ID']) {
       var ins = instrById[r['강사ID']];
-      return roleTag(r) + (ins ? '<span class="tag t-ok nmk" data-detail="' + esc(r['강사ID']) + '" title="강사 정보 보기">' + esc(ins.name) + '</span> ' + docBadge(ins, r) : '<span class="tag t-ok">' + esc(r['강사명'] || r['강사ID']) + '</span>');
+      return roleTag(r) + (ins ? '<span class="tag t-ok nmk" data-detail="' + esc(r['강사ID']) + '" title="강사 정보 보기">' + esc(ins.name) + '</span> ' + docBadge(ins, r) + unavBadge(r) : '<span class="tag t-ok">' + esc(r['강사명'] || r['강사ID']) + '</span>');
     }
     if (isOps(r)) return opsTag(r);
     if (r['강사명']) return roleTag(r) + '<span class="tag t-info">' + esc(r['강사명']) + ' (직접 입력)</span>';
@@ -5197,6 +5219,11 @@
     if (!l) return '';
     if (l.warn) return '<span class="bz"><span class="tag t-warn">이미 배정됨</span><small>' + l.head + '<br>' + l.sub + '</small></span>';
     return '<span class="bz g"><small>' + l.head + '<br>' + l.sub + '</small></span>';
+  }
+  /* 강사 검색 목록: 지금 고른 날짜·교시에 출강 불가로 등록했으면 표시 */
+  function unavPickerHtml(iid){
+    var d = $('sDate'), h = d ? unavHits(iid, d.value, $('sStart').value, $('sEnd').value) : [];
+    return h.length ? '<span class="bz"><span class="tag t-warn" title="' + esc(h.join(', ')) + '">출강 불가</span><small>' + esc(h[0]) + '</small></span>' : '';
   }
   function busyCardHtml(iid){
     var l = busyLines(busyOf(iid));
