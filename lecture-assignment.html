@@ -603,6 +603,8 @@
   #fBackdrop{display:none;position:fixed;inset:0;background:rgba(20,20,19,.45);z-index:80;}
   #sFormPanel .fclose{display:none;}
   #sFormPanel .funfold{display:none;}
+  #sFormPanel .ffbtn{margin-left:8px;height:26px;padding:0 10px;font-size:12px;vertical-align:middle;}
+  #sFormPanel.ffold .ffbtn{display:none;}
   #sFormPanel.ffold .funfold{display:inline-flex;margin-top:4px;}
   #sFormPanel.ffold .cline, #sFormPanel.ffold .form, #sFormPanel.ffold .fbtn, #sFormPanel.ffold #sMsg{display:none;}
   #sFormPanel.fmodal{position:fixed;z-index:85;top:50%;left:50%;transform:translate(-50%,-50%);width:min(760px,94vw);max-height:92vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);margin:0;}
@@ -861,7 +863,7 @@
       <thead>
         <tr>
           <th>구분</th><th>과정 · 기수</th><th>입교</th><th>교육기간</th>
-          <th class="num">계획인원</th><th>강의실</th><th>합숙</th><th>편성 담당</th><th>강사 배정 현황</th><th>검사</th><th class="chg" id="thChg">변경</th>
+          <th class="num">계획인원</th><th>강의실</th><th>합숙</th><th>편성 담당</th><th>강사 배정 현황</th><th>검사</th><th class="chg" id="thChg" style="display:none !important;">변경</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -897,7 +899,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-18 배정 104</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-18 배정 105</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1483,7 +1485,7 @@
     $('cardOv').className = 'card' + (ovOpen ? ' ovl' : ' none');
     var cxAll = plans.filter(isCancelled).length;
     $('count').textContent = '전체 ' + plans.length + '개 중 ' + shown.length + '개 표시' + (cxAll && !$('fStatus').value ? ' (취소된 ' + cxAll + '건은 숨김 — 위 상태 선택에서 "취소 포함"으로 볼 수 있습니다)' : '');
-    $('thChg').style.display = isViewer() ? 'none' : '';
+    $('thChg').style.display = 'none';   // 21:38 금용님: 목록의 [변경]은 과정 머리의 일정 변경·기수 취소와 중복이라 없앰
     planViewSync();
     if (planMode === 'cal') { renderPlanCal(); return; }
     if (planMode === 'room') { renderRoomFree(); return; }
@@ -1514,7 +1516,6 @@
         '<td>' + esc(p['편성 담당'] || '-') + '</td>' +
         '<td class="nw">' + subjCell(p) + '</td>' +
         '<td>' + checkCell(p) + '</td>' +
-        (isViewer() ? '' : '<td class="nw chg">' + chgCell(p) + '</td>') +
         '</tr>';
       cards += '<div class="rc' + (cx ? ' cx' : '') + '"><div class="top"><div><div class="nm"><button type="button" class="clink" data-open="' + esc(p['과정+기수']) + '">' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') + '</button>' +
         (cx ? ' <span class="tag t-err">취소됨</span>' : (changeInfo(p['과정+기수']).changed ? ' <span class="tag t-warn">일정 변경됨</span>' : '')) + '</div>' +
@@ -1525,7 +1526,7 @@
         '<dt>강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd>' +
         '<dt>편성 담당</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd>' +
         (checkCell(p) ? '<dt>검사</dt><dd>' + checkCell(p) + '</dd>' : '') + '</dl>' +
-        (isViewer() ? '' : '<div style="margin-top:8px;">' + chgCell(p) + '</div>') + '</div>';
+        '</div>';
     });
     $('tbody').innerHTML = rows;
     $('cardList').innerHTML = cards;
@@ -2151,7 +2152,7 @@
     var p1 = periods.length ? periods[0].n : 1;
     panel.innerHTML =
       '<button type="button" class="fclose" id="sClose" aria-label="닫기">' + ic('x') + '</button>' +
-      '<h3 id="sFormTitle">교과목 추가</h3>' +
+      '<h3 id="sFormTitle">교과목 추가 <button type="button" class="btn sm ffbtn" id="sFold" title="입력 칸을 접습니다">접기</button></h3>' +
       '<button type="button" class="btn primary funfold" id="sUnfold">교과목 추가 열기</button>' +
       '<div class="cline" id="sFormLine">' + courseLine(p) + '</div>' +
       '<div class="form">' +
@@ -2199,8 +2200,11 @@
     updateDow();
     refreshRoomOptions();
     updOpsAuto();
-    panel.classList.toggle('ffold', formFold && isNarrow() && !form.id);
-    $('sUnfold').addEventListener('click', function(){ formFold = false; panel.classList.remove('ffold'); });
+    /* 21:38 금용님: PC에서도 [접기]로 접을 수 있게. PC는 접은 상태를 이 브라우저에 기억, 휴대폰은 과정을 열 때마다 접힘(기존) */
+    var pcFold = false; try { pcFold = localStorage.getItem('jsfa_la_ffold') === '1'; } catch (e) {}
+    panel.classList.toggle('ffold', !form.id && (isNarrow() ? formFold : pcFold));
+    $('sUnfold').addEventListener('click', function(){ formFold = false; panel.classList.remove('ffold'); if (!isNarrow()) { try { localStorage.setItem('jsfa_la_ffold', '0'); } catch (e) {} } });
+    $('sFold').addEventListener('click', function(){ formFold = true; panel.classList.add('ffold'); if (!isNarrow()) { try { localStorage.setItem('jsfa_la_ffold', '1'); } catch (e) {} } });
     $('sRole').value = form.role === '보조강사' ? '보조강사' : '주강사';
     $('sRole').addEventListener('change', function(){ form.role = $('sRole').value; renderChip(); });
     $('sTrainer').value = form.trainer || '';
@@ -4661,7 +4665,7 @@
       '<button type="button" class="btn sm" data-gw="today">이번 주</button>' +
       '<span class="wk">' + (wi + 1) + '주차 / ' + weeks.length + '주 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span>' +
       (all ? '' : (function(){ var cf = courseFill(p, gapIndex()); return cf.total ? '<span class="wk gfill">편성 현황 ' + cf.filled + '/' + cf.total + '교시' + (cf.done ? ' (비워둠 ' + cf.done + ')' : '') + '</span>' : ''; })()) +
-      '<span style="margin-left:auto;display:inline-flex;gap:6px;">' + (!canEdit ? '' : '<button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>' + '<button type="button" class="btn sm mvm' + (gpOn() ? ' on' : '') + '" data-gpmode="1" title="켜면 빈 교시 칸마다 비워둠 처리 버튼이 나타납니다. 평소에는 숨겨 둡니다">비워둠 처리 ' + (gpOn() ? '끄기' : '켜기') + '</button>') + oriSelect('grid') + '<button type="button" class="btn sm" data-gw="print">인쇄</button>' + (all ? '' : '<button type="button" class="btn sm" data-gw="pdfall" title="이 과정의 모든 주차를 한 파일(주차당 1페이지)로 인쇄합니다. 인쇄창에서 PDF로 저장하면 파일명이 제N기 과정명으로 채워집니다">과정 전체 PDF</button>') + '</span></div>' + ctab +
+      '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:6px;max-width:100%;">' + (!canEdit ? '' : '<button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>' + '<button type="button" class="btn sm mvm' + (gpOn() ? ' on' : '') + '" data-gpmode="1" title="켜면 빈 교시 칸마다 비워둠 처리 버튼이 나타납니다. 평소에는 숨겨 둡니다">비워둠 처리 ' + (gpOn() ? '끄기' : '켜기') + '</button>') + oriSelect('grid') + '<button type="button" class="btn sm" data-gw="print">인쇄</button>' + (all ? '' : '<button type="button" class="btn sm" data-gw="pdfall" title="이 과정의 모든 주차를 한 파일(주차당 1페이지)로 인쇄합니다. 인쇄창에서 PDF로 저장하면 파일명이 제N기 과정명으로 채워집니다">과정 전체 PDF</button>') + '</span></div>' + ctab +
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:var(--err-bg);border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span><span><i style="background:repeating-linear-gradient(135deg,#FFF1BF,#FFF1BF 3px,#fff 3px,#fff 6px);border:1px solid #D9B100"></i>빈 교시</span><span><i style="background:repeating-linear-gradient(135deg,#D9DCE0,#D9DCE0 3px,var(--bg-hover) 3px,var(--bg-hover) 6px)"></i>비워둠 처리(편성 아님)</span>' +
       '<span class="docleg"><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">재동의 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
