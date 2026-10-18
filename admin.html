@@ -18,6 +18,10 @@
   .gnav{background:#10263F;color:#fff;}
   .gnav-in{display:flex;align-items:stretch;gap:2px;padding:0 28px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .gnav-in::-webkit-scrollbar{display:none;}
+  .gnav-out{align-self:center;flex-shrink:0;margin-left:14px;height:32px;padding:0 12px;border:1px solid rgba(255,255,255,.4);border-radius:6px;background:transparent;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .gnav-out:hover{background:rgba(255,255,255,.12);}
+  .gnav-out .go-i{display:none;width:18px;height:18px;}
+  @media (max-width:640px){ .gnav-out{margin-left:auto;height:30px;width:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;} .gnav-out .go-t{display:none;} .gnav-out .go-i{display:block;} }
   .gnav-brand{display:flex;align-items:center;font-size:17px;font-weight:800;letter-spacing:-0.2px;padding-right:24px;margin-right:10px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
   .gnav-brand .on{color:#FFB38A;margin-left:0;}
   .gnav-brand{flex-direction:column;align-items:flex-start;justify-content:center;line-height:1.2;}
@@ -28,7 +32,7 @@
   .gnav-i{display:flex;align-items:center;gap:6px;min-height:56px;padding:0 20px;font-size:16px;font-weight:700;color:rgba(255,255,255,0.9);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;box-sizing:border-box;}
   a.gnav-i:hover{color:#fff;background:rgba(255,255,255,0.08);}
   .gnav-i.on{color:#fff;border-bottom:4px solid #fff;background:rgba(255,255,255,0.08);}   /* 10-17 B안: 메뉴 바 크게·선명하게 */
-  @media (max-width:640px){ .gnav-in{padding:0 8px;} .gnav-brand{display:none;} .gnav-i{min-height:48px;padding:0 12px;font-size:14px;} }
+  @media (max-width:640px){ .gnav-in{padding:0 8px;} .gnav-brand{display:none;} .gnav-i{min-height:48px;padding:0 10px;font-size:14px;} }
 
   .wrap{max-width:1280px;margin:0 auto;padding:18px 16px 60px;}
   .crumb{font-size:13px;color:var(--text-muted);font-weight:600;margin-bottom:10px;}
@@ -201,7 +205,7 @@
 </head>
 <body>
 
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand"><span class="gb-name">소방교육 외래강사 <span class="on">ON</span></span><small class="gb-sub">AI 강사 추천·평가·환류 시스템</small></span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">강의실</a><a class="gnav-i on" aria-current="page" id="navAdmin" href="admin.html">관리자</a><span class="gnav-school"><span class="gs-name">전남소방학교</span><small class="gs-ab">(JFSA)</small></span></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand"><span class="gb-name">소방교육 외래강사 <span class="on">ON</span></span><small class="gb-sub">AI 강사 추천·평가·환류 시스템</small></span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">강의실</a><a class="gnav-i on" aria-current="page" id="navAdmin" href="admin.html">관리자</a><span class="gnav-school"><span class="gs-name">전남소방학교</span><small class="gs-ab">(JFSA)</small></span><button type="button" class="gnav-out" id="logoutBtn" aria-label="로그아웃" title="로그아웃"><span class="go-t">로그아웃</span><svg class="go-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></nav>
 
 <div class="wrap">
   <div id="gate" class="loading">불러오는 중입니다. 처음에는 10초 정도 걸릴 수 있습니다.</div>
@@ -430,7 +434,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 관리자 13</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 관리자 14</div>
 </div>
 
 <script src="eval-core.js?v=4"></script>
@@ -446,6 +450,8 @@
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
   function getPw(){ try { return sessionStorage.getItem(KEY_PW); } catch(e){ return null; } }
+  /* M1(10-18): 관리자·평가관리에도 메뉴 바 로그아웃(다른 화면과 같은 자리). 이 탭의 비밀번호·권한·임시 목록을 지우고 홈 로그인 화면으로 */
+  (function(){ var lo = $('logoutBtn'); if (lo) lo.addEventListener('click', function(){ try { ['jsfa_dash_pw', 'jsfa_dash_role', 'jsfa_admin_pw', 'jsfa_boot_v1', 'jsfa_list_v1'].forEach(function(k){ sessionStorage.removeItem(k); }); } catch (e) {} location.href = 'home.html'; }); })();
   function lsGet(k){ try { return localStorage.getItem(k) || ''; } catch(e){ return ''; } }
   function lsSet(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
   function num(v){ var n = parseInt(String(v).replace(/[^0-9]/g, ''), 10); return isNaN(n) ? 0 : n; }

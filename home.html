@@ -358,7 +358,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 홈 92</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 홈 93</div>
 </div>
 </div>
 
@@ -790,7 +790,7 @@
       return '<li style="border-left:5px solid ' + courseColor(String(o.p['과정명'] || '')) + ';padding-left:10px;"><div><span class="tag ' + typeCls(o.p['구분']) + '">' + esc(o.p['구분'] || '기타') + '</span> <a class="cn" href="lecture-assignment.html#c=' + encodeURIComponent(o.key) + fromQ() + '">' + esc(nameOf(o.key)) + '<span class="go">교과목 편성' + ic('arrowR', 'r') + '</span></a>' +
         '<div class="ds">' + esc(seg) + (rm ? ' · ' + esc(rm) : '') + '</div></div><div class="st">' + st + '</div></li>';
     }).join('') + '</ul>' +
-      (homeViewer() ? '' : '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table&w=' + base + '">교과목 편성하기</a></div>');
+      '';   // D2(10-18): 과정마다 '교과목 편성 →' 링크가 있어 아래 [교과목 편성하기]는 없앰
     $('cWeek').innerHTML = html;
   }
 
@@ -899,7 +899,7 @@
       '</tbody><tfoot><tr class="rowlink" data-href="lecture-assignment.html#v=table&y=' + encodeURIComponent(yearSel) + '" title="' + yearSel + '년 전체 과정 목록 보기"><td><a href="lecture-assignment.html#v=table&y=' + encodeURIComponent(yearSel) + '">합계</a><span class="go">전체 보기' + ic('arrowR', 'r') + '</span></td><td>' + total.c + '</td><td>' + total.n + '</td><td>' + total.p.toLocaleString('ko-KR') + '</td></tr></tfoot></table>' +
       '<div class="hint" style="margin-top:8px;">과정 = 과정명 종류, 회 = 기수 수, 인원 = 계획인원 합계(입교 시작일이 ' + yearSel + '년인 기수 기준). 구분 행을 누르면 해당 과정 목록이 열립니다. ' +
       (cancelled ? '취소된 기수 ' + cancelled + '회는 제외했습니다. ' : '') + '</div>' +
-      '<div style="margin-top:10px;"><a class="btn sm" href="lecture-assignment.html#v=table">전체 과정 보기</a></div>';
+      '';   // D1(10-18): [전체 과정 보기]는 편성 필요 카드·표의 합계 줄과 중복이라 없앰
     $('cYear').innerHTML = html; $('cYear').style.display = '';
   }
 
@@ -1220,6 +1220,7 @@
     return '<div class="dtx"><table class="dtt"><thead><tr>' + cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
   }
+  function cLinkD(key, d){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + (d ? '&d=' + d : '') + fromQ() + '">' + esc(nameOf(key)) + '</a>'; }   // D3: 과정명 링크가 그 날짜로 바로 열림
   function cLink(key, txt){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + fromQ() + '">' + esc(txt == null ? nameOf(key) : txt) + '</a>'; }
   function planRow(p, extra){
     var key = String(p['과정+기수'] || ''), a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a, today = todayStr();
@@ -1347,7 +1348,7 @@
       resv: function(){
         return '<div class="dsec">교과목 미정 (사전확보 교시)<small>' + rv.length + '건<span class="dx"> · 교시·강의실만 잡아 둔 건 · 예약일 14일 이내</span></small></div>' +
           dtTable(['예약일까지', '예약일', '과정 · 기수', '교시', '강의실', ''], rv.map(function(o){
-            return [esc(dl(o.d)), '<span class="nw">' + esc(md(normYmd(o.r['일자']))) + '</span>', cLink(String(o.r['개설키'])), esc(per(o.r)), esc(o.r['강의실'] || ''), viewer ? '' : '<a class="btn sm" href="lecture-assignment.html#c=' + encodeURIComponent(String(o.r['개설키'])) + '&d=' + normYmd(o.r['일자']) + fromQ() + '">교과목 편성</a>'];
+            return [esc(dl(o.d)), '<span class="nw">' + esc(md(normYmd(o.r['일자']))) + '</span>', cLinkD(String(o.r['개설키']), normYmd(o.r['일자'])), esc(per(o.r)), esc(o.r['강의실'] || ''), ''];
           }), '해당하는 건이 없습니다.');
       },
       rvreq: function(){
@@ -1393,8 +1394,8 @@
       gap: function(){
         return '<div class="dsec">빈 교시가 있는 과정<small>' + g7.length + '과정 · ' + gapRows.length + '일<span class="dx"> · 빈 날짜가 7일 이내</span></small></div>' +
           dtTable(['날짜까지', '날짜', '과정 · 기수', '빈 교시', ''], gapRows.map(function(g){
-            var btn = viewer ? '' : '<button type="button" class="btn sm" data-hgap="' + esc(g.key) + '|' + esc(g.date) + '">비워둠 처리</button> <a class="btn sm" href="lecture-assignment.html#c=' + encodeURIComponent(g.key) + '&d=' + g.date + fromQ() + '">교과목 편성</a>';
-            return [esc(dl(dayDiff(today, g.date))), '<span class="nw">' + esc(md(g.date)) + '</span>', cLink(g.key), esc(gapNumText(g.nums)), btn];
+            var btn = viewer ? '' : '<button type="button" class="btn sm" data-hgap="' + esc(g.key) + '|' + esc(g.date) + '">비워둠 처리</button>';
+            return [esc(dl(dayDiff(today, g.date))), '<span class="nw">' + esc(md(g.date)) + '</span>', cLinkD(g.key, g.date), esc(gapNumText(g.nums)), btn];
           }), '해당하는 건이 없습니다.') + '<div class="hint">교과목·강사를 못 구해 일부러 비워 둔 칸은 "비워둠 처리"로 사유를 남기면 위 목록에서 빠지고, 아래 "비워둠 처리한 칸"에 계속 표시됩니다(처리 취소 가능). 나중에 교과목을 편성하면 자동으로 빠집니다.</div>' + gapDoneSection(viewer);
       }
     };

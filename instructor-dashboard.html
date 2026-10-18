@@ -420,7 +420,7 @@
       <button type="button" id="mobileFilterToggle" class="badge" style="border:1px solid var(--border-input);cursor:pointer;font-family:inherit;">상세 필터<svg class="ic r" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     </div>
     <div class="filter-row" id="filterOptions">
-      <select class="filter" id="filterSpecialty">
+      <select class="filter" id="filterSpecialty" style="display:none;" aria-hidden="true">
         <option value="">분야 전체</option>
         <option value="직무교육">직무교육</option>
         <option value="직무역량교육">직무역량교육</option>
@@ -524,7 +524,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 강사관리 27</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 강사관리 28</div>
 </div>
 
 <script>
@@ -845,6 +845,7 @@
     lastFiltered = filtered;
     var efc = document.getElementById('exportFilteredCount'); if (efc) efc.textContent = filtered.length;
     var eac = document.getElementById('exportAllCount'); if (eac) eac.textContent = allData.length;
+    var efb = document.getElementById('exportFilteredBtn'); if (efb) efb.style.display = filtered.length !== allData.length ? '' : 'none';   // D7: 거르지 않았을 때는 [전체] 하나만
     mobilePage = 0;
     renderMobileCards();
     if (typeof updateSummaryStats === 'function') updateSummaryStats();
