@@ -10,10 +10,14 @@
   var METHODS = ['이론 강의', '실습·실기', '사례·토론', '시뮬레이션·VR', '현장 견학'];
 
   var css =
-    '.aip-card .aip-lead{background:#F2F6FB;border:1px solid #D5E1EF;border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.65;color:#1B3A5F;margin-bottom:14px;}' +
+    '.aip-card .aip-lead{background:#1B3A5F;border-radius:10px;padding:16px 18px;font-size:13px;line-height:1.65;color:#E6EDF5;margin-bottom:16px;}' +
     '.aip-card .aip-lead b{font-weight:800;}' +
-    '.aip-card .aip-more{border:none;background:none;padding:0;margin-left:6px;font-family:inherit;font-size:12.5px;font-weight:700;color:#1B3A5F;text-decoration:underline;cursor:pointer;}' +
-    '.aip-card .aip-detail{display:none;margin-top:6px;font-weight:400;}' +
+    '.aip-card .aip-optmain{display:inline-flex;align-items:center;height:26px;padding:0 10px;margin-left:8px;border-radius:999px;background:#FFF1E8;border:1px solid #F7C4A5;color:#C2410C;font-size:13px;font-weight:800;vertical-align:middle;}' +
+    '.aip-card .aip-head{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:16px;color:#fff;}' +
+    '.aip-card .aip-ai{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:#E8590C;color:#fff;font-size:12px;font-weight:800;letter-spacing:.5px;}' +
+    '.aip-card .aip-more{border:none;background:none;padding:0;margin-left:2px;font-family:inherit;font-size:12.5px;font-weight:700;color:#FFB38A;text-decoration:underline;cursor:pointer;}' +
+    '.aip-card .aip-detail{display:none;margin-top:8px;font-weight:400;}' +
+    '.aip-card .aip-detail b{color:#fff;}' +
     '.aip-card .aip-lead.open .aip-detail{display:block;}' +
     '.aip-card .aip-opt{display:inline-block;font-size:11px;font-weight:700;color:#5F6B7A;background:#EEF1F4;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:middle;}' +
     '.aip-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}' +
@@ -40,9 +44,9 @@
     if (!document.getElementById('aipCss')) { var st = document.createElement('style'); st.id = 'aipCss'; st.textContent = css; document.head.appendChild(st); }
     box.classList.add('card', 'aip-card');
     box.innerHTML =
-      '<div class="card-title">강의 전문 정보 <span class="aip-opt">모두 선택 입력</span></div>' +
-      '<div class="aip-lead" id="aipLead"><b>AI 맞춤 강사 추천에 쓰이는 정보입니다.</b>' +
-        '<button type="button" class="aip-more" id="aipMore" aria-expanded="false">자세히</button>' +
+      '<div class="card-title">강의 전문 정보 <span class="aip-optmain">모두 선택 입력</span></div>' +
+      '<div class="aip-lead" id="aipLead"><div class="aip-head"><span class="aip-ai">AI</span><b>맞춤 강사 추천에 쓰이는 정보입니다.</b>' +
+        '<button type="button" class="aip-more" id="aipMore" aria-expanded="false">자세히</button></div>' +
         '<div class="aip-detail">전남소방학교는 앞으로 교과목을 편성할 때 강의 내용에 맞는 강사님을 찾는 <b>AI 맞춤 추천</b>을 도입할 예정입니다. ' +
         '아래 정보를 자세히 적어 주실수록 강사님의 전문 분야에 맞는 강의를 의뢰드릴 수 있습니다.<br>' +
         '입력하지 않으셔도 등록에는 지장이 없으며, 추천에는 이름·연락처 같은 개인 식별 정보를 쓰지 않습니다.</div></div>' +
