@@ -871,7 +871,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-17 배정 96</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-18 배정 97</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2591,7 +2591,7 @@
     var ret = retention(x), miss = [];
     if (!x.card) miss.push('강사카드');
     if (!x.consent) miss.push('개인정보 동의서');
-    else if (ret.over) miss.push('동의서 보유기간 만료');
+    else if (ret.over) miss.push('동의서 재동의 점검 지남');
     return { miss: miss, due: !!x.consent && ret.due, ret: ret };
   }
   /* 교과목(편성 1줄)별 강의계획서 상태: 강사ID가 있는 주강사 줄만 대상(보조강사·직접 입력·취소된 기수·'계획서 불필요' 표시 제외).
@@ -3938,7 +3938,7 @@
       seen[id] = true; dc.push({ ins: ins, d: d, o: o });
     });
     D.docs = { label: '강사 서류', n: instructors === null ? null : dc.length,
-      sum: instructors === null ? '강사 정보를 불러오는 중입니다.' : '강의일이 ' + TODO_DAYS + '일 이내인 강사 중 서류가 미비하거나 보유기간이 만료된 강사 <b>' + dc.length + '명</b>',
+      sum: instructors === null ? '강사 정보를 불러오는 중입니다.' : '강의일이 ' + TODO_DAYS + '일 이내인 강사 중 서류가 미비하거나 재동의 점검(3년)이 지난 강사 <b>' + dc.length + '명</b>',
       cols: ['미비', '강사', '미비 항목', '가장 가까운 강의', '과정 · 기수'],
       items: dc.map(function(x){
         var r = x.o.r, pill = pillHtml('bad', '미비 ' + x.d.miss.length);
@@ -4091,7 +4091,7 @@
     var pend = !!(ps && !ps.done && !ps.ended && !ps.over);
     var a = ' data-doc="' + esc(x.id) + '"' + (row ? ' data-sid="' + esc(row['편성ID']) + '"' : '') + ' role="button" tabindex="0"';
     if (miss.length) return '<span class="db bad"' + a + ' title="' + esc(miss.join(', ')) + ' · 눌러서 보기">미비 ' + miss.length + '</span>';
-    if (d.due) return '<span class="db wn"' + a + ' title="개인정보 보유기간 만료 임박(' + esc(d.ret.expire) + ') · 눌러서 보기">보유 임박</span>';
+    if (d.due) return '<span class="db wn"' + a + ' title="개인정보 동의 재동의 점검 임박(' + esc(d.ret.expire) + ') · 눌러서 보기">재동의 임박</span>';
     if (pend) return '<span class="db wn"' + a + ' title="강의계획서 미제출 · 기한 ' + esc(ps.due) + ' · 눌러서 보기">강의계획서 대기</span>';
     return '<span class="db ok"' + a + ' title="강사카드·개인정보 동의서' + (ps && ps.done ? '·강의계획서' : '') + ' 제출됨 · 눌러서 보기">서류 완비</span>';
   }
@@ -4617,7 +4617,7 @@
       '<span style="margin-left:auto;display:inline-flex;gap:6px;">' + (!canEdit ? '' : '<button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>' + '<button type="button" class="btn sm mvm' + (gpOn() ? ' on' : '') + '" data-gpmode="1" title="켜면 빈 교시 칸마다 비워둠 처리 버튼이 나타납니다. 평소에는 숨겨 둡니다">비워둠 처리 ' + (gpOn() ? '끄기' : '켜기') + '</button>') + oriSelect('grid') + '<button type="button" class="btn sm" data-gw="print">인쇄</button>' + (all ? '' : '<button type="button" class="btn sm" data-gw="pdfall" title="이 과정의 모든 주차를 한 파일(주차당 1페이지)로 인쇄합니다. 인쇄창에서 PDF로 저장하면 파일명이 제N기 과정명으로 채워집니다">과정 전체 PDF</button>') + '</span></div>' + ctab +
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:var(--err-bg);border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span><span><i style="background:repeating-linear-gradient(135deg,#FFF1BF,#FFF1BF 3px,#fff 3px,#fff 6px);border:1px solid #D9B100"></i>빈 교시</span><span><i style="background:repeating-linear-gradient(135deg,#D9DCE0,#D9DCE0 3px,var(--bg-hover) 3px,var(--bg-hover) 6px)"></i>비워둠 처리(편성 아님)</span>' +
-      '<span class="docleg"><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">보유 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
+      '<span class="docleg"><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">재동의 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
       mvBarHtml() + empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
       '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : formState === 'end' ? '종료된 과정이라 칸을 눌러도 수정창이 열리지 않습니다. 편성 기록 삭제는 목록 보기에서 할 수 있습니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
@@ -4709,8 +4709,8 @@
     var cs;
     if (!x.consent) cs = '<span class="db bad">미제출</span>';
     else {
-      cs = '<span class="db ' + (ret.over ? 'bad' : d.due ? 'wn' : 'ok') + '">' + (ret.over ? '제출 · 보유기간 만료' : d.due ? '제출 · 보유기간 임박' : '제출') + '</span>' + fileLinks(x.consent, true) +
-        (ret.expire ? '<div class="hint" style="margin-top:3px;">보유기간 ' + esc(ret.base) + ' ~ ' + esc(ret.expire) + (x.reconsent ? ' (재동의 확인 ' + esc(x.reconsent) + ' 기준)' : ' (등록일 기준 3년)') + '</div>' : '');
+      cs = '<span class="db ' + (ret.over ? 'bad' : d.due ? 'wn' : 'ok') + '">' + (ret.over ? '제출 · 재동의 점검 지남' : d.due ? '제출 · 재동의 점검 임박' : '제출') + '</span>' + fileLinks(x.consent, true) +
+        (ret.expire ? '<div class="hint" style="margin-top:3px;">재동의 점검 ' + esc(ret.base) + ' ~ ' + esc(ret.expire) + (x.reconsent ? ' (재동의 확인 ' + esc(x.reconsent) + ' 기준)' : ' (등록일 기준 3년마다)') + '</div>' : '');
     }
     return '<table class="dtab" style="width:100%;border-collapse:collapse;margin-top:4px;">' + cardRow + '<tr><td>개인정보 동의서</td><td>' + cs + '</td></tr></table>';
   }
@@ -4723,7 +4723,7 @@
     var ps = srow ? planState(srow) : null;
     items.push({ priv: true, name: '강사카드', ok: !!x.card, text: x.card ? '제출' : '미제출', fid: x.card });
     if (!x.consent) items.push({ name: '개인정보 동의서', ok: false, text: '미제출', fid: '' });
-    else items.push({ priv: true, name: '개인정보 동의서', ok: !ret.over, warn: d.due, text: ret.over ? '보유기간 만료(' + ret.expire + ')' : d.due ? '보유기간 임박(' + ret.expire + ' 만료)' : '제출 · 보유 ~' + ret.expire, fid: x.consent, hint: x.reconsent ? '재동의 확인 ' + x.reconsent + ' 기준' : '등록일 ' + (ret.base || '-') + ' 기준 3년' });
+    else items.push({ priv: true, name: '개인정보 동의서', ok: !ret.over, warn: d.due, text: ret.over ? '재동의 점검 지남(' + ret.expire + ')' : d.due ? '재동의 점검 임박(' + ret.expire + ')' : '제출 · 재동의 점검 ' + ret.expire, fid: x.consent, hint: x.reconsent ? '재동의 확인 ' + x.reconsent + ' 기준' : '등록일 ' + (ret.base || '-') + ' 기준 3년마다' });
     if (ps) items.push({ name: '강의계획서 · ' + (ps.subj || '교과목') + ' (' + md(ps.date) + ')', ok: ps.done || ps.ended, warn: !ps.done && !ps.ended && !ps.over, text: planText(ps), fid: ps.fid,
       hint: '교과목별 제출 · 기한은 2027년 개강 과정부터 개강일 14일 전, 그 전 과정은 강의일 7일 전', neutral: !ps.done && ps.ended });
     items.sort(function(a, b){ return (a.ok && !a.warn ? 1 : 0) - (b.ok && !b.warn ? 1 : 0); });

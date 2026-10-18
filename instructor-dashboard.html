@@ -412,7 +412,7 @@
       </label>
       <label id="retentionFilterLabel" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-sub);border:1px solid var(--border);border-radius:6px;padding:0 12px;height:40px;cursor:pointer;">
         <input type="checkbox" id="filterRetention" style="width:auto;height:auto;">
-        보유기간 3년 도래·임박
+        재동의 점검(3년) 도래·임박
       </label>
     </div>
   </div>
@@ -489,7 +489,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 강사관리 17</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 강사관리 18</div>
 </div>
 
 <script>
@@ -558,7 +558,7 @@
     return age;
   }
 
-  // 개인정보 보유기간: 등록일(재동의 확인일이 있으면 그 날짜 중 늦은 날)부터 3년. 만료 90일 전부터 '임박'으로 표시
+  // 재동의 점검 주기(10-18 새 동의서: 보유기간은 '활용 종료 시까지', 3년마다 재동의 점검): 등록일(재동의 확인일이 있으면 그 날짜 중 늦은 날)부터 3년. 만료 90일 전부터 '임박'으로 표시
   function retentionInfo(d){
     var base = String(d.등록일 || '').slice(0,10);
     var re = String(d.재동의확인일 || '').slice(0,10);
@@ -895,7 +895,7 @@
         '<div class="fi"><div class="fk">활동지역</div><div class="fv">' + esc(d.활동지역||'-') + '</div></div>' +
         '<div class="fi"><div class="fk">강의회차</div><div class="fv">' + (d.강의회차 || 0) + '회</div></div>' +
         '<div class="fi"><div class="fk">등록일</div><div class="fv">' + esc(d.등록일||'-') + '</div></div>' +
-        (isViewer ? '' : (function(){ var r = retentionInfo(d); return '<div class="fi"><div class="fk">보유기간 만료일 (3년)</div><div class="fv"' + (r.due ? ' style="color:#A32D2D;font-weight:700;"' : '') + '>' + esc(r.expire || '-') + (r.over ? ' (도래)' : (r.due ? ' (임박)' : '')) + '</div></div>' +
+        (isViewer ? '' : (function(){ var r = retentionInfo(d); return '<div class="fi"><div class="fk">재동의 점검일 (3년마다)</div><div class="fv"' + (r.due ? ' style="color:#A32D2D;font-weight:700;"' : '') + '>' + esc(r.expire || '-') + (r.over ? ' (도래)' : (r.due ? ' (임박)' : '')) + '</div></div>' +
           '<div class="fi"><div class="fk">재동의 확인</div><div class="fv">' + (d.재동의확인일 ? (esc(d.재동의확인일) + (d.재동의메모 ? '<br><span style="font-size:12px;font-weight:400;">' + esc(d.재동의메모) + '</span>' : '')) : '-') + '</div></div>'; })()) +
         '<div class="fi full"><div class="fk">자격증·학위</div><div class="fv">' + esc(slashJoinLines(d.자격증학위) || '-') + '</div></div>' +
         '<div class="fi full"><div class="fk">약력</div><div class="fv">' + esc(slashJoinLines(d.약력) || '-') + '</div></div>' +
