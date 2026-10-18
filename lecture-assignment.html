@@ -70,6 +70,11 @@
   #loginCard{background:#fff;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,0.08);padding:34px 30px;width:100%;max-width:360px;text-align:center;}
   #loginCard .title{font-size:20px;font-weight:800;color:var(--navy);margin-bottom:6px;}
   #loginCard .sub{font-size:13px;color:var(--text-muted);margin-bottom:22px;}
+  #loginCard .lg-pg{display:inline-block;font-size:12px;font-weight:700;color:var(--navy);background:#EEF2F7;border-radius:999px;padding:3px 10px;margin-bottom:12px;}
+  #loginCard .lg-name{font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:24px;line-height:1.25;font-weight:800;color:var(--navy);margin-bottom:6px;}
+  #loginCard .lg-on{color:#E8590C;}
+  #loginCard .lg-s1{font-weight:700;margin-bottom:4px;}
+  #loginCard .lg-s2{margin-bottom:22px;}
   .pin-box{width:48px;height:56px;border:1.5px solid var(--border-input);border-radius:8px;text-align:center;font-size:22px;font-family:inherit;}
   .pin-box:focus{outline:none;border-color:var(--navy);}
   #loginBtn{width:100%;height:42px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
@@ -760,7 +765,10 @@
 
 <div id="loginScreen">
   <div id="loginCard">
-    <div class="title">소방교육 외래강사 ON</div><div class="sub" style="margin-bottom:6px;font-weight:700;">AI 강사 추천·평가·환류 시스템 · 강의배정</div>
+    <span class="lg-pg">강의배정</span>
+    <div class="title lg-name">소방교육 외래강사 <span class="lg-on">ON</span></div>
+    <div class="sub lg-s1">AI 강사 추천·평가·환류 시스템</div>
+    <div class="sub lg-s2">전남소방학교(JFSA)</div>
     <form id="loginForm">
       <div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px;">
         <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" data-idx="0" aria-label="비밀번호 1번째 자리">
@@ -875,7 +883,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-18 배정 100</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-18 배정 101</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
