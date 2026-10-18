@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>소방학교 외래강사 ON(JFSA) · 홈</title>
+<title>소방교육 외래강사ON (AI 강사 추천·평가·환류 시스템) · 홈</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/nanum-myeongjo@5.3.0/korean-800.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/nanum-myeongjo@5.3.0/latin-800.css"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
   :root{
@@ -73,7 +73,11 @@
 
   /* 공통 상단 메뉴 */
   .gnav{background:#10263F;color:#fff;}
-  .gnav-brand .on{color:#FFB38A;margin-left:.3em;}
+  .gnav-brand .on{color:#FFB38A;margin-left:0;}
+  .gnav-brand{flex-direction:column;align-items:flex-start;justify-content:center;line-height:1.2;}
+  .gnav-brand .gb-sub{font-size:11px;font-weight:600;color:rgba(255,255,255,.72);letter-spacing:0;margin-top:3px;}
+  .gnav-school{margin-left:auto;display:flex;align-items:center;padding-left:16px;font-size:14px;font-weight:700;color:rgba(255,255,255,.88);white-space:nowrap;}
+  @media (max-width:640px){ .gnav-school{display:none;} }
   .gnav-in{display:flex;align-items:stretch;gap:2px;padding:0 28px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .gnav-in::-webkit-scrollbar{display:none;}
   .gnav-brand{display:flex;align-items:center;font-size:17px;font-weight:800;letter-spacing:-0.2px;padding-right:24px;margin-right:10px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
@@ -288,8 +292,8 @@
 
 <div id="loginScreen">
   <div id="loginCard">
-    <div class="title serifname" style="font-size:24px;line-height:1.25;">소방학교 외래강사 <span style="color:#E8590C;">ON</span></div>
-    <div class="sub" style="margin-bottom:4px;font-weight:700;">전남소방학교 교육운영 관리 시스템</div>
+    <div class="title serifname" style="font-size:24px;line-height:1.25;">소방교육 외래강사<span style="color:#E8590C;">ON</span></div>
+    <div class="sub" style="margin-bottom:4px;font-weight:700;">AI 강사 추천·평가·환류 시스템</div><div class="sub" style="margin-bottom:4px;">전남소방학교</div>
     <div class="sub">담당자 전용 · 비밀번호를 입력해 주세요</div>
     <form id="loginForm">
       <div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px;">
@@ -305,13 +309,13 @@
 </div>
 
 <div id="app" style="display:none;">
-<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand">소방학교 외래강사 <span class="on">ON</span></span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">강의실</a><a class="gnav-i" id="navAdmin" href="admin.html" style="display:none">관리자</a></div></nav>
+<nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand"><span class="gb-name">소방교육 외래강사<span class="on">ON</span></span><small class="gb-sub">AI 강사 추천·평가·환류 시스템</small></span><a class="gnav-i on" aria-current="page" href="home.html">홈</a><a class="gnav-i" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" data-v="room" href="lecture-assignment.html#v=room">강의실</a><a class="gnav-i" id="navAdmin" href="admin.html" style="display:none">관리자</a><span class="gnav-school">전남소방학교</span></div></nav>
 <div class="wrap">
   <div class="crumb" id="crumb"></div>
   <header class="brandhead">
     <div>
-      <div class="bh-name serifname">소방학교 외래강사 <span class="on">ON</span><small>(JFSA)</small></div>
-      <div class="bh-sub">전남소방학교 교육운영 관리 시스템</div>
+      <div class="bh-name serifname">소방교육 외래강사<span class="on">ON</span></div>
+      <div class="bh-sub">AI 강사 추천·평가·환류 시스템</div>
       <div class="sub" id="clock"></div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
@@ -344,7 +348,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-17 홈 86</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-18 홈 87</div>
 </div>
 </div>
 
