@@ -411,7 +411,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 관리자 18</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 관리자 19</div>
 </div>
 
 <script src="eval-core.js?v=4"></script>
@@ -594,6 +594,22 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, old); else old();
   }
   function mkClear(){ $('mkOut').hidden = true; $('mkOut').innerHTML = ''; show($('mkMsg'), 'ok', ''); mkLast = null; }
+  /* 관리자 19(10-19, 제안 A): 이미 만든 설문의 교과목·강사(생성기 v6이 기억한 목록)와 지금 편성을 비교해 바뀐 점을 알려 줌 */
+  function pairKey(subject, id, name, set){ return set + '|' + E.normSubject(subject) + '|' + (String(id || '').trim() || 'N:' + String(name || '').replace(/\s+/g, '')); }
+  function pairDiffHtml(r){
+    if (!Array.isArray(r.pairs)) return '<div class="hint" style="margin-top:8px;">이 설문은 이전 방식으로 만들어 지금 편성과 비교할 정보가 없습니다. 강사가 바뀌었다면 [설문지 미리 열어 보기]로 직접 확인해 주세요.</div>';
+    var made = {}, now = {}, add = [], gone = [];
+    r.pairs.forEach(function(p){ made[pairKey(p[0], p[2], p[1], p[3])] = p; });
+    E.surveyPairs(courseSessions(r.course)).forEach(function(p){ now[pairKey(p.subject, p.id, p.name, p.set)] = [p.subject, p.name, p.id, p.set]; });
+    Object.keys(now).forEach(function(k){ if (!made[k]) add.push(now[k]); });
+    Object.keys(made).forEach(function(k){ if (!now[k]) gone.push(made[k]); });
+    if (!add.length && !gone.length) return '<div class="hint" style="margin-top:8px;">✔ 설문을 만든 뒤 바뀐 교과목·강사가 없습니다.</div>';
+    var li = function(p){ return esc(p[0]) + ' · ' + esc(p[1] || '') + (p[3] === 'T' ? ' (현장교관)' : ''); };
+    return '<div class="note warn"><b>설문을 만든 뒤 편성이 ' + (add.length + gone.length) + '건 바뀌었습니다</b>' +
+      (gone.length ? '<br><b>설문에는 있지만 지금 편성에는 없음</b><br>' + gone.map(li).join('<br>') : '') +
+      (add.length ? '<br><b>지금 편성에는 있지만 설문에는 없음</b><br>' + add.map(li).join('<br>') : '') +
+      '<br><br>· 아직 링크를 보내지 않았거나 응답이 0건이면 <b>[다시 만들기]</b> 후 새 링크를 안내하세요.<br>· 이미 응답을 받는 중이면 다시 만들지 마세요(응답이 둘로 나뉨). 결과 올리기에서 예전 이름 열을 새 강사로 연결합니다.</div>';
+  }
   function renderMk(r){
     mkLast = r;
     var made = !!r.created;
@@ -606,6 +622,7 @@
       '<a class="btn" href="' + esc(r.url || r.link) + '" target="_blank" rel="noopener">설문지 미리 열어 보기</a>' +
       '<button type="button" class="btn sm danger" id="mkRemake" title="같은 과정의 설문을 새로 하나 더 만듭니다(링크가 바뀜)">다시 만들기</button></div>';
     if (!made) h += '<div class="hint" style="margin-top:8px;">같은 과정은 새로 만들지 않고 이미 만든 링크를 보여 줍니다. 문항이나 편성을 고친 뒤 새 설문이 필요할 때만 [다시 만들기]를 누르세요.</div>';
+    if (!made) h += pairDiffHtml(r);
     if (r.warnings && r.warnings.length) h += '<div class="note warn"><b>설문문항 탭 확인</b><br>' + r.warnings.map(esc).join('<br>') + '</div>';
     h += '</div>';
     $('mkOut').innerHTML = h; $('mkOut').hidden = false;
