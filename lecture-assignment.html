@@ -899,7 +899,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-19 배정 107</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-19 배정 108</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1046,12 +1046,12 @@
   function noticePlan(old, nv){
     var out = [], oldId = old ? String(old['강사ID'] || '') : '', newId = nv ? String(nv['강사ID'] || '') : '';
     function nm(id, row){ return (instrById[id] || {}).name || (row && row['강사명']) || id; }
-    if (old && oldId && oldId !== newId && !sessEnded(old['일자'])) out.push({ k: '취소', n: nm(oldId, old), s: String(old['교과목'] || ''), d: normYmd(old['일자']) });
+    if (old && oldId && oldId !== newId && !sessEnded(old['일자'])) out.push({ k: '취소', n: nm(oldId, old), s: String(old['교과목'] || ''), d: normYmd(old['일자']), r: old });
     if (nv && newId && !sessEnded(nv['일자'])) {
       var slot = function(r){ return [normYmd(r['일자']), Number(r['시작교시']), Number(r['끝교시']), String(r['강의실'] || ''), String(r['교과목'] || ''), String(r['반'] || '전체')].join('|'); };
       var wasAsst = old && String(old['강사 역할'] || '') === '보조강사' && String(nv['강사 역할'] || '') !== '보조강사';
       var kind = (!old || oldId !== newId || wasAsst) ? '배정' : (slot(old) !== slot(nv) ? '변경' : '');
-      if (kind) out.push({ k: kind, n: nm(newId, nv), s: String(nv['교과목'] || ''), d: normYmd(nv['일자']) });
+      if (kind) out.push({ k: kind, n: nm(newId, nv), s: String(nv['교과목'] || ''), d: normYmd(nv['일자']), r: nv, o: kind === '변경' ? old : null });
     }
     return out;
   }
@@ -1062,11 +1062,25 @@
       ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
       ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,34,54,.45);display:flex;align-items:center;justify-content:center;padding:16px;';
       var byKind = {}; plan.forEach(function(p){ (byKind[p.k] = byKind[p.k] || []).push(p); });
-      var rows = plan.map(function(p){ return '<li><b>' + esc(p.n) + '</b> 선생님 · ' + esc(p.k) + ' 안내 · ' + esc(p.s) + (p.d ? ' (' + esc(md(p.d)) + ')' : '') + '</li>'; }).join('');
+      /* 10-19 금용님: 과정 기간·강의 일시를 확인창에 다시 보여 줌(변경은 이전 → 변경) */
+      var slotTxt = function(r){
+        if (!r) return '';
+        var pt = periodText(r), rm = String(r['강의실'] || '');
+        return md(normYmd(r['일자'])) + ' ' + pt.txt + (pt.time ? ' (' + pt.time + ')' : '') + (rm ? ' · ' + rm : '');
+      };
+      var rows = plan.map(function(p){
+        var r = p.r || {}, cp = planByKey(String(r['개설키'] || ''));
+        var course = cp ? (String(cp['과정명'] || '') + ' ' + String(cp['기수'] || '')).trim() : String(r['개설키'] || '');
+        var per = cp ? range(cp['입교 시작일'], cp['입교 종료일']) : '';
+        return '<li style="margin-bottom:8px;"><b>' + esc(p.n) + '</b> 선생님 · ' + esc(p.k) + ' 안내' +
+          '<div class="ncd">교과목 <b>' + esc(p.s) + '</b></div>' +
+          (course ? '<div class="ncd">과정 ' + esc(course) + (per ? ' (입교 ' + esc(per) + ')' : '') + '</div>' : '') +
+          '<div class="ncd">일시 ' + (p.o ? '이전 ' + esc(slotTxt(p.o)) + ' → <b>변경 ' + esc(slotTxt(p.r)) + '</b>' : '<b>' + esc(slotTxt(p.r)) + '</b>') + '</div></li>';
+      }).join('');
       ov.innerHTML = '<div style="background:#fff;border-radius:12px;max-width:440px;width:100%;padding:18px 18px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25);max-height:90vh;overflow:auto;">' +
         '<div style="font-size:16px;font-weight:700;margin-bottom:6px;">강사에게 안내를 보낼까요?</div>' +
         '<div style="font-size:13px;color:#4B5563;margin-bottom:8px;">저장하면 아래 강사에게 메일과 문자가 발송됩니다.</div>' +
-        '<ul style="margin:0 0 10px;padding-left:18px;font-size:13px;line-height:1.6;">' + rows + '</ul>' +
+        '<ul style="margin:0 0 10px;padding-left:18px;font-size:13px;line-height:1.6;">' + rows + '</ul><style>.ncd{color:#374151;font-size:13px;}</style>' +
         '<div class="hint" style="margin-bottom:12px;">강사 상태·연락처에 따라 일부는 발송되지 않을 수 있습니다. "저장만"을 고르면 안내 없이 저장되며, 배정 안내는 나중에 "안내 재발송"으로 보낼 수 있습니다(변경·취소 안내는 재발송 대상이 아닙니다).</div>' +
         '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;">' +
         '<button type="button" class="btn" data-nc="cancel">취소</button>' +
@@ -2191,7 +2205,7 @@
       '<button type="button" class="btn" id="sReset">입력 지우기</button>' +
       '<button type="button" class="btn danger" id="sDel" style="display:none;" title="이 교과목 편성을 삭제합니다">이 교과목 삭제</button>' +
       '<button type="button" class="btn" id="sOpsAuto" style="display:none;" title="이 과정의 첫날 1교시 입교안내, 마지막 날 마지막 교시 성과측정을 교육운영팀 운영으로 추가">운영팀 교시 자동 추가</button>' +
-      '<span class="hint" id="sMode">겹침·기간 밖은 저장 후 경고로 알려 드립니다.</span></div>' +
+      '<span id="sRange" style="font-size:13px;font-weight:700;color:var(--navy);"></span><span class="hint" id="sMode">겹침·기간 밖은 저장 후 경고로 알려 드립니다.</span></div>' +
       '<div id="sMsg"></div>';
     // 방 직접 입력 상태
     if (defRoom && rooms.indexOf(defRoom) === -1) { $('sRoomText').style.display = ''; $('sRoomText').value = defRoom; }
@@ -2218,7 +2232,10 @@
     renderChip();
     $('sDate').addEventListener('change', function(){ updateDow(); renderChip(); refreshRoomOptions(); });
     $('sStart').addEventListener('change', function(){
-      if (Number($('sEnd').value) < Number($('sStart').value)) $('sEnd').value = $('sStart').value;
+      /* 10-19 금용님: 끝 교시를 깜박하지 않게 시작 교시를 고르면 끝 교시 = 시작+1(2시간)로 맞춤. 편성된 교시·마지막 교시를 넘으면 아래 잠금에서 줄어듦 */
+      var st = Number($('sStart').value), se2 = $('sEnd');
+      var nx = Array.prototype.some.call(se2.options, function(o){ return Number(o.value) === st + 1; }) ? st + 1 : st;
+      se2.value = String(nx);
       renderChip(); refreshRoomOptions();
     });
     $('sEnd').addEventListener('change', function(){
@@ -2252,8 +2269,11 @@
   function occupiedPeriods(){
     var occ = {}, date = normYmd($('sDate').value), klass = $('sKlass').value || '전체';
     if (!date) return occ;
+    /* 10-19 금용님: 교육운영팀·교육훈련팀 운영 교시(비고에 대표자)에도 강사를 주강사·보조강사로 추가할 수 있게, 강사를 고른 경우 팀 운영 줄은 막지 않음 */
+    var withInstr = !!(form.iid || (form.iname && !isOpsName(form.iname)));
     allSessions.forEach(function(r){
       if (String(r['개설키'] || '') !== currentKey || normYmd(r['일자']) !== date || String(r['편성ID']) === form.id) return;
+      if (withInstr && isOps(r)) return;
       var k = String(r['반'] || '전체');
       if (!(k === '전체' || klass === '전체' || k === klass)) return;
       var a = Number(r['시작교시']), b = Number(r['끝교시']); if (!isFinite(a) || !isFinite(b)) return;
@@ -2282,8 +2302,10 @@
     }
     mark(ss, function(n){ return !!occ[n]; });
     mark(se, function(n){ return !!occ[n] || n > limit; });
+    var rg = $('sRange');   // 저장 버튼 옆에 고른 교시 범위를 한 줄로(끝 교시 확인용)
+    if (rg) { var a1 = Number(ss.value), b1 = Number(se.value); rg.textContent = (a1 && b1 && b1 >= a1) ? (a1 === b1 ? a1 + '교시' : a1 + '~' + b1 + '교시') + '(' + (b1 - a1 + 1) + '시간)' : ''; }
     var h = $('sPerHint');
-    if (h) h.textContent = any ? (co ? '' : '같은 날 이미 편성된 교시(' + Object.keys(occ).map(Number).sort(function(a, b){ return a - b; }).join('·') + '교시)는 선택할 수 없습니다. 같은 교시에 보조강사를 추가하려면 역할을 "보조강사"로 바꾸세요.') : '';
+    if (h) h.textContent = any ? (co ? '' : '같은 날 이미 편성된 교시(' + Object.keys(occ).map(Number).sort(function(a, b){ return a - b; }).join('·') + '교시)는 선택할 수 없습니다. 같은 교시에 보조강사를 추가하려면 역할을 "보조강사"로 바꾸세요. 팀 운영 교시에는 강사를 고르면 추가할 수 있습니다.') : '';
     if (h) h.className = 'hint';
     if (h && !co && !free.length && normYmd($('sDate').value)) { h.textContent = '이 날은 모든 교시가 이미 편성되어 있습니다. 다른 날짜를 선택하세요.'; h.className = 'hint warn'; }
   }

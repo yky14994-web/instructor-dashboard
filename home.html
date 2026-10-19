@@ -138,6 +138,8 @@
 
   .tag{display:inline-block;border-radius:12px;padding:2px 9px;font-size:12px;font-weight:700;line-height:1.5;white-space:nowrap;}
   .t-ok{background:var(--ok-bg);color:var(--ok-fg);}
+  .t-live{background:var(--navy);color:#fff;font-weight:800;}
+  .dtt tr.live td{background:#EEF4FB;} .dtt tr.live td:first-child{box-shadow:inset 4px 0 0 var(--navy);}
   .t-warn{background:var(--warn-bg);color:var(--warn-fg);}
   .t-err{background:var(--err-bg);color:var(--err-fg);}
   .t-none{background:var(--none-bg);color:var(--none-fg);}
@@ -358,7 +360,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 홈 94</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 홈 95</div>
 </div>
 </div>
 
@@ -1218,7 +1220,7 @@
   function dtTable(cols, rows, empty){
     if (!rows.length) return '<div class="empty">' + esc(empty) + '</div>';
     return '<div class="dtx"><table class="dtt"><thead><tr>' + cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '</tr></thead><tbody>' +
-      rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+      rows.map(function(r){ return '<tr' + (r.live ? ' class="live"' : '') + '>' + r.map(function(c){ return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
   }
   function cLinkD(key, d){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + (d ? '&d=' + d : '') + fromQ() + '">' + esc(nameOf(key)) + '</a>'; }   // D3: 과정명 링크가 그 날짜로 바로 열림
   function cLink(key, txt){ return '<a href="lecture-assignment.html#c=' + encodeURIComponent(key) + fromQ() + '">' + esc(txt == null ? nameOf(key) : txt) + '</a>'; }
@@ -1227,10 +1229,14 @@
     var d = a ? dayDiff(today, a) : 0, st, cls;
     if (isCancelled(p)) { st = '취소'; cls = 't-none'; }
     else if (dateOver(b)) { st = '종료'; cls = 't-none'; }
-    else if (a <= today) { st = '진행 중'; cls = 't-ok'; }
+    else if (a <= today) { st = '진행 중'; cls = 't-live'; }
     else { st = 'D-' + d; cls = d <= 14 ? 't-warn' : 't-none'; }
-    return [cLink(key), esc(p['구분'] || ''), esc(ipgyoLine(p).replace(/^입교 /, '')), esc(p['계획인원'] || ''), esc(p['예정 강의실'] || '미정'), '<span class="tag ' + cls + '">' + esc(st) + '</span>'].concat(extra || []);
+    var out = [cLink(key), esc(p['구분'] || ''), esc(ipgyoLine(p).replace(/^입교 /, '')), esc(p['계획인원'] || ''), esc(p['예정 강의실'] || '미정'), '<span class="tag ' + cls + '">' + esc(st) + '</span>'].concat(extra || []);
+    out.live = st === '진행 중';
+    return out;
   }
+  /* 10-19 금용님: 편성이 필요한 과정 중 진행 중인 과정 강조(줄 바탕·왼쪽 띠·편성 현황 굵게) */
+  function isLivePlan(p){ var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a; return !isCancelled(p) && !!a && a <= todayStr() && !dateOver(b); }
   var PCOLS = ['과정 · 기수', '구분', '입교 기간', '계획인원', '예정 강의실', '상태'];
   function gapDoneSection(viewer){
     var list = gapDoneList();
@@ -1244,7 +1250,10 @@
     var rows = gc.map(function(o){
       var det = o.gaps.slice(0, 6).map(function(g){ return esc(md(g.date)) + ' ' + esc(gapNumText(g.nums)); }).join('<br>') + (o.gaps.length > 6 ? '<br>외 ' + (o.gaps.length - 6) + '일' : '');
       var n = o.gaps.reduce(function(a, g){ return a + g.nums.length; }, 0), cf = courseFill(o.p, gapIndex());
-      return [cLink(String(o.p['과정+기수'])), esc(ipgyoLine(o.p).replace(/^입교 /, '')), esc(cf.filled + '/' + cf.total + '교시 편성' + (cf.done ? ' (비워둠 ' + cf.done + ')' : '')), esc(n + '교시 · ' + o.gaps.length + '일'), det];
+      var lv = isLivePlan(o.p), fillTxt = esc(cf.filled + '/' + cf.total + '교시 편성' + (cf.done ? ' (비워둠 ' + cf.done + ')' : ''));
+      var row = [cLink(String(o.p['과정+기수'])) + (lv ? ' <span class="tag t-live">진행 중</span>' : ''), esc(ipgyoLine(o.p).replace(/^입교 /, '')), lv ? '<b>' + fillTxt + '</b>' : fillTxt, esc(n + '교시 · ' + o.gaps.length + '일'), det];
+      row.live = lv;
+      return row;
     });
     return '<div class="dsec">빈 교시가 있는 과정 (교과목 없는 교시)<small>' + gc.length + '과정</small></div><div class="hint" style="margin-bottom:6px;">교과목이 일부만 편성되어 비어 있는 과정입니다(한 건도 없으면 위 목록). ' + esc(scope) + ' 중 빈 날짜가 7일 이내인 칸만 표시하며, 5주 넘는 과정은 제외합니다. 일부러 비운 칸은 "비워둠 처리"하세요.</div>' +
       dtTable(['과정 · 기수', '입교 기간', '편성 현황(전체)', '빈 교시(7일 이내)', '날짜별 빈 교시'], rows, '빈 교시가 있는 과정이 없습니다.') + gapDoneSection(homeViewer());
@@ -1261,7 +1270,7 @@
     var lab = function(k){ var y = k.slice(0, 4), m = Number(k.slice(5, 7)); return y + '년 ' + m + '월'; };
     return '<div class="mchips">' + groups.map(function(g){ return '<span>' + esc(Number(g.k.slice(5, 7)) + '월 ' + g.items.length + '과정') + '</span>'; }).join('') + '</div>' +
       groups.map(function(g){
-        return '<div class="mhd">' + esc(lab(g.k)) + ' 시작<small>' + g.items.length + '과정</small></div>' + dtTable(PCOLS.concat(['편성 현황']), g.items.map(function(p){ return planRow(p, [esc(needText(p) || '-')]); }), '');
+        return '<div class="mhd">' + esc(lab(g.k)) + ' 시작<small>' + g.items.length + '과정</small></div>' + dtTable(PCOLS.concat(['편성 현황']), g.items.map(function(p){ return planRow(p, [isLivePlan(p) ? '<b>' + esc(needText(p) || '-') + '</b>' : esc(needText(p) || '-')]); }), '');
       }).join('');
   }
   function detailHtml(kind){
