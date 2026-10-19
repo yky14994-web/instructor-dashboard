@@ -360,7 +360,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 홈 96</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 홈 97</div>
 </div>
 </div>
 
@@ -1255,8 +1255,14 @@
       row.live = lv;
       return row;
     });
-    return '<div class="dsec">빈 교시가 있는 과정 (교과목 없는 교시)<small>' + gc.length + '과정</small></div><div class="hint" style="margin-bottom:6px;">교과목이 일부만 편성되어 비어 있는 과정입니다(한 건도 없으면 위 목록). ' + esc(scope) + ' 중 빈 날짜가 7일 이내인 칸만 표시하며, 5주 넘는 과정은 제외합니다. 일부러 비운 칸은 "비워둠 처리"하세요.</div>' +
-      dtTable(['과정 · 기수', '입교 기간', '편성 현황(전체)', '빈 교시(7일 이내)', '날짜별 빈 교시'], rows, '빈 교시가 있는 과정이 없습니다.') + gapDoneSection(homeViewer());
+    /* 10-19 금용님(가안): 기준(7일 이내)을 제목에 드러내고, 0건이면 그 뒤(2개월 이내) 빈 교시 규모를 한 줄로 알림 */
+    var emptyMsg = '7일 이내 빈 교시는 없습니다.';
+    if (!gc.length) {
+      var later = gapCourses(null), ln = later.reduce(function(a, o){ return a + o.gaps.reduce(function(b, g){ return b + g.nums.length; }, 0); }, 0);
+      if (later.length) emptyMsg += ' (그 뒤 빈 교시: ' + later.length + '과정 ' + ln + '교시)';
+    }
+    return '<div class="dsec">빈 교시가 있는 과정 · 7일 이내<small>' + gc.length + '과정</small></div><div class="hint" style="margin-bottom:6px;">교과목이 일부만 편성되어 비어 있는 과정입니다(한 건도 없으면 위 목록). ' + esc(scope) + ' 중 빈 날짜가 7일 이내인 칸만 표시하며, 5주 넘는 과정은 제외합니다. 일부러 비운 칸은 "비워둠 처리"하세요.</div>' +
+      dtTable(['과정 · 기수', '입교 기간', '편성 현황(전체)', '빈 교시(7일 이내)', '날짜별 빈 교시'], rows, emptyMsg) + gapDoneSection(homeViewer());
   }
   /* 입교 시작일 기준 월별로 끊어서 표시(월 제목 띠 + 월별 표, 맨 위에 월별 건수 요약) */
   function byMonthTables(list){
