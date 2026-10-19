@@ -198,6 +198,35 @@
   .rvhead h2{margin:0;}
   .rwait{border:2px solid #C99A00;color:#7A5B00;background:#FFF8E1;text-align:center;font-weight:800;padding:6px;margin:0 0 12px;font-size:13px;}
   .ld{font-size:11px;color:#6B7280;}
+
+  /* 6. 강사 환류(관리자 21) */
+  .fbflow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0;font-size:13px;}
+  .fbflow span{display:inline-flex;align-items:center;gap:6px;background:var(--bg-soft);border:1px solid #D9E0EA;border-radius:999px;padding:3px 11px 3px 4px;font-weight:700;color:var(--navy);}
+  .fbflow span b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;}
+  .fbflow i{font-style:normal;color:#A3ABB7;}
+  .fbl{list-style:none;margin:10px 0 0;padding:0;border-top:1px solid var(--border);}
+  .fbi{border-bottom:1px solid var(--border);padding:12px 2px;}
+  .fbi.off .fbh{opacity:.6;}
+  .fbh{display:flex;gap:10px;align-items:flex-start;}
+  .fbh input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;accent-color:var(--navy);flex:0 0 auto;cursor:pointer;}
+  .fbh .fbm{flex:1 1 auto;min-width:0;}
+  .fbh .fbt{font-size:15px;font-weight:800;color:var(--navy);}
+  .fbh .fbs{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--text-sub);margin-top:3px;}
+  .fbh .fbs b{color:var(--text);font-variant-numeric:tabular-nums;}
+  .fbh .fbb{flex:0 0 auto;}
+  .fbx{margin:10px 0 0 28px;padding:12px 14px;background:var(--bg-soft);border:1px solid #D9E0EA;border-radius:8px;}
+  .fbx h4{margin:0 0 6px;font-size:13px;color:var(--navy);}
+  .fbx .fbg{margin:8px 0 0;}
+  .fbx .fbg > b{font-size:12px;color:var(--text-muted);}
+  .fbx label.fbc{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:14px;line-height:1.5;cursor:pointer;}
+  .fbx label.fbc input{width:16px;height:16px;margin:2px 0 0;accent-color:var(--navy);flex:0 0 auto;}
+  .mailpv{margin-top:10px;background:#fff;border:1px solid #CBD4E0;border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.7;}
+  .mailpv table{border-collapse:collapse;font-size:13px;margin-bottom:8px;}
+  .mailpv th{text-align:left;color:var(--text-muted);font-weight:700;padding:2px 12px 2px 0;white-space:nowrap;vertical-align:top;}
+  .mailpv .mb{border-top:3px solid var(--navy);padding-top:10px;}
+  .mailpv .mb p{margin:0 0 10px;}
+  .fbfoot{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:14px;}
+  @media (max-width:640px){ .fbx{margin-left:0;} .fbh{flex-wrap:wrap;} .fbh .fbm{flex:1 1 calc(100% - 30px);} .fbh .fbb{width:100%;padding-left:28px;} }
 </style>
 </head>
 <body>
@@ -242,7 +271,7 @@
       <button type="button" class="tab" data-t="review" role="tab"><span class="sn">3</span>검토·반영 <span class="badge" id="waitBadge" title="검토 대기" hidden></span></button>
       <button type="button" class="tab" data-t="view" role="tab"><span class="sn">4</span>점수 조회</button>
       <button type="button" class="tab" data-t="rep" role="tab"><span class="sn">5</span>결과 보고서</button>
-      <span class="step-off" title="다음 작업에서 만듭니다"><span class="sn">6</span>강사 환류 메일 <span class="tag t-none">준비 중</span></span>
+      <button type="button" class="tab" data-t="fb" role="tab"><span class="sn">6</span>강사 환류</button>
     </div>
 
     <!-- 1. 설문 준비 -->
@@ -409,9 +438,23 @@
       </div>
       <div id="repDoc" class="repdoc"></div>
     </div>
+
+    <!-- 6. 강사 환류 메일 -->
+    <div id="tFb" hidden>
+      <div class="card">
+        <h2>강사 환류 메일</h2>
+        <div class="fbflow" aria-label="진행 순서"><span><b>1</b>환류지 확인</span><i>›</i><span><b>2</b>메일 미리보기</span><i>›</i><span><b>3</b>보낼 강사 선택</span><i>›</i><span><b>4</b>발송 확인</span></div>
+        <div class="hint">강사 한 분에 교과목별 1통씩, <b>본인 점수와 담당자가 고른 의견만</b> 보냅니다(다른 강사 점수·순위는 넣지 않음). 반영 승인한 과정만 고를 수 있고, 반영 제외한 교과목·의견은 넣지 않습니다.</div>
+        <div class="row" style="margin-top:10px;">
+          <div class="fld" style="min-width:260px;flex:1 1 260px;"><label for="fbCourse">과정</label><select id="fbCourse"></select></div>
+        </div>
+        <div id="fbMsg" class="note" hidden></div>
+        <div id="fbBody"></div>
+      </div>
+    </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-20 관리자 20</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-20 관리자 21</div>
 </div>
 
 <script src="eval-core.js?v=4"></script>
@@ -507,19 +550,19 @@
   function courseSessions(key){ return sessions.filter(function(s){ return String(s['개설키']) === key; }); }
 
   /* ---------- 화면 전환 ---------- */
-  var HASH = { prep: 'prep', up: 'eval', review: 'review', view: 'view', rep: 'rep' };
+  var HASH = { prep: 'prep', up: 'eval', review: 'review', view: 'view', rep: 'rep', fb: 'fb' };
   function route(){
     var h = location.hash.replace('#', '');
-    var t = h === 'prep' ? 'prep' : h === 'review' ? 'review' : h === 'view' ? 'view' : h === 'rep' ? 'rep' : h === 'eval' ? 'up' : '';
+    var t = h === 'prep' ? 'prep' : h === 'review' ? 'review' : h === 'view' ? 'view' : h === 'rep' ? 'rep' : h === 'fb' ? 'fb' : h === 'eval' ? 'up' : '';
     $('vAdmin').hidden = !!t;
     $('vEval').hidden = !t;
     if (t) tab(t);
   }
   function tab(t){
     document.querySelectorAll('.tab').forEach(function(b){ var on = b.getAttribute('data-t') === t; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-    $('tPrep').hidden = t !== 'prep'; $('tUp').hidden = t !== 'up'; $('tReview').hidden = t !== 'review'; $('tView').hidden = t !== 'view'; $('tRep').hidden = t !== 'rep';
+    $('tPrep').hidden = t !== 'prep'; $('tUp').hidden = t !== 'up'; $('tReview').hidden = t !== 'review'; $('tView').hidden = t !== 'view'; $('tRep').hidden = t !== 'rep'; $('tFb').hidden = t !== 'fb';
     if (t === 'prep') renderPrep();
-    if (t === 'review' || t === 'view' || t === 'rep') { if (!results) loadResults(); else { renderUploads(); renderView(); renderRepCourses(); } }
+    if (t === 'review' || t === 'view' || t === 'rep' || t === 'fb') { if (!results) loadResults(); else { renderUploads(); renderView(); renderRepCourses(); renderFbCourses(); } }
     else if (!results) loadResults(true);   // 검토 대기 건수 표시용(조용히)
   }
   window.addEventListener('hashchange', route);
@@ -962,13 +1005,13 @@
   var pendingOpen = '';
   function openWhenReady(id){ if (results && upMap()[id]) openReview(id); else pendingOpen = id; }
   function loadResults(quiet){
-    if (!quiet) { $('vwLoading').hidden = false; $('rvLoading').hidden = false; }
+    if (!quiet) { $('vwLoading').hidden = false; $('rvLoading').hidden = false; if (!$('tFb').hidden && !results) $('fbBody').innerHTML = '<div class="loading">불러오는 중입니다.</div>'; }
     return api({ action: 'listEvalResults', password: getPw() }, 3).then(function(r){
       $('vwLoading').hidden = true; $('rvLoading').hidden = true;
       if (r.status !== 'ok') { if (!quiet) show($('emsg'), 'err', esc(r.message || '불러오지 못했습니다')); return; }
       results = r;
       (results.uploads || []).forEach(function(u){ if (!u['상태']) u['상태'] = ST_DONE; });
-      renderBadge(); renderUploads(); renderView(); renderRepCourses();
+      renderBadge(); renderUploads(); renderView(); renderRepCourses(); renderFbCourses();
       if (pendingOpen) { var id = pendingOpen; pendingOpen = ''; openReview(id); }
     }).catch(function(err){ $('vwLoading').hidden = true; $('rvLoading').hidden = true; if (!quiet) show($('emsg'), 'err', '불러오지 못했습니다: ' + esc(err.message)); });
   }
@@ -1182,6 +1225,136 @@
     window.print();
     setTimeout(back, 4000);
   };
+
+  /* ---------- 6. 강사 환류 메일 (관리자 21, 서버 e2) ----------
+   * 반영 승인한 과정의 교과목·강사 줄마다 1통. 의견 기본 선택: 칭찬만 체크(개선 요청·기타는 담당자가 골라 넣음)
+   * 이미 보낸 교과목·메일 주소가 없는 강사는 기본으로 체크하지 않음 */
+  var fbCache = {};
+  function fbLogs(){ return (results && results.환류) || []; }
+  function fbMail(id){ return ((results && results.강사메일) || {})[String(id || '')] || null; }
+  function fbCmtsOf(r, rowsAll, cms){
+    var subj = String(r['교과목'] || ''), lab = subj + ' (' + String(r['강사명'] || '') + ')';
+    var single = rowsAll.filter(function(x){ return String(x['교과목'] || '') === subj; }).length === 1;
+    return cms.filter(function(c){ var l = String(c['교과목'] || ''); return l === lab || (single && l === subj); });
+  }
+  function fbState(upId){
+    if (fbCache[upId]) return fbCache[upId];
+    var rowsAll = results.rows.filter(function(r){ return String(r['업로드ID']) === upId && kindOf(r) !== 'C' && String(r['제외'] || '') !== 'Y'; });
+    var cms = results.comments.filter(function(c){ return String(c['업로드ID']) === upId && String(c['제외'] || '') !== 'Y'; });
+    var logs = fbLogs();
+    return (fbCache[upId] = { id: upId, rows: rowsAll.map(function(r){
+      var aid = String(r['집계ID']), m = fbMail(r['강사ID']), sent = logs.filter(function(l){ return String(l['집계ID']) === aid; });
+      var can = !!(r['강사ID'] && m && m.있음);
+      return { r: r, aid: aid, can: can, sent: sent, send: can && !sent.length, open: false, pv: null,
+        cms: fbCmtsOf(r, rowsAll, cms).map(function(c){ return { c: c, inc: String(c['성격'] || '') === '칭찬' }; }) };
+    }) });
+  }
+  function renderFbCourses(){
+    if (!results) return;
+    var sel = $('fbCourse'), cur = sel.value;
+    var ups = uploads().filter(isDone).sort(function(a, b){ return String(b['승인일시'] || b['저장일시']).localeCompare(String(a['승인일시'] || a['저장일시'])); });
+    var logs = fbLogs();
+    sel.innerHTML = ups.length ? '<option value="">과정을 선택해 주세요</option>' + ups.map(function(u){
+      var id = String(u['업로드ID']), n = results.rows.filter(function(r){ return String(r['업로드ID']) === id && kindOf(r) !== 'C' && String(r['제외'] || '') !== 'Y'; }).length;
+      var done = {}; logs.forEach(function(l){ if (String(l['업로드ID']) === id) done[String(l['집계ID'])] = 1; });
+      var k = Object.keys(done).length;
+      return '<option value="' + esc(id) + '">' + esc(u['개설키']) + ' (' + (k ? '보냄 ' + k + '/' + n : '보내기 전 ' + n + '건') + ')</option>';
+    }).join('') : '<option value="">반영 승인한 평가 결과가 없습니다</option>';
+    if (cur && ups.some(function(u){ return String(u['업로드ID']) === cur; })) sel.value = cur;
+    renderFb();
+  }
+  function fbSentText(sent){
+    if (!sent.length) return '<span class="hint">보낸 기록 없음</span>';
+    var l = sent[sent.length - 1], st = String(l['메일상태'] || '');
+    var tag = st === '발송' ? '<span class="tag t-ok">보냄</span>' : st === '대기' ? '<span class="tag t-warn">발송 대기</span>' : st === '실패' ? '<span class="tag t-err">발송 실패</span>' : '<span class="tag t-none">' + esc(st || '확인 불가') + '</span>';
+    return tag + ' <span class="hint">' + esc(String(l['발송시각'] || l['요청일시'] || '').slice(5, 16).replace('-', '.')) + (sent.length > 1 ? ' · ' + sent.length + '회' : '') + '</span>';
+  }
+  function fbPicked(st){ return st.rows.filter(function(x){ return x.send && x.can; }); }
+  function renderFb(){
+    var el = $('fbBody'), id = $('fbCourse').value;
+    if (!results) { el.innerHTML = ''; return; }
+    if (!results.강사메일) { el.innerHTML = '<div class="note warn">서버가 아직 e2 이전 버전이라 환류 메일을 보낼 수 없습니다. 외래강사 DB 시트의 Apps Script에 서버 e2를 배포한 뒤 새로고침해 주세요.</div>'; return; }
+    if (!id) { el.innerHTML = '<div class="hint" style="margin-top:12px;">' + (uploads().some(isDone) ? '과정을 고르면 교과목·강사별 환류 목록이 나타납니다.' : '반영 승인한 결과가 없습니다. "3. 검토·반영"에서 먼저 [반영 승인]을 눌러 주세요.') + '</div>'; return; }
+    var st = fbState(id), u = upMap()[id] || {};
+    var pick = fbPicked(st), ppl = {}, resend = pick.filter(function(x){ return x.sent.length; }).length;
+    pick.forEach(function(x){ ppl[String(x.r['강사ID'])] = 1; });
+    var noMail = st.rows.filter(function(x){ return !x.can; }).length, sentN = st.rows.filter(function(x){ return x.sent.length; }).length;
+    var h = '<div class="sum"><span>교과목·강사 ' + st.rows.length + '건</span><span>응답 ' + respN(u) + '명</span>' + (sentN ? '<span>보낸 기록 ' + sentN + '건</span>' : '') + (noMail ? '<span style="color:var(--err-fg);">메일 주소 없음 ' + noMail + '건</span>' : '') + '</div>';
+    if (!st.rows.length) { el.innerHTML = h + '<div class="note warn">보낼 교과목·강사 줄이 없습니다(공통 문항만 있거나 모두 반영 제외).</div>'; return; }
+    h += '<div class="row" style="margin-top:4px;gap:6px;"><button type="button" class="btn sm" data-fball="1">보낼 수 있는 줄 모두 선택</button><button type="button" class="btn sm" data-fball="0">모두 해제</button></div><ul class="fbl">';
+    st.rows.forEach(function(x, i){
+      var r = x.r, n = Number(r['응답수']) || 0, few = n < E.MIN_SESSION, tr = kindOf(r) === 'T', m = fbMail(r['강사ID']) || {};
+      var nInc = x.cms.filter(function(c){ return c.inc; }).length;
+      h += '<li class="fbi' + (x.can ? '' : ' off') + '"><div class="fbh"><input type="checkbox" data-fbck="' + i + '"' + (x.send && x.can ? ' checked' : '') + (x.can ? '' : ' disabled') + ' aria-label="' + esc(r['강사명']) + ' 보내기">' +
+        '<div class="fbm"><div class="fbt">' + esc(r['교과목']) + ' · ' + esc(r['강사명']) + ' ' + (tr ? '<span class="tag t-warn">훈련</span>' : '<span class="tag t-info">강의</span>') + '</div>' +
+        '<div class="fbs"><span>응답 <b>' + n + '</b>명</span><span>종합 ' + (few ? '<span class="tag t-warn">응답 적음</span>' : '<b>' + f2(r['종합']) + '</b>') + '</span><span>넣을 의견 <b>' + nInc + '</b>/' + x.cms.length + '건</span>' +
+        '<span>' + (!r['강사ID'] ? '<span class="tag t-err">강사ID 없음</span>' : m.있음 ? esc(m.메일) : '<span class="tag t-err">메일 주소 없음</span> <span class="hint">강사관리에서 이메일 등록</span>') + '</span>' +
+        '<span>' + fbSentText(x.sent) + '</span></div></div>' +
+        '<div class="fbb"><button type="button" class="btn sm' + (x.open ? ' primary' : '') + '" data-fbopen="' + i + '">' + (x.open ? '환류지 닫기' : '환류지·미리보기') + '</button></div></div>';
+      if (x.open) {
+        h += '<div class="fbx"><h4>메일에 넣을 의견 고르기</h4>';
+        if (!x.cms.length) h += '<div class="hint">이 교과목에는 반영된 서술형 의견이 없습니다. 메일에는 만족도 점수만 들어갑니다.</div>';
+        [['칭찬', '좋았던 점 (칭찬)'], ['개선 요청', '바라는 점 (개선 요청)'], ['기타', '기타 의견']].forEach(function(g){
+          var list = x.cms.filter(function(c){ var t = String(c.c['성격'] || '기타'); return g[0] === '기타' ? (t !== '칭찬' && t !== '개선 요청') : t === g[0]; });
+          if (!list.length) return;
+          h += '<div class="fbg"><b>' + g[1] + ' ' + list.length + '건</b>' + list.map(function(c){ return '<label class="fbc"><input type="checkbox" data-fbcm="' + i + ':' + x.cms.indexOf(c) + '"' + (c.inc ? ' checked' : '') + '><span>' + esc(c.c['내용']) + '</span></label>'; }).join('') + '</div>';
+        });
+        h += '<div class="row" style="margin-top:10px;"><button type="button" class="btn sm" data-fbpv="' + i + '">메일 미리보기</button><span class="hint">고른 의견으로 실제 보낼 메일을 서버에서 만들어 보여 줍니다(보내지 않음).</span></div>';
+        if (x.pv) h += x.pv;
+        h += '</div>';
+      }
+      h += '</li>';
+    });
+    h += '</ul><div class="fbfoot"><div class="hint">받는 사람은 강사DB에 등록된 메일로 서버가 정합니다. 보내는 이: 전남소방학교 교육운영팀. 하루 메일 한도를 넘으면 대기했다가 1시간마다 이어서 보냅니다.</div>' +
+      '<button type="button" class="btn primary" id="fbSend"' + (pick.length ? '' : ' disabled') + '>' + Object.keys(ppl).length + '명(' + pick.length + '통) 보내기</button></div>' +
+      (resend ? '<div class="hint" style="text-align:right;margin-top:4px;color:var(--warn-fg);">선택한 줄 중 ' + resend + '통은 이미 보낸 교과목입니다(다시 보냄).</div>' : '');
+    el.innerHTML = h;
+    el.querySelectorAll('[data-fbck]').forEach(function(c){ c.onchange = function(){ st.rows[+c.getAttribute('data-fbck')].send = c.checked; renderFb(); }; });
+    el.querySelectorAll('[data-fball]').forEach(function(b){ b.onclick = function(){ var on = b.getAttribute('data-fball') === '1'; st.rows.forEach(function(x){ x.send = on && x.can; }); renderFb(); }; });
+    el.querySelectorAll('[data-fbopen]').forEach(function(b){ b.onclick = function(){ var x = st.rows[+b.getAttribute('data-fbopen')]; x.open = !x.open; renderFb(); }; });
+    el.querySelectorAll('[data-fbcm]').forEach(function(c){ c.onchange = function(){ var p = c.getAttribute('data-fbcm').split(':'), x = st.rows[+p[0]]; x.cms[+p[1]].inc = c.checked; x.pv = null; renderFb(); }; });
+    el.querySelectorAll('[data-fbpv]').forEach(function(b){ b.onclick = function(){ fbPreview(st, +b.getAttribute('data-fbpv'), b); }; });
+    var sb = $('fbSend'); if (sb) sb.onclick = function(){ fbSend(st, sb); };
+  }
+  function fbItem(x){ return { 집계ID: x.aid, 서술IDs: x.cms.filter(function(c){ return c.inc; }).map(function(c){ return String(c.c['서술ID']); }) }; }
+  /* 서버가 만든 본문 줄(<b>·<br>만 사용, 글자는 서버에서 이스케이프)을 화면에 안전하게 표시 */
+  function decEnt(t){ return String(t).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&'); }
+  function mailLineHtml(l){
+    return String(l).split(/(<\/?b>|<br\s*\/?>)/).map(function(p){
+      if (p === '<b>' || p === '</b>') return p;
+      if (/^<br/.test(p)) return '<br>';
+      return esc(decEnt(p.replace(/<[^>]+>/g, '')));
+    }).join('');
+  }
+  function fbPreview(st, i, btn){
+    var x = st.rows[i]; btn.disabled = true; btn.textContent = '만드는 중…';
+    api({ action: 'previewFeedback', password: getPw(), 업로드ID: st.id, items: [fbItem(x)] }).then(function(r){
+      if (r.status !== 'ok') { x.pv = '<div class="note err">' + esc(/unknown action/.test(String(r.message)) ? '서버가 아직 e2 이전 버전입니다. 서버 e2를 배포해 주세요.' : (r.message || '미리보기를 만들지 못했습니다')) + '</div>'; renderFb(); return; }
+      var d = r.data[0];
+      x.pv = '<div class="mailpv"><table><tr><th>보내는 이</th><td>' + esc(d.보내는이) + '</td></tr><tr><th>받는 사람</th><td>' + esc(d.대상) + ' 님 ' + (d.메일있음 ? '&lt;' + esc(d.받는사람) + '&gt;' : '<span class="tag t-err">메일 주소 없음</span>') + '</td></tr><tr><th>제목</th><td>' + esc(d.제목) + '</td></tr></table>' +
+        '<div class="mb"><b style="color:var(--navy);">강의 평가 결과 안내</b>' + d.본문.map(function(l){ return '<p>' + mailLineHtml(l) + '</p>'; }).join('') + '</div></div>';
+      renderFb();
+    }).catch(function(err){ x.pv = '<div class="note err">미리보기를 불러오지 못했습니다: ' + esc(err.message) + '</div>'; renderFb(); });
+  }
+  function fbSend(st, btn){
+    var pick = fbPicked(st); if (!pick.length) return;
+    var ppl = {}; pick.forEach(function(x){ ppl[String(x.r['강사명'])] = 1; });
+    var names = Object.keys(ppl), resend = pick.filter(function(x){ return x.sent.length; }).length;
+    var noCm = pick.filter(function(x){ return !x.cms.some(function(c){ return c.inc; }); }).length;
+    if (!window.confirm('강사 ' + names.length + '명에게 강의 평가 결과 메일 ' + pick.length + '통을 보냅니다.\n받는 분: ' + names.slice(0, 8).join(', ') + (names.length > 8 ? ' 외 ' + (names.length - 8) + '명' : '') +
+      (resend ? '\n※ 이미 보낸 교과목 ' + resend + '통이 다시 나갑니다.' : '') + (noCm ? '\n※ ' + noCm + '통은 고른 의견이 없어 점수만 들어갑니다.' : '') + '\n\n보낼까요?')) return;
+    btn.disabled = true; btn.textContent = '보내는 중…'; show($('fbMsg'), 'ok', '');
+    api({ action: 'sendFeedback', password: getPw(), 업로드ID: st.id, items: pick.map(fbItem) }).then(function(r){
+      if (r.status !== 'ok') { btn.disabled = false; btn.textContent = '다시 보내기'; show($('fbMsg'), 'err', esc(/unknown action/.test(String(r.message)) ? '서버가 아직 e2 이전 버전입니다. 서버 e2를 배포한 뒤 다시 시도해 주세요.' : (r.message || '보내지 못했습니다'))); return; }
+      var res = r.결과 || [], wait = res.filter(function(o){ return o.결과 === '대기'; }), bad = res.filter(function(o){ return o.결과 !== '발송' && o.결과 !== '대기'; });
+      show($('fbMsg'), bad.length ? 'warn' : 'ok', '강사 ' + r.보냄 + '명에게 환류 메일 ' + r.통 + '통을 ' + (wait.length ? '보내거나 대기열에 넣었습니다' : '보냈습니다') + '.' +
+        (wait.length ? '<br>발송 대기 ' + wait.length + '통: 오늘 메일 한도가 부족해 1시간마다 이어서 보냅니다.' : '') +
+        (bad.length ? '<br>보내지 못한 ' + bad.length + '통: ' + bad.map(function(o){ return esc(o.대상 + '·' + o.교과목 + '(' + o.결과 + ')'); }).join(', ') : ''));
+      delete fbCache[st.id];
+      loadResults(true);
+    }).catch(function(err){ btn.disabled = false; btn.textContent = '다시 보내기'; show($('fbMsg'), 'err', '발송 결과를 확인하지 못했습니다: ' + esc(err.message) + ' 중복 발송을 막기 위해 새로고침해 보낸 기록을 먼저 확인해 주세요.'); });
+  }
+  $('fbCourse').onchange = function(){ show($('fbMsg'), 'ok', ''); renderFb(); };
   boot();
 })();
 </script>
