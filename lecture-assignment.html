@@ -773,18 +773,19 @@
     body.pgrid.pofc .gph-i{display:none !important;} body.pgrid.pofc .gph-o{display:inline;}
     body.pgrid.pofc .gprinthead h2{font-size:18px;margin-bottom:6px;} body.pgrid.pofc .gprinthead .gpm{font-size:12px;gap:2px 22px;}
     body.pgrid.pofc .glegend,body.pgrid.pofc .gf,body.pgrid.pofc .gc .t,body.pgrid.pofc .gc .s span[title],body.pgrid.pofc .gpt,body.pgrid.pofc .gpb,body.pgrid.pofc .hint{display:none !important;}
-    body.pgrid.pofc table.g{border:1.5px solid #000;} body.pgrid.pofc table.g th,body.pgrid.pofc table.g td{border:1px solid #555 !important;}
-    body.pgrid.pofc table.g td.c{background:#fff !important;vertical-align:top;}
+    /* 10-20 금용님: 바깥 테두리 네 변을 같은 굵기로(표가 용지 폭에 꽉 차서 오른쪽 바깥선 절반이 잘려 얇게 찍히던 것 → 좌우 2px 여백) */
+    body.pgrid.pofc table.g{border:1.5px solid #000;width:calc(100% - 4px);margin:0 2px;} body.pgrid.pofc table.g th,body.pgrid.pofc table.g td{border:1px solid #555 !important;}
+    body.pgrid.pofc table.g td.c{background:#fff !important;vertical-align:middle;text-align:center;}   /* 10-20: 칸 안 내용 가로·세로 가운데 */
     body.pgrid.pofc table.g td.gpopen,body.pgrid.pofc table.g td.gpdone{background:#fff !important;}
-    body.pgrid.pofc .gc{border:0 !important;border-radius:0;background:#fff !important;padding:5px 6px !important;line-height:1.4;}
+    body.pgrid.pofc .gc{border:0 !important;border-radius:0;background:#fff !important;padding:5px 6px !important;line-height:1.4;height:auto;text-align:center;}
     body.pgrid.pofc .gc .s{font-size:12.5px;font-weight:800;color:#000;margin-bottom:3px;}
-    body.pgrid.pofc .gc .i{font-size:11.5px;color:#000;margin-top:1px;}
+    body.pgrid.pofc .gc .i{font-size:11.5px;color:#000;margin-top:1px;justify-content:center;}
     body.pgrid.pofc .nmk{color:#000;text-decoration:none;font-weight:600;}
     body.pgrid.pofc .gc .tag,body.pgrid.pofc .gc .rb{border:0 !important;background:none !important;padding:0;border-radius:0;font-size:11.5px;font-weight:600;color:#000 !important;margin:0;}
     body.pgrid.pofc .gc .rb{margin-right:3px;}
     body.pgrid.pofc .gc .r{font-size:10.5px;color:#444;margin-top:2px;}
     body.pgrid.pofc .gc .n{border-top:0;font-size:10.5px;color:#444;padding-top:0;}
-    body.pgrid.pofc.ppt table.g td.c{height:29mm;} body.pgrid.pofc .gtod{display:none;}
+    body.pgrid.pofc.ppt table.g td.c{height:29mm;} body.pgrid.pofc .gtod,body.pgrid.pofc .gend{display:none !important;}
     body.pgrid.pofc:not(.ppt) table.g td.c{height:17mm;}
     body.pgrid.pofc table.g thead th{font-size:12px;} body.pgrid.pofc table.g th.pc{font-size:11.5px;}
     body.pgrid #navBar,body.pgrid .navbar,body.plist #navBar,body.plist .navbar{display:none !important;}
@@ -933,7 +934,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-19 배정 115</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-20 배정 116</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
