@@ -266,9 +266,9 @@
           <button type="button" class="btn sm" id="btnApiSet" title="설문 생성기 웹 앱 주소와 비밀값을 넣거나 고칩니다(이 브라우저에 기억)">연결 설정</button>
         </div>
         <div id="apiSet" hidden>
-          <div class="gen-guide" style="margin-top:10px;">처음 한 번만 넣습니다. <b>①</b> 설문 생성기 Apps Script에서 <b>배포 → 새 배포(웹 앱)</b>로 받은 주소 <b>②</b> 스크립트 속성 <b>SURVEY_API_KEY</b>에 넣은 비밀값 → <b>[연결 시험 후 저장]</b></div>
+          <div class="gen-guide" id="apiGuide" style="margin-top:10px;">처음 한 번만 넣습니다. <b>①</b> 설문 생성기 Apps Script에서 <b>배포 → 새 배포(웹 앱)</b>로 받은 주소 <b>②</b> 스크립트 속성 <b>SURVEY_API_KEY</b>에 넣은 비밀값 → <b>[연결 시험 후 저장]</b></div>
           <div class="row" style="margin-top:8px;">
-            <div class="fld" style="flex:2 1 320px;"><label for="inApi">설문 생성기 웹 앱 주소</label><input type="text" id="inApi" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"></div>
+            <div class="fld" style="flex:2 1 320px;"><label for="inApi">설문 생성기 웹 앱 주소 <span id="apiUrlNote" style="font-weight:400;color:#6B7280;" hidden>(기본값 · 고칠 필요 없음)</span></label><input type="text" id="inApi" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"></div>
             <div class="fld" style="flex:1 1 200px;"><label for="inApiKey">비밀값</label><input type="password" id="inApiKey" placeholder="SURVEY_API_KEY 값" autocomplete="off"></div>
             <button type="button" class="btn" id="btnApiSave">연결 시험 후 저장</button>
           </div>
@@ -434,7 +434,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 관리자 15</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 관리자 16</div>
 </div>
 
 <script src="eval-core.js?v=4"></script>
@@ -624,7 +624,10 @@
   /* ---------- 설문 링크 만들기 (관리자 11, B안): 설문 생성기 웹 앱(jfsa.edu)에 요청해 폼을 만들고 링크를 받음 ----------
    * 운영 서버(외부강사 DB)는 거치지 않음(E22). 웹 앱 주소·비밀값은 이 브라우저에만 기억(코드·저장소에 넣지 않음) */
   var KEY_API = 'jsfa_svgen_api', KEY_APIK = 'jsfa_svgen_key', mkLast = null;
-  function apiUrl(){ return lsGet(KEY_API); }
+  // 관리자 16(10-19): 생성기 웹 앱 주소는 코드에 넣어 둠(기기마다 비밀값만 입력). 비밀값은 계속 코드에 넣지 않음.
+  // 생성기를 '새 배포'로 다시 배포해 주소가 바뀌면 여기만 고치면 됨. [연결 설정]에서 다른 주소를 저장하면 그 주소가 우선
+  var GEN_API_URL = 'https://script.google.com/macros/s/AKfycbzdNzMQVKyiQjnBxnAbo1rVnDPYa-RCB2P32qdkx0c14xu_JRayDtoLk5TWLIKjs4BxOg/exec';
+  function apiUrl(){ return lsGet(KEY_API) || GEN_API_URL; }
   function apiKey(){ return lsGet(KEY_APIK); }
   function genApi(body){
     var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
@@ -669,7 +672,7 @@
     show($('mkMsg'), 'ok', '');
     if (!key) { show($('mkMsg'), 'err', '먼저 위에서 과정을 선택해 주세요.'); return; }
     if (!prepState(courseSessions(key)).pairs.length) { show($('mkMsg'), 'warn', '이 과정에는 강사가 지정된 교과목이 없어 설문을 만들 수 없습니다. 강의배정에서 교과목과 강사를 먼저 입력해 주세요.'); return; }
-    if (!apiUrl() || !apiKey()) { openApiSet(); show($('mkMsg'), 'warn', '처음 한 번 <b>연결 설정</b>이 필요합니다. 아래 칸에 설문 생성기 웹 앱 주소와 비밀값을 넣어 주세요.'); return; }
+    if (!apiUrl() || !apiKey()) { openApiSet(); show($('mkMsg'), 'warn', apiUrl() ? '이 기기에서 처음 한 번 <b>비밀값</b>을 넣어야 합니다. 아래 비밀값 칸에 넣고 <b>[연결 시험 후 저장]</b>을 누르세요.' : '처음 한 번 <b>연결 설정</b>이 필요합니다. 아래 칸에 설문 생성기 웹 앱 주소와 비밀값을 넣어 주세요.'); return; }
     var btn = $('btnMk'); btn.disabled = true; btn.textContent = '만드는 중입니다… (10~30초)';
     genApi({ action: 'createSurvey', course: key, force: !!force }).then(function(r){
       if (r.status !== 'ok') throw Object.assign(new Error(r.message || '설문을 만들지 못했습니다.'), { srv: true });
@@ -682,7 +685,15 @@
   }
   $('btnMk').onclick = function(){ runMk(false); };
   $('selPrep').addEventListener('change', mkClear);
-  function openApiSet(){ $('apiSet').hidden = false; $('inApi').value = apiUrl(); $('inApiKey').value = apiKey(); $('inApi').focus(); }
+  function openApiSet(){
+    $('apiSet').hidden = false; $('inApi').value = apiUrl(); $('inApiKey').value = apiKey();
+    var fixed = !!GEN_API_URL && apiUrl() === GEN_API_URL;
+    $('apiUrlNote').hidden = !fixed;
+    $('apiGuide').innerHTML = fixed
+      ? '이 기기에서 처음 한 번 <b>비밀값</b>만 넣습니다. 생성기 주소는 이미 들어 있습니다. 비밀값은 설문 생성기 스크립트 속성 <b>SURVEY_API_KEY</b>에 넣은 값과 같아야 합니다 → <b>[연결 시험 후 저장]</b>'
+      : '처음 한 번만 넣습니다. <b>①</b> 설문 생성기 Apps Script에서 <b>배포 → 새 배포(웹 앱)</b>로 받은 주소 <b>②</b> 스크립트 속성 <b>SURVEY_API_KEY</b>에 넣은 비밀값 → <b>[연결 시험 후 저장]</b>';
+    (apiUrl() ? $('inApiKey') : $('inApi')).focus();
+  }
   $('btnApiSet').onclick = function(){ if ($('apiSet').hidden) openApiSet(); else $('apiSet').hidden = true; };
   ['inApi', 'inApiKey'].forEach(function(id){ $(id).addEventListener('input', function(){ $(id).classList.remove('bad'); }); });
   function apiBad(id, msg){ $(id).classList.add('bad'); $(id).focus(); show($('mkMsg'), 'err', msg); }
@@ -693,8 +704,8 @@
     if (u === WEBAPP_URL) { apiBad('inApi', '운영 서버(외부강사 DB) 주소입니다. <b>설문 생성기</b> 시트에서 배포한 웹 앱 주소를 넣어 주세요.'); return; }
     if (k.length < 8) { apiBad('inApiKey', '비밀값을 넣어 주세요(8자 이상). 설문 생성기 스크립트 속성 SURVEY_API_KEY에 넣은 값과 같아야 합니다.'); return; }
     btn.disabled = true; btn.textContent = '연결 시험 중…';
-    var pu = apiUrl(), pk = apiKey();
-    lsSet(KEY_API, u); lsSet(KEY_APIK, k);
+    var pu = lsGet(KEY_API), pk = apiKey();
+    lsSet(KEY_API, u === GEN_API_URL ? '' : u); lsSet(KEY_APIK, k);   // 코드에 넣은 주소와 같으면 따로 기억하지 않음(나중에 코드 주소가 바뀌어도 따라감)
     genApi({ action: 'ping' }).then(function(r){
       if (r.status !== 'ok') throw Object.assign(new Error(r.message || '연결 시험에 실패했습니다.'), { srv: true });
       $('apiSet').hidden = true;
