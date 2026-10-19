@@ -75,9 +75,6 @@
   .fld label{font-size:12px;font-weight:700;color:var(--text-muted);}
   .gen-guide{flex:1 1 100%;background:var(--info-bg);color:var(--navy);border-radius:8px;padding:9px 12px;font-size:13px;line-height:1.55;}
   .mk-big{height:44px;padding:0 22px;font-size:15px;}
-  .alt-ways{margin-top:14px;border:1px solid var(--border);border-radius:8px;padding:8px 12px;background:var(--bg-soft);}
-  .alt-ways summary{cursor:pointer;font-weight:700;color:var(--text-sub);font-size:13px;padding:2px 0;}
-  .alt-ways[open] summary{margin-bottom:8px;}
   .mk-box{margin-top:12px;border:1px solid #BFD8C6;background:var(--ok-bg);border-radius:10px;padding:14px 16px;}
   .mk-box.old{border-color:#CBD4E0;background:var(--info-bg);}
   .mk-head{font-size:15px;font-weight:800;color:var(--ok-fg);margin-bottom:10px;}
@@ -275,26 +272,6 @@
         </div>
         <div id="mkMsg" class="note" hidden></div>
         <div id="mkOut" hidden></div>
-        <details id="altWays" class="alt-ways">
-          <summary>다른 방법 (설문 생성기 시트에서 직접 만들기 · 폼을 손으로 만들기)</summary>
-        <ol class="howto">
-          <li id="howGen">아래 <b>[설문 생성기 열기]</b>를 누릅니다. 구글 시트가 새 창으로 열립니다.</li>
-          <li>시트 위 메뉴 <b>설문 생성기 &rarr; 설문 만들기</b>에서 과정을 고르고, 오른쪽 미리보기로 문항을 확인합니다.</li>
-          <li><b>[설문 만들기]</b> &rarr; <b>[링크 복사]</b> 후 교육생 단체톡에 붙여 넣습니다.</li>
-          <li>성과측정이 끝나면 구글 폼 <b>응답</b> 탭에서 CSV로 내려받아 <b>2. 결과 올리기</b>에 올립니다.</li>
-        </ol>
-        <div class="row">
-          <button type="button" class="btn" id="btnGen">설문 생성기 열기</button>
-          <button type="button" class="btn sm" id="btnGenSet" title="저장해 둔 설문 생성기 시트 주소를 고치거나 지웁니다(엉뚱한 시트가 열리거나 생성기 시트를 새로 만들었을 때)">생성기 주소 고치기</button>
-          <button type="button" class="btn sm" id="btnTpl" title="설문 생성기를 쓰지 않고 네이버 폼·구글 폼을 손으로 만들 때, 이 파일의 이름을 문항 제목으로 그대로 쓰면 결과 올리기에서 점수가 자동으로 연결됩니다">문항 제목 파일 받기(폼을 직접 만들 때)</button>
-        </div>
-        <div id="genSet" class="row" style="margin-top:10px;" hidden>
-          <div class="gen-guide"><b>①</b> jfsa.edu 계정으로 <b>설문 생성기</b> 구글 시트를 열고 주소창 주소를 복사 → <b>②</b> 아래 칸에 붙여넣기 → <b>③</b> <b>[저장]</b></div>
-          <div class="fld" style="flex:1 1 320px;"><label for="inGen">설문 생성기 시트 주소(처음 한 번만 입력, 이 브라우저에 기억)</label><input type="text" id="inGen" placeholder="https://docs.google.com/spreadsheets/d/..."></div>
-          <button type="button" class="btn" id="btnGenSave">저장</button>
-        </div>
-        <div id="prepMsg" class="note" hidden></div>
-        </details>
         <div class="hint" style="margin-top:10px;">질문 문장, 안내문, 기본정보(소속·근무기간·보직) 선택지, 단체톡 안내 문장은 설문 생성기 시트의 <b>설문문항</b> 탭에서 고칩니다. 항목 이름(강의: 태도·목표·전달·효과, 훈련: 태도·준비성·전문성·적용성)은 점수 계산에 쓰여 고정입니다. 고친 문장은 그 뒤에 새로 만드는 설문부터 적용됩니다.</div>
       </div>
     </div>
@@ -434,7 +411,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 관리자 17</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 관리자 18</div>
 </div>
 
 <script src="eval-core.js?v=4"></script>
@@ -593,33 +570,6 @@
     el.innerHTML = h;
   }
   $('selPrep').onchange = renderPrep;
-  function genUrl(){ return lsGet(KEY_GEN); }
-  function refreshGen(){
-    var has = !!genUrl();
-    $('btnGen').textContent = has ? '설문 생성기 열기' : '설문 생성기 연결하기(처음 1회)';
-    $('btnGen').title = has ? '설문 생성기 구글 시트를 새 창으로 엽니다' : '설문 생성기 시트 주소를 한 번 넣어 두면, 다음부터 이 버튼으로 바로 열립니다(이 브라우저에 기억)';
-    $('howGen').innerHTML = has ? '아래 <b>[설문 생성기 열기]</b>를 누릅니다. 구글 시트가 새 창으로 열립니다.'
-      : '아래 <b>[설문 생성기 연결하기]</b>를 눌러 설문 생성기 시트 주소를 한 번 넣습니다. 그다음부터는 같은 버튼(<b>[설문 생성기 열기]</b>)으로 시트가 새 창으로 열립니다.';
-  }
-  $('btnGen').onclick = function(){
-    var u = genUrl();
-    if (!u) { $('genSet').hidden = false; $('inGen').focus(); return; }
-    window.open(u, '_blank', 'noopener');
-  };
-  $('btnGenSet').onclick = function(){ $('genSet').hidden = !$('genSet').hidden; $('inGen').value = genUrl(); if (!$('genSet').hidden) $('inGen').focus(); };
-  // 10-17 관리자 10: 주소가 없는데 빈칸으로 저장하면 막고 칸을 강조(이전에는 "지웠습니다"가 떠서 헷갈림). 저장된 주소를 지울 때만 확인 후 지움
-  function genBad(msg){ $('inGen').classList.add('bad'); $('inGen').focus(); show($('prepMsg'), 'err', msg); }
-  $('inGen').addEventListener('input', function(){ $('inGen').classList.remove('bad'); });
-  $('btnGenSave').onclick = function(){
-    var v = $('inGen').value.trim();
-    if (!v && !genUrl()) { genBad('주소 칸이 비어 있습니다. 설문 생성기 시트 주소를 <b>붙여넣은 뒤</b> [저장]을 눌러 주세요.'); return; }
-    if (v && !/^https:\/\/docs\.google\.com\/spreadsheets\//.test(v)) { genBad('구글 시트 주소(https://docs.google.com/spreadsheets/…)를 붙여 넣어 주세요. 설문(구글 폼) 주소가 아니라 <b>설문 생성기 시트</b> 주소입니다.'); return; }
-    if (!v && !confirm('저장해 둔 설문 생성기 주소를 지울까요?')) return;
-    $('inGen').classList.remove('bad');
-    lsSet(KEY_GEN, v); $('genSet').hidden = true; refreshGen();
-    show($('prepMsg'), 'ok', v ? '설문 생성기 주소를 이 브라우저에 저장했습니다. 이제 <b>[설문 생성기 열기]</b>를 누르면 시트가 새 창으로 열립니다.' : '저장한 주소를 지웠습니다.');
-  };
-  refreshGen();
 
   /* ---------- 설문 링크 만들기 (관리자 11, B안): 설문 생성기 웹 앱(jfsa.edu)에 요청해 폼을 만들고 링크를 받음 ----------
    * 운영 서버(외부강사 DB)는 거치지 않음(E22). 웹 앱 주소·비밀값은 이 브라우저에만 기억(코드·저장소에 넣지 않음) */
@@ -636,7 +586,7 @@
       .then(readJson).then(function(j){ if (timer) clearTimeout(timer); return j; }, function(err){ if (timer) clearTimeout(timer); throw err; });
   }
   function connFailMsg(){
-    return '설문 생성기에 연결하지 못했습니다. <b>[연결 설정]</b>의 웹 앱 주소가 맞는지, 생성기를 <b>웹 앱(액세스: 모든 사용자)</b>으로 배포했는지 확인해 주세요. 급하면 아래 <b>다른 방법</b>으로 시트에서 직접 만들 수 있습니다.';
+    return '설문 생성기에 연결하지 못했습니다. 인터넷 연결과 <b>[연결 설정]</b>의 웹 앱 주소를 확인해 주세요. 급하면 jfsa.edu 계정으로 설문 생성기 시트를 열어 메뉴 <b>설문 생성기 → 설문 만들기</b>에서 직접 만들 수 있습니다.';
   }
   function copyText(t, btn){
     function ok(){ if (btn) { var o = btn.textContent; btn.textContent = '복사됨'; setTimeout(function(){ btn.textContent = o; }, 1500); } }
@@ -694,7 +644,6 @@
       });
     }).catch(function(err){
       show($('mkMsg'), 'err', err.srv ? esc(err.message) : connFailMsg());
-      if (!err.srv) $('altWays').open = true;
     }).then(function(){ btn.disabled = false; btn.textContent = '설문 링크 만들기'; });
   }
   $('btnMk').onclick = function(){ runMk(false); };
@@ -753,18 +702,6 @@
     return h;
   }
   function csvLine(r){ return r.map(function(c){ return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(','); }
-  $('btnTpl').onclick = function(){
-    show($('prepMsg'), 'err', '');
-    var key = $('selPrep').value;
-    if (!key) { show($('prepMsg'), 'err', '먼저 위에서 과정을 선택해 주세요.'); return; }
-    var pairs = E.surveyPairs(courseSessions(key));
-    if (!pairs.length) { show($('prepMsg'), 'warn', '이 과정에는 강사가 지정된 교과목 편성이 없어 문항 제목 파일을 만들 수 없습니다.'); return; }
-    var csv = '﻿' + csvLine(E.BASIC_FIELDS.concat(E.surveyHeader(pairs).slice(1)).concat(commonHeaders())) + '\r\n';
-    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    a.download = '설문_열제목_' + key.replace(/[\\/:*?"<>|]/g, '') + '.csv';
-    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
-    show($('prepMsg'), 'ok', '기본정보·교과목·강사 ' + pairs.length + '건·공통 문항의 문항 제목 파일을 내려받았습니다. 설문을 직접 만들 때 이 이름을 문항 제목으로 그대로 쓰면 자동으로 연결됩니다.');
-  };
 
   /* ---------- 서술형 의견 묶음(업로드 미리보기·검토 공용) ----------
    * groups: [{label, list:[{id, text, topic, tone, pii, inc(true=반영)}]}] */
