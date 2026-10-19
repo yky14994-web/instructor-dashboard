@@ -411,7 +411,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 관리자 19</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-20 관리자 20</div>
 </div>
 
 <script src="eval-core.js?v=4"></script>
@@ -613,7 +613,7 @@
   function renderMk(r){
     mkLast = r;
     var made = !!r.created;
-    var head = made ? (r.remade ? '✔ 새 설문을 다시 만들었습니다' : '✔ 설문이 만들어졌습니다') : '이미 만든 설문입니다' + (r.createdAt ? ' (' + esc(r.createdAt) + ' 만듦)' : '');
+    var head = made ? (r.deletedPrev ? '✔ 이전에 만든 설문이 삭제되어 있어 새로 만들었습니다' : r.remade ? '✔ 새 설문을 다시 만들었습니다(이전 설문은 응답을 닫고 제목에 [이전] 표시)' : '✔ 설문이 만들어졌습니다') : '이미 만든 설문입니다' + (r.createdAt ? ' (' + esc(r.createdAt) + ' 만듦)' : '');
     var h = '<div class="mk-box' + (made ? '' : ' old') + '"><div class="mk-head">' + head + ' · ' + esc(r.course) + '</div>' +
       '<div class="mk-link"><a href="' + esc(r.link) + '" target="_blank" rel="noopener">' + esc(r.link) + '</a> <button type="button" class="btn sm" id="mkCopyLink">링크 복사</button></div>' +
       '<label for="mkText">단체톡에 붙여 넣을 문장</label><textarea id="mkText" readonly>' + esc(r.text || r.link) + '</textarea>' +
@@ -630,7 +630,7 @@
     $('mkCopyText').onclick = function(){ copyText($('mkText').value, this); };
     $('mkQr').onclick = function(){ showQr(r.course, r.link); };
     $('mkRemake').onclick = function(){
-      if (!confirm('이 과정의 설문을 새로 하나 더 만들까요?\n\n새 설문은 링크가 바뀌고, 이전 링크로 받은 응답과 합쳐지지 않습니다. 이미 단체톡에 링크를 보냈다면 새로 만들지 마세요.')) return;
+      if (!confirm('이 과정의 설문을 새로 하나 더 만들까요?\n\n새 설문은 링크가 바뀌고, 이전 설문은 응답 받기가 닫힙니다(지우지는 않음). 이전 링크로 받은 응답과는 합쳐지지 않으니, 이미 응답을 받고 있다면 새로 만들지 마세요.')) return;
       runMk(true);
     };
   }
