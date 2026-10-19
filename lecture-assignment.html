@@ -627,6 +627,18 @@
   .gbox.wide .gc{font-size:12px;}
   .gnavbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
   .gnavbar .wk{font-weight:800;color:var(--navy);font-size:14px;}
+  /* 10-19 시안1: 도구 묶음([편집▾][인쇄▾][ⓘ]), 범례·사용 안내 접기, 카드 정리 */
+  .gtools{margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:6px;max-width:100%;align-items:center;}
+  .mnu{position:relative;display:inline-block;} .mnu>summary{list-style:none;cursor:pointer;} .mnu>summary::-webkit-details-marker{display:none;}
+  .mnu[open]>summary{background:var(--bg-hover,#EEF2F7);}
+  .mnu .pn{position:absolute;right:0;top:calc(100% + 4px);z-index:40;background:#fff;border:1px solid #D5DCE4;border-radius:10px;box-shadow:0 8px 24px rgba(15,34,54,.14);padding:10px;display:flex;flex-direction:column;align-items:stretch;gap:8px;min-width:210px;}
+  .mnu .pn .btn{justify-content:flex-start;} .mnu .pn .pofcl{padding:2px 2px;}
+  .gbox:not(.ginfo) .glegend,.gbox:not(.ginfo) .ghelp{display:none;}
+  .gbox.ginfo .glegend{margin-top:8px;padding:8px 10px;background:#F6F8FB;border-radius:8px;}
+  .gc .t{display:none;}
+  .gc .i .tag.t-ops{background:none;padding:0;border:0;border-radius:0;font-weight:700;color:var(--text,#1F2937);font-size:inherit;}
+  .gf.c{background:none !important;color:#8A94A3;font-weight:600;padding:0 0 0 2px;}
+  @media (max-width:640px){ .gtools .mprint{display:none;} .mnu .pn{min-width:220px;} }
   .gnavbar select{height:32px;border:1px solid var(--border-input);border-radius:6px;padding:0 8px;font-family:inherit;font-size:13px;background:#fff;}
   .glegend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-sub);margin:4px 0 10px;align-items:center;}
   .glegend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px;border:1px solid #bbb;}
@@ -755,6 +767,7 @@
     body.pgrid.ppt table.g td.c{height:auto;min-height:20mm;}
     body.pgrid.ppt table.g{font-size:10px;} body.pgrid.ppt .gc{font-size:10px;padding:3px 5px;} body.pgrid.ppt table.g th.pc{width:64px;} body.pgrid.ppt table.g th.pc small{font-size:8px;white-space:nowrap;}
     body.pgrid .docleg{display:none !important;}
+    body.pgrid:not(.pofc) .gbox .glegend{display:flex !important;}   /* 내부 점검용 인쇄에는 범례를 넣음(화면에서는 ⓘ로 접힘) */
     /* 10-19 공문용 인쇄(가안): 내부 표시 숨김, 교과목 > 강사 > 강의실 순서로 크기 정리, 카드 테두리·둥근 상자 없앰, A4 한 장을 채우도록 칸 높이 확대 */
     body.pgrid .gph-o{display:none;}
     body.pgrid.pofc .gph-i{display:none !important;} body.pgrid.pofc .gph-o{display:inline;}
@@ -839,7 +852,7 @@
   <div class="cards">
     <div class="card" title="표시 중인 과정 수"><div class="n"><span id="cCourses">0</span><span class="u">회</span></div><div class="l"><b>과정·기수</b><span class="d" id="cCoursesL">표시 중인 과정 수</span></div></div>
     <div class="card" title="표시 중인 과정 기준"><div class="n"><span id="cPeople">0</span><span class="u">명</span></div><div class="l"><b>계획인원 합계</b></div></div>
-    <div class="card warn" title="검사 결과가 OK가 아닌 과정"><div class="n"><span id="cCheck">0</span><span class="u">건</span></div><div class="l"><b>확인 필요·오류</b></div></div>
+    <div class="card warn" title="확인 필요·오류가 있는 과정"><div class="n"><span id="cCheck">0</span><span class="u">건</span></div><div class="l"><b>확인 필요·오류</b></div></div>
     <div class="card none" title="아직 교과목이 없는 과정"><div class="n"><span id="cNoSubj">0</span><span class="u">건</span></div><div class="l"><b>교과목 없는 과정</b></div></div>
     <div class="card" id="cardOv" title="강사·강의실·같은 반"><div class="n"><span id="cOverlap">0</span><span class="u">건</span></div><div class="l"><b>겹침 경고(미확인)</b><span class="d" id="cOverlapL">강사·강의실·같은 반</span></div></div>
   </div>
@@ -854,8 +867,8 @@
     <button class="btn qm" id="qmThis" type="button" title="이번 달 입교 과정만 보기">이번달</button>
     <button class="btn qm" id="qmNext" type="button" title="다음 달 입교 과정만 보기">다음달</button>
     <select id="fType" aria-label="구분"></select>
-    <select id="fCheck" aria-label="검사 결과">
-      <option value="">검사 전체</option>
+    <select id="fCheck" aria-label="확인 필요·오류">
+      <option value="">확인 상태 전체</option>
       <option value="warn">확인 필요</option>
       <option value="err">오류(수정 필요)</option>
       <option value="ovl">겹침 경고(미확인)</option>
@@ -873,7 +886,7 @@
       <button class="btn" id="printBtn" type="button">인쇄</button>
     </span>
   </div>
-  <div class="legend" id="planLegend" style="margin:0 2px 8px 2px;">검사 열에는 확인 필요(노랑)·오류(빨강)인 과정만 표시합니다. 표시가 없으면 이상 없음입니다. 검사 결과는 강의배정DB 연간계획 시트의 값입니다.</div>
+  <div class="legend" id="planLegend" style="margin:0 2px 8px 2px;">확인 열에는 확인 필요(노랑)·오류(빨강)인 과정만 표시합니다. 표시가 없으면 이상 없음입니다. 표시 내용은 강의배정DB 연간계획 시트의 값입니다.</div>
 
   <div id="loading">불러오는 중입니다. 처음에는 몇 초 걸릴 수 있습니다.</div>
   <div id="weekNote" class="hint" style="display:none;margin:0 2px 8px 2px;"></div>
@@ -884,7 +897,7 @@
       <thead>
         <tr>
           <th>구분</th><th>과정 · 기수</th><th>입교</th><th>교육기간</th>
-          <th class="num">계획인원</th><th>강의실</th><th>합숙</th><th>편성 담당</th><th>강사 배정 현황</th><th>검사</th><th class="chg" id="thChg" style="display:none !important;">변경</th>
+          <th class="num">계획인원</th><th>강의실</th><th>합숙</th><th>편성 담당</th><th>강사 배정 현황</th><th>확인</th><th class="chg" id="thChg" style="display:none !important;">변경</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -920,7 +933,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-19 배정 113</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-19 배정 115</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1560,7 +1573,7 @@
         '<dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd>' +
         '<dt>강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd>' +
         '<dt>편성 담당</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd>' +
-        (checkCell(p) ? '<dt>검사</dt><dd>' + checkCell(p) + '</dd>' : '') + '</dl>' +
+        (checkCell(p) ? '<dt>확인</dt><dd>' + checkCell(p) + '</dd>' : '') + '</dl>' +
         '</div>';
     });
     $('tbody').innerHTML = rows;
@@ -1726,6 +1739,12 @@
     return '<select class="porient" data-ori="' + sf + '" aria-label="인쇄 용지 방향"><option value="portrait"' + (o === 'portrait' ? ' selected' : '') + '>A4 세로</option><option value="landscape"' + (o === 'landscape' ? ' selected' : '') + '>A4 가로</option></select>';
   }
   /* 시간표 '공문용' 인쇄 체크(이 브라우저에 기억) */
+  var gInfo = false;   // 10-19 시안1: 격자 범례·사용 안내는 [ⓘ 표시 안내]를 눌렀을 때만
+  document.addEventListener('click', function(ev){
+    var t = ev.target, b = t.closest ? t.closest('[data-ginfo]') : null;
+    if (b) { gInfo = !gInfo; var gb = b.closest('.gbox'); if (gb) gb.classList.toggle('ginfo', gInfo); b.setAttribute('aria-expanded', gInfo ? 'true' : 'false'); return; }
+    Array.prototype.forEach.call(document.querySelectorAll('details.mnu[open]'), function(d){ if (!d.contains(t)) d.removeAttribute('open'); });   // 메뉴 밖을 누르면 닫음
+  });
   function ofcOn(){ try { return localStorage.getItem('jsfa_la_pofc') === '1'; } catch (e) { return false; } }
   document.addEventListener('change', function(ev){ var t = ev.target; if (t && t.id === 'gOfc') { try { localStorage.setItem('jsfa_la_pofc', t.checked ? '1' : '0'); } catch (e) {} } });
   function printWith(sf, cls){
@@ -4723,19 +4742,21 @@
       '<span class="gph-o"><b>교육장소</b> ' + esc(p['예정 강의실'] || '-') + '</span>' +
       (weeks.length > 1 ? '<span class="gph-o"><b>' + (wi + 1) + '주차</b> ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span>' : '') + '</div></div>';
     var scopeBar = '<span class="gscope" role="group" aria-label="격자 범위"><button type="button" data-gs="one" class="' + (all ? '' : 'on') + '">이 과정만</button><button type="button" data-gs="all" class="' + (all ? 'on' : '') + '">같은 주 전체 과정</button></span>';
-    box.innerHTML = '<div class="gbox' + (all ? ' wide' : '') + '">' + pHead + '<div class="gnavbar">' + scopeBar + '<button type="button" class="btn sm" data-gw="prev"' + (wi === 0 ? ' disabled' : '') + '>' + ic('chevL', 'l') + '이전 주</button>' +
+    box.innerHTML = '<div class="gbox' + (all ? ' wide' : '') + (gInfo ? ' ginfo' : '') + '">' + pHead + '<div class="gnavbar">' + scopeBar + '<button type="button" class="btn sm" data-gw="prev"' + (wi === 0 ? ' disabled' : '') + '>' + ic('chevL', 'l') + '이전 주</button>' +
       '<select id="gWeek" aria-label="주 선택">' + opts + '</select>' +
       '<button type="button" class="btn sm" data-gw="next"' + (wi === weeks.length - 1 ? ' disabled' : '') + '>다음 주' + ic('chevR', 'r') + '</button>' +
       '<button type="button" class="btn sm" data-gw="today">이번 주</button>' +
-      '<span class="wk">' + (wi + 1) + '주차 / ' + weeks.length + '주 · ' + esc(md(mon)) + ' ~ ' + esc(md(addDays(mon, 4))) + '</span>' +
-      (all ? '' : (function(){ var cf = courseFill(p, gapIndex()); return cf.total ? '<span class="wk gfill">편성 현황 ' + cf.filled + '/' + cf.total + '교시' + (cf.done ? ' (비워둠 ' + cf.done + ')' : '') + '</span>' : ''; })()) +
-      '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:6px;max-width:100%;">' + (!canEdit ? '' : '<button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>' + '<button type="button" class="btn sm mvm' + (gpOn() ? ' on' : '') + '" data-gpmode="1" title="켜면 빈 교시 칸마다 비워둠 처리 버튼이 나타납니다. 평소에는 숨겨 둡니다">비워둠 처리 ' + (gpOn() ? '끄기' : '켜기') + '</button>') + oriSelect('grid') + (all ? '' : '<label class="pofcl" title="켜면 공문 첨부용으로 인쇄합니다: 빈 교시·경고·편성 현황 같은 내부 표시를 빼고 교과목을 크게 표시"><input type="checkbox" id="gOfc"' + (ofcOn() ? ' checked' : '') + '> 공문용</label>') + '<button type="button" class="btn sm" data-gw="print">인쇄</button>' + (all ? '' : '<button type="button" class="btn sm" data-gw="pdfall" title="이 과정의 모든 주차를 한 파일(주차당 1페이지)로 인쇄합니다. 인쇄창에서 PDF로 저장하면 파일명이 제N기 과정명으로 채워집니다">과정 전체 PDF</button>') + '</span></div>' + ctab +
+      // 10-19 시안1: 주 선택 칸과 과정 머리의 '교시 n/n'과 겹치는 주차·편성 현황 글자는 화면에서 뺌
+
+      '<span class="gtools">' + (!canEdit ? '' : '<details class="mnu"><summary class="btn sm">편집 ' + ic('chevD', 'r') + '</summary><div class="pn"><button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>' + '<button type="button" class="btn sm mvm' + (gpOn() ? ' on' : '') + '" data-gpmode="1" title="켜면 빈 교시 칸마다 비워둠 처리 버튼이 나타납니다. 평소에는 숨겨 둡니다">비워둠 처리 ' + (gpOn() ? '끄기' : '켜기') + '</button></div></details>') +
+        '<details class="mnu mprint"><summary class="btn sm">인쇄 ' + ic('chevD', 'r') + '</summary><div class="pn">' + oriSelect('grid') + (all ? '' : '<label class="pofcl" title="켜면 공문 첨부용으로 인쇄합니다: 빈 교시·경고·서류 미비·편성 현황 같은 내부 표시를 빼고 교과목을 크게 표시"><input type="checkbox" id="gOfc"' + (ofcOn() ? ' checked' : '') + '> 공문용 (내부 표시 빼기)</label>') + '<button type="button" class="btn sm" data-gw="print">이 주 인쇄</button>' + (all ? '' : '<button type="button" class="btn sm" data-gw="pdfall" title="이 과정의 모든 주차를 한 파일(주차당 1페이지)로 인쇄합니다. 인쇄창에서 PDF로 저장하면 파일명이 제N기 과정명으로 채워집니다">과정 전체 PDF</button>') + '</div></details>' +
+        '<button type="button" class="btn sm" data-ginfo="1" aria-expanded="' + (gInfo ? 'true' : 'false') + '">ⓘ 표시 안내</button></span></div>' + ctab +
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:var(--err-bg);border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span><span><i style="background:repeating-linear-gradient(135deg,#FFF1BF,#FFF1BF 3px,#fff 3px,#fff 6px);border:1px solid #D9B100"></i>빈 교시</span><span><i style="background:repeating-linear-gradient(135deg,#D9DCE0,#D9DCE0 3px,var(--bg-hover) 3px,var(--bg-hover) 6px)"></i>비워둠 처리(편성 아님)</span>' +
       '<span class="docleg"><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">재동의 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
       mvBarHtml() + empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
-      '<div class="hint gnp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : formState === 'end' ? '종료된 과정이라 칸을 눌러도 수정창이 열리지 않습니다. 편성 기록 삭제는 목록 보기에서 할 수 있습니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
+      '<div class="hint gnp ghelp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : formState === 'end' ? '종료된 과정이라 칸을 눌러도 수정창이 열리지 않습니다. 편성 기록 삭제는 목록 보기에서 할 수 있습니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
       (sessEnded(mon) ? '<div class="hint gnp" style="margin-top:4px;">강의일 당일 17:50 이후는 종료된 일정으로 보며, 종료된 일정의 교과목은 배정·수정·삭제할 수 없습니다.</div>' : '') + '</div>';
   }
   /* 과정 전체(모든 주차)를 한 파일로: 주차마다 1페이지로 이어 붙여 인쇄. 파일명(브라우저 PDF 저장 기본값)은 "제N기 과정명" */
