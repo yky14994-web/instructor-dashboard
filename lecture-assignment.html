@@ -819,6 +819,22 @@
 <script src="admin-nav.js" defer></script>
 <script src="swipe-nav.js?v=3" defer></script>
 <script src="unavail.js?v=1" defer></script>
+<style id="polish">
+  /* 디자인 다듬기: 색·그림자·상태 표시만 변경(글꼴·크기·여백·줄바꿈은 그대로) */
+  body{background:#EDF1F6;}
+  header,.panel,.bar,.todo{box-shadow:0 0 0 1px rgba(27,58,95,.07),0 1px 2px rgba(16,24,40,.04),0 6px 16px rgba(16,24,40,.04);}
+  .card{border-color:#DCE3EC;box-shadow:0 1px 2px rgba(16,24,40,.04),0 4px 12px rgba(16,24,40,.03);}
+  th{background:#F1F5FA;color:var(--navy);letter-spacing:0;}
+  tbody tr{transition:background-color .12s ease;}
+  tbody tr:hover td{background:#F7F9FC;}
+  tr.cx:hover td,tr.cx td{background:#F4F4F4;}
+  .btn:active{transform:scale(.98);}
+  .btn:hover{border-color:#B9C4D3;}
+  .btn:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid rgba(27,58,95,.45);outline-offset:1px;}
+  input:not([type=checkbox]):not([type=radio]):hover,select:hover{border-color:#B9C4D3;}
+  input:not([type=checkbox]):not([type=radio]):focus,select:focus,textarea:focus{border-color:var(--navy);}
+  @media (prefers-reduced-motion:reduce){tbody tr,.btn{transition:none;}.btn:active{transform:none;}}
+</style>
 </head>
 <body>
 <script>try{if(sessionStorage.getItem('jsfa_dash_pw'))document.documentElement.classList.add('autologin');}catch(e){}window.__autoDone=function(){document.documentElement.classList.remove('autologin');};</script>
@@ -942,7 +958,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-20 배정 118</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-20 배정 119</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2892,7 +2908,7 @@
     }
     var i = courseRank[name]; if (i == null) { var h = 0; for (var k = 0; k < name.length; k++) h = (h * 31 + name.charCodeAt(k)) % 997; i = h; }
     var hue = Math.round((i * 137.508 + 20) % 360);
-    return { bg: 'hsl(' + hue + ',58%,89%)', fg: 'hsl(' + hue + ',62%,22%)', bd: 'hsl(' + hue + ',55%,55%)' };
+    return { bg: 'hsl(' + hue + ',38%,91%)', fg: 'hsl(' + hue + ',45%,22%)', bd: 'hsl(' + hue + ',38%,53%)' };
   }
   function courseStyle(p, key){ var c = courseColor(p ? String(p['과정명'] || '') : String(key || '')); return 'background:' + c.bg + ';color:' + c.fg + ';'; }
   function typeCls(p){
