@@ -242,11 +242,12 @@
     border-radius:10px;
     padding:28px;
   }
-  #detail .close{
-    float:right;
-    border:none;background:none;
-    font-size:14px;color:var(--text-sub);
-    cursor:pointer;
+  #detail .close{   /* 10-20 금용님: 사진에 가려지지 않게 한 줄을 따로 쓰고, 내려도 위에 붙어 있게(sticky) */
+    position:sticky;top:-12px;z-index:3;
+    display:flex;align-items:center;gap:2px;margin:-12px -12px 6px auto;
+    border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 12px;
+    font-size:14px;font-weight:700;color:var(--text-sub);
+    cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.08);
   }
   #detail h2{font-size:20px;margin:0 0 4px 0;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;}
   @media (max-width:640px){
@@ -524,7 +525,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 강사관리 30</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-20 강사관리 31</div>
 </div>
 
 <script>

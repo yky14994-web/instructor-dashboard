@@ -934,7 +934,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-20 배정 116</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-20 배정 117</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2025,7 +2025,7 @@
         ? '<a class="btn primary" href="#c=' + encodeURIComponent(String(nx.next['과정+기수'])) + '" title="편성이 필요한 다음 과정(교과목이 없거나 빈 교시가 남은 과정)의 편성 화면으로 이동합니다">다음 편성할 과정 › ' + esc(String(nx.next['과정명'] || '') + ' ' + String(nx.next['기수'] || '')) + ' (남은 ' + nx.n + '과정)</a>'
         : '';   // 10-19: 누를 수 없는 '없음' 표시는 두지 않음(3초 원칙 ⑤)
     }
-    html += '<a class="btn" href="home.html#d=nosubj">편성이 필요한 과정 전체</a>';   // D4: [홈으로]는 메뉴 바·경로 표시와 중복
+    html += '<a class="btn" href="home.html#d=nosubj">← 편성이 필요한 과정 전체</a>';   // 10-20 금용님: 떠 있는 버튼은 빼고 기존 버튼에 화살표만
     nb.style.display = ''; nb.innerHTML = html;
   }
   function showEdit(key){
