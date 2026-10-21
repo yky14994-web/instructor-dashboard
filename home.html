@@ -305,6 +305,27 @@
 <script src="busy-indicator.js" defer></script>
 <script src="admin-nav.js" defer></script>
 <script src="swipe-nav.js?v=3" defer></script>
+<style id="uxfix">
+  /* 디자인 다듬기(2026-10-21): 색·그림자·상태 표시, 대비·누름 영역·작은 글자만 조정. 글꼴·배치·기능은 그대로 */
+  body{background:#EDF1F6;}
+  .card{border-color:#DCE3EC;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px rgba(16,24,40,.04);}
+  .tl li.done,.tcr.done,.tt td.blk.done{opacity:.78;}
+  .tcr .tm small{font-size:12px;}
+  .rl .tag small{font-size:12px;}
+  .tcard,.tl li{--text-muted:#4E5766;}
+  #verStamp{font-size:12px !important;color:#5F6877 !important;}
+  .tl .co a,.wk a.cn,.tcard .tch a{position:relative;}
+  .tl .co a::after,.wk a.cn::after,.tcard .tch a::after{content:"";position:absolute;inset:-5px -3px;}
+  .hb-desc{text-decoration:none;border:1px solid var(--border-input);border-radius:6px;background:#fff;height:36px;padding:0 12px;color:var(--text-sub);}
+  .hb-desc:hover{background:var(--bg-hover);}
+  .btn:hover{border-color:#B9C4D3;}
+  .btn:active{transform:scale(.98);}
+  .btn:focus-visible,a:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid rgba(27,58,95,.55);outline-offset:2px;}
+  tbody tr{transition:background-color .12s ease;}
+  tbody tr:hover td{background:#F7F9FC;}
+  @media (prefers-reduced-motion:reduce){tbody tr,.btn{transition:none;}.btn:active{transform:none;}}
+  @media (max-width:640px){ .btn.sm{height:40px;} }
+</style>
 </head>
 <body>
 <script>try{if(sessionStorage.getItem('jsfa_dash_pw'))document.documentElement.classList.add('autologin');}catch(e){}window.__autoDone=function(){document.documentElement.classList.remove('autologin');};</script>
@@ -360,7 +381,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-19 홈 97</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-21 홈 98</div>
 </div>
 </div>
 
@@ -554,8 +575,8 @@
     var i = courseRank[name]; if (i == null) { var h = 0; for (var k = 0; k < name.length; k++) h = (h * 31 + name.charCodeAt(k)) % 997; i = h; }
     return Math.round((i * 137.508 + 20) % 360);
   }
-  function courseColor(name){ return 'hsl(' + courseHue(name) + ',55%,55%)'; }
-  function courseBg(name){ return 'hsl(' + courseHue(name) + ',58%,92%)'; }
+  function courseColor(name){ return 'hsl(' + courseHue(name) + ',32%,53%)'; }
+  function courseBg(name){ return 'hsl(' + courseHue(name) + ',28%,95%)'; }
   function courseName(key){ var p = planByKey(key); return String(p && p['과정명'] || key); }
   function typeCls(t){ t = String(t || ''); return 'ct-' + (['기본', '전문', '특별', '민관'].indexOf(t) > -1 ? t : '기타'); }
   /* 편성 화면으로 넘길 출발지: 상세 화면(교과목 없는 과정 전체 등)에서 눌렀으면 그 화면 이름도 함께 넘겨 돌아올 수 있게 함 */
