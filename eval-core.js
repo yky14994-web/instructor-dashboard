@@ -5,7 +5,7 @@
 (function (root) {
   'use strict';
 
-  var MIN_SESSION = 10;   // 한 회차 점수를 표시하는 최소 응답 수
+  var MIN_SESSION = 20;   // 한 회차 점수를 표시하는 최소 응답 수
   var MIN_CUM = 20;       // 누적 별점을 표시하는 최소 응답 수(한 과정 20~30명 기준)
   var Q = ['태도', '목표', '전달', '효과'];                 // 강의 문항
   var QT = ['태도', '준비성', '전문성', '적용성'];          // 훈련(현장교관) 문항
@@ -205,7 +205,7 @@
       });
       var avg = {}, ok = true, tot = 0;
       QS.forEach(function (k) {
-        if (cnts[k] > 0) { avg[k] = round2(sums[k] / cnts[k]); tot += sums[k] / cnts[k]; } else { avg[k] = null; ok = false; }   // 종합은 반올림 전 문항 평균으로 계산
+        if (cnts[k] > 0) { avg[k] = round2(sums[k] / cnts[k]); tot += avg[k]; } else { avg[k] = null; ok = false; }   // 종합은 화면에 보이는(소수 둘째 자리) 문항 평균 4개의 평균 — 서버 저장 계산과 같음
       });
       return { subject: g.subject, names: g.names, set: g.set, n: n, avg: avg, overall: ok ? round2(tot / 4) : null, comments: comments, nones: nones, hasAll: ok };
     }).filter(function (it) { return it.n > 0 || it.comments.length > 0 || it.nones > 0; });
@@ -235,7 +235,7 @@
   /* 한 강사의 저장 행(응답수·종합 포함)에서 누적 계산 — 응답 수로 가중한 평균 */
   function cumulative(list) {
     var n = 0, sum = 0;
-    list.forEach(function (r) { var c = Number(r.응답수), s = Number(r.종합); if (c > 0 && isFinite(s)) { n += c; sum += s * c; } });
+    list.forEach(function (r) { var c = Number(r.응답수), s = Number(r.종합); if (c >= MIN_SESSION && isFinite(s)) { n += c; sum += s * c; } });
     return { n: n, avg: n ? round2(sum / n) : null };
   }
 

@@ -329,12 +329,12 @@
           <div class="sum" id="sumRow"></div>
           <div class="swp">표는 좌우로 밀어서 볼 수 있습니다.</div>
           <div class="tx" style="margin-top:8px;"><table class="t">
-            <thead><tr><th>교과목</th><th>강사</th><th class="n">응답</th><th class="n">태도</th><th class="n">목표</th><th class="n">전달</th><th class="n">효과</th><th class="n">종합(5점)</th><th class="n">50점 환산</th><th>표시</th></tr></thead>
+            <thead><tr><th>교과목</th><th>강사</th><th class="n">응답</th><th class="n">태도</th><th class="n">목표</th><th class="n">전달</th><th class="n">효과</th><th class="n">종합(5점)</th><th>표시</th></tr></thead>
             <tbody id="pvBody"></tbody></table></div>
           <div id="pvTWrap" hidden>
             <h3 style="margin:16px 0 4px;font-size:15px;">훈련(현장교관) 문항 <span class="tag t-info">편성에서 현장교관(대표)로 표시한 줄</span></h3>
             <div class="tx"><table class="t">
-              <thead><tr><th>교과목</th><th>교수</th><th class="n">응답</th><th class="n">태도</th><th class="n">준비성</th><th class="n">전문성</th><th class="n">적용성</th><th class="n">종합(5점)</th><th class="n">50점 환산</th><th>표시</th></tr></thead>
+              <thead><tr><th>교과목</th><th>교수</th><th class="n">응답</th><th class="n">태도</th><th class="n">준비성</th><th class="n">전문성</th><th class="n">적용성</th><th class="n">종합(5점)</th><th>표시</th></tr></thead>
               <tbody id="pvBodyT"></tbody></table></div>
           </div>
           <div id="pvCWrap" hidden>
@@ -343,7 +343,7 @@
               <thead><tr><th>분야</th><th>항목</th><th class="n">응답</th><th class="n">평균(5점)</th></tr></thead>
               <tbody id="pvBodyC"></tbody></table></div>
           </div>
-          <div class="note">강사는 선택한 과정의 교과목 편성에서 자동으로 찾습니다. 주강사가 둘 이상이거나 편성에 없는 교과목은 직접 선택해 주세요. "저장하지 않음"을 고르면 그 줄은 저장되지 않습니다. 응답이 10명 미만인 교과목은 점수를 저장하되 별점에는 쓰지 않습니다. 종합은 4개 문항 평균이고, 50점 환산은 종합×10입니다(현행 BSC 점수 기준).</div>
+          <div class="note">강사는 선택한 과정의 교과목 편성에서 자동으로 찾습니다. 주강사가 둘 이상이거나 편성에 없는 교과목은 직접 선택해 주세요. "저장하지 않음"을 고르면 그 줄은 저장되지 않습니다. 응답이 20명 미만인 교과목은 점수를 저장하되 별점에는 쓰지 않습니다. 종합은 4개 문항 평균이며 5점 만점입니다.</div>
         </div>
 
         <div class="card">
@@ -416,7 +416,7 @@
         <div class="tx"><table class="t" id="vwTable">
           <thead><tr><th>강사</th><th>교과목</th><th>최근 평가</th><th class="n">최근 점수</th><th>누적 별점</th><th class="n">누적 응답</th><th>상태</th></tr></thead>
           <tbody id="vwBody"></tbody></table></div>
-        <div class="hint" style="margin-top:8px;">반영 승인한 결과만 집계합니다. 누적 별점은 응답 수로 가중한 평균(5점 만점)이며 0.5점 단위로 표시합니다. 누적 응답이 20명 미만이면 별점을 표시하지 않고, 한 회차 응답이 10명 미만이면 그 회차 점수는 표시하지 않습니다. 점수는 관리자 화면에서만 보입니다.</div>
+        <div class="hint" style="margin-top:8px;">반영 승인한 결과만 집계합니다. 누적 별점은 응답 수로 가중한 평균(5점 만점)이며 0.5점 단위로 표시합니다. 응답이 20명 미만인 회차는 점수를 표시하지 않고 누적 평균과 누적 응답 수에서도 뺍니다. 누적 응답이 20명 미만이면 별점을 표시하지 않습니다. 점수는 관리자 화면에서만 보입니다.</div>
       </div>
     </div>
 
@@ -429,7 +429,6 @@
           <div class="fld" style="min-width:260px;flex:1 1 260px;"><label for="repCourse">과정</label><select id="repCourse"></select></div>
         </div>
         <div class="row" style="margin-top:10px;gap:18px;">
-          <label style="font-size:14px;"><input type="checkbox" id="repShow50"> 50점 환산 점수 표시</label>
           <label style="font-size:14px;"><input type="checkbox" id="repShowCm"> 서술형 의견 포함</label>
           <label style="font-size:14px;"><input type="checkbox" id="repShowBasic" checked> 응답자 구성 포함</label>
         </div>
@@ -454,7 +453,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-20 관리자 21</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-21 관리자 22</div>
 </div>
 
 <script src="eval-core.js?v=5"></script>
@@ -912,19 +911,19 @@
     var low = pv.items.filter(function(it){ return it.n < E.MIN_SESSION; }).length;
     var ncm = pv.items.reduce(function(s, it){ return s + it.cms.length; }, 0);
     var nT = pv.items.filter(function(it){ return it.set === 'T'; }).length;
-    $('sumRow').innerHTML = '<span>응답 ' + pv.fileCount + '명 (100%)</span><span>교과목 ' + pv.items.length + '개' + (nT ? ' (훈련 ' + nT + ')' : '') + '</span>' + ((pv.commons || []).length ? '<span>공통 문항 ' + pv.commons.length + '개</span>' : '') + '<span>서술형 의견 ' + ncm + '건</span>' + (pv.noneCount ? '<span>의견 없음 ' + pv.noneCount + '건</span>' : '') + (low ? '<span>응답 10명 미만 ' + low + '개</span>' : '') + (pv.skipped ? '<span>인식하지 못한 응답 ' + pv.skipped + '칸</span>' : '');
+    $('sumRow').innerHTML = '<span>응답 ' + pv.fileCount + '명 (100%)</span><span>교과목 ' + pv.items.length + '개' + (nT ? ' (훈련 ' + nT + ')' : '') + '</span>' + ((pv.commons || []).length ? '<span>공통 문항 ' + pv.commons.length + '개</span>' : '') + '<span>서술형 의견 ' + ncm + '건</span>' + (pv.noneCount ? '<span>의견 없음 ' + pv.noneCount + '건</span>' : '') + (low ? '<span>응답 20명 미만 ' + low + '개</span>' : '') + (pv.skipped ? '<span>인식하지 못한 응답 ' + pv.skipped + '칸</span>' : '');
     $('sampleTag').hidden = !pv.sample;
     function rowHtml(it, i){
       var lowRow = it.n < E.MIN_SESSION, sk = it.inst === 'x';
       var subjCell = it.state === 'none' ? esc(it.subject || '(이름 없음)') + '<div class="hint">편성에서 찾지 못함</div>' : (esc(it.label || it.subject) + (it.how ? '<div class="hint">' + it.how + '으로 연결' + (it.fileSubject && E.normSubject(it.fileSubject) !== E.normSubject(it.label) ? ' · 파일 표기: ' + esc(it.fileSubject) : '') + '</div>' : ''));
-      var tagHtml = !it.hasAll ? '<span class="tag t-err">문항 열 부족</span>' : lowRow ? '<span class="tag t-warn">응답 10명 미만</span>' : '<span class="tag t-ok">표시</span>';
+      var tagHtml = !it.hasAll ? '<span class="tag t-err">문항 열 부족</span>' : lowRow ? '<span class="tag t-warn">응답 20명 미만</span>' : '<span class="tag t-ok">표시</span>';
       var qs = E.qList(it.set).map(function(q){ return '<td class="n">' + fmt(it.avg[q]) + '</td>'; }).join('');
       return '<tr class="' + (lowRow ? 'low ' : '') + (sk ? 'skip' : '') + '"><td>' + subjCell + '</td><td><select data-i="' + i + '" aria-label="강사 선택">' + instOptions(it) + '</select></td><td class="n">' + it.n + '</td>' + qs +
-        '<td class="n">' + (it.overall == null ? '–' : (lowRow ? fmt(it.overall) : starHtml(it.overall))) + '</td><td class="n">' + (it.overall == null ? '–' : Math.round(E.to50(it.overall)) + '점') + '</td><td>' + tagHtml + '</td></tr>';
+        '<td class="n">' + (it.overall == null ? '–' : (lowRow ? fmt(it.overall) : starHtml(it.overall))) + '</td><td>' + tagHtml + '</td></tr>';
     }
     var hL = '', hT = '';
     pv.items.forEach(function(it, i){ if (it.set === 'T') hT += rowHtml(it, i); else hL += rowHtml(it, i); });
-    $('pvBody').innerHTML = hL || '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:14px;">강의 문항으로 읽힌 교과목이 없습니다.</td></tr>';
+    $('pvBody').innerHTML = hL || '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:14px;">강의 문항으로 읽힌 교과목이 없습니다.</td></tr>';
     $('pvBodyT').innerHTML = hT; $('pvTWrap').hidden = !hT;
     var cs = pv.commons || [];
     $('pvBodyC').innerHTML = cs.map(function(c){ return '<tr><td>' + esc(c.section) + '</td><td>' + esc(c.item) + '</td><td class="n">' + c.n + '</td><td class="n">' + fmt(c.avg) + '</td></tr>'; }).join('');
@@ -1072,7 +1071,7 @@
     $('rvBody').innerHTML = rv.rows.length ? rv.rows.map(function(x, i){
       var r = x.r, lowRow = Number(r['응답수']) < E.MIN_SESSION, tr = kindOf(r) === 'T';
       return '<tr class="' + (x.inc ? (lowRow ? 'low' : '') : 'off') + '"><td class="c"><input type="checkbox" data-ri="' + i + '"' + (x.inc ? ' checked' : '') + ' aria-label="반영"></td><td>' + esc(r['교과목']) + '</td><td>' + esc(r['강사명']) + '</td><td>' + (tr ? '<span class="tag t-warn">훈련</span>' : '<span class="tag t-info">강의</span>') + '</td><td class="n">' + esc(r['응답수']) + '</td>' +
-        ['태도', '목표', '전달', '효과'].map(function(q){ return '<td class="n">' + f2(r[q]) + '</td>'; }).join('') + '<td class="n"><b>' + f2(r['종합']) + '</b></td><td>' + (!x.inc ? '<span class="tag t-none">반영 안 함</span>' : lowRow ? '<span class="tag t-warn">응답 10명 미만</span>' : '<span class="tag t-ok">반영</span>') + '</td></tr>';
+        ['태도', '목표', '전달', '효과'].map(function(q){ return '<td class="n">' + f2(r[q]) + '</td>'; }).join('') + '<td class="n"><b>' + f2(r['종합']) + '</b></td><td>' + (!x.inc ? '<span class="tag t-none">반영 안 함</span>' : lowRow ? '<span class="tag t-warn">응답 20명 미만</span>' : '<span class="tag t-ok">반영</span>') + '</td></tr>';
     }).join('') : '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:14px;">교과목·강사 점수가 없습니다(공통 문항만 저장된 결과).</td></tr>';
     $('rvBody').querySelectorAll('input[data-ri]').forEach(function(c){ c.onchange = function(){ rv.rows[+c.getAttribute('data-ri')].inc = c.checked; renderReview(); }; });
     $('rvBasic').innerHTML = basicHtml(parseBasic(u), respN(u));
@@ -1171,7 +1170,7 @@
     var rows = all.filter(function(r){ return kindOf(r) !== 'C'; });
     var rowsL = all.filter(function(r){ return kindOf(r) === 'L'; }), rowsT = all.filter(function(r){ return kindOf(r) === 'T'; }), rowsC = all.filter(function(r){ return kindOf(r) === 'C'; });
     var cms = results.comments.filter(function(c){ return String(c['개설키']) === key && String(c['제외'] || '') !== 'Y'; });
-    var show50 = $('repShow50').checked, showCm = $('repShowCm').checked, showB = $('repShowBasic').checked;
+    var showCm = $('repShowCm').checked, showB = $('repShowBasic').checked;
     var en = Number(up['입교인원']), cf = respN(up);
     var low = rows.filter(function(r){ return Number(r['응답수']) < E.MIN_SESSION; }).length;
     var h = isDone(up) ? '' : '<div class="rwait">검토 대기(반영 승인 전) 결과입니다</div>';
@@ -1179,13 +1178,13 @@
     h += '<div class="rmeta"><span>기관: 전남소방학교</span>' + (en ? '<span>입교 인원: ' + en + '명</span>' : '') + '<span>응답 인원: ' + (cf || '–') + '명</span>' + (en ? '<span>응답률: ' + Math.round(cf / en * 100) + '%</span>' : '') + '<span>집계일: ' + esc(String(up['저장일시'] || '').slice(0, 10)) + '</span></div>';
     var sec = 0;
     function scoreTable(list, heads, who){
-      var cum = E.cumulative(list), t = '<table class="rt"><thead><tr><th>연번</th><th>교과목</th><th>' + who + '</th><th>응답</th>' + heads.map(function(x){ return '<th>' + x + '</th>'; }).join('') + '<th>종합(5점)</th>' + (show50 ? '<th>50점 환산</th>' : '') + '</tr></thead><tbody>';
+      var cum = E.cumulative(list), t = '<table class="rt"><thead><tr><th>연번</th><th>교과목</th><th>' + who + '</th><th>응답</th>' + heads.map(function(x){ return '<th>' + x + '</th>'; }).join('') + '<th>종합(5점)</th>'  + '</tr></thead><tbody>';
       list.forEach(function(r, i){
         var lowRow = Number(r['응답수']) < E.MIN_SESSION;
         t += '<tr><td>' + (i + 1) + '</td><td class="l">' + esc(r['교과목']) + '</td><td>' + esc(r['강사명']) + '</td><td>' + esc(r['응답수']) + (lowRow ? '※' : '') + '</td>' +
-          ['태도', '목표', '전달', '효과'].map(function(q){ return '<td>' + f2(r[q]) + '</td>'; }).join('') + '<td><b>' + f2(r['종합']) + '</b></td>' + (show50 ? '<td>' + (isNaN(Number(r['종합'])) ? '–' : Math.round(E.to50(Number(r['종합'])) * 10) / 10) + '점</td>' : '') + '</tr>';
+          ['태도', '목표', '전달', '효과'].map(function(q){ return '<td>' + f2(r[q]) + '</td>'; }).join('') + '<td><b>' + f2(r['종합']) + '</b></td>'  + '</tr>';
       });
-      return t + '<tr class="tot"><td colspan="3">전체 평균(응답 수 가중)</td><td>' + cum.n + '</td><td colspan="4"></td><td>' + f2(cum.avg) + '</td>' + (show50 ? '<td>' + (cum.avg == null ? '–' : Math.round(E.to50(cum.avg) * 10) / 10) + '점</td>' : '') + '</tr></tbody></table>';
+      return t + '<tr class="tot"><td colspan="3">전체 평균(응답 수 가중, 응답 20명 미만 교과목 제외)</td><td>' + cum.n + '</td><td colspan="4"></td><td>' + f2(cum.avg) + '</td>'  + '</tr></tbody></table>';
     }
     if (rowsL.length) h += '<h3 class="rh">' + (++sec) + '. 교과목·강사별 강의 평가</h3>' + scoreTable(rowsL, ['태도', '목표', '전달', '효과'], '강사');
     if (rowsT.length) h += '<h3 class="rh">' + (++sec) + '. 훈련(현장교관) 평가</h3>' + scoreTable(rowsT, ['태도', '준비성', '전문성', '적용성'], '교수');
@@ -1196,7 +1195,7 @@
       secs.forEach(function(k){ bySec[k].forEach(function(r, i){ h += '<tr>' + (i === 0 ? '<td rowspan="' + bySec[k].length + '">' + esc(k) + '</td>' : '') + '<td class="l">' + esc(r['항목']) + '</td><td>' + esc(r['응답수']) + '</td><td><b>' + f2(r['종합']) + '</b></td></tr>'; }); });
       h += '</tbody></table>';
     }
-    h += '<div class="rnote">산출 기준: 5점 척도(매우만족 5점, 만족 4점, 보통 3점, 불만족 2점, 매우불만족 1점)의 문항별 평균입니다. 종합은 강의 평가는 태도·목표·전달·효과, 훈련 평가는 태도·준비성·전문성·적용성 4개 문항 평균입니다.' + (rowsT.length ? ' 훈련 평가는 교과목별 대표 현장교관 1명 기준입니다.' : '') + (rowsC.length ? ' 구내식당 문항은 이용한 응답자만 집계합니다.' : '') + (show50 ? ' 50점 환산은 종합×10입니다.' : '') + (low ? '<br>※ 응답이 ' + E.MIN_SESSION + '명 미만인 교과목은 참고용입니다.' : '') + '</div>';
+    h += '<div class="rnote">산출 기준: 5점 척도(매우만족 5점, 만족 4점, 보통 3점, 불만족 2점, 매우불만족 1점)의 문항별 평균입니다. 종합은 강의 평가는 태도·목표·전달·효과, 훈련 평가는 태도·준비성·전문성·적용성 4개 문항 평균입니다.' + (rowsT.length ? ' 훈련 평가는 교과목별 대표 현장교관 1명 기준입니다.' : '') + (rowsC.length ? ' 구내식당 문항은 이용한 응답자만 집계합니다.' : '')  + (low ? '<br>※ 응답이 ' + E.MIN_SESSION + '명 미만인 교과목은 참고용입니다.' : '') + '</div>';
     var basics = parseBasic(up);
     if (showB && E.BASIC_FIELDS.some(function(f){ return basics[f]; })) {
       h += '<h3 class="rh">' + (++sec) + '. 응답자 구성</h3><table class="rt"><thead><tr><th style="width:90px;">구분</th><th>응답 (명)</th></tr></thead><tbody>';
@@ -1216,7 +1215,7 @@
     doc.innerHTML = h;
     $('repMsg').textContent = '';
   }
-  $('repCourse').onchange = renderReport; $('repShow50').onchange = renderReport; $('repShowCm').onchange = renderReport; $('repShowBasic').onchange = renderReport;
+  $('repCourse').onchange = renderReport; $('repShowCm').onchange = renderReport; $('repShowBasic').onchange = renderReport;
   $('btnPdf').onclick = function(){
     var key = $('repCourse').value; if (!key) return;
     var old = document.title; document.title = '평가결과_' + key.replace(/[\\/:*?"<>|]/g, '');
@@ -1287,7 +1286,7 @@
       var nInc = x.cms.filter(function(c){ return c.inc; }).length;
       h += '<li class="fbi' + (x.can ? '' : ' off') + '"><div class="fbh"><input type="checkbox" data-fbck="' + i + '"' + (x.send && x.can ? ' checked' : '') + (x.can ? '' : ' disabled') + ' aria-label="' + esc(r['강사명']) + ' 보내기">' +
         '<div class="fbm"><div class="fbt">' + esc(r['교과목']) + ' · ' + esc(r['강사명']) + ' ' + (tr ? '<span class="tag t-warn">훈련</span>' : '<span class="tag t-info">강의</span>') + '</div>' +
-        '<div class="fbs"><span>응답 <b>' + n + '</b>명</span><span>종합 ' + (few ? '<span class="tag t-warn">응답 적음</span>' : '<b>' + f2(r['종합']) + '</b>') + '</span><span>넣을 의견 <b>' + nInc + '</b>/' + x.cms.length + '건</span>' +
+        '<div class="fbs"><span>응답 <b>' + n + '</b>명</span><span>종합 <b>' + f2(r['종합']) + '</b>' + (few ? ' <span class="tag t-warn" title="응답 ' + E.MIN_SESSION + '명 미만: 메일에는 점수를 \'참고용\' 문구와 함께 표시하고, 누적·별점에는 반영되지 않습니다">참고용</span>' : '') + '</span><span>넣을 의견 <b>' + nInc + '</b>/' + x.cms.length + '건</span>' +
         '<span>' + (!r['강사ID'] ? '<span class="tag t-err">강사ID 없음</span>' : m.있음 ? esc(m.메일) : '<span class="tag t-err">메일 주소 없음</span> <span class="hint">강사관리에서 이메일 등록</span>') + '</span>' +
         '<span>' + fbSentText(x.sent) + '</span></div></div>' +
         '<div class="fbb"><button type="button" class="btn sm' + (x.open ? ' primary' : '') + '" data-fbopen="' + i + '">' + (x.open ? '환류지 닫기' : '환류지·미리보기') + '</button></div></div>';
