@@ -835,8 +835,21 @@
   input:not([type=checkbox]):not([type=radio]):focus,select:focus,textarea:focus{border-color:var(--navy);}
   @media (prefers-reduced-motion:reduce){tbody tr,.btn{transition:none;}.btn:active{transform:none;}}
 </style>
+<style id="evscore">
+  /* 강사 평가 점수 표시(관리자 화면 전용): 별은 0.5점 단위로 채움 */
+  .sc{display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px;font-size:12px;color:var(--text-sub);margin-top:2px;}
+  .sc .scp{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+  .sc .scl{color:var(--text-muted);}
+  .sc .st{display:inline-block;font-size:13px;letter-spacing:1px;line-height:1;background:linear-gradient(90deg,#E0A100 var(--p),#D5DCE6 var(--p));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sc b{color:var(--navy);font-variant-numeric:tabular-nums;}
+  .sc .ref{color:#7A5B00;background:#FFF2C9;border-radius:999px;padding:0 7px;font-size:11px;font-weight:700;}
+  .sc .low{color:var(--text-muted);}
+  .scbox{display:grid;gap:6px;margin:2px 0 4px;}
+  .scbox table{width:100%;font-size:13px;}
+</style>
 </head>
 <body>
+<script src="eval-core.js?v=5"></script>
 <script>try{if(sessionStorage.getItem('jsfa_dash_pw'))document.documentElement.classList.add('autologin');}catch(e){}window.__autoDone=function(){document.documentElement.classList.remove('autologin');};</script>
 <div id="boot">불러오는 중...</div>
 
@@ -958,7 +971,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-20 배정 119</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-21 배정 120</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1906,6 +1919,70 @@
     });
   }
 
+
+  /* ---------- 강사 평가 점수(평가관리에서 반영 승인된 결과) ----------
+     기준: 회차 10건 이상 = 점수 표시, 누적 20건 이상 = 별점, 10~19건 = 참고용, 10건 미만 = 응답 부족(점수 숨김) */
+  var EV_STALE_MS = 10 * 60 * 1000, evData = null, evLoadedAt = 0, evLoading = false, evFailed = false, evIdx = {};
+  function evRelayout(){
+    if (currentKey) { renderSessionList(); var pk1 = $('sPicker'); if (pk1 && pk1.style.display !== 'none') showPicker(); }
+    var ic = $('iCard'); if (ic && $('iOverlay') && $('iOverlay').style.display === 'flex' && ic.getAttribute('data-ev')) { var el = ic.querySelector('[data-evbox]'); if (el) el.innerHTML = evDetailHtml(ic.getAttribute('data-ev')); }
+    if ($('pOverlay') && $('pOverlay').style.display === 'flex' && typeof renderCopy === 'function') renderCopy();
+  }
+  function ensureEval(){
+    if (isViewer() || evLoading) return;
+    if (evData !== null && !evFailed && Date.now() - evLoadedAt < EV_STALE_MS) return;
+    evLoading = true;
+    api({ action: 'listEvalResults', password: getPw() }).then(function(j){
+      if (j.status !== 'ok') throw new Error(j.message || 'fail');
+      var um = {}; (j.uploads || []).forEach(function(u){ um[String(u['업로드ID'])] = u; });
+      var idx = {};
+      (j.rows || []).forEach(function(r){
+        var u = um[String(r['업로드ID'])]; if (!u || String(u['상태'] || '반영') !== '반영') return;      // 승인된 결과만
+        if (String(r['제외'] || '') === 'Y') return;
+        if (String(r['유형'] || '') === '공통') return;
+        var id = String(r['강사ID'] || ''); if (!id) return;
+        (idx[id] = idx[id] || []).push(r);
+      });
+      evIdx = idx; evData = true; evFailed = false; evLoadedAt = Date.now();
+    }).catch(function(){ if (evData === null) evFailed = true; }).then(function(){ evLoading = false; evRelayout(); });
+  }
+  /* 한 강사의 점수: { all:{n,avg}, subj:{n,avg}|null, trainer:boolean } (없으면 null) */
+  function evScore(iid, subject){
+    var rows = evIdx[String(iid)]; if (!rows || !rows.length) return null;
+    var key = subject ? EvalCore.normSubject(subject) : '', sub = key ? rows.filter(function(r){ return EvalCore.normSubject(r['교과목']) === key; }) : [];
+    return { all: EvalCore.cumulative(rows), subj: sub.length ? EvalCore.cumulative(sub) : null, trainer: rows.every(function(r){ return String(r['유형'] || '') === '훈련'; }) };
+  }
+  function evFmt(v){ return (Math.round(v * 100) / 100).toFixed(2); }
+  function evPart(label, c){
+    if (!c || !c.n) return '';
+    var L = label ? '<span class="scl">' + esc(label) + '</span>' : '';
+    if (c.n < EvalCore.MIN_SESSION) return '<span class="scp low">' + L + '응답 부족 (' + c.n + '건)</span>';
+    if (c.n < EvalCore.MIN_CUM) return '<span class="scp">' + L + '<b>' + evFmt(c.avg) + '</b><span class="ref">참고 · 응답 ' + c.n + '</span></span>';
+    return '<span class="scp">' + L + '<span class="st" style="--p:' + EvalCore.starPct(c.avg) + '%" aria-hidden="true">★★★★★</span><b>' + evFmt(c.avg) + '</b><span class="scl">(응답 ' + c.n + ')</span></span>';
+  }
+  /* 목록·복사창용 한 줄. subject가 있으면 "이 교과목" 점수를 먼저, 전체 점수를 뒤에 */
+  function evLine(iid, subject){
+    if (isViewer() || !iid) return '';
+    if (evData === null) return evFailed ? '' : '<div class="sc"><span class="scp low">평가 점수 불러오는 중…</span></div>';
+    var s = evScore(iid, subject); if (!s) return '';
+    var parts = [];
+    if (s.subj) parts.push(evPart('이 교과목', s.subj));
+    parts.push(evPart(s.subj ? '전체' : (s.trainer ? '현장교관' : '전체'), s.all));
+    return '<div class="sc" title="평가관리에서 반영 승인된 설문 결과입니다">' + parts.filter(Boolean).join('') + '</div>';
+  }
+  /* 상세창용: 교과목별 표 */
+  function evDetailHtml(iid){
+    if (isViewer()) return '';
+    if (evData === null) return evFailed ? '<div class="hint">평가 점수를 불러오지 못했습니다.</div>' : '<div class="hint">평가 점수를 불러오는 중입니다…</div>';
+    var rows = evIdx[String(iid)]; if (!rows || !rows.length) return '<div class="hint">반영된 평가가 아직 없습니다.</div>';
+    var by = {}, order = [];
+    rows.forEach(function(r){ var k = String(r['교과목'] || ''); if (!by[k]) { by[k] = []; order.push(k); } by[k].push(r); });
+    var all = EvalCore.cumulative(rows);
+    var h = '<div class="scbox"><div class="sc" style="margin:0">' + evPart('전체', all) + '</div><table><thead><tr><th>교과목</th><th class="num">회차</th><th>점수</th></tr></thead><tbody>';
+    order.forEach(function(k){ var c = EvalCore.cumulative(by[k]); h += '<tr><td>' + esc(k) + '</td><td class="num">' + by[k].length + '</td><td>' + evPart('', c).replace('class="scp', 'class="sc scp') + '</td></tr>'; });
+    return h + '</tbody></table></div><div class="hint" style="margin-top:4px;">반영 승인된 설문만 집계합니다. 응답 10건 미만은 점수를 숨기고, 20건 미만은 참고용입니다.</div>';
+  }
+
   /* --- 화면 전환 --- */
   function openCourse(key){
     location.hash = '#c=' + encodeURIComponent(key);
@@ -2461,6 +2538,7 @@
     if (nl) nl.textContent = isOpsName(form.iname) && !form.iid ? '비고 (대표자 이름)' : '비고';
   }
   function showPicker(){
+    ensureEval();
     var pk = $('sPicker');
     var q = $('sInstr').value.trim();
     if (!q) { pk.style.display = 'none'; return; }
@@ -2497,7 +2575,7 @@
         html += '<div class="it row" data-iid="' + esc(x.id) + '">' + avatar(x, '') +
           '<div class="tx"><b>' + esc(x.name) + ' <span class="tag ' + cls + '">' + esc(x.status || '-') + '</span></b>' +
           '<small>' + esc([x.field, x.org, x.region].filter(Boolean).join(' · ') + subjLine) + '</small>' +
-          '<small>강의 ' + x.count + '회' + (why.length ? ' · <span style="color:var(--navy);">일치: ' + esc(why.join('·')) + '</span>' : '') + '</small></div>' +
+          '<small>강의 ' + x.count + '회' + (why.length ? ' · <span style="color:var(--navy);">일치: ' + esc(why.join('·')) + '</span>' : '') + '</small>' + evLine(x.id, ($('sSubj') && $('sSubj').value.trim()) || '') + '</div>' +
           busyPickerHtml(x.id) + unavPickerHtml(x.id) +
           '<button type="button" class="detailBtn" data-detail="' + esc(x.id) + '">상세</button></div>';
       });
@@ -4970,10 +5048,12 @@
       '</div>' +
       '<div class="sec">서류 현황 ' + docBadge(x) + '</div>' + docTable(x) +
       planSecHtml(id, mine, viewer) +
+      (viewer ? '' : '<div class="sec">평가 점수 <span class="hint">(평가관리 반영 결과)</span></div><div data-evbox>' + evDetailHtml(id) + '</div>') +
       '<div class="sec">강의 이력 <span class="hint">(강의배정DB 편성 내역)</span></div><div class="hbox">' + sumHtml + mineHtml + '</div>' +
       '<div class="btns"><button type="button" class="btn" id="iClose">닫기</button>' +
       '<a class="btn" id="iToDash" href="instructor-dashboard.html#i=' + encodeURIComponent(id) + '" style="display:inline-flex;align-items:center;text-decoration:none;" title="강사관리 화면에서 이 강사의 상세 정보(서류·이력 등)를 엽니다">강사관리에서 보기</a>' +
       (canPick ? '<button type="button" class="btn primary" id="iPick" data-pick="' + esc(id) + '">이 강사 선택</button>' : '') + '</div>';
+    $('iCard').setAttribute('data-ev', id); ensureEval();
     $('iOverlay').style.display = 'flex';
     $('iClose').addEventListener('click', closeInstructor);
     Array.prototype.forEach.call($('iCard').querySelectorAll('[data-plink]'), function(b){
@@ -5621,6 +5701,7 @@
     return res;
   }
   function openCopy(){
+    ensureEval();
     if (isViewer()) return;
     var p = planByKey(currentKey);
     if (!p || isCancelled(p)) return;
@@ -5644,9 +5725,9 @@
       (others.length ? '<optgroup label="다른 과정 (이름이 비슷한 순)">' + others.map(optOf).join('') + '</optgroup>' : '');
     var trs = rows.map(function(r){
       var s0 = r.src, pt = periodText(s0), sid = esc(String(s0['편성ID']));
-      var who = cp.instr ? (s0['강사명'] || s0['강사ID'] || '미지정') : '(복사 안 함)';
+      var who = cp.instr ? esc(s0['강사명'] || s0['강사ID'] || '미지정') + evLine(String(s0['강사ID'] || ''), String(s0['교과목'] || '')) : '(복사 안 함)';
       return '<tr' + (r.err ? ' class="bad"' : (r.skip ? ' class="off"' : '')) + '><td class="nw"><input type="checkbox" data-cpk="' + sid + '" aria-label="이 교과목 복사"' + (r.err ? ' disabled' : (r.skip ? '' : ' checked')) + '></td><td class="nw">' + esc(md(s0['일자'])) + '</td><td class="nw">' + (r.date ? '→ <b>' + esc(md(r.date)) + '</b>' : '→ -') + '</td>' +
-        '<td class="nw">' + esc(pt.txt) + '</td><td>' + esc(s0['교과목']) + '</td><td class="nw">' + esc(s0['반'] || '전체') + '</td><td>' + esc(who) + '</td><td>' + esc(r.body.강의실 || '미정') + '</td>' +
+        '<td class="nw">' + esc(pt.txt) + '</td><td>' + esc(s0['교과목']) + '</td><td class="nw">' + esc(s0['반'] || '전체') + '</td><td>' + who + '</td><td>' + esc(r.body.강의실 || '미정') + '</td>' +
         '<td>' + (r.err ? '제외: ' + esc(r.err) : (r.skip ? '복사 안 함' : (r.note ? esc(r.note) : '복사'))) + '</td></tr>';
     }).join('');
     var cf = good.length ? copyConflicts(rows) : [];
