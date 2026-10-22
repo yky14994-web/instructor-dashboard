@@ -835,6 +835,28 @@
   input:not([type=checkbox]):not([type=radio]):focus,select:focus,textarea:focus{border-color:var(--navy);}
   @media (prefers-reduced-motion:reduce){tbody tr,.btn{transition:none;}.btn:active{transform:none;}}
 </style>
+<style id="hdrfix">
+  .crumbrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 12px;}
+  .crumbrow .crumb{margin:0;}
+  #helpToggle{flex:none;white-space:nowrap;}
+  #helpToggle[aria-pressed="true"]{background:var(--bg-soft);border-color:var(--navy);color:var(--navy);}
+  body:not(.hlp-on) .hlp{display:none !important;}
+  /* 10-22 PC: 교과목 목록 제목줄 — 새로고침 옆 가운데에 과정명 / 격자 교시 칸 가로·세로 가운데 */
+  .scn{display:none;}
+  @media screen and (min-width:761px){
+    #sListPanel h3{display:flex;align-items:center;gap:8px;}
+    #sListPanel h3 .vtabs{float:none;margin-left:0;}
+    #sListPanel h3 .scn{display:block;flex:1 1 auto;min-width:0;text-align:center;font-size:15px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 12px;}
+  }
+  table.g tbody th.pc{vertical-align:middle;text-align:center;}
+  @media print{ .scn{display:none !important;} }
+  /* 10-22 격자 카드 안 내용(교과목·강사·강의실 등)을 칸 안에서 가로·세로 가운데로 */
+  @media screen{
+    table.g td.c .gc{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;}
+    table.g td.c .gc .i{justify-content:center;}
+    table.g td.c .gc .n{align-self:stretch;}
+  }
+</style>
 <style id="evscore">
   /* 강사 평가 점수 표시(관리자 화면 전용): 별은 0.5점 단위로 채움 */
   .sc{display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px;font-size:12px;color:var(--text-sub);margin-top:2px;}
@@ -876,7 +898,7 @@
 <div id="app" style="display:none;">
 <nav class="gnav" aria-label="주 메뉴"><div class="gnav-in"><span class="gnav-brand"><span class="gb-name">소방교육 외래강사 <span class="on">ON</span></span><small class="gb-sub">AI 강사 추천·평가·환류 시스템</small></span><a class="gnav-i" href="home.html">홈</a><a class="gnav-i on" id="gnavAssign" aria-current="page" href="lecture-assignment.html#v=table">강의배정</a><a class="gnav-i" href="instructor-dashboard.html">강사관리</a><a class="gnav-i" id="gnavRoom" href="lecture-assignment.html#v=room">강의실</a><a class="gnav-i" id="navAdmin" href="admin.html" style="display:none">관리자</a><span class="gnav-school"><span class="gs-name">전남소방학교</span><small class="gs-ab">(JFSA)</small></span><button type="button" class="gnav-out" id="logoutBtn" aria-label="로그아웃" title="로그아웃"><span class="go-t">로그아웃</span><svg class="go-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></nav>
 <div class="wrap">
-  <div class="crumb" id="crumb"></div>
+  <div class="crumbrow"><div class="crumb" id="crumb"></div><button type="button" class="btn sm" id="helpToggle" aria-pressed="false" title="화면의 긴 설명 문구를 보이거나 숨깁니다">설명 보기</button></div>
   <header id="pageHead">
     <div>
       <div class="title" id="hTitle">연간 교육훈련계획</div>
@@ -918,13 +940,13 @@
     <input type="search" id="fText" placeholder="과정명 검색" aria-label="과정명 검색">
     <span class="spacer"></span>
     <span class="bgrp">
-      <button class="btn" id="reloadBtn" type="button">새로고침</button>
+      <button class="btn" id="reloadBtn" type="button" title="서버에서 최신 내용을 다시 불러옵니다">새로고침</button>
       <button class="btn" id="excelBtn" type="button">엑셀 내려받기</button>
       <select class="porient" id="oriTable" data-ori="table" aria-label="인쇄 용지 방향"></select>
       <button class="btn" id="printBtn" type="button">인쇄</button>
     </span>
   </div>
-  <div class="legend" id="planLegend" style="margin:0 2px 8px 2px;">확인 열에는 확인 필요(노랑)·오류(빨강)인 과정만 표시합니다. 표시가 없으면 이상 없음입니다. 표시 내용은 강의배정DB 연간계획 시트의 값입니다.</div>
+  <div class="legend hlp" id="planLegend" style="margin:0 2px 8px 2px;">확인 열에는 확인 필요(노랑)·오류(빨강)인 과정만 표시합니다. 표시가 없으면 이상 없음입니다. 표시 내용은 강의배정DB 연간계획 시트의 값입니다.</div>
 
   <div id="loading">불러오는 중입니다. 처음에는 몇 초 걸릴 수 있습니다.</div>
   <div id="weekNote" class="hint" style="display:none;margin:0 2px 8px 2px;"></div>
@@ -953,7 +975,8 @@
     <div class="panel" id="sHead"></div>
     <div class="panel" id="sFormPanel"></div>
     <div class="panel" id="sListPanel">
-      <h3>교과목 목록 <span class="hint">(날짜별)</span> <button class="btn sm" id="sReload" type="button" style="margin-left:8px;">새로고침</button>
+      <h3>교과목 목록 <span class="hint">(날짜별)</span> <button class="btn sm" id="sReload" type="button" style="margin-left:8px;" title="서버에서 최신 편성 내용을 다시 불러옵니다">새로고침</button>
+        <span id="sCourseName" class="scn"></span>
         <span id="sPrintBox" style="margin-left:6px;white-space:nowrap;"><select class="porient" id="oriList" data-ori="list" aria-label="인쇄 용지 방향" style="height:30px;"></select> <button class="btn sm" id="sPrint" type="button">인쇄</button></span>
         <span class="vtabs" role="tablist" aria-label="보기 전환"><button type="button" id="vList" class="on" role="tab">목록</button><button type="button" id="vGrid" role="tab">격자</button></span></h3>
       <div class="cline" id="sListLine"></div>
@@ -971,7 +994,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-21 배정 121</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-22 배정 126</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2147,7 +2170,7 @@
     if (sessionsOk) {
       var nx = nextNoSubj();
       html += nx.next
-        ? '<a class="btn primary" href="#c=' + encodeURIComponent(String(nx.next['과정+기수'])) + '" title="편성이 필요한 다음 과정(교과목이 없거나 빈 교시가 남은 과정)의 편성 화면으로 이동합니다">다음 편성할 과정 › ' + esc(String(nx.next['과정명'] || '') + ' ' + String(nx.next['기수'] || '')) + ' (남은 ' + nx.n + '과정)</a>'
+        ? '<a class="btn" href="#c=' + encodeURIComponent(String(nx.next['과정+기수'])) + '" title="편성이 필요한 다음 과정(교과목이 없거나 빈 교시가 남은 과정)의 편성 화면으로 이동합니다">다음 편성할 과정 › ' + esc(String(nx.next['과정명'] || '') + ' ' + String(nx.next['기수'] || '')) + ' (남은 ' + nx.n + '과정)</a>'
         : '';   // 10-19: 누를 수 없는 '없음' 표시는 두지 않음(3초 원칙 ⑤)
     }
     html += '<a class="btn" href="home.html#d=nosubj">← 편성이 필요한 과정 전체</a>';   // 10-20 금용님: 떠 있는 버튼은 빼고 기존 버튼에 화살표만
@@ -2369,21 +2392,21 @@
         '<div id="sChip"></div>' +
         '<div id="sRoleRow" style="display:flex;flex-wrap:wrap;gap:8px 20px;margin:8px 0 0;align-items:flex-start;">' +
           '<div id="sRoleWrap" style="display:none;flex:1 1 170px;min-width:0;"><div style="display:flex;align-items:center;gap:6px;"><label for="sRole" class="hint" style="margin:0;font-weight:700;" title="2명 이상이면 주·보조로 표시, 누적은 주강사만 집계">역할</label><select id="sRole" style="width:auto;"><option>주강사</option><option>보조강사</option></select></div>' +
-          '<div class="hint" style="margin-top:3px;font-size:12px;">누적은 주강사만 집계</div></div>' +
+          '<div class="hint hlp" style="margin-top:3px;font-size:12px;">누적은 주강사만 집계</div></div>' +
           '<div id="sTrainerWrap" style="display:none;flex:1 1 220px;min-width:0;"><div style="display:flex;align-items:center;gap:6px;"><label for="sTrainer" class="hint" style="margin:0;font-weight:700;">현장교관</label><select id="sTrainer" style="width:auto;"><option value="">아니오 (일반 강의)</option><option value="대표">예 · 설문 평가 대상 (대표)</option><option value="제외">예 · 설문 평가 제외</option></select></div>' +
-          '<div class="hint" style="margin-top:3px;font-size:12px;">설문 평가는 교과목당 대표 1명</div></div>' +
+          '<div class="hint hlp" style="margin-top:3px;font-size:12px;">설문 평가는 교과목당 대표 1명</div></div>' +
         '</div>' +
         '</div>' +
       '<div class="span2"><label for="sNote" id="sNoteLbl">비고</label><input type="text" id="sNote" maxlength="200" placeholder="선택 입력"></div>' +
       '<div class="span3" id="sNoPlanWrap" style="display:none;"><label for="sNoPlan" title="체크하면 이 과정의 같은 이름 교과목 전체가 강의계획서 제출 대상에서 빠지고, 마감·미제출 집계와 강사 안내 메일에도 나오지 않습니다." style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;"><input type="checkbox" id="sNoPlan" style="width:auto;height:auto;margin:0;">' +
         '<span style="font-weight:700;">강의계획서 제출 불필요</span></label>' +
-        '<div class="hint" id="sNoPlanHint">같은 이름 교과목 전체가 계획서 제출·마감 집계·안내 메일에서 빠집니다.</div></div>' +
+        '<div class="hint hlp" id="sNoPlanHint">같은 이름 교과목 전체가 계획서 제출·마감 집계·안내 메일에서 빠집니다.</div></div>' +
       '</div>' +
       '<div class="fbtn"><button type="button" class="btn primary" id="sSave">저장</button>' +
       '<button type="button" class="btn" id="sReset">입력 지우기</button>' +
       '<button type="button" class="btn danger" id="sDel" style="display:none;" title="이 교과목 편성을 삭제합니다">이 교과목 삭제</button>' +
       '<button type="button" class="btn" id="sOpsAuto" style="display:none;" title="이 과정의 첫날 1교시 입교안내, 마지막 날 마지막 교시 성과측정을 교육운영팀 운영으로 추가">운영팀 교시 자동 추가</button>' +
-      '<span id="sRange" style="font-size:13px;font-weight:700;color:var(--navy);"></span><span class="hint" id="sMode">겹침·기간 밖은 저장 후 경고로 알려 드립니다.</span></div>' +
+      '<span id="sRange" style="font-size:13px;font-weight:700;color:var(--navy);"></span><span class="hint hlp" id="sMode">겹침·기간 밖은 저장 후 경고로 알려 드립니다.</span></div>' +
       '<div id="sMsg"></div>';
     // 방 직접 입력 상태
     if (defRoom && rooms.indexOf(defRoom) === -1) { $('sRoomText').style.display = ''; $('sRoomText').value = defRoom; }
@@ -3181,7 +3204,7 @@
         }).join('') + '</tbody></table>' : '') + '</div>';
     box.innerHTML = '<div class="pcalbox">' + head + pcHead + '<table class="calt"><thead>' + thead + '</thead><tbody>' + body + '</tbody></table>' +
       '<div class="cagenda">' + (agenda || '<div class="tnone" style="padding:10px 0;">이 달에 표시할 과정이 없습니다.</div>') + '</div>' + leg +
-      '<div class="hint" style="margin-top:8px;">과정 칩이나 날짜를 누르면 그날의 교과목·강사·강의실이 열립니다. 입교·실습 기간의 평일은 교과목 편성 전에도 표시됩니다.</div></div>';
+      '<div class="hint hlp" style="margin-top:8px;">과정 칩이나 날짜를 누르면 그날의 교과목·강사·강의실이 열립니다. 입교·실습 기간의 평일은 교과목 편성 전에도 표시됩니다.</div></div>';
   }
   /* ---------- 빈 강의실 조회 ---------- */
   var roomDate = '', roomS = 0, roomE = 0, roomMonth = '', roomMonthRoom = '';
@@ -3424,7 +3447,7 @@
       '<div class="rmq"><span class="lb">화면 표시</span><select id="roomMonthRoomSel" aria-label="표시할 강의실">' + ropts + '</select><span class="lb">엑셀은 항상 전체 강의실</span></div>' +
       '<div class="calleg" style="margin:4px 0 2px;"><span><i style="background:#DCE8F8"></i>편성된 교과목 사용</span><span><i style="background:#FFF1BF"></i>연간계획 예정(편성 전)</span><span><i style="background:#E6DDF5"></i>예약 포함(사전확보·대관)</span><span><i style="border-color:#D8574B"></i>같은 날 겹침</span><span><i style="background:var(--bg-hover)"></i>주말</span></div>' +
       '<div class="rmm"><table class="rmmt"><thead>' + th + '</thead><tbody>' + rowsHtml + '</tbody></table></div>' +
-      '<div class="hint" style="margin-top:6px;">칸을 누르면 그날 일정이 열립니다.</div>';
+      '<div class="hint hlp" style="margin-top:6px;">칸을 누르면 그날 일정이 열립니다.</div>';
   }
 
   /* ---------- 강의실 예약(사전확보·대관) ---------- */
@@ -3468,7 +3491,7 @@
       else form = '<div class="rvbox">' + secHead('add', rvSt.editId ? '예약 수정' : '강의실 예약 추가', '') +
         '<div class="rmq" style="margin-bottom:4px;"><label><input type="radio" name="rvType" value="사전확보" ' + (rvSt.type === '사전확보' ? 'checked' : '') + '> 사전확보 <small class="hint">과정은 있고 교과목은 아직 미편성</small></label> ' +
         '<label><input type="radio" name="rvType" value="대관" ' + (rvSt.type === '대관' ? 'checked' : '') + '> 대관 <small class="hint">과정·교과목 없이 다른 용도</small></label></div>' +
-        '<div class="hint" style="margin-bottom:6px;">※ 여기서 저장하면 승인 절차 없이 바로 예약으로 등록됩니다. 직원이 조회 전용으로 신청한 대관은 아래 \'대관 신청 승인 대기\'에 표시됩니다.</div>' +
+        '<div class="hint hlp" style="margin-bottom:6px;">※ 여기서 저장하면 승인 절차 없이 바로 예약으로 등록됩니다. 직원이 조회 전용으로 신청한 대관은 아래 \'대관 신청 승인 대기\'에 표시됩니다.</div>' +
         '<div class="rvf">' +
         '<label>시작일' + dateIn('rvFrom', rvSt.from) + '</label>' +
         (rvSt.editId ? '' : '<label>종료일(하루면 비움)' + dateIn('rvTo', rvSt.to) + '</label>') +
@@ -3601,7 +3624,7 @@
       var ds = rqDates();
       var sum = ds.length ? '신청 날짜 ' + ds.length + '일' + (ds.length > 1 ? ' (' + md(ds[0]) + ' ~ ' + md(ds[ds.length - 1]) + ')' : '') : '시작 날짜를 입력해 주세요.';
       form = '<div class="rvbox"><h4>강의실 대관 신청</h4>' +
-        '<div class="hint" style="margin-bottom:6px;">담당자가 확인·승인하면 강의실 예약(대관)으로 등록됩니다. 승인 전에는 강의실이 확보된 것이 아니므로, 위 격자에서 비어 있는 시간을 확인한 뒤 신청해 주세요. 반려되면 이 목록에서 사라지며 결과 안내는 따로 가지 않습니다(연락처로 담당자가 확인).</div>' +
+        '<div class="hint hlp" style="margin-bottom:6px;">담당자가 확인·승인하면 강의실 예약(대관)으로 등록됩니다. 승인 전에는 강의실이 확보된 것이 아니므로, 위 격자에서 비어 있는 시간을 확인한 뒤 신청해 주세요. 반려되면 이 목록에서 사라지며 결과 안내는 따로 가지 않습니다(연락처로 담당자가 확인).</div>' +
         '<div class="rvf">' +
         '<label>시작일' + dateIn('rqFrom', rqSt.from) + '</label>' +
         '<label>종료일(하루면 비움)' + dateIn('rqTo', rqSt.to) + '</label>' +
@@ -4394,6 +4417,7 @@
     var viewer = isViewer();
     updOpsAuto();
     $('sListLine').innerHTML = courseLine(p);
+    var scn = $('sCourseName'); if (scn) { scn.textContent = p ? courseLabel(currentKey) : ''; scn.title = scn.textContent; }
     buildRoleCnt();
     var gridOn = viewMode === 'grid';
     $('sGridWrap').style.display = gridOn ? '' : 'none';
@@ -4818,7 +4842,7 @@
     });
     var totalCols = lay.reduce(function(a, l){ return a + l.lanes; }, 0);
     var head = '<tr><th class="pc">교시</th>' + days.map(function(d, i){
-      return '<th colspan="' + lay[i].lanes + '" data-d="' + i + '" class="' + (d === today ? 'today ' : '') + (i === gridDay ? 'dshow' : '') + '">' + esc(DOW[parseYmd(d).dow]) + '<small>' + esc(md(d).replace(/\(.\)/, '')) + (d === today ? '<span class="gtod"> · 오늘</span>' : '') + '</small>' + (sessEnded(d) ? '<span class="gend" title="종료된 일정(강의일 당일 17:50 이후)에는 교과목을 배정할 수 없습니다">편성 불가</span>' : '') + '</th>';
+      return '<th colspan="' + lay[i].lanes + '" data-d="' + i + '" class="' + (d === today ? 'today ' : '') + (i === gridDay ? 'dshow' : '') + '">' + esc(DOW[parseYmd(d).dow]) + '<small>' + esc(md(d).replace(/\(.\)/, '')) + (d === today ? '<span class="gtod"> · 오늘</span>' : '') + '</small>' + '</th>';
     }).join('') + '</tr>';
     var body = '';
     pl.forEach(function(n, ri){
@@ -4891,8 +4915,8 @@
       '<span class="docleg"><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">재동의 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
       mvBarHtml() + empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
-      '<div class="hint gnp ghelp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : formState === 'end' ? '종료된 과정이라 칸을 눌러도 수정창이 열리지 않습니다. 편성 기록 삭제는 목록 보기에서 할 수 있습니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
-      (sessEnded(mon) ? '<div class="hint gnp" style="margin-top:4px;">강의일 당일 17:50 이후는 종료된 일정으로 보며, 종료된 일정의 교과목은 배정·수정·삭제할 수 없습니다.</div>' : '') + '</div>';
+      '<div class="hint gnp ghelp hlp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : formState === 'end' ? '종료된 과정이라 칸을 눌러도 수정창이 열리지 않습니다. 편성 기록 삭제는 목록 보기에서 할 수 있습니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
+      (sessEnded(mon) ? '<div class="hint gnp hlp" style="margin-top:4px;">강의일 당일 17:50 이후는 종료된 일정으로 보며, 종료된 일정의 교과목은 배정·수정·삭제할 수 없습니다.</div>' : '') + '</div>';
   }
   /* 과정 전체(모든 주차)를 한 파일로: 주차마다 1페이지로 이어 붙여 인쇄. 파일명(브라우저 PDF 저장 기본값)은 "제N기 과정명" */
   function courseFileName(p){
@@ -6076,6 +6100,14 @@
   document.addEventListener('change', function(ev){
     if (ev.target && ev.target.id === 'gWeek') { gridWeek = ev.target.value; gridDay = -1; renderSessionList(); }
   });
+  /* 10-22 설명 문구 보기/숨기기: 기본은 숨김, 선택은 이 브라우저에 기억 */
+  (function(){
+    var on = false; try { on = localStorage.getItem('jsfa_la_help') === '1'; } catch (e) {}
+    var b = $('helpToggle');
+    function apply(){ document.body.classList.toggle('hlp-on', on); if (b) { b.textContent = on ? '설명 숨기기' : '설명 보기'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); } }
+    apply();
+    if (b) b.addEventListener('click', function(){ on = !on; try { localStorage.setItem('jsfa_la_help', on ? '1' : '0'); } catch (e) {} apply(); });
+  })();
   $('sReload').addEventListener('click', function(){
     var pw = getPw(); if (!pw) return;
     var b = $('sReload'); b.disabled = true; b.textContent = '불러오는 중...';
