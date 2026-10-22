@@ -850,6 +850,10 @@
   }
   table.g tbody th.pc{vertical-align:middle;text-align:center;}
   @media print{ .scn{display:none !important;} }
+  .gc.gchl{outline:3px solid #D98200;outline-offset:-2px;box-shadow:0 0 0 4px rgba(217,130,0,.25);animation:gchlp 1.1s ease-in-out 4;}
+  @keyframes gchlp{0%,100%{box-shadow:0 0 0 4px rgba(217,130,0,.25);}50%{box-shadow:0 0 0 9px rgba(217,130,0,.08);}}
+  @media (prefers-reduced-motion:reduce){ .gc.gchl{animation:none;} }
+  @media print{ .gc.gchl{outline:none;box-shadow:none;animation:none;} }
   /* 10-22 격자 카드 안 내용(교과목·강사·강의실 등)을 칸 안에서 가로·세로 가운데로 */
   @media screen{
     table.g td.c .gc{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;}
@@ -994,7 +998,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-22 배정 126</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-22 배정 127</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2077,6 +2081,7 @@
       viewMode = 'grid'; try { sessionStorage.setItem('jsfa_la_view', 'grid'); } catch (e) {}
       gridKeepWeek = mondayOf(dm[1]); gridWantDate = dm[1];
       lastDate = dm[1];   // 교과목 추가 칸의 일자 기본값을 누른 날짜로
+      var sm = /[#&]s=([A-Za-z0-9_-]{1,60})(?:&|$)/.exec(location.hash || ''); gridHlId = sm ? sm[1] : '';   // 강사관리 '강의배정에서 보기': 해당 칸 강조
     }
     if (currentKey === key && $('editView').style.display === 'block') { refreshEditList(); return; }
     showEdit(key);
@@ -4481,7 +4486,7 @@
 
   /* --- 격자 보기(주 단위, 날짜×교시) --- */
   var viewMode = 'list', gridWeek = '', gridDay = -1;
-  var gridScope = 'one', gridHide = {}, gridKeepWeek = '', gridWantDate = '';   // gridScope: 'one'=이 과정만, 'all'=같은 주에 진행되는 과정 전체
+  var gridScope = 'one', gridHide = {}, gridKeepWeek = '', gridWantDate = '', gridHlId = '';   // gridScope: 'one'=이 과정만, 'all'=같은 주에 진행되는 과정 전체
   var GCOL = ['#2F6DB5', '#2E8B57', '#8A4FBF', '#D9822B', '#C2477A', '#2A9DA8', '#7A7F2A', 'var(--text-muted)'];
   try { if (sessionStorage.getItem('jsfa_la_gscope') === 'all') gridScope = 'all'; } catch (e) {}
   try { if (sessionStorage.getItem('jsfa_la_view') === 'grid') viewMode = 'grid'; } catch (e) {}
@@ -4784,7 +4789,7 @@
     } else if (canEdit && mvOn() && !mv && !isViewer() && !cont && !sessEnded(r['일자'])) {
       body += '<button type="button" class="mvb" data-mvsel="' + esc(gid) + '" title="이 교과목을 다른 칸으로 이동하거나 다른 교과목과 맞바꿉니다">⇄ 이동·맞바꾸기</button>';
     }
-    return '<div class="gc' + cls + mvc + ((canEdit || other) && !(mvc === ' mvsel') ? ' ed' : '') + '"' + act + (cx ? ' style="border-left:5px solid ' + cx.color + ';"' : '') + '>' + body + '</div>';
+    return '<div class="gc' + cls + mvc + ((canEdit || other) && !(mvc === ' mvsel') ? ' ed' : '') + '" data-sids="' + esc(u.map(function(x){ return String(x['편성ID'] || ''); }).join(',')) + '"' + act + (cx ? ' style="border-left:5px solid ' + cx.color + ';"' : '') + '>' + body + '</div>';
   }
   function renderGrid(p, list){
     var box = $('sGridWrap');
@@ -4917,6 +4922,18 @@
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
       '<div class="hint gnp ghelp hlp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : formState === 'end' ? '종료된 과정이라 칸을 눌러도 수정창이 열리지 않습니다. 편성 기록 삭제는 목록 보기에서 할 수 있습니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
       (sessEnded(mon) ? '<div class="hint gnp hlp" style="margin-top:4px;">강의일 당일 17:50 이후는 종료된 일정으로 보며, 종료된 일정의 교과목은 배정·수정·삭제할 수 없습니다.</div>' : '') + '</div>';
+    if (gridHlId) applyGridHl();
+  }
+  /* 강사관리 '강의배정에서 보기'로 온 경우: 해당 칸을 강조하고 화면 가운데로 */
+  var gridHlTimer = 0;
+  function applyGridHl(){
+    var id = gridHlId; if (!id) return;
+    var cells = [].slice.call(document.querySelectorAll('#sGridWrap .gc[data-sids]')).filter(function(c){ return c.getAttribute('data-sids').split(',').indexOf(id) > -1; });
+    if (!cells.length) return;
+    cells.forEach(function(c){ c.classList.add('gchl'); });
+    clearTimeout(gridHlTimer);
+    gridHlTimer = setTimeout(function(){ gridHlId = ''; [].forEach.call(document.querySelectorAll('.gc.gchl'), function(c){ c.classList.remove('gchl'); }); }, 8000);
+    setTimeout(function(){ try { cells[0].scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { cells[0].scrollIntoView(); } }, 120);
   }
   /* 과정 전체(모든 주차)를 한 파일로: 주차마다 1페이지로 이어 붙여 인쇄. 파일명(브라우저 PDF 저장 기본값)은 "제N기 과정명" */
   function courseFileName(p){

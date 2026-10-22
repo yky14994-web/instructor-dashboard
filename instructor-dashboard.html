@@ -1233,7 +1233,8 @@
             : '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:#FCEBEB;color:#A32D2D;margin-left:6px;">강의계획서 미제출</span>')
           : '';
         var when = (h.교시 ? h.교시 : '') + (h.시간 ? (h.교시 ? ' (' + h.시간 + ')' : h.시간) : '');
-        var openUrl = 'lecture-assignment.html#c=' + encodeURIComponent(h.강의명 || '') + '&from=dash';
+        var dm0 = /^(\d{4})\D+(\d{1,2})\D+(\d{1,2})/.exec(String(h.일자 || '')), dq = dm0 ? dm0[1] + '-' + ('0' + dm0[2]).slice(-2) + '-' + ('0' + dm0[3]).slice(-2) : '';
+        var openUrl = 'lecture-assignment.html#c=' + encodeURIComponent(h.강의명 || '') + '&from=dash' + (dq ? '&d=' + dq : '') + (dq && h.이력ID ? '&s=' + encodeURIComponent(h.이력ID) : '');   // 그 날짜 주의 격자로 열고 해당 칸을 강조
         return '<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(20,20,19,0.06);' + (isCancelled ? 'opacity:0.55;' : '') + '">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
             '<div style="font-size:14px;color:var(--text);font-weight:700;">' + escapeAttr(h.강의명||'') + roleBadge + '</div>' +
