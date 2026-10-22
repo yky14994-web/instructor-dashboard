@@ -998,7 +998,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-22 배정 127</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-23 배정 129</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -5703,7 +5703,7 @@
       var s0 = String(src[g[0]] || ''), e0 = String(src[g[1]] || '');
       if (!s0 || !e0 || dateStr < s0 || dateStr > e0) continue;
       var s1 = String(dst[g[0]] || ''), e1 = String(dst[g[1]] || '');
-      if (!s1 || !e1) return { err: '새 기수에 ' + g[2] + ' 기간이 없음' };
+      if (!s1 || !e1) return { err: '본 과정에 ' + g[2] + ' 기간이 없음' };
       var a = ymdToDate(s0), b = ymdToDate(s1), nd, note = '';
       if (isWeekendDate(d)) {
         nd = new Date(b.getFullYear(), b.getMonth(), b.getDate() + Math.round((d - a) / 86400000));
@@ -5719,7 +5719,7 @@
       if (out < s1 || out > e1) return { date: out, err: '새 ' + g[2] + ' 기간 밖(' + md(out) + ')' };
       return { date: out, note: note };
     }
-    return { err: '원본 과정의 입교·실습 기간 밖 일정' };
+    return { err: '지난 과정의 입교·실습 기간 밖 일정' };
   }
   function buildCopyRows(){
     var p = planByKey(currentKey), src = planByKey(cp.src);
@@ -5779,9 +5779,9 @@
     var otherSrc = !!src && String(src['과정명']) !== String(p['과정명']);
     function optOf(q){
       var k = q['과정+기수'];
-      return '<option value="' + esc(k) + '"' + (k === cp.src ? ' selected' : '') + '>' + esc(courseLabel(k) + ' · ' + range(q['입교 시작일'], q['입교 종료일']) + ' · ' + subjText(sessionsByKey[k] || { total: 0, assigned: 0, ops: 0 }, false).replace(/ 중 \d+개 배정/, '').replace(/^교과목 (\d+)개$/, '교과목 $1개')) + '</option>';
+      return '<option value="' + esc(k) + '"' + (k === cp.src ? ' selected' : '') + '>' + esc((function(){ var y = String(normYmd(q['입교 시작일']) || '').slice(0, 4); return y ? y + '년 ' : ''; })() + courseLabel(k) + ' · ' + range(q['입교 시작일'], q['입교 종료일']) + ' · ' + subjText(sessionsByKey[k] || { total: 0, assigned: 0, ops: 0 }, false).replace(/ 중 \d+개 배정/, '').replace(/^교과목 (\d+)개$/, '교과목 $1개')) + '</option>';
     }
-    var opts = (cands.length ? (others.length ? '<optgroup label="같은 과정">' : '') + cands.map(optOf).join('') + (others.length ? '</optgroup>' : '') : '') +
+    var opts = (cands.length ? (others.length ? '<optgroup label="같은 과정 (최근 기수 순)">' : '') + cands.slice().reverse().map(optOf).join('') + (others.length ? '</optgroup>' : '') : '') +
       (others.length ? '<optgroup label="다른 과정 (이름이 비슷한 순)">' + others.map(optOf).join('') + '</optgroup>' : '');
     var trs = rows.map(function(r){
       var s0 = r.src, pt = periodText(s0), sid = esc(String(s0['편성ID']));
@@ -5801,15 +5801,15 @@
     } else if (good.length) cfHtml = '<div class="box i">복사했을 때 생기는 겹침 경고는 없습니다.</div>';
     $('pCard').innerHTML =
       '<div class="top"><h2>' + (otherSrc || !cands.length ? '다른 과정에서 가져오기' : '이전 기수에서 복사') + '</h2><span class="hint">' + esc(courseLabel(currentKey)) + ' · ' + esc(ipgyo(p)) + '</span></div>' +
-      '<div class="opt"><div><label class="l" for="pSrc">원본 과정·기수</label><select id="pSrc">' + opts + '</select></div>' +
-      '<div><label class="l" for="pRoom">강의실</label><select id="pRoom"><option value="src"' + (cp.room === 'src' ? ' selected' : '') + '>원본 그대로</option><option value="plan"' + (cp.room === 'plan' ? ' selected' : '') + '>새 기수 예정 강의실로 통일</option></select></div>' +
+      '<div class="opt"><div><label class="l" for="pSrc">지난 과정·기수</label><select id="pSrc">' + opts + '</select></div>' +
+      '<div><label class="l" for="pRoom">강의실</label><select id="pRoom"><option value="src"' + (cp.room === 'src' ? ' selected' : '') + '>지난 과정 그대로</option><option value="plan"' + (cp.room === 'plan' ? ' selected' : '') + '>본 과정 예정 강의실로 통일</option></select></div>' +
       '<div><label class="ck"><input type="checkbox" id="pInstr"' + (cp.instr ? ' checked' : '') + '> 강사도 복사</label></div></div>' +
-      '<div class="sumline">원본 ' + (src ? esc(range(src['입교 시작일'], src['입교 종료일'])) : '') + ' → 새 기수 ' + esc(ipgyo(p)) + ' · 교육 구간별 평일 n일차 기준으로 날짜를 옮깁니다. ' +
+      '<div class="sumline">지난 과정 ' + (src ? esc(range(src['입교 시작일'], src['입교 종료일'])) : '') + ' → 본 과정 ' + esc(ipgyo(p)) + ' · 교육 구간별 평일 n일차 기준으로 날짜를 옮깁니다. ' +
       '<b>복사 ' + good.length + '줄</b>' + (skipped ? ' · 뺀 ' + skipped + '줄' : '') + (bad ? ' · <span style="color:var(--err-fg);font-weight:700;">제외 ' + bad + '줄(아래 표 확인)</span>' : '') + '</div>' +
       (otherSrc ? '<div class="box w"><b>다른 과정(' + esc(courseLabel(cp.src)) + ')에서 가져옵니다.</b> 교과목·교시·강의실' + (cp.instr ? '·강사' : '') + '가 그대로 들어오니, 이 과정에 맞지 않는 줄은 체크를 풀어 빼 주세요.</div>' : '') +
-      '<div class="pwrap"><table><thead><tr><th class="nw"><input type="checkbox" id="pAll" aria-label="전체 선택"' + (rows.length && !skipped ? ' checked' : '') + '></th><th>원본 일자</th><th>새 일자</th><th>교시</th><th>교과목</th><th>반</th><th>강사</th><th>강의실</th><th>결과</th></tr></thead><tbody>' + trs + '</tbody></table></div>' +
+      '<div class="pwrap"><table><thead><tr><th class="nw"><input type="checkbox" id="pAll" aria-label="전체 선택"' + (rows.length && !skipped ? ' checked' : '') + '></th><th>지난 과정 일자</th><th>본 과정 일자</th><th>교시</th><th>교과목</th><th>반</th><th>강사</th><th>강의실</th><th>결과</th></tr></thead><tbody>' + trs + '</tbody></table></div>' +
       cfHtml +
-      '<div class="box w">원본 내용을 그대로 가져옵니다. 저장 후 교과목 편성 화면의 "수정"에서 <b>날짜·교시·교과목·반·강의실·강사·비고를 모두 바꿀 수 있고</b>, 필요 없는 줄은 삭제할 수 있습니다. <b>복사 저장 시 강사에게 안내(메일·문자)는 자동으로 가지 않습니다.</b> 안내가 필요한 교과목은 저장 후 "안내 재발송"으로 보내 주세요.' + (cp.instr ? ' 강사가 달라지는 기수라면 "강사도 복사"를 해제해 비워 둘 수 있습니다.' : ' 강사는 비어 있는 상태("미지정")로 저장됩니다.') + '</div>' +
+      '<div class="box w">지난 과정 내용을 그대로 가져옵니다. 저장 후 교과목 편성 화면의 "수정"에서 <b>날짜·교시·교과목·반·강의실·강사·비고를 모두 바꿀 수 있고</b>, 필요 없는 줄은 삭제할 수 있습니다. <b>복사 저장 시 강사에게 안내(메일·문자)는 자동으로 가지 않습니다.</b> 안내가 필요한 교과목은 저장 후 "안내 재발송"으로 보내 주세요.' + (cp.instr ? ' 강사가 달라지는 기수라면 "강사도 복사"를 해제해 비워 둘 수 있습니다.' : ' 강사는 비어 있는 상태("미지정")로 저장됩니다.') + '</div>' +
       '<div class="msg" id="pMsg"></div>' +
       '<div class="btns"><button type="button" class="btn" id="pClose">닫기</button><button type="button" class="btn primary" id="pSave"' + (good.length ? '' : ' disabled') + '>' + good.length + '줄 복사해 저장</button></div>';
     $('pClose').addEventListener('click', closeCopy);
@@ -5850,7 +5850,7 @@
       if (p) { renderHead(p); renderSessionList(); }
       var nIns = (j.data || []).filter(function(r){ return r['강사ID'] || r['강사명']; }).length;
       showMsg('ok', courseLabel(srcKey) + '에서 교과목 ' + (j.개수 || good.length) + '줄을 복사했습니다. ' +
-        (useInstr ? '강사 ' + nIns + '줄은 원본 그대로 복사했으니, 달라지는 교과목은 "수정"에서 바꿔 주세요. ' : '강사는 비워 두었습니다("강사 지정"으로 입력). ') +
+        (useInstr ? '강사 ' + nIns + '줄은 지난 과정 그대로 복사했으니, 달라지는 교과목은 "수정"에서 바꿔 주세요. ' : '강사는 비워 두었습니다("강사 지정"으로 입력). ') +
         '강사 안내는 자동으로 가지 않았습니다(필요한 건은 "안내 재발송"). ' +
         ((j.warnings || []).length ? ' 확인 필요: ' + j.warnings.join(' / ') + '.' : ''));
       window.scrollTo(0, 0);
