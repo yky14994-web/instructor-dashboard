@@ -381,7 +381,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-21 홈 98</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-21 홈 99</div>
 </div>
 </div>
 
@@ -1571,7 +1571,7 @@
   var lastLoad = '';
   function tickClock(){
     var n = new Date();
-    $('clock').textContent = n.getFullYear() + '년 ' + (n.getMonth() + 1) + '월 ' + n.getDate() + '일 (' + DOW[n.getDay()] + ') ' + ('0' + n.getHours()).slice(-2) + ':' + ('0' + n.getMinutes()).slice(-2) + (lastLoad ? ' · 마지막 새로고침 ' + lastLoad : '');
+    $('clock').textContent = n.getFullYear() + '년 ' + (n.getMonth() + 1) + '월 ' + n.getDate() + '일 (' + DOW[n.getDay()] + ')' + (lastLoad ? ' · 마지막 새로고침 ' + lastLoad : '');   // 현재 시각을 따로 두면 새로고침 직후 같은 시각이 두 번 보임 → 날짜 + 마지막 새로고침만
   }
   function updateQuickLinks(){
     var t = todayStr();
