@@ -325,6 +325,27 @@
   tbody tr:hover td{background:#F7F9FC;}
   @media (prefers-reduced-motion:reduce){tbody tr,.btn{transition:none;}.btn:active{transform:none;}}
   @media (max-width:640px){ .btn.sm{height:40px;} }
+  /* ===== 마이크로 인터랙션 A안 (10-24): 눌림·펼침·팝업 등장·저장 강조·불러오는 중 표시. 0.2초 이하, 이동·투명도만 사용 ===== */
+  html{-webkit-tap-highlight-color:transparent;}
+  .mi-spin::before{content:'';display:inline-block;width:11px;height:11px;margin-right:6px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-1px;box-sizing:border-box;}
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes miFade{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+    @keyframes miChev{from{transform:rotate(180deg);}to{transform:none;}}
+    @keyframes miBg{from{opacity:0;}to{opacity:1;}}
+    @keyframes miPop{from{opacity:0;transform:translateY(8px) scale(.985);}to{opacity:1;transform:none;}}
+    @keyframes miSheet{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:none;}}
+    @keyframes miGlow{from{box-shadow:inset 0 0 0 999px rgba(255,205,40,.42);}to{box-shadow:inset 0 0 0 999px rgba(255,205,40,0);}}
+    @keyframes miSpin{to{transform:rotate(360deg);}}
+    .mi-open{animation:miFade .2s cubic-bezier(.2,.8,.2,1);}
+    .mi-chev .ic,.mi-open .secgo .ic,.mi-open .sechead .ic{animation:miChev .2s cubic-bezier(.2,.8,.2,1);}
+    .mi-saved,tr.mi-saved>td{animation:miGlow 1.4s ease-out;}
+    .mi-spin::before{animation:miSpin .7s linear infinite;}
+  }
+  table.st tr.rowlink:active>td{background:#EEF2F7;}
+  @media (prefers-reduced-motion:no-preference){
+    .btn{transition:background-color .15s ease,border-color .15s ease,color .15s ease,transform .1s ease;}
+    #app.mi-desc.showdesc .cdesc,#app.mi-desc.showdesc div.hint,#app.mi-desc.showdesc #cTodo li .l small,#app.mi-desc.showdesc #detail .l small,#app.mi-desc.showdesc .dsec .dx{animation:miFade .2s ease-out;}
+  }
 </style>
 </head>
 <body>
@@ -381,7 +402,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-21 홈 99</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-24 홈 100</div>
 </div>
 </div>
 
@@ -1672,11 +1693,11 @@
     var b = $('descToggle');
     function set(v){ on = v; $('app').classList.toggle('showdesc', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.textContent = on ? '설명 숨기기' : '설명 보기'; try { localStorage.setItem('jsfa_home_desc', on ? '1' : '0'); } catch (e) {} }
     set(on);
-    b.addEventListener('click', function(){ set(!on); });
+    b.addEventListener('click', function(){ var ap = $('app'); ap.classList.add('mi-desc'); setTimeout(function(){ ap.classList.remove('mi-desc'); }, 450); set(!on); });
   })();
   $('reloadBtn').addEventListener('click', function(){
-    var b = this; b.disabled = true; b.textContent = '불러오는 중...';
-    loadAll(getPw(), true).catch(function(err){ showMsg('err', err.message || '불러오지 못했습니다'); }).finally(function(){ b.disabled = false; b.textContent = '새로고침'; });
+    var b = this; b.disabled = true; b.textContent = '불러오는 중...'; b.classList.add('mi-spin');
+    loadAll(getPw(), true).catch(function(err){ showMsg('err', err.message || '불러오지 못했습니다'); }).finally(function(){ b.disabled = false; b.textContent = '새로고침'; b.classList.remove('mi-spin'); });
   });
   /* 로그아웃: 이 탭에 저장된 비밀번호·권한·임시 목록을 지우고 로그인 화면으로 */
   $('logoutBtn').addEventListener('click', function(){

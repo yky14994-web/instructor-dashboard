@@ -885,6 +885,32 @@
   .sc .low{color:var(--text-muted);}
   .scbox{display:grid;gap:6px;margin:2px 0 4px;}
   .scbox table{width:100%;font-size:13px;}
+  /* ===== 마이크로 인터랙션 A안 (10-24): 눌림·펼침·팝업 등장·저장 강조·불러오는 중 표시. 0.2초 이하, 이동·투명도만 사용 ===== */
+  html{-webkit-tap-highlight-color:transparent;}
+  .mi-spin::before{content:'';display:inline-block;width:11px;height:11px;margin-right:6px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-1px;box-sizing:border-box;}
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes miFade{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+    @keyframes miChev{from{transform:rotate(180deg);}to{transform:none;}}
+    @keyframes miBg{from{opacity:0;}to{opacity:1;}}
+    @keyframes miPop{from{opacity:0;transform:translateY(8px) scale(.985);}to{opacity:1;transform:none;}}
+    @keyframes miSheet{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:none;}}
+    @keyframes miGlow{from{box-shadow:inset 0 0 0 999px rgba(255,205,40,.42);}to{box-shadow:inset 0 0 0 999px rgba(255,205,40,0);}}
+    @keyframes miSpin{to{transform:rotate(360deg);}}
+    .mi-open{animation:miFade .2s cubic-bezier(.2,.8,.2,1);}
+    .mi-chev .ic,.mi-open .secgo .ic,.mi-open .sechead .ic{animation:miChev .2s cubic-bezier(.2,.8,.2,1);}
+    .mi-saved,tr.mi-saved>td{animation:miGlow 1.4s ease-out;}
+    .mi-spin::before{animation:miSpin .7s linear infinite;}
+  }
+  .rgt td.cl:active,.rgt td[data-cday]:active,.gc.ed:active,.rmmt td.u:active,.rmmt td.pl:active{filter:brightness(.9);}
+  @media (prefers-reduced-motion:no-preference){
+    .btn{transition:background-color .15s ease,border-color .15s ease,color .15s ease,transform .1s ease;}
+    #iOverlay,#bOverlay,#cOverlay,#pOverlay,body>div[role="dialog"]{animation:miBg .15s ease-out;}
+    #iCard,#bCard,#cCard,#pCard,body>div[role="dialog"]>div{animation:miPop .18s cubic-bezier(.2,.8,.2,1);}
+    @keyframes miPopC{from{opacity:0;transform:translate(-50%,-48%);}to{opacity:1;transform:translate(-50%,-50%);}}
+    #sFormPanel.fmodal{animation:miPopC .18s cubic-bezier(.2,.8,.2,1);}
+    body.mi-hlp .hlp{animation:miFade .2s ease-out;}
+    @media (max-width:640px){ #iCard,#bCard,#cCard,#pCard,body>div[role="dialog"]>div{animation-name:miSheet;} }
+  }
 </style>
 </head>
 <body>
@@ -1011,7 +1037,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-23 배정 137</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-24 배정 138</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2826,6 +2852,7 @@
       box.innerHTML = '<div class="note-ok">' + html + '</div>' + noticeBoxHtml(res['안내']) +
         (warns.length ? '<div class="note-warn"><b>확인이 필요합니다(저장은 되었습니다)</b><br>' + warns.map(function(w){ return '· ' + esc(w); }).join('<br>') + '</div>' : '');
       var savedId = String(res.data['편성ID']);
+      setTimeout(function(){ miSavedSess(savedId); }, 30);
       var mine = cfl.filter(function(c){ return !c.conf && (c.a.ids.indexOf(savedId) > -1 || c.b.ids.indexOf(savedId) > -1); });
       if (mine.length) {
         box.innerHTML += '<div class="note-warn" style="background:var(--err-bg);color:#7A140D;"><b>겹침이 있습니다(저장은 되었습니다)</b>' + mine.map(function(c){
@@ -3572,6 +3599,8 @@
     var body = { action: 'saveReservation', password: getPw(), 유형: rvSt.type, 시작교시: s, 끝교시: e, 강의실: rvSt.room,
       개설키: rvSt.type === '사전확보' ? rvSt.key : '', 사유: rvSt.type === '대관' ? String(rvSt.reason).trim() : '', 연락처: rvSt.contact.trim(), 비고: rvSt.note.trim() };
     if (rvSt.editId) { body.예약ID = rvSt.editId; body.일자 = ds[0]; } else body.일자들 = ds;
+    var miBefore = {}, miEdit = rvSt.editId || '';
+    resv.forEach(function(x){ miBefore[String(x['예약ID'])] = 1; });
     rvSt.busy = true; rvSt.msg = ''; renderRoomFree();
     api(body).then(function(res){
       rvSt.busy = false;
@@ -3581,6 +3610,7 @@
         rvReset(); rvSt.type = keepType;
         rvSt.msg = '<span style="color:#1F6B2B;">저장했습니다(' + (res.count || 1) + '건).</span>' + (w ? ' <span style="color:#7A5B00;">주의: ' + esc(w) + '</span>' : '');
         renderRoomFree();
+        setTimeout(function(){ [].forEach.call(document.querySelectorAll('[data-cm^="rv:edit:"]'), function(b){ var id = b.getAttribute('data-cm').slice(8); if (!miBefore[id] || id === miEdit) miFlash(b.closest('tr'), 'mi-saved', 1500); }); }, 30);
       });
     }).catch(function(){ rvSt.busy = false; rvSt.msg = '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'; renderRoomFree(); });
   }
@@ -3768,12 +3798,19 @@
   function secHead(key, title, sub){
     return '<div class="sechead"><span>' + title + (sub ? '<small>' + sub + '</small>' : '') + '</span><button type="button" class="btn sm" data-cm="rm:sec:' + key + '" aria-expanded="true">접기' + ic('chevU', 'r') + '</button></div>';
   }
+  /* 마이크로 인터랙션: 잠깐 클래스를 붙였다 떼어 짧은 움직임을 한 번만 재생 */
+  function miFlash(el, cls, ms){ if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(function(){ el.classList.remove(cls); }, ms || 450); }
+  function miSavedSess(id){
+    [].forEach.call(document.querySelectorAll('[data-act="edit"][data-id]'), function(b){ if (b.getAttribute('data-id') === id) miFlash(b.closest('tr'), 'mi-saved', 1500); });
+    [].forEach.call(document.querySelectorAll('.gc[data-sids]'), function(c){ if (c.getAttribute('data-sids').split(',').indexOf(id) > -1) miFlash(c, 'mi-saved', 1500); });
+  }
   function roomNav(act){
     if (act === 'rm:xlsx') { doRoomExcel(); return; }
     if (act === 'rm:leg') {
       roomLeg = !roomLeg;
       try { sessionStorage.setItem('jsfa_room_leg', roomLeg ? '1' : ''); } catch (e) {}
       var y0 = window.pageYOffset; renderRoomFree(); window.scrollTo(0, y0);
+      miFlash(document.querySelector('[data-cm="rm:leg"]'), 'mi-chev'); if (roomLeg) miFlash(document.querySelector('#planRoom .pcalbox .calleg'), 'mi-open');
       return;
     }
     var sm = /^rm:sec:(add|month)$/.exec(act);
@@ -3782,6 +3819,7 @@
       if (sm[1] === 'add' && !roomSec.add) { rvSt.room = ''; rvSt.msg = ''; if (rvSt.editId) rvReset(); }
       try { sessionStorage.setItem('jsfa_room_sec', JSON.stringify(roomSec)); } catch (e) {}
       var y = window.pageYOffset; renderRoomFree(); window.scrollTo(0, y);
+      var sb = document.querySelector('[data-cm="rm:sec:' + sm[1] + '"]'); if (sb) miFlash(sb.closest('.rcard') || sb.parentNode, 'mi-open');
       return;
     }
     var d = parseYmd(roomDate || ymd(new Date())); if (!d) d = parseYmd(ymd(new Date()));
@@ -6145,13 +6183,13 @@
     var b = $('helpToggle');
     function apply(){ document.body.classList.toggle('hlp-on', on); if (b) { b.textContent = on ? '설명 숨기기' : '설명 보기'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); } }
     apply();
-    if (b) b.addEventListener('click', function(){ on = !on; try { localStorage.setItem('jsfa_la_help', on ? '1' : '0'); } catch (e) {} apply(); });
+    if (b) b.addEventListener('click', function(){ on = !on; try { localStorage.setItem('jsfa_la_help', on ? '1' : '0'); } catch (e) {} miFlash(document.body, 'mi-hlp'); apply(); });
   })();
   $('sReload').addEventListener('click', function(){
     var pw = getPw(); if (!pw) return;
-    var b = $('sReload'); b.disabled = true; b.textContent = '불러오는 중...';
+    var b = $('sReload'); b.disabled = true; b.textContent = '불러오는 중...'; b.classList.add('mi-spin');
     loadAll(pw, true).catch(function(e){ showMsg('err', e.message || '불러오지 못했습니다'); })
-      .then(function(){ b.disabled = false; b.textContent = '새로고침'; });
+      .then(function(){ b.disabled = false; b.textContent = '새로고침'; b.classList.remove('mi-spin'); });
   });
   $('excelBtn').addEventListener('click', doExcel);
   $('printBtn').addEventListener('click', doPrint);
