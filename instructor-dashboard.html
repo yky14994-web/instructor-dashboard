@@ -223,6 +223,34 @@
   html.embed #loginScreen, html.embed #app, html.embed #boot{display:none !important;}
   html.embed #overlay{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
 
+  /* 강의 이력 요약 팝업 */
+  #histOverlay{position:fixed;inset:0;background:rgba(20,20,19,0.4);align-items:center;justify-content:center;padding:20px;z-index:15;}
+  #histPop{background:#fff;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;border-radius:10px;padding:20px 22px;}
+  #histPop .hp-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;}
+  #histPop h2{font-size:16px;margin:0;color:var(--text);}
+  #histPop .hp-head button{border:none;background:none;font-size:14px;color:var(--text-sub);cursor:pointer;font-family:inherit;}
+  #histPop .hp-sum{font-size:15px;color:var(--navy);display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;}
+  #histPop .hp-up{font-size:12px;color:var(--text-muted);}
+  #histPop .hp-yr{font-size:12px;color:var(--text-sub);margin-top:4px;}
+  #histPop .hp-note{font-size:12px;color:var(--text-muted);margin-top:4px;}
+  #histPop table.hp-t{margin-top:12px;font-size:13px;}
+  #histPop .hp-t th{font-size:12px;padding:6px 8px;text-align:left;}
+  #histPop .hp-t td{padding:8px;border-top:1px solid var(--border);vertical-align:middle;}
+  #histPop .hp-t td:nth-child(2){white-space:nowrap;color:var(--text-sub);}
+  #histPop .hp-t td:nth-child(3){text-align:right;white-space:nowrap;}
+  #histPop .hp-t tr.before td{color:var(--text-muted);}
+  #histPop .hp-b{font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;}
+  #histPop .hp-b.done{background:var(--line);color:#243B53;}
+  #histPop .hp-b.now{background:#E3F1E4;color:#1F5A2B;}
+  #histPop .hp-b.before{background:#FAEEDA;color:#633806;}
+  #histPop .hp-empty{font-size:13px;color:var(--text-muted);padding:12px 0;}
+  #histPop .hp-foot{margin-top:12px;}
+  #histPop .hp-more{border:none;background:none;color:var(--navy);font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer;padding:0;font-family:inherit;}
+  button.hcnt.hcm{flex-shrink:0;text-decoration:none;text-align:right;line-height:1.35;font-size:13px;display:flex;flex-direction:column;align-items:flex-end;padding:2px 0 2px 8px;}
+  button.hcnt.hcm b{font-weight:700;color:var(--navy);}
+  button.hcnt.hcm span{font-weight:400;color:var(--text-sub);}
+  button.hcnt{border:none;background:none;color:var(--navy);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:0;}
+
   /* 상세보기 패널 */
   #overlay{
     display:none;
@@ -476,7 +504,7 @@
   <table id="table" style="display:none;">
     <thead>
       <tr>
-        <th>소속</th><th></th><th>강사명</th><th>연락처</th><th>직위/직책</th><th>강사구분</th><th>분야</th><th>활동지역</th><th>강의회차</th><th>상태</th>
+        <th>소속</th><th></th><th>강사명</th><th>연락처</th><th>직위/직책</th><th>강사구분</th><th>분야</th><th>활동지역</th><th>강의 이력</th><th>상태</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
@@ -499,6 +527,13 @@
   <div id="detail">
     <button class="close" id="closeBtn">닫기<svg class="ic r" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     <div id="detailBody"></div>
+  </div>
+</div>
+
+<div id="histOverlay" style="display:none;">
+  <div id="histPop">
+    <div class="hp-head"><h2 id="histPopTitle"></h2><button id="histCloseBtn" type="button">닫기</button></div>
+    <div id="histPopBody"></div>
   </div>
 </div>
 
@@ -527,7 +562,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-20 강사관리 31</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-23 강사관리 32</div>
 </div>
 
 <script>
@@ -839,9 +874,12 @@
         '<td>' + esc(kindLabel(d.강사구분)) + '</td>' +
         '<td>' + esc(d.전문분야||'') + '</td>' +
         '<td>' + esc(d.활동지역||'') + '</td>' +
-        '<td>' + (d.강의회차 || 0) + '회</td>' +
+        '<td>' + ((d.편성건수 !== undefined ? d.편성건수 : (d.강의회차 || 0)) > 0 ? '<button type="button" class="hcnt" title="과정별 강의 이력 보기">' + (d.과정수 !== undefined ? esc(d.과정수 + '과정 · ' + (d.누적시간 || 0) + '시간') : '이력 보기') + '</button>' : '-') + '</td>' +
         '<td><span class="status ' + statusClass(d.상태) + '">' + esc(d.상태||'') + '</span></td>';
-      tr.addEventListener('click', function(){ openDetail(d); });
+      tr.addEventListener('click', function(e){
+        if (e.target.closest && e.target.closest('.hcnt')) { openHistPop(d); return; }
+        openDetail(d);
+      });
       tbody.appendChild(tr);
     });
 
@@ -890,12 +928,16 @@
           '<div class="mmeta" style="white-space:nowrap;">' + (d._stale ? '<span style="color:#9AA3AF;">…</span>' : esc(d.연락처||'')) + '</div>' +
           badgeRow +
         '</div>' +
+        ((d.편성건수 !== undefined ? d.편성건수 : (d.강의회차 || 0)) > 0 && d.과정수 !== undefined
+          ? '<button type="button" class="hcnt hcm" title="과정별 강의 이력 보기"><b>' + d.과정수 + '과정</b><span>' + (d.누적시간 || 0) + '시간</span></button>' : '') +
       '</div>';
     }).join('');
 
     Array.prototype.forEach.call(listEl.querySelectorAll('.mcard'), function(card){
-      card.addEventListener('click', function(){
-        openDetail(lastFiltered[parseInt(card.dataset.idx, 10)]);
+      card.addEventListener('click', function(e){
+        var dd = lastFiltered[parseInt(card.dataset.idx, 10)];
+        if (e.target.closest && e.target.closest('.hcm')) { openHistPop(dd); return; }
+        openDetail(dd);
       });
     });
 
@@ -956,6 +998,129 @@
       });
     });
   }
+
+  /* 강의 1건의 상태: 날짜가 지났으면 완료, 오늘이면 '시간' 값(예: 09:00~11:50)의 시작·종료 시각과 현재 시각을 비교 */
+  function lectureState(h, today){
+    var d = String(h.일자 || '');
+    if (!d) return 'done';
+    if (d < today) return 'done';
+    if (d > today) return 'before';
+    var m = /(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/.exec(String(h.시간 || ''));
+    var t = new Date(), nowMin = t.getHours() * 60 + t.getMinutes();
+    if (!m) return nowMin >= 17 * 60 + 50 ? 'done' : 'before';   // 시각이 없으면 당일 17:50 기준(강의배정과 같음)
+    var s0 = Number(m[1]) * 60 + Number(m[2]), e0 = Number(m[3]) * 60 + Number(m[4]);
+    return nowMin >= e0 ? 'done' : nowMin >= s0 ? 'now' : 'before';
+  }
+  function localToday(){
+    var t = new Date();
+    return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+  }
+  function histHours(h){
+    if (h.시수 !== undefined) return Number(h.시수) || 0;
+    var parts = String(h.시간 || '').split('~');
+    if (parts.length !== 2) return 0;
+    var a = parseInt(parts[0], 10), b = parseInt(parts[1], 10);
+    return (!isNaN(a) && !isNaN(b) && b > a) ? b - a : 0;
+  }
+
+  /* 강사별 강의 이력 요약 팝업(PC 목록의 강의회차 숫자를 누르면 열림).
+     과정 단위로 묶어 보여 주고, 교시 단위 상세는 강사 상세에서 본다(같은 정보를 두 번 늘어놓지 않음). 주강사만, 취소 제외 */
+  function histPeriods(h){   // '1~3교시' → [1,2,3]. 읽지 못하면 빈 배열
+    var m = /(\d+)\s*(?:~\s*(\d+))?\s*교시/.exec(String(h.교시 || ''));
+    if (!m) return [];
+    var a = Number(m[1]), b = m[2] ? Number(m[2]) : a, out = [];
+    if (b >= a && b - a < 20) for (var i = a; i <= b; i++) out.push(i);
+    return out;
+  }
+  function histCourseName(h){
+    var key = String(h.강의명 || '');
+    return String(h.과정명 || '') || key.replace(/\s*\d+\s*기\s*$/, '') || '(과정명 없음)';
+  }
+  /* 과정명 기준으로 묶음: 같은 과정은 기수가 달라도 1과정, 같은 날 같은 교시는 1번만 시간에 넣음(서버 목록 집계와 같은 규칙) */
+  function histCourseRows(list){
+    var today = localToday(), map = {}, order = [], seenAll = {}, seenDone = {}, byYear = {}, doneTotal = 0, sub = 0;
+    (list || []).forEach(function(h){
+      if (h.상태 === '취소됨') return;
+      if (h.역할 === '보조강사') { sub++; return; }
+      var k = histCourseName(h);
+      if (!map[k]) { map[k] = {name:k, first:'', last:'', hours:0, doneHours:0, n:0, terms:[], st:{done:0, now:0, before:0}}; order.push(k); }
+      var c = map[k], dt = String(h.일자 || '');
+      var stt = lectureState(h, today), ps = histPeriods(h), added = 0, addedDone = 0;
+      if (ps.length) {
+        ps.forEach(function(p){
+          var kk = dt + '|' + p;
+          if (!seenAll[kk]) { seenAll[kk] = 1; added++; }
+          if (stt === 'done' && !seenDone[kk]) { seenDone[kk] = 1; addedDone++; }
+        });
+      } else { added = addedDone = (stt === 'done' ? histHours(h) : 0); if (stt !== 'done') added = histHours(h); }
+      c.n++; c.hours += added; c.doneHours += addedDone; c.st[stt]++;
+      doneTotal += addedDone;
+      if (addedDone && dt) { var y = dt.slice(0, 4); byYear[y] = (byYear[y] || 0) + addedDone; }
+      var term = String(h.강의명 || '').slice(k.length).trim();
+      if (term && c.terms.indexOf(term) < 0) c.terms.push(term);
+      if (dt && (!c.first || dt < c.first)) c.first = dt;
+      if (dt && dt > c.last) c.last = dt;
+    });
+    var rows = order.map(function(k){
+      var c = map[k];
+      c.state = c.st.now || (c.st.done && c.st.before) ? 'now' : (c.st.done ? 'done' : 'before');
+      return c;
+    }).sort(function(x, y){ return String(y.last).localeCompare(String(x.last)); });
+    return {rows: rows, doneHours: doneTotal, byYear: byYear, sub: sub};
+  }
+  function termLabel(terms){
+    if (!terms.length) return '';
+    var nums = terms.map(function(t){ return t.replace(/\s*기$/, ''); });
+    var allKi = terms.every(function(t){ return /기$/.test(t); });
+    return ' (' + nums.sort(function(a, b){ return parseInt(a, 10) - parseInt(b, 10) || (a < b ? -1 : 1); }).join('·') + (allKi ? '기' : '') + ')';
+  }
+  function shortDate(v){ var m = /^\d{4}\D+(\d{1,2})\D+(\d{1,2})/.exec(String(v || '')); return m ? m[1] + '.' + m[2] : ''; }
+  function openHistPop(d){
+    var ov = document.getElementById('histOverlay');
+    var box = document.getElementById('histPopBody');
+    document.getElementById('histPopTitle').textContent = (d.성명 || '') + ' 강사 · 강의 이력';
+    function paint(list){
+      var R = histCourseRows(list), rows = R.rows;
+      var past = rows.filter(function(c){ return c.state !== 'before'; });
+      var up = rows.filter(function(c){ return c.state === 'before'; });
+      var upHours = 0; up.forEach(function(c){ upHours += c.hours; });
+      if (!rows.length && !R.sub) { box.innerHTML = '<div class="hp-empty">강의배정DB에 편성된 강의가 없습니다.</div>'; return; }
+      var yrs = Object.keys(R.byYear).sort().reverse().map(function(y){ return y + '년 ' + R.byYear[y] + '시간'; });
+      var lbl = {done:'완료', now:'진행 중', before:'예정'};
+      box.innerHTML =
+        '<div class="hp-sum"><b>과정 ' + past.length + '개 · 누적 ' + R.doneHours + '시간</b>' +
+        (up.length ? '<span class="hp-up">예정 ' + up.length + '개 · ' + upHours + '시간 별도</span>' : '') +
+        (R.sub ? '<span class="hp-up">보조강사 ' + R.sub + '건 별도</span>' : '') + '</div>' +
+        (yrs.length ? '<div class="hp-yr">' + yrs.join(' · ') + '</div>' : '') +
+        '<div class="hp-note">주강사 기준 · 취소 제외 · 같은 과정은 기수와 관계없이 1개 · 1교시=1시간 · 누적은 끝난 강의만 · 시스템 기록 기준</div>' +
+        (rows.length ? '<table class="hp-t"><thead><tr><th>과정</th><th>기간</th><th>시간</th><th>상태</th></tr></thead><tbody>' +
+        rows.map(function(c){
+          var per = shortDate(c.first) + (c.last && c.last !== c.first ? '~' + shortDate(c.last) : '');
+          return '<tr class="' + c.state + '"><td>' + esc(c.name + termLabel(c.terms)) + '</td><td>' + esc(per) + '</td><td>' + c.hours + '</td><td><span class="hp-b ' + c.state + '">' + lbl[c.state] + '</span></td></tr>';
+        }).join('') + '</tbody></table>' : '') +
+        '<div class="hp-foot"><button type="button" class="hp-more" id="histMore">교시별 상세는 강사 상세에서 보기</button></div>';
+      document.getElementById('histMore').onclick = function(){ ov.style.display = 'none'; openDetail(d); };
+    }
+    ov.style.display = 'flex';
+    if (historyCache[d.강사ID]) { paint(historyCache[d.강사ID]); return; }
+    if ((d.편성건수 !== undefined ? d.편성건수 : d.강의회차) === 0) { paint([]); return; }
+    box.innerHTML = '<div class="hp-empty">불러오는 중…</div>';
+    fetch(WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getHistory', 강사ID: d.강사ID, password: sessionStorage.getItem('jsfa_dash_pw') })
+    }).then(function(r){ return r.json(); }).then(function(j){
+      historyCache[d.강사ID] = j.data || [];
+      paint(historyCache[d.강사ID]);
+    }).catch(function(){ box.innerHTML = '<div class="hp-empty">이력을 불러오지 못했습니다.</div>'; });
+  }
+  (function(){
+    var ov = document.getElementById('histOverlay');
+    if (!ov) return;
+    document.getElementById('histCloseBtn').addEventListener('click', function(){ ov.style.display = 'none'; });
+    ov.addEventListener('click', function(e){ if (e.target === ov) ov.style.display = 'none'; });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && ov.style.display !== 'none') ov.style.display = 'none'; });
+  })();
 
   function openDetail(d){
     if (d && d._stale) { alert('최신 정보를 불러오는 중입니다. 잠시 후 다시 눌러 주세요.'); return; }
@@ -1153,30 +1318,6 @@
         if (!confirm('정말 반려 처리하시겠습니까?')) return;
         submitApproval(d.강사ID, '반려', reason);
       });
-    }
-
-    /* 강의 1건의 상태: 날짜가 지났으면 완료, 오늘이면 '시간' 값(예: 09:00~11:50)의 시작·종료 시각과 현재 시각을 비교 */
-    function lectureState(h, today){
-      var d = String(h.일자 || '');
-      if (!d) return 'done';
-      if (d < today) return 'done';
-      if (d > today) return 'before';
-      var m = /(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/.exec(String(h.시간 || ''));
-      var t = new Date(), nowMin = t.getHours() * 60 + t.getMinutes();
-      if (!m) return nowMin >= 17 * 60 + 50 ? 'done' : 'before';   // 시각이 없으면 당일 17:50 기준(강의배정과 같음)
-      var s0 = Number(m[1]) * 60 + Number(m[2]), e0 = Number(m[3]) * 60 + Number(m[4]);
-      return nowMin >= e0 ? 'done' : nowMin >= s0 ? 'now' : 'before';
-    }
-    function localToday(){
-      var t = new Date();
-      return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
-    }
-    function histHours(h){
-      if (h.시수 !== undefined) return Number(h.시수) || 0;
-      var parts = String(h.시간 || '').split('~');
-      if (parts.length !== 2) return 0;
-      var a = parseInt(parts[0], 10), b = parseInt(parts[1], 10);
-      return (!isNaN(a) && !isNaN(b) && b > a) ? b - a : 0;
     }
 
     // 강의 이력: 강의배정DB(교과목시간표) 편성을 읽기 전용으로 표시. 배정·변경·취소는 강의배정 메뉴에서만 한다.
@@ -1574,7 +1715,7 @@
           var v = d[k];
           if (v === undefined || v === null) return '';
           if (driveKeys.indexOf(k) > -1 && v) return 'https://drive.google.com/file/d/' + v + '/view';
-          if (k === '강의회차' || k === '강의확정건수' || k === '확정미제출건수' || k === '확정제출건수' || k === '강의완료건수' || k === '편성건수') return Number(v) || 0;
+          if (k === '강의회차' || k === '과정수' || k === '누적시간' || k === '강의확정건수' || k === '확정미제출건수' || k === '확정제출건수' || k === '강의완료건수' || k === '편성건수') return Number(v) || 0;
           return String(v);
         }));
       });
@@ -1646,7 +1787,7 @@
      탭을 닫거나 로그아웃·인증 실패·강사 정보 변경(승인·휴면·삭제·재동의·초대) 시 삭제, 15분 지난 것은 사용하지 않음 */
   var KEY_LIST = 'jsfa_list_v1', LIST_MAX_AGE = 15 * 60 * 1000;
   var LIST_CACHE_FIELDS = ['강사ID', '성명', '소속', '직위', '강사구분', '전문분야', '활동지역', '상태', '등록경로', '등록일', '재동의확인일', '사진링크',
-    '강의회차', '강의확정건수', '확정미제출건수', '확정제출건수', '강의완료건수', '강의확정', '확정미제출', '편성건수', '이력있음'];
+    '강의회차', '과정수', '누적시간', '강의확정건수', '확정미제출건수', '확정제출건수', '강의완료건수', '강의확정', '확정미제출', '편성건수', '이력있음'];
   function pwFp(pw){ var h = 5381, t = String(pw || ''); for (var i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return String(h); }
   function listCacheClear(){ try { sessionStorage.removeItem(KEY_LIST); } catch (e) {} }
   function listCacheSave(pw, rows, role){
