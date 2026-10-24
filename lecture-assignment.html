@@ -788,7 +788,7 @@
     body.pgrid.ppt table.g td.c{height:auto;min-height:20mm;}
     body.pgrid.ppt table.g{font-size:10px;} body.pgrid.ppt .gc{font-size:10px;padding:3px 5px;} body.pgrid.ppt table.g th.pc{width:64px;} body.pgrid.ppt table.g th.pc small{font-size:8px;white-space:nowrap;}
     body.pgrid .docleg{display:none !important;}
-    body.pgrid:not(.pofc) .gbox .glegend{display:flex !important;}   /* 내부 점검용 인쇄에는 범례를 넣음(화면에서는 ⓘ로 접힘) */
+    body.pgrid .glegend{display:none !important;}   /* 내부 점검용 인쇄에는 범례를 넣음(화면에서는 ⓘ로 접힘) */
     /* 10-19 공문용 인쇄(가안): 내부 표시 숨김, 교과목 > 강사 > 강의실 순서로 크기 정리, 카드 테두리·둥근 상자 없앰, A4 한 장을 채우도록 칸 높이 확대 */
     body.pgrid .gph-o{display:none;}
     body.pgrid.pofc .gph-i{display:none !important;} body.pgrid.pofc .gph-o{display:inline;}
@@ -827,6 +827,21 @@
   .crumb .sep{margin:0 2px;color:var(--text-faint);font-size:18px;font-weight:700;}
   .crumb .cur{color:#fff;background:var(--navy);font-weight:800;padding:5px 12px;border-radius:8px;}
   @media (max-width:640px){ .crumb{font-size:14px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} }
+
+  .psysname{display:none;}
+  @media print{
+    /* 10-24 금용님: 격자 인쇄 — 주소(바닥글) 제거, 상단 가운데 시스템명, 범례 제거, 칸 안 내용 가로·세로 정중앙(칸 속 칸 없음) */
+    body.pgrid{padding:16mm 10mm 10mm !important;}
+    body.pgrid.pgall{padding:0 !important;}
+    body.pgrid.pgall .gap{padding:16mm 10mm 10mm;box-sizing:border-box;}
+    body.pgrid .psysname{display:block;position:fixed;top:7mm;left:0;right:0;text-align:center;font-size:13px;font-weight:800;color:#000;letter-spacing:.02em;}
+    body.pgrid table.g td.c{vertical-align:middle !important;text-align:center !important;}
+    body.pgrid table.g td.c .gc{border:0 !important;background:transparent !important;border-radius:0;padding:2px !important;height:auto;text-align:center;}
+    body.pgrid table.g td.c .gc .i{justify-content:center;}
+    body.pgrid table.g td.c .gc .r.rx{font-weight:800;color:#000;text-decoration:underline;text-underline-offset:2px;}
+    body.pgrid table.g td.c .gc .r.rx::before{content:'◆ ';}
+    body.pgrid table.g td.c .gc .n{border-top:0;padding-top:0;}
+  }
 </style>
 <script src="busy-indicator.js" defer></script>
 <script src="admin-nav.js" defer></script>
@@ -853,6 +868,7 @@
   .crumbrow .crumb{margin:0;}
   #helpToggle{flex:none;white-space:nowrap;}
   #helpToggle[aria-pressed="true"]{background:var(--bg-soft);border-color:var(--navy);color:var(--navy);}
+  @media print{ .crumbrow{display:none !important;} }   /* 10-24 금용님: 인쇄 미리보기에 '설명 보기' 버튼이 찍히던 문제 */
   body:not(.hlp-on) .hlp{display:none !important;}
   /* 10-22 PC: 교과목 목록 제목줄 — 새로고침 옆 가운데에 과정명 / 격자 교시 칸 가로·세로 가운데 */
   .scn{display:none;}
@@ -911,9 +927,25 @@
     body.mi-hlp .hlp{animation:miFade .2s ease-out;}
     @media (max-width:640px){ #iCard,#bCard,#cCard,#pCard,body>div[role="dialog"]>div{animation-name:miSheet;} }
   }
+  /* 10-24 격자 인쇄: 과정 고르기 창 */
+  #gpPick{display:none;position:fixed;inset:0;z-index:120;background:rgba(20,20,19,.45);align-items:center;justify-content:center;padding:16px;}
+  #gpPick .gpc{background:#fff;border-radius:12px;width:min(480px,100%);max-height:86vh;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.18);}
+  #gpPick .gph{font-size:16px;font-weight:800;color:var(--navy);padding:16px 18px 4px;}
+  #gpPick .gpsub{font-size:13px;color:var(--text-sub);padding:0 18px 10px;}
+  #gpPick .lnk{border:none;background:none;padding:0;color:var(--navy);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;}
+  #gpPick .gpl{overflow-y:auto;padding:0 10px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  #gpPick .gpr{display:flex;gap:10px;align-items:flex-start;padding:10px 8px;border-bottom:1px solid var(--line);cursor:pointer;}
+  #gpPick .gpr:last-child{border-bottom:none;}
+  #gpPick .gpr input{margin-top:3px;width:16px;height:16px;flex:none;}
+  #gpPick .gpr small{display:block;color:var(--text-sub);font-size:12px;margin-top:2px;}
+  #gpPick .gpr small.gpcur{display:inline;color:var(--navy);font-weight:700;margin:0 0 0 4px;}
+  #gpPick .gpf{display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:12px 18px;}
+  #gpPick .gpn{margin-right:auto;font-size:13px;font-weight:700;color:var(--navy);}
+  @media print{ #gpPick{display:none !important;} }
 </style>
 </head>
 <body>
+<div class="psysname">소방교육 외래강사 ON</div>
 <script src="eval-core.js?v=5"></script>
 <script>try{if(sessionStorage.getItem('jsfa_dash_pw'))document.documentElement.classList.add('autologin');}catch(e){}window.__autoDone=function(){document.documentElement.classList.remove('autologin');};</script>
 <div id="boot">불러오는 중...</div>
@@ -1037,7 +1069,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-24 배정 140</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-24 배정 141</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1851,13 +1883,13 @@
   });
   function ofcOn(){ try { return localStorage.getItem('jsfa_la_pofc') === '1'; } catch (e) { return false; } }
   document.addEventListener('change', function(ev){ var t = ev.target; if (t && t.id === 'gOfc') { try { localStorage.setItem('jsfa_la_pofc', t.checked ? '1' : '0'); } catch (e) {} } });
-  function printWith(sf, cls){
+  function printWith(sf, cls, noOfc){
     var o = oriGet(sf), st = document.getElementById('pageOri');
     if (!st) { st = document.createElement('style'); st.id = 'pageOri'; document.head.appendChild(st); }
-    st.textContent = '@page{size:A4 ' + o + ';margin:20mm 10mm 10mm 10mm;}';
+    st.textContent = '@page{size:A4 ' + o + ';margin:' + (sf === 'grid' ? '0' : '20mm 10mm 10mm 10mm') + ';}';   /* 격자: 여백 0 → 브라우저 머리글·바닥글(주소) 안 찍힘, 여백은 본문 padding으로 */
     document.body.classList.toggle('ppt', o === 'portrait');
     if (cls) document.body.classList.add(cls);
-    var ofc = sf === 'grid' && gridScope !== 'all' && ofcOn(); if (ofc) document.body.classList.add('pofc');   // 시간표 공문용 인쇄
+    var ofc = sf === 'grid' && ofcOn() && (noOfc === false || (!noOfc && gridScope !== 'all'));   // noOfc: false=공문용 체크를 그대로 적용, true=적용 안 함, 생략=이전 방식 if (ofc) document.body.classList.add('pofc');   // 시간표 공문용 인쇄
     var done = function(){ document.body.classList.remove('ppt'); document.body.classList.remove('pofc'); if (cls) document.body.classList.remove(cls); window.removeEventListener('afterprint', done); };
     window.addEventListener('afterprint', done);
     window.print();
@@ -4853,7 +4885,7 @@
       return '<div class="i">' + roleTag(x) + nm + eb + '</div>';
     }).join('');
     var body = (cx ? '<div class="gcn" style="color:' + cx.color + '">' + esc(cx.label) + '</div>' : '') + '<div class="s">' + klass + esc(r['교과목']) + (warns.length ? ' <span title="' + esc(warns.join(' / ')) + '">' + ic('alert') + '</span>' : '') + flag + '</div>' +
-      '<div class="t">' + esc(pt.txt) + '</div>' + ins + '<div class="r">' + esc(r['강의실'] || '강의실 미정') + '</div>' + (!isOps(r) && String(r['비고'] || '').trim() ? '<div class="n">' + esc(String(r['비고']).trim()) + '</div>' : '');
+      '<div class="t">' + esc(pt.txt) + '</div>' + ins + '<div class="r' + roomDiff(r, p, cx) + '">' + esc(r['강의실'] || '강의실 미정') + '</div>' + (!isOps(r) && String(r['비고'] || '').trim() ? '<div class="n">' + esc(String(r['비고']).trim()) + '</div>' : '');
     var other = cx && !cx.own;
     var act = canEdit ? ' data-act="edit" data-id="' + esc(r['편성ID']) + '"' : (other ? ' data-gopen="' + esc(cx.key) + '" title="누르면 이 과정의 교과목 편성 화면으로 이동합니다"' : '');
     var mvc = '';
@@ -4864,6 +4896,13 @@
       body += '<button type="button" class="mvb" data-mvsel="' + esc(gid) + '" title="이 교과목을 다른 칸으로 이동하거나 다른 교과목과 맞바꿉니다">⇄ 이동·맞바꾸기</button>';
     }
     return '<div class="gc' + cls + mvc + ((canEdit || other) && !(mvc === ' mvsel') ? ' ed' : '') + '" data-sids="' + esc(u.map(function(x){ return String(x['편성ID'] || ''); }).join(',')) + '"' + act + (cx ? ' style="border-left:5px solid ' + cx.color + ';"' : '') + '>' + body + '</div>';
+  }
+  /* 인쇄용: 칸의 강의실이 과정 개요(예정 강의실)와 다르면 ' rx' (개요가 비어 있으면 비교하지 않음) */
+  function roomDiff(r, p, cx){
+    if (cx && !cx.own) return '';
+    var base = planRoomNames(p && p['예정 강의실']).map(roomNorm), rm = roomNorm(r['강의실']);
+    if (!base.length || !rm || isOps(r)) return '';
+    return base.indexOf(rm) < 0 ? ' rx' : '';
   }
   function renderGrid(p, list){
     var box = $('sGridWrap');
@@ -4987,7 +5026,10 @@
       // 10-19 시안1: 주 선택 칸과 과정 머리의 '교시 n/n'과 겹치는 주차·편성 현황 글자는 화면에서 뺌
 
       '<span class="gtools">' + (!canEdit ? '' : '<details class="mnu"><summary class="btn sm">편집 ' + ic('chevD', 'r') + '</summary><div class="pn"><button type="button" class="btn sm mvm' + (mvOn() ? ' on' : '') + '" data-mvmode="1" title="켜면 칸마다 이동·맞바꾸기 버튼이 나타납니다">⇄ 이동 모드 ' + (mvOn() ? '끄기' : '켜기') + '</button>' + '<button type="button" class="btn sm mvm' + (gpOn() ? ' on' : '') + '" data-gpmode="1" title="켜면 빈 교시 칸마다 비워둠 처리 버튼이 나타납니다. 평소에는 숨겨 둡니다">비워둠 처리 ' + (gpOn() ? '끄기' : '켜기') + '</button></div></details>') +
-        '<details class="mnu mprint"><summary class="btn sm">인쇄 ' + ic('chevD', 'r') + '</summary><div class="pn">' + oriSelect('grid') + (all ? '' : '<label class="pofcl" title="켜면 공문 첨부용으로 인쇄합니다: 빈 교시·경고·서류 미비·편성 현황 같은 내부 표시를 빼고 교과목을 크게 표시"><input type="checkbox" id="gOfc"' + (ofcOn() ? ' checked' : '') + '> 공문용 (내부 표시 빼기)</label>') + '<button type="button" class="btn sm" data-gw="print">이 주 인쇄</button>' + (all ? '' : '<button type="button" class="btn sm" data-gw="pdfall" title="이 과정의 모든 주차를 한 파일(주차당 1페이지)로 인쇄합니다. 인쇄창에서 PDF로 저장하면 파일명이 제N기 과정명으로 채워집니다">과정 전체 PDF</button>') + '</div></details>' +
+        '<details class="mnu mprint"><summary class="btn sm">인쇄 ' + ic('chevD', 'r') + '</summary><div class="pn">' + oriSelect('grid') + '<button type="button" class="btn sm" data-gw="pdfall" title="이 과정의 모든 주를 주당 1장으로 인쇄합니다. PDF로 저장하면 파일명이 제N기 과정명으로 채워집니다">이 과정</button>' +
+          '<label class="pofcl" title="이 과정 인쇄에만 적용: 빈 교시·경고·서류 미비·편성 현황 같은 내부 표시를 빼고 교과목을 크게 표시"><input type="checkbox" id="gOfc"' + (ofcOn() ? ' checked' : '') + '> 공문용 (내부 표시 빼기)</label>' +
+          '<button type="button" class="btn sm" data-gw="pweek" title="지금 보는 주에 진행되는 과정을 골라 과정당 1장으로 인쇄합니다">이번 주 과정</button>' +
+          '<button type="button" class="btn sm" data-gw="pmonth" title="지금 보는 달에 진행되는 과정을 골라 과정별로(주당 1장) 인쇄합니다">이번 달 과정</button></div></details>' +
         '<button type="button" class="btn sm" data-ginfo="1" aria-expanded="' + (gInfo ? 'true' : 'false') + '">ⓘ 표시 안내</button></span></div>' + ctab +
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:var(--err-bg);border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span><span><i style="background:repeating-linear-gradient(135deg,#FFF1BF,#FFF1BF 3px,#fff 3px,#fff 6px);border:1px solid #D9B100"></i>빈 교시</span><span><i style="background:repeating-linear-gradient(135deg,#D9DCE0,#D9DCE0 3px,var(--bg-hover) 3px,var(--bg-hover) 6px)"></i>비워둠 처리(편성 아님)</span>' +
@@ -5014,30 +5056,90 @@
     var m = String(p['기수'] || '').match(/\d+/), g = m ? '제' + m[0] + '기' : String(p['기수'] || '').trim();
     return (g + ' ' + String(p['과정명'] || '').trim()).trim().replace(/[\\\/:*?"<>|]/g, '');
   }
-  function printCourseAll(){
-    var p = planByKey(currentKey); if (!p) return;
-    var list = sessionsOf(currentKey), weeks = gridWeeksOf(p, list);
-    if (!weeks.length) { alert('인쇄할 기간이 없습니다.'); return; }
-    var keepW = gridWeek, keepD = gridDay, box = $('sGridWrap'), pages = [];
+  /* 10-24 금용님: 격자 인쇄 = 과정당 1장. '이 과정'은 바로 인쇄, '이번 주 과정'·'이번 달 과정'은 과정을 골라 과정별로 인쇄 */
+  function printPlanPages(items, fileName){   // items: [{q: 연간계획 줄, w: 주 월요일}]
+    var p0 = planByKey(currentKey); if (!p0) return;
+    if (!items.length) { alert('인쇄할 과정이 없습니다.'); return; }
+    var keepW = gridWeek, keepD = gridDay, keepS = gridScope, box = $('sGridWrap'), pages = [];
     try {
-      weeks.forEach(function(w){
-        gridWeek = w; gridDay = -1; renderGrid(p, list);
+      gridScope = 'one';
+      items.forEach(function(it){
+        gridWeek = it.w; gridDay = -1; renderGrid(it.q, sessionsOf(String(it.q['과정+기수'] || '')));
         var h = box.querySelector('.gprinthead'), t = box.querySelector('.gscroll');
-        pages.push('<div class="gap">' + (h ? h.outerHTML : '') + (t ? t.outerHTML : '') + '</div>');
+        pages.push('<div class="gap"><div class="gbox">' + (h ? h.outerHTML : '') + (t ? t.outerHTML : '') + '</div></div>');
       });
     } finally {
-      gridWeek = keepW; gridDay = keepD; renderGrid(p, list);   // 오류가 나도 화면의 주차·요일 상태를 원래대로 복원
+      gridScope = keepS; gridWeek = keepW; gridDay = keepD; renderGrid(p0, sessionsOf(currentKey));   // 오류가 나도 화면 상태를 원래대로 복원
     }
     var c = $('gAllPrint');
     if (!c) { c = document.createElement('div'); c.id = 'gAllPrint'; box.parentNode.insertBefore(c, box.nextSibling); }
     c.innerHTML = pages.join('');
-    var oldTitle = document.title, name = courseFileName(p);
-    if (name) document.title = name;
+    var oldTitle = document.title;
+    if (fileName) document.title = fileName;
     document.body.classList.add('pgall');
     var done = function(){ document.body.classList.remove('pgall'); document.title = oldTitle; c.innerHTML = ''; window.removeEventListener('afterprint', done); };
     window.addEventListener('afterprint', done);
-    printWith('grid', 'pgrid');
+    printWith('grid', 'pgrid', false);
     setTimeout(done, 120000);
+  }
+  function printCourseAll(){
+    var p = planByKey(currentKey); if (!p) return;
+    printPlanPages(gridWeeksOf(p, sessionsOf(currentKey)).map(function(w){ return { q: p, w: w }; }), courseFileName(p));
+  }
+  /* 기간(a~b)에 걸친 과정과 그 과정의 주 목록 */
+  function coursesInSpan(a, b){
+    var out = [];
+    plans.forEach(function(q){
+      var k = String(q['과정+기수'] || ''); if (!k || isCancelled(q)) return;
+      var ws = gridWeeksOf(q, sessionsOf(k)).filter(function(w){ return w <= b && addDays(w, 4) >= a; });
+      if (ws.length) out.push({ q: q, k: k, weeks: ws });
+    });
+    out.sort(function(x, y){
+      if (x.k === currentKey) return -1; if (y.k === currentKey) return 1;
+      var s1 = String(x.q['입교 시작일'] || ''), s2 = String(y.q['입교 시작일'] || '');
+      return s1 < s2 ? -1 : s1 > s2 ? 1 : (x.k < y.k ? -1 : 1);
+    });
+    return out;
+  }
+  function openPrintPick(mode){
+    if (!gridWeek) return;
+    var dm = document.querySelector('details.mprint'); if (dm) dm.open = false;   // 인쇄 메뉴는 닫고 고르기 창만
+    var mon = gridWeek, ym = addDays(mon, 2).slice(0, 7), q0 = parseYmd(ym + '-01');
+    var a = mode === 'week' ? mon : ym + '-01', b = mode === 'week' ? addDays(mon, 4) : ym + '-31';
+    var list = coursesInSpan(a, b);
+    var title = mode === 'week' ? '이번 주 과정 인쇄 · ' + md(mon) + ' ~ ' + md(addDays(mon, 4)) : '이번 달 과정 인쇄 · ' + (q0 ? q0.y + '년 ' + q0.m + '월' : ym);
+    var fileName = mode === 'week' ? '주간 교과목 시간표 ' + md(mon) + '~' + md(addDays(mon, 4)) : (q0 ? q0.y + '년 ' + q0.m + '월 교과목 시간표' : '');
+    var ov = $('gpPick');
+    if (!ov) { ov = document.createElement('div'); ov.id = 'gpPick'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); document.body.appendChild(ov); }
+    var rows = list.length ? list.map(function(x, i){
+      var q = x.q, per = esc(md(normYmd(q['입교 시작일']) || '')) + (q['입교 종료일'] ? ' ~ ' + esc(md(normYmd(q['입교 종료일']))) : '');
+      return '<label class="gpr"><input type="checkbox" data-gpi="' + i + '" checked><span><b>' + esc(String(q['과정명'] || '') + ' ' + String(q['기수'] || '')) + '</b>' + (x.k === currentKey ? ' <small class="gpcur">현재 화면</small>' : '') + '<small>' + per + ' · ' + x.weeks.length + '장</small></span></label>';
+    }).join('') : '<div class="hint">이 기간에 진행되는 과정이 없습니다.</div>';
+    ov.innerHTML = '<div class="gpc"><div class="gph">' + esc(title) + '</div>' +
+      '<div class="gpsub">인쇄할 과정을 고르세요. 과정마다 주당 1장으로 인쇄합니다.' + (list.length > 1 ? ' <button type="button" class="lnk" data-gpp="all">전체 선택</button> · <button type="button" class="lnk" data-gpp="none">전체 해제</button>' : '') + '</div>' +
+      '<div class="gpl">' + rows + '</div>' +
+      '<div class="gpf"><span class="gpn"></span><button type="button" class="btn" data-gpp="close">닫기</button><button type="button" class="btn primary" data-gpp="print"' + (list.length ? '' : ' disabled') + '>인쇄</button></div></div>';
+    var cnt = function(){
+      var n = 0, pg = 0;
+      [].forEach.call(ov.querySelectorAll('[data-gpi]'), function(c){ if (c.checked) { n++; pg += list[Number(c.getAttribute('data-gpi'))].weeks.length; } });
+      ov.querySelector('.gpn').textContent = n ? n + '개 과정 · ' + pg + '장' : '선택한 과정 없음';
+      var pb = ov.querySelector('[data-gpp="print"]'); if (pb) pb.disabled = !n;
+    };
+    ov.onchange = cnt;
+    ov.onclick = function(ev){
+      var t = ev.target; if (t === ov) { ov.style.display = 'none'; return; }
+      var act = t.getAttribute && t.getAttribute('data-gpp'); if (!act) return;
+      if (act === 'close') { ov.style.display = 'none'; return; }
+      if (act === 'all' || act === 'none') { [].forEach.call(ov.querySelectorAll('[data-gpi]'), function(c){ c.checked = act === 'all'; }); cnt(); return; }
+      if (act === 'print') {
+        var items = [];
+        [].forEach.call(ov.querySelectorAll('[data-gpi]'), function(c){ if (!c.checked) return; var x = list[Number(c.getAttribute('data-gpi'))]; x.weeks.forEach(function(w){ items.push({ q: x.q, w: w }); }); });
+        ov.style.display = 'none';
+        printPlanPages(items, fileName);
+      }
+    };
+    ov.style.display = 'flex';
+    cnt();
   }
   function gridNav(act){
     var p = planByKey(currentKey);
@@ -5045,6 +5147,8 @@
     var wi = weeks.indexOf(gridWeek);
     if (act === 'print') { printWith('grid', 'pgrid'); return; }
     if (act === 'pdfall') { printCourseAll(); return; }
+    if (act === 'pweek') { openPrintPick('week'); return; }
+    if (act === 'pmonth') { openPrintPick('month'); return; }
     if (act === 'prev' && wi > 0) gridWeek = weeks[wi - 1];
     else if (act === 'next' && wi > -1 && wi < weeks.length - 1) gridWeek = weeks[wi + 1];
     else if (act === 'today') { var tw = mondayOf(ymd(new Date())); gridWeek = weeks.indexOf(tw) > -1 ? tw : gridWeek; }
