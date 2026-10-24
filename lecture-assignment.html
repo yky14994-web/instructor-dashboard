@@ -1037,7 +1037,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-24 배정 139</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-24 배정 140</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2691,6 +2691,9 @@
     ensureInstructors(true);   // 5분 지난 강사 목록이면 다시 받음(그사이 정식 등록된 강사 반영)
     renderForm(p);
     $('sFormPanel').classList.remove('ffold');   // 수정·복사·배정으로 연 입력창도 항상 펼침
+    /* 10-24 금용님: 수정할 교과목의 날짜가 꽉 찬 날(1~7교시 모두 편성)이면 입력창 기본 날짜가 '첫 빈 날'로 바뀌어
+       다른 요일·교시로 저장되던 문제 → 수정은 항상 그 교과목의 원래 날짜로 채움 */
+    if (mode === 'edit' && normYmd(r['일자'])) { $('sDate').value = normYmd(r['일자']); }
     $('sStart').value = String(Number(r['시작교시']));
     $('sEnd').value = String(Number(r['끝교시']));
     refreshRoomOptions();
