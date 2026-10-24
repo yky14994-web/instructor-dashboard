@@ -201,22 +201,24 @@
   #gtOv .gtleg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px;}
   #gtOv .gtleg i.gh{background:none;border:1.5px dashed #888;} #gtOv .gtleg i.gx{background:repeating-linear-gradient(135deg,#bbb,#bbb 3px,#eee 3px,#eee 6px);}
   #gtOv .gtbody{flex:1;overflow:auto;position:relative;}
-  #gtOv .gtin{min-width:1500px;position:relative;}
+  #gtOv .gtin{min-width:1700px;position:relative;}
   #gtOv .gtr{display:grid;grid-template-columns:210px 1fr;min-height:28px;border-bottom:1px solid #EEF1F5;}
   #gtOv .gtl{position:sticky;left:0;z-index:3;background:#fff;padding:4px 10px;font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid var(--line);line-height:20px;}
   #gtOv .gtl small{font-weight:500;color:var(--text-sub);margin-left:4px;}
   #gtOv .gtl .gtag{display:inline-block;font-size:10.5px;font-weight:800;padding:0 5px;border-radius:8px;margin-left:4px;vertical-align:1px;}
   #gtOv .gtl .gtag.c{background:#FDE7E7;color:#B42318;} #gtOv .gtl .gtag.m{background:#FFF1D6;color:#8A5A00;}
-  #gtOv .gtr.hd{position:sticky;top:0;z-index:5;background:#F3F5F8;border-bottom:1px solid #C9D1DB;min-height:30px;}
+  #gtOv .gtr.hd{position:sticky;top:0;z-index:5;background:#F3F5F8;border-bottom:1px solid #C9D1DB;min-height:46px;}
+  #gtOv .gtw{position:absolute;top:26px;font-size:10px;color:var(--text-sub);padding-left:2px;line-height:16px;}
+  #gtOv .gtgrid .gm.g4{border-left-color:#D3D9E1;}
   #gtOv .gtr.hd .gtl{background:#F3F5F8;z-index:6;}
   #gtOv .gtt{position:relative;}
-  #gtOv .gtm{position:absolute;top:0;bottom:0;border-left:1px solid #E1E6EC;font-size:12px;font-weight:800;color:var(--navy);padding:6px 0 0 6px;box-sizing:border-box;}
-  #gtOv .gtgrid{position:absolute;top:30px;bottom:0;left:210px;right:0;pointer-events:none;z-index:1;}
+  #gtOv .gtm{position:absolute;top:0;height:24px;border-left:1px solid #C9D1DB;font-size:12px;font-weight:800;color:var(--navy);padding:4px 0 0 6px;box-sizing:border-box;}
+  #gtOv .gtgrid{position:absolute;top:46px;bottom:0;left:210px;right:0;pointer-events:none;z-index:1;}
   #gtOv .gtgrid .gm{position:absolute;top:0;bottom:0;border-left:1px solid #EEF1F5;}
   #gtOv .gtgrid .gmo{position:absolute;top:0;bottom:0;background:rgba(0,0,0,.018);}
   #gtOv .gtb{position:absolute;top:5px;height:18px;border-radius:4px;min-width:4px;z-index:2;}
   #gtOv .gtb.x{background:repeating-linear-gradient(135deg,#bbb,#bbb 4px,#e6e6e6 4px,#e6e6e6 8px) !important;}
-  #gtOv .gtb.og{background:none !important;border:1.5px dashed #888;z-index:1;}
+  #gtOv .gtb.ogx{background:none !important;border:1.5px dashed #888;z-index:1;}
   #gtOv .gtb.ch{box-shadow:0 0 0 2px #F5B301;}
   #gtOv .gtx{position:absolute;top:5px;line-height:18px;font-size:11.5px;color:#333;white-space:nowrap;z-index:2;}
   #gtOv .gtday{position:absolute;top:0;bottom:0;width:0;border-left:2px solid #E5484D;z-index:4;pointer-events:none;}
@@ -230,7 +232,7 @@
     body.pgt #gtOv .gtbody{overflow:visible;} body.pgt #gtOv .gtin{min-width:0;width:100%;}
     body.pgt #gtOv .gtr{break-inside:avoid;min-height:22px;} body.pgt #gtOv .gtr.hd{position:static;}
     body.pgt #gtOv .gtl{position:static;font-size:10.5px;line-height:17px;padding:2px 6px;}
-    body.pgt #gtOv .gtgrid .gmo{display:none;}
+    body.pgt #gtOv .gtw{font-size:7px;top:24px;padding-left:0;} body.pgt #gtOv .gtgrid{top:42px;} body.pgt #gtOv .gtr.hd{min-height:42px;}
     body.pgt #gtOv .gtr{grid-template-columns:170px 1fr;} body.pgt #gtOv .gtgrid{left:170px;}
     body.pgt #gtOv .gtb{top:3px;height:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;} body.pgt #gtOv .gtx{top:3px;font-size:9.5px;line-height:15px;}
     body.pgt #gtOv .gtday{-webkit-print-color-adjust:exact;print-color-adjust:exact;} body.pgt #gtOv .gtday em{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -448,7 +450,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-24 홈 101</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-24 홈 102</div>
 </div>
 </div>
 
@@ -1010,34 +1012,31 @@
   function renderGantt(){
     var ov = $('gtOv'), y = Number($('gtYear').value), days = ((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0) ? 366 : 365;
     var pc = function(n){ return (n / days * 100).toFixed(3) + '%'; };
-    var list = plans.filter(function(p){ var d = normYmd(p['입교 시작일']); return d && Number(d.slice(0, 4)) === y; })
+    var list = plans.filter(function(p){ var d = normYmd(p['입교 시작일']); return d && Number(d.slice(0, 4)) === y && !isCancelled(p); })
       .sort(function(a, b){ var x = normYmd(a['입교 시작일']), z = normYmd(b['입교 시작일']); return x !== z ? (x < z ? -1 : 1) : String(a['과정명'] || '').localeCompare(String(b['과정명'] || ''), 'ko'); });
-    var mo = '', grid = '', ml = [0, 31, (days === 366 ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31], acc = 0;
+    var mo = '', grid = '', ml = [0, 31, (days === 366 ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31], acc = 0, wk = '';
     for (var m = 1; m <= 12; m++) {
       mo += '<div class="gtm" style="left:' + pc(acc) + ';width:' + pc(ml[m]) + ';">' + m + '월</div>';
-      grid += '<div class="gm" style="left:' + pc(acc) + ';"></div>' + (m % 2 === 0 ? '<div class="gmo" style="left:' + pc(acc) + ';width:' + pc(ml[m]) + ';"></div>' : '');
       acc += ml[m];
     }
+    var j1 = new Date(y, 0, 1).getDay(), off = (j1 + 6) % 7;   // 월요일 기준 주 번호: 1월 1일이 속한 주 = 1주
+    for (var dd = 0, first = true; dd < days; dd++) {
+      var isMon = ((dd + off) % 7 === 0);
+      if (!isMon && dd !== 0) continue;
+      var wn = Math.floor((dd + off) / 7) + 1;
+      wk += '<div class="gtw" style="left:' + pc(dd) + ';">' + wn + '</div>';
+      grid += '<div class="gm' + (wn % 4 === 1 ? ' g4' : '') + '" style="left:' + pc(dd) + ';"></div>';
+    }
     var today = todayStr(), tl = today.slice(0, 4) === String(y) ? gtDoy(today, y) : null;
-    var rows = '<div class="gtr hd"><div class="gtl">과정 · 기수 (' + list.length + '건)</div><div class="gtt">' + mo + '</div></div>';
-    var chN = 0, cxN = 0;
+    var rows = '<div class="gtr hd"><div class="gtl">과정 · 기수 (' + list.length + '건)<small style="display:block;margin:0;">가로축: 주(월요일 시작)</small></div><div class="gtt">' + mo + wk + '</div></div>';
     list.forEach(function(p){
-      var key = String(p['과정+기수'] || ''), a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a, cx = isCancelled(p), t = gtType(p), ch = gtChange(key), changed = !!(ch.start || ch.end);
-      if (cx) cxN++; else if (changed) chN++;
+      var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a, t = gtType(p);
       var s0 = gtDoy(a, y), e0 = gtDoy(b, y), left = Math.max(0, s0), w = Math.max(1, Math.min(days, e0 + 1) - left);
-      var bar = '<div class="gtb' + (cx ? ' x' : '') + (changed && !cx ? ' ch' : '') + '" style="left:' + pc(left) + ';width:' + pc(w) + ';background:' + gtColor(t) + ';"></div>';
-      if (changed && !cx) {
-        var oa = ch.start || a, ob = ch.end || b, os = gtDoy(oa, y), oe = gtDoy(ob, y);
-        if (os !== null && oe !== null) bar = '<div class="gtb og" style="left:' + pc(Math.max(0, os)) + ';width:' + pc(Math.max(1, Math.min(days, oe + 1) - Math.max(0, os))) + ';"></div>' + bar;
-      }
-      var sd = function(x){ var q = parseYmd(x); return q ? q.m + '/' + q.d : x; }, txt = sd(a) + (b !== a ? '~' + sd(b) : '') + (p['계획인원'] ? ' · ' + p['계획인원'] + '명' : '');
-      var onRight = (left + w) / days < 0.8, tx = onRight ? 'left:calc(' + pc(left + w) + ' + 5px)' : 'right:calc(' + (100 - left / days * 100).toFixed(3) + '% + 5px)';
-      var tip = key + ' · ' + t + ' · ' + a + ' ~ ' + b + (p['계획인원'] ? ' · ' + p['계획인원'] + '명' : '') + (cx ? ' · 취소됨' : changed ? ' · 일정 변경됨(원래 ' + (ch.start || a) + ' ~ ' + (ch.end || b) + ')' : '');
-      rows += '<div class="gtr" title="' + esc(tip) + '"><div class="gtl">' + esc(String(p['과정명'] || '')) + '<small>' + esc(String(p['기수'] || '')) + '</small>' + (cx ? '<span class="gtag c">취소</span>' : changed ? '<span class="gtag m">변경</span>' : '') + '</div><div class="gtt">' + bar + '<span class="gtx" style="' + tx + ';">' + esc(txt) + '</span></div></div>';
+      rows += '<div class="gtr"><div class="gtl">' + esc(String(p['과정명'] || '')) + '<small>' + esc(String(p['기수'] || '')) + '</small></div><div class="gtt"><div class="gtb" style="left:' + pc(left) + ';width:' + pc(w) + ';background:' + gtColor(t) + ';"></div></div></div>';
     });
     var used = {}; list.forEach(function(p){ used[gtType(p)] = true; });
     var leg = GT_TYPES.filter(function(x){ return used[x[0]]; }).map(function(x){ return '<span><i style="background:' + x[1] + ';"></i>' + x[0] + '</span>'; }).join('') +
-      (chN ? '<span><i class="gh"></i>변경 전 일정(점선) · 변경된 과정은 노란 테두리</span>' : '') + (cxN ? '<span><i class="gx"></i>취소</span>' : '') + (tl !== null ? '<span><i style="background:#E5484D;width:3px;height:12px;border-radius:0;"></i>오늘</span>' : '');
+      (tl !== null ? '<span><i style="background:#E5484D;width:3px;height:12px;border-radius:0;"></i>오늘</span>' : '');
     $('gtLeg').innerHTML = leg;
     $('gtBody').innerHTML = list.length ? '<div class="gtin">' + rows + '<div class="gtgrid">' + grid + (tl !== null ? '<div class="gtday" style="left:' + pc(tl + .5) + ';"><em>오늘 ' + md(today) + '</em></div>' : '') + '</div></div>' : '<div class="gtempty">' + y + '년 연간계획이 없습니다.</div>';
     if (tl !== null) { var bd = $('gtBody'), inn = bd.firstChild; if (inn && inn.offsetWidth) bd.scrollLeft = Math.max(0, 210 + (inn.offsetWidth - 210) * (tl / days) - bd.clientWidth * 0.7); }
@@ -1058,7 +1057,7 @@
           try { if (f && ov.requestFullscreen) ov.requestFullscreen(); else if (!f && document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
         } else if (k === 'print') {
           var st = $('gtPage'); if (!st) { st = document.createElement('style'); st.id = 'gtPage'; document.head.appendChild(st); }
-          st.textContent = '@page{size:A4 landscape;margin:10mm;}'; document.body.classList.add('pgt');
+          st.textContent = '@page{size:A3 landscape;margin:10mm;}'; document.body.classList.add('pgt');
           var done = function(){ document.body.classList.remove('pgt'); window.removeEventListener('afterprint', done); }; window.addEventListener('afterprint', done);
           window.print(); setTimeout(done, 1500);
         }
