@@ -190,6 +190,52 @@
   }
 
   /* 오늘 수업 크게 보기(전체 화면 상황판) */
+  /* 10-24 금용님: 연간계획 간트차트(전체 화면 창) */
+  #gtOv{position:fixed;inset:0;z-index:9100;background:rgba(20,20,19,.5);display:none;align-items:center;justify-content:center;padding:16px;}
+  #gtOv.on{display:flex;} #gtOv.full{padding:0;}
+  #gtOv .gtc{background:#fff;border-radius:12px;width:100%;height:100%;max-width:1700px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.2);}
+  #gtOv.full .gtc{max-width:none;border-radius:0;}
+  #gtOv .gtbar{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);}
+  #gtOv .gtbar h2{margin:0;font-size:17px;color:var(--navy);margin-right:auto;}
+  #gtOv .gtleg{display:flex;gap:4px 12px;flex-wrap:wrap;padding:8px 16px;font-size:12.5px;color:var(--text-sub);border-bottom:1px solid var(--line);align-items:center;}
+  #gtOv .gtleg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px;}
+  #gtOv .gtleg i.gh{background:none;border:1.5px dashed #888;} #gtOv .gtleg i.gx{background:repeating-linear-gradient(135deg,#bbb,#bbb 3px,#eee 3px,#eee 6px);}
+  #gtOv .gtbody{flex:1;overflow:auto;position:relative;}
+  #gtOv .gtin{min-width:1500px;position:relative;}
+  #gtOv .gtr{display:grid;grid-template-columns:210px 1fr;min-height:28px;border-bottom:1px solid #EEF1F5;}
+  #gtOv .gtl{position:sticky;left:0;z-index:3;background:#fff;padding:4px 10px;font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid var(--line);line-height:20px;}
+  #gtOv .gtl small{font-weight:500;color:var(--text-sub);margin-left:4px;}
+  #gtOv .gtl .gtag{display:inline-block;font-size:10.5px;font-weight:800;padding:0 5px;border-radius:8px;margin-left:4px;vertical-align:1px;}
+  #gtOv .gtl .gtag.c{background:#FDE7E7;color:#B42318;} #gtOv .gtl .gtag.m{background:#FFF1D6;color:#8A5A00;}
+  #gtOv .gtr.hd{position:sticky;top:0;z-index:5;background:#F3F5F8;border-bottom:1px solid #C9D1DB;min-height:30px;}
+  #gtOv .gtr.hd .gtl{background:#F3F5F8;z-index:6;}
+  #gtOv .gtt{position:relative;}
+  #gtOv .gtm{position:absolute;top:0;bottom:0;border-left:1px solid #E1E6EC;font-size:12px;font-weight:800;color:var(--navy);padding:6px 0 0 6px;box-sizing:border-box;}
+  #gtOv .gtgrid{position:absolute;top:30px;bottom:0;left:210px;right:0;pointer-events:none;z-index:1;}
+  #gtOv .gtgrid .gm{position:absolute;top:0;bottom:0;border-left:1px solid #EEF1F5;}
+  #gtOv .gtgrid .gmo{position:absolute;top:0;bottom:0;background:rgba(0,0,0,.018);}
+  #gtOv .gtb{position:absolute;top:5px;height:18px;border-radius:4px;min-width:4px;z-index:2;}
+  #gtOv .gtb.x{background:repeating-linear-gradient(135deg,#bbb,#bbb 4px,#e6e6e6 4px,#e6e6e6 8px) !important;}
+  #gtOv .gtb.og{background:none !important;border:1.5px dashed #888;z-index:1;}
+  #gtOv .gtb.ch{box-shadow:0 0 0 2px #F5B301;}
+  #gtOv .gtx{position:absolute;top:5px;line-height:18px;font-size:11.5px;color:#333;white-space:nowrap;z-index:2;}
+  #gtOv .gtday{position:absolute;top:0;bottom:0;width:0;border-left:2px solid #E5484D;z-index:4;pointer-events:none;}
+  #gtOv .gtday em{position:absolute;top:0;left:3px;font-style:normal;font-size:10.5px;font-weight:800;color:#fff;background:#E5484D;border-radius:3px;padding:0 4px;white-space:nowrap;}
+  #gtOv .gtempty{padding:40px 16px;color:var(--text-sub);}
+  @media print{
+    body.pgt > *:not(#gtOv){display:none !important;}
+    body.pgt #gtOv{position:static;display:block !important;background:none;padding:0;}
+    body.pgt #gtOv .gtc{height:auto;max-width:none;box-shadow:none;border-radius:0;display:block;overflow:visible;}
+    body.pgt #gtOv .gtbar .btn,body.pgt #gtOv .gtbar select{display:none !important;}
+    body.pgt #gtOv .gtbody{overflow:visible;} body.pgt #gtOv .gtin{min-width:0;width:100%;}
+    body.pgt #gtOv .gtr{break-inside:avoid;min-height:22px;} body.pgt #gtOv .gtr.hd{position:static;}
+    body.pgt #gtOv .gtl{position:static;font-size:10.5px;line-height:17px;padding:2px 6px;}
+    body.pgt #gtOv .gtgrid .gmo{display:none;}
+    body.pgt #gtOv .gtr{grid-template-columns:170px 1fr;} body.pgt #gtOv .gtgrid{left:170px;}
+    body.pgt #gtOv .gtb{top:3px;height:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;} body.pgt #gtOv .gtx{top:3px;font-size:9.5px;line-height:15px;}
+    body.pgt #gtOv .gtday{-webkit-print-color-adjust:exact;print-color-adjust:exact;} body.pgt #gtOv .gtday em{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body.pgt #gtOv .gtleg i,body.pgt #gtOv .gtl .gtag{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
   #tvOv{position:fixed;inset:0;z-index:9000;background:var(--bg-hover);display:none;flex-direction:column;--f:16px;}
   #tvOv.on{display:flex;}
   #tvOv .tvbar{display:flex;align-items:center;justify-content:space-between;gap:8px 14px;flex-wrap:wrap;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:var(--navy);color:#fff;}
@@ -402,7 +448,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-24 홈 100</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-24 홈 101</div>
 </div>
 </div>
 
@@ -924,7 +970,7 @@
   function renderYear(){
     var years = planYears(), ys = Object.keys(years).sort();
     if (!yearSel || !years[yearSel]) yearSel = pickYear(years);
-    var html = '<div class="chead"><h2>연간 교육훈련계획</h2>' + (ys.length ? '<select id="yearSel" aria-label="연도">' + ys.map(function(y){ return '<option value="' + y + '"' + (y === yearSel ? ' selected' : '') + '>' + y + '년</option>'; }).join('') + '</select>' : '') + '</div><div class="cdesc">연간 교육훈련계획 기준 과정·기수·인원입니다.</div>';
+    var html = '<div class="chead"><h2>연간 교육훈련계획</h2>' + (ys.length ? '<select id="yearSel" aria-label="연도">' + ys.map(function(y){ return '<option value="' + y + '"' + (y === yearSel ? ' selected' : '') + '>' + y + '년</option>'; }).join('') + '</select>' : '') + (ys.length ? '<button type="button" class="btn sm" data-gantt="1" title="연간계획을 월별 가로 막대(간트차트)로 봅니다">간트차트 보기</button>' : '') + '</div><div class="cdesc">연간 교육훈련계획 기준 과정·기수·인원입니다.</div>';
     if (!ys.length) { $('cYear').innerHTML = html + '<div class="empty">연간계획 데이터가 없습니다.</div>'; $('cYear').style.display = ''; return; }
     var names = {}, byType = {}, cancelled = 0, total = { c: 0, n: 0, p: 0 };
     plans.forEach(function(p){
@@ -946,6 +992,94 @@
       '';   // D1(10-18): [전체 과정 보기]는 편성 필요 카드·표의 합계 줄과 중복이라 없앰
     $('cYear').innerHTML = html; $('cYear').style.display = '';
   }
+
+  /* ---------- 연간계획 간트차트 (10-24) ---------- */
+  var GT_TYPES = [['기본', '#3B6FB6'], ['전문', '#2E8B6E'], ['특별', '#C9822B'], ['민관', '#8A5BB0'], ['기타', '#7A8794']];
+  function gtColor(t){ for (var i = 0; i < GT_TYPES.length; i++) if (GT_TYPES[i][0] === t) return GT_TYPES[i][1]; return GT_TYPES[4][1]; }
+  function gtType(p){ var t = String(p['구분'] || ''); return ['기본', '전문', '특별', '민관'].indexOf(t) > -1 ? t : '기타'; }
+  function gtChange(key){
+    var o = { start: '', end: '' };
+    histRows.forEach(function(h){
+      if (String(h['개설키'] || '') !== key || h['유형'] !== '일정 변경') return;
+      if (h['항목'] === '입교 시작일' && !o.start) o.start = normYmd(h['전']) || '';
+      if (h['항목'] === '입교 종료일' && !o.end) o.end = normYmd(h['전']) || '';
+    });
+    return o;
+  }
+  function gtDoy(d, y){ var q = parseYmd(d); if (!q) return null; return (Date.UTC(q.y, q.m - 1, q.d) - Date.UTC(y, 0, 1)) / 86400000; }
+  function renderGantt(){
+    var ov = $('gtOv'), y = Number($('gtYear').value), days = ((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0) ? 366 : 365;
+    var pc = function(n){ return (n / days * 100).toFixed(3) + '%'; };
+    var list = plans.filter(function(p){ var d = normYmd(p['입교 시작일']); return d && Number(d.slice(0, 4)) === y; })
+      .sort(function(a, b){ var x = normYmd(a['입교 시작일']), z = normYmd(b['입교 시작일']); return x !== z ? (x < z ? -1 : 1) : String(a['과정명'] || '').localeCompare(String(b['과정명'] || ''), 'ko'); });
+    var mo = '', grid = '', ml = [0, 31, (days === 366 ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31], acc = 0;
+    for (var m = 1; m <= 12; m++) {
+      mo += '<div class="gtm" style="left:' + pc(acc) + ';width:' + pc(ml[m]) + ';">' + m + '월</div>';
+      grid += '<div class="gm" style="left:' + pc(acc) + ';"></div>' + (m % 2 === 0 ? '<div class="gmo" style="left:' + pc(acc) + ';width:' + pc(ml[m]) + ';"></div>' : '');
+      acc += ml[m];
+    }
+    var today = todayStr(), tl = today.slice(0, 4) === String(y) ? gtDoy(today, y) : null;
+    var rows = '<div class="gtr hd"><div class="gtl">과정 · 기수 (' + list.length + '건)</div><div class="gtt">' + mo + '</div></div>';
+    var chN = 0, cxN = 0;
+    list.forEach(function(p){
+      var key = String(p['과정+기수'] || ''), a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a, cx = isCancelled(p), t = gtType(p), ch = gtChange(key), changed = !!(ch.start || ch.end);
+      if (cx) cxN++; else if (changed) chN++;
+      var s0 = gtDoy(a, y), e0 = gtDoy(b, y), left = Math.max(0, s0), w = Math.max(1, Math.min(days, e0 + 1) - left);
+      var bar = '<div class="gtb' + (cx ? ' x' : '') + (changed && !cx ? ' ch' : '') + '" style="left:' + pc(left) + ';width:' + pc(w) + ';background:' + gtColor(t) + ';"></div>';
+      if (changed && !cx) {
+        var oa = ch.start || a, ob = ch.end || b, os = gtDoy(oa, y), oe = gtDoy(ob, y);
+        if (os !== null && oe !== null) bar = '<div class="gtb og" style="left:' + pc(Math.max(0, os)) + ';width:' + pc(Math.max(1, Math.min(days, oe + 1) - Math.max(0, os))) + ';"></div>' + bar;
+      }
+      var sd = function(x){ var q = parseYmd(x); return q ? q.m + '/' + q.d : x; }, txt = sd(a) + (b !== a ? '~' + sd(b) : '') + (p['계획인원'] ? ' · ' + p['계획인원'] + '명' : '');
+      var onRight = (left + w) / days < 0.8, tx = onRight ? 'left:calc(' + pc(left + w) + ' + 5px)' : 'right:calc(' + (100 - left / days * 100).toFixed(3) + '% + 5px)';
+      var tip = key + ' · ' + t + ' · ' + a + ' ~ ' + b + (p['계획인원'] ? ' · ' + p['계획인원'] + '명' : '') + (cx ? ' · 취소됨' : changed ? ' · 일정 변경됨(원래 ' + (ch.start || a) + ' ~ ' + (ch.end || b) + ')' : '');
+      rows += '<div class="gtr" title="' + esc(tip) + '"><div class="gtl">' + esc(String(p['과정명'] || '')) + '<small>' + esc(String(p['기수'] || '')) + '</small>' + (cx ? '<span class="gtag c">취소</span>' : changed ? '<span class="gtag m">변경</span>' : '') + '</div><div class="gtt">' + bar + '<span class="gtx" style="' + tx + ';">' + esc(txt) + '</span></div></div>';
+    });
+    var used = {}; list.forEach(function(p){ used[gtType(p)] = true; });
+    var leg = GT_TYPES.filter(function(x){ return used[x[0]]; }).map(function(x){ return '<span><i style="background:' + x[1] + ';"></i>' + x[0] + '</span>'; }).join('') +
+      (chN ? '<span><i class="gh"></i>변경 전 일정(점선) · 변경된 과정은 노란 테두리</span>' : '') + (cxN ? '<span><i class="gx"></i>취소</span>' : '') + (tl !== null ? '<span><i style="background:#E5484D;width:3px;height:12px;border-radius:0;"></i>오늘</span>' : '');
+    $('gtLeg').innerHTML = leg;
+    $('gtBody').innerHTML = list.length ? '<div class="gtin">' + rows + '<div class="gtgrid">' + grid + (tl !== null ? '<div class="gtday" style="left:' + pc(tl + .5) + ';"><em>오늘 ' + md(today) + '</em></div>' : '') + '</div></div>' : '<div class="gtempty">' + y + '년 연간계획이 없습니다.</div>';
+    if (tl !== null) { var bd = $('gtBody'), inn = bd.firstChild; if (inn && inn.offsetWidth) bd.scrollLeft = Math.max(0, 210 + (inn.offsetWidth - 210) * (tl / days) - bd.clientWidth * 0.7); }
+  }
+  function openGantt(){
+    var ov = $('gtOv');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'gtOv'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+      ov.innerHTML = '<div class="gtc"><div class="gtbar"><h2>연간 교육훈련계획 간트차트</h2><select id="gtYear" aria-label="연도"></select>' +
+        '<button type="button" class="btn sm" data-gt="print">인쇄</button><button type="button" class="btn sm" data-gt="full">전체화면</button><button type="button" class="btn sm" data-gt="close">닫기</button></div>' +
+        '<div class="gtleg" id="gtLeg"></div><div class="gtbody" id="gtBody"></div></div>';
+      document.body.appendChild(ov);
+      ov.addEventListener('click', function(ev){
+        var a = ev.target.closest && ev.target.closest('[data-gt]'); if (!a) return; var k = a.getAttribute('data-gt');
+        if (k === 'close') closeGantt();
+        else if (k === 'full') {
+          var f = !ov.classList.contains('full'); ov.classList.toggle('full', f); a.textContent = f ? '전체화면 해제' : '전체화면';
+          try { if (f && ov.requestFullscreen) ov.requestFullscreen(); else if (!f && document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+        } else if (k === 'print') {
+          var st = $('gtPage'); if (!st) { st = document.createElement('style'); st.id = 'gtPage'; document.head.appendChild(st); }
+          st.textContent = '@page{size:A4 landscape;margin:10mm;}'; document.body.classList.add('pgt');
+          var done = function(){ document.body.classList.remove('pgt'); window.removeEventListener('afterprint', done); }; window.addEventListener('afterprint', done);
+          window.print(); setTimeout(done, 1500);
+        }
+      });
+      ov.addEventListener('change', function(ev){ if (ev.target.id === 'gtYear') { yearSel = ev.target.value; renderGantt(); } });
+      document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape' && $('gtOv').classList.contains('on') && !document.fullscreenElement) closeGantt(); });
+    }
+    var years = planYears(), ys = Object.keys(years).sort();
+    if (!yearSel || !years[yearSel]) yearSel = pickYear(years);
+    $('gtYear').innerHTML = ys.map(function(y){ return '<option value="' + y + '"' + (y === yearSel ? ' selected' : '') + '>' + y + '년</option>'; }).join('');
+    ov.classList.add('on'); document.body.style.overflow = 'hidden';
+    renderGantt();
+  }
+  function closeGantt(){
+    var ov = $('gtOv'); if (!ov) return;
+    ov.classList.remove('on', 'full'); document.body.style.overflow = '';
+    var fb = ov.querySelector('[data-gt="full"]'); if (fb) fb.textContent = '전체화면';
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+    renderYear();
+  }
+  document.addEventListener('click', function(ev){ var t = ev.target.closest && ev.target.closest('[data-gantt]'); if (t) openGantt(); });
 
   /* ---------- 현황 요약 3카드: 처리할 일 / 편성 안 된 과정 / 이번 달 교육 현황 ---------- */
   function dayDiff(a, b){
