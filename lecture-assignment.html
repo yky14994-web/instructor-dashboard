@@ -1037,7 +1037,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-24 배정 138</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-24 배정 139</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2842,16 +2842,25 @@
       var next = e + 1;
       renderHead(planByKey(currentKey));
       renderSessionList();
-      // 폼 초기화(같은 날짜·반·구분·강의실 유지, 시작 교시는 다음 교시)
-      form = { id: '', iid: '', iname: '' };
-      renderForm(planByKey(currentKey));
-      var nx = periodInfo(next) ? next : e;
-      $('sStart').value = String(nx); $('sEnd').value = String(nx); refreshPeriodLock();
+      var savedId = String(res.data['편성ID']);
+      /* 10-24 금용님: 수정 저장 후 입력창이 빈 '추가' 상태로 바뀌어 내용이 사라진 것처럼 보이던 문제
+         - 목록형: 고친 내용을 그대로 둔 채 '수정' 상태 유지(이어서 고칠 수 있음)
+         - 격자형(팝업): 팝업을 닫고 고친 칸을 강조 */
+      var keepRow = (wasEdit && !formModalOpen()) ? allSessions.filter(function(x){ return String(x['편성ID']) === savedId; })[0] : null;
+      if (keepRow) {
+        fillForm(keepRow, 'edit');
+      } else {
+        // 폼 초기화(같은 날짜·반·구분·강의실 유지, 시작 교시는 다음 교시)
+        form = { id: '', iid: '', iname: '' };
+        renderForm(planByKey(currentKey));
+        var nx = periodInfo(next) ? next : e;
+        $('sStart').value = String(nx); $('sEnd').value = String(nx); refreshPeriodLock();
+        if (wasEdit && formModalOpen()) closeFormModal();
+      }
       var html = ic('check', 'l') + (wasEdit ? '수정했습니다.' : '저장했습니다.');
       var box = $('sMsg');
       box.innerHTML = '<div class="note-ok">' + html + '</div>' + noticeBoxHtml(res['안내']) +
         (warns.length ? '<div class="note-warn"><b>확인이 필요합니다(저장은 되었습니다)</b><br>' + warns.map(function(w){ return '· ' + esc(w); }).join('<br>') + '</div>' : '');
-      var savedId = String(res.data['편성ID']);
       setTimeout(function(){ miSavedSess(savedId); }, 30);
       var mine = cfl.filter(function(c){ return !c.conf && (c.a.ids.indexOf(savedId) > -1 || c.b.ids.indexOf(savedId) > -1); });
       if (mine.length) {
