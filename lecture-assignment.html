@@ -627,7 +627,8 @@
   #sFormPanel .ffbtn{margin-left:8px;height:26px;padding:0 10px;font-size:12px;vertical-align:middle;}
   #sFormPanel.ffold .ffbtn{display:none;}
   #sFormPanel.fmodal .ffbtn{display:none !important;}   /* 10-19: 격자에서 띄운 입력창에는 [접기]를 두지 않음(접으면 빈 창만 남음) */
-  #sFormPanel.ffold .funfold{display:inline-flex;margin-top:4px;}
+  #sFormPanel.ffold .funfold{display:inline-flex;margin-top:0;}
+  #sFormPanel.ffold{padding:10px 18px;} #sFormPanel.ffold #sFormTitle{display:none;}
   #sFormPanel.ffold .cline, #sFormPanel.ffold .form, #sFormPanel.ffold .fbtn, #sFormPanel.ffold #sMsg{display:none;}
   #sFormPanel.fmodal{position:fixed;z-index:85;top:50%;left:50%;transform:translate(-50%,-50%);width:min(760px,94vw);max-height:92vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);margin:0;}
   #sFormPanel.fmodal .fclose{display:flex;align-items:center;justify-content:center;position:absolute;top:10px;right:12px;width:30px;height:30px;border:1px solid var(--border-input);border-radius:6px;background:#fff;font-size:14px;cursor:pointer;color:var(--text-sub);}
@@ -1065,7 +1066,6 @@
     <div id="viewerNote" class="viewer-note" style="display:none;">조회 전용 계정입니다. 교과목 편성 내용은 볼 수만 있고 추가·수정·삭제는 할 수 없습니다.</div>
     <div id="sBlock" class="note-err" style="display:none;margin-bottom:12px;"></div>
     <div class="panel" id="sHead"></div>
-    <div class="panel" id="sFormPanel"></div>
     <div class="panel" id="sListPanel">
       <h3>교과목 목록 <span class="hint">(날짜별)</span> <button class="btn sm" id="sReload" type="button" style="margin-left:8px;" title="서버에서 최신 편성 내용을 다시 불러옵니다">새로고침</button>
         <span id="sCourseName" class="scn"></span>
@@ -1077,6 +1077,7 @@
       <div id="sCards"></div>
       <div id="sEmpty" class="empty" style="display:none;"></div>
     </div>
+    <div class="panel" id="sFormPanel"></div>
     <div id="navBar" class="navbar" style="display:none;"></div>
   </div>
 </div>
@@ -1086,7 +1087,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-24 배정 142</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-25 배정 143</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2509,10 +2510,9 @@
     refreshRoomOptions();
     updOpsAuto();
     /* 21:38 금용님: PC에서도 [접기]로 접을 수 있게. PC는 접은 상태를 이 브라우저에 기억, 휴대폰은 과정을 열 때마다 접힘(기존) */
-    var pcFold = false; try { pcFold = localStorage.getItem('jsfa_la_ffold') === '1'; } catch (e) {}
-    panel.classList.toggle('ffold', !form.id && (isNarrow() ? formFold : pcFold));
-    $('sUnfold').addEventListener('click', function(){ formFold = false; panel.classList.remove('ffold'); if (!isNarrow()) { try { localStorage.setItem('jsfa_la_ffold', '0'); } catch (e) {} } });
-    $('sFold').addEventListener('click', function(){ formFold = true; panel.classList.add('ffold'); if (!isNarrow()) { try { localStorage.setItem('jsfa_la_ffold', '1'); } catch (e) {} } });
+    panel.classList.toggle('ffold', !form.id && formFold);   // 10-25 금용님: 교과목 추가 카드는 목록·격자 아래에 접힌 한 줄(버튼만)로 둠 — 열기·수정·복사 때만 펼침
+    $('sUnfold').addEventListener('click', function(){ formFold = false; panel.classList.remove('ffold'); try { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} });
+    $('sFold').addEventListener('click', function(){ formFold = true; panel.classList.add('ffold'); });
     $('sRole').value = form.role === '보조강사' ? '보조강사' : '주강사';
     $('sRole').addEventListener('change', function(){ form.role = $('sRole').value; renderChip(); });
     $('sTrainer').value = form.trainer || '';
@@ -4633,7 +4633,9 @@
     return true;
   }
   function closeFormModal(){
+    var wasModal = $('sFormPanel').classList.contains('fmodal');
     $('sFormPanel').classList.remove('fmodal');
+    if (wasModal) { formFold = true; $('sFormPanel').classList.add('ffold'); }   // 10-25: 팝업을 닫으면 아래 카드는 다시 접힌 한 줄로
     $('fBackdrop').style.display = 'none';
   }
   /* 이 과정 앞으로 날짜의 살아 있는 강의실 예약(사전확보·대관 모두) */
