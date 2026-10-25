@@ -115,6 +115,9 @@
   }
   .form-download:hover { background: #e3e9ee; }
 
+  .ferr { display: none; margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--danger); }
+  .field.bad .ferr { display: block; }
+  .field.bad input { border-color: var(--danger); }
   #msg { margin-top: 20px; padding: 16px; border-radius: 8px; font-size: 15px; font-weight: 600; text-align: center; display: none; }
   #msg.ok { display: block; background: #e6f4ea; color: var(--success); border: 1px solid #cce8d6; }
   #msg.err { display: block; background: #fce8e6; color: var(--danger); border: 1px solid #fad2cf; }
@@ -160,7 +163,7 @@
         <div class="field"><label class="required" for="birth">생년월일 <span class="age-badge" id="ageBadge"></span></label><input type="text" id="birth" inputmode="numeric" maxlength="10" placeholder="예: 19900101 (숫자만 입력)" required></div>
       </div>
       <div class="field"><label class="required" for="phone">연락처</label><input type="tel" id="phone" placeholder="010-0000-0000" required></div>
-      <div class="field"><label class="required" for="email">이메일</label><input type="email" id="email" required></div>
+      <div class="field"><label class="required" for="email">이메일</label><input type="text" id="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="name@example.com" required></div>
       <div class="row">
         <div class="field"><label class="required" for="org">소속</label><input type="text" id="org" required></div>
         <div class="field"><label for="position">직위 / 직책</label><input type="text" id="position"></div>
@@ -287,12 +290,51 @@
     }).then(function(res){ return res.json(); });
   }
 
+  /* 10-25 금용님: 생년월일·연락처·이메일 오입력 시 등록 차단(칸 아래에 이유 표시) */
+  function checkBirth(v){
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); if (!m) return '생년월일 8자리를 입력해 주세요. 예: 19900101';
+    var y = +m[1], mo = +m[2], d = +m[3], dt = new Date(y, mo - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return '존재하지 않는 날짜입니다. 년·월·일을 확인해 주세요.';
+    var age = calcAge(v);
+    if (y < 1900 || age === null || age < 18 || age > 100) return '생년월일을 다시 확인해 주세요.' + (age !== null && age >= 0 ? ' (만 ' + age + '세로 계산됩니다)' : '');
+    return '';
+  }
+  function checkPhone(v){
+    var dg = String(v).replace(/[^0-9]/g, '');
+    if (!/^01[016789]\d{7,8}$/.test(dg)) return '휴대전화 번호를 확인해 주세요. 예: 010-1234-5678';
+    return '';
+  }
+  function checkEmail(v){
+    v = String(v).trim();
+    if (!/^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$/.test(v) || /\.\./.test(v)) return '이메일 주소를 확인해 주세요. 예: name@example.com';
+    return '';
+  }
+  var CHECKS = [['birth', checkBirth], ['phone', checkPhone], ['email', checkEmail]];
+  function showFieldErr(id, text){
+    var inp = document.getElementById(id), box = inp.closest('.field'), er = box.querySelector('.ferr');
+    if (!er) { er = document.createElement('div'); er.className = 'ferr'; er.setAttribute('role', 'alert'); box.appendChild(er); }
+    er.textContent = text; box.classList.toggle('bad', !!text);
+    inp.setAttribute('aria-invalid', text ? 'true' : 'false');
+  }
+  CHECKS.forEach(function(c){
+    var el = document.getElementById(c[0]);
+    el.addEventListener('blur', function(){ if (el.value.trim()) showFieldErr(c[0], c[1](el.value)); });
+    el.addEventListener('input', function(){ if (el.closest('.field').classList.contains('bad')) showFieldErr(c[0], c[1](el.value)); });
+  });
+  function checkAllFields(){
+    var first = null;
+    CHECKS.forEach(function(c){ var t = c[1](document.getElementById(c[0]).value); showFieldErr(c[0], t); if (t && !first) first = c[0]; });
+    if (first) { var f = document.getElementById(first); try { f.scrollIntoView({ behavior: 'smooth', block: 'center' }); f.focus({ preventScroll: true }); } catch (e) {} }
+    return !first;
+  }
+
   document.getElementById('inviteForm').addEventListener('submit', function(e){
     var thisForm = document.getElementById('inviteForm');
     if (!thisForm.checkValidity()) { e.preventDefault(); thisForm.reportValidity(); return; }
     e.preventDefault();
     var msg = document.getElementById('msg');
     msg.style.display = 'none';
+    if (!checkAllFields()) { msg.textContent = '입력하신 생년월일·연락처·이메일을 다시 확인해 주세요.'; msg.className = 'err'; msg.style.display = 'block'; return; }
 
     var btn = document.getElementById('submitBtn');
     btn.disabled = true;
@@ -352,6 +394,6 @@
   });
 </script>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-19 강사초대 9</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 18px;font-family:'Pretendard',sans-serif;">화면 버전 2026-10-25 강사초대 10</div>
 </body>
 </html>

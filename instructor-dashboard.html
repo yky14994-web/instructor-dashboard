@@ -587,7 +587,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-24 강사관리 33</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-25 강사관리 34</div>
 </div>
 
 <script>
@@ -1613,6 +1613,9 @@
       msg.style.color = '#791F1F'; msg.style.display = 'block';
       return;
     }
+    var badMsg = !/^01[016789]\d{7,8}$/.test(phone.replace(/[^0-9]/g, '')) ? '연락처를 확인해 주세요. 휴대전화 번호만 가능합니다. 예: 010-1234-5678'
+      : (!/^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$/.test(email) || /\.\./.test(email)) ? '이메일 주소를 확인해 주세요. 예: name@example.com' : '';
+    if (badMsg) { msg.textContent = badMsg; msg.style.color = '#791F1F'; msg.style.display = 'block'; return; }
     var btn = document.getElementById('inviteSubmitBtn');
     btn.disabled = true; btn.textContent = '발송 중...';
     var pw = sessionStorage.getItem('jsfa_dash_pw');
