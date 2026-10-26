@@ -679,6 +679,7 @@
   table.g td.gpopen,table.g td.gpdone{vertical-align:middle;text-align:center;}
   table.g td.gpopen{background:repeating-linear-gradient(135deg,#FFF6D8,#FFF6D8 6px,#FFFDF3 6px,#FFFDF3 12px);}
   table.g td.gpdone{background:repeating-linear-gradient(135deg,var(--line),var(--line) 6px,var(--bg-hover) 6px,var(--bg-hover) 12px);}
+  table.g td.gpout{background:radial-gradient(circle,#BCC5D1 1.1px,transparent 1.5px) 0 0/9px 9px,var(--bg-soft);cursor:not-allowed;}   /* 10-26: 이 과정의 교육기간 밖 날짜 — 편성 불가 칸(점 무늬) */
   table.g td.gpend{background:repeating-linear-gradient(135deg,var(--none-bg),var(--none-bg) 6px,var(--bg-soft) 6px,var(--bg-soft) 12px);cursor:not-allowed;}
   .gend{display:block;margin:3px auto 0;width:max-content;font-size:11px;font-weight:800;color:#4B5563;background:var(--line);border-radius:999px;padding:1px 8px;}
   .gpt{display:block;font-size:12px;font-weight:800;color:#8A6D00;} td.gpdone .gpt{color:var(--text-muted);} .gpt small{display:block;font-weight:600;font-size:11px;margin-top:1px;}
@@ -798,7 +799,7 @@
     /* 10-20 금용님: 바깥 테두리 네 변을 같은 굵기로(표가 용지 폭에 꽉 차서 오른쪽 바깥선 절반이 잘려 얇게 찍히던 것 → 좌우 2px 여백) */
     body.pgrid.pofc table.g{border:1.5px solid #000;width:calc(100% - 4px);margin:0 2px;} body.pgrid.pofc table.g th,body.pgrid.pofc table.g td{border:1px solid #555 !important;}
     body.pgrid.pofc table.g td.c{background:#fff !important;vertical-align:middle;text-align:center;}   /* 10-20: 칸 안 내용 가로·세로 가운데 */
-    body.pgrid.pofc table.g td.gpopen,body.pgrid.pofc table.g td.gpdone{background:#fff !important;}
+    body.pgrid.pofc table.g td.gpopen,body.pgrid.pofc table.g td.gpdone,body.pgrid.pofc table.g td.gpout{background:#fff !important;}
     body.pgrid.pofc .gc{border:0 !important;border-radius:0;background:#fff !important;padding:5px 6px !important;line-height:1.4;height:auto;text-align:center;}
     body.pgrid.pofc .gc .s{font-size:12.5px;font-weight:800;color:#000;margin-bottom:3px;}
     body.pgrid.pofc .gc .i{font-size:11.5px;color:#000;margin-top:1px;justify-content:center;}
@@ -1087,7 +1088,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-26 배정 144</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-26 배정 145</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2839,6 +2840,8 @@
     var s = Number($('sStart').value), e = Number($('sEnd').value);
     if (!parseYmd(date)) { showFormMsg('note-err', '일자를 선택해 주세요.'); return; }
     if (sessEnded(date)) { showFormMsg('note-err', ENDED_ADD_MSG); return; }
+    var pChk = planByKey(currentKey), origRow = form.id ? allSessions.filter(function(r){ return String(r['편성ID'] || '') === String(form.id); })[0] : null;
+    if (pChk && !dateInRanges(pChk, date) && !(origRow && String(origRow['일자'] || '').slice(0, 10) === date)) { showFormMsg('note-err', '이 과정의 입교·실습 기간 밖이라 편성할 수 없습니다. 기간을 바꾸려면 [일정 변경]을 이용해 주세요.'); return; }
     if (!subj) { showFormMsg('note-err', '교과목을 입력해 주세요.'); return; }
     if (s > e) { showFormMsg('note-err', '시작 교시가 끝 교시보다 클 수 없습니다.'); return; }
     if (!((form.iid || form.iname) && $('sRole').value === '보조강사')) {
@@ -4611,7 +4614,7 @@
   var gridScope = 'one', gridHide = {}, gridKeepWeek = '', gridWantDate = '', gridHlId = '';   // gridScope: 'one'=이 과정만, 'all'=같은 주에 진행되는 과정 전체
   var GCOL = ['#2F6DB5', '#2E8B57', '#8A4FBF', '#D9822B', '#C2477A', '#2A9DA8', '#7A7F2A', 'var(--text-muted)'];
   try { if (sessionStorage.getItem('jsfa_la_gscope') === 'all') gridScope = 'all'; } catch (e) {}
-  try { if (sessionStorage.getItem('jsfa_la_view') === 'grid') viewMode = 'grid'; } catch (e) {}
+  try { var vSaved = sessionStorage.getItem('jsfa_la_view'); viewMode = vSaved === 'list' ? 'list' : ((vSaved === 'grid' || !(window.matchMedia && window.matchMedia('(max-width: 640px)').matches)) ? 'grid' : 'list'); } catch (e) {}   // 10-26: 기본은 격자(좁은 화면은 목록)
   function ymd(dt){ return dt.getFullYear() + '-' + ('0' + (dt.getMonth() + 1)).slice(-2) + '-' + ('0' + dt.getDate()).slice(-2); }
   function addDays(s, n){ var q = parseYmd(s); return ymd(new Date(q.y, q.m - 1, q.d + n)); }
   function mondayOf(s){ var q = parseYmd(s); return addDays(s, -(q.dow === 0 ? 6 : q.dow - 1)); }
@@ -4997,13 +5000,15 @@
               ce = canEdit && cx.own; cp0 = planByKey(rk) || p;
             }
             body += '<td class="c' + sh + '" data-d="' + di + '" rowspan="' + st.rs + '">' + gridCell(st.u, st.cont, ce, cp0, cx) + '</td>';
+          } else if (li === 0 && canEdit && !all && !dateInRanges(p, d)) {
+            body += '<td class="c empty gpout' + sh + '" data-d="' + di + '"></td>';   // 교육기간 밖: 눌러도 편성 입력이 열리지 않음
           } else if (li === 0 && canEdit && !all) {
             var gs = gapSlotState(p, d, n);
             var endD = sessEnded(d); if (endD) gs = '';
             if (mv && mv.key === currentKey && !endD) body += '<td class="c empty mvt' + sh + '" data-d="' + di + '" data-mvto="' + d + '|' + n + '" title="누르면 선택한 교과목을 이 칸으로 옮깁니다"></td>';
             else body += '<td class="c empty' + (endD ? ' gpend' : (gs ? ' gp' + gs : '')) + sh + '" data-d="' + di + '" data-new="' + d + '|' + n + '"' + (endD ? ' title="종료된 일정이라 편성할 수 없습니다"' : '') + '>' + gapCellHtml(gs, p, d, n, true) + '</td>';
           }
-          else { var endD2 = sessEnded(d), gs2 = (!all && li === 0 && !endD2) ? gapSlotState(p, d, n) : ''; body += '<td class="c' + (endD2 ? ' gpend' : (gs2 ? ' gp' + gs2 : '')) + sh + '" data-d="' + di + '">' + gapCellHtml(gs2, p, d, n, false) + '</td>'; }
+          else { var endD2 = sessEnded(d), gs2 = (!all && li === 0 && !endD2) ? gapSlotState(p, d, n) : ''; body += '<td class="c' + (endD2 ? ' gpend' : (gs2 ? ' gp' + gs2 : (!all && p && !dateInRanges(p, d) ? ' gpout' : ''))) + sh + '" data-d="' + di + '">' + gapCellHtml(gs2, p, d, n, false) + '</td>'; }
         }
       });
       body += '</tr>';
