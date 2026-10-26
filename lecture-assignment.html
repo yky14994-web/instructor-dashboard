@@ -1087,7 +1087,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-25 배정 143</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-26 배정 144</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1421,11 +1421,11 @@
   }
 
   /* 교과목 수 문구: 강사가 필요한 교과목과 교육운영팀 운영 교시를 나눠 표시 */
-  function subjCount(st){ return st.total - (st.ops || 0); }
+  function subjCount(st){ return st.total; }   // 10-26: 팀 운영 건도 교과목으로 센다(강사 미지정은 운영 건이 항상 배정 처리라 그대로 정확)
   function subjText(st, done){
-    var n = subjCount(st), a = st.assigned - (st.ops || 0), o = st.ops ? ' · 운영 교시 ' + st.ops : '';
-    if (!n) return '운영 교시 ' + st.ops + '개만 편성';
-    return done ? '교과목 ' + n + '개 · 배정 완료' + o : '교과목 ' + n + '개 중 ' + a + '개 배정' + o;
+    var n = subjCount(st), a = st.assigned;
+    if (!n) return '교과목 없음';
+    return done ? '교과목 ' + n + '개 · 배정 완료' : '교과목 ' + n + '개 중 ' + a + '개 배정';
   }
   function subjState(p){
     var key = p['과정+기수'];
@@ -1434,20 +1434,20 @@
     var s = sessionsByKey[key];
     if (!s || !s.total) return { kind: 'none', text: '교과목 없음' };
     var cls = s.assigned >= s.total ? 'ok' : 'info';
-    var n = subjCount(s), a = s.assigned - (s.ops || 0);
-    if (!n) return { kind: cls, text: subjText(s, false) };   // 운영 교시만 편성된 과정은 기존 표시 유지
+    var n = subjCount(s), a = s.assigned;
+    if (!n) return { kind: cls, text: subjText(s, false) };
     var b = normYmd(p['입교 종료일']) || normYmd(p['입교 시작일']);
     if (b && sessEnded(b)) return { kind: 'end', text: '종료 (교과목 ' + n + '개 중 ' + a + '개 배정)', short: '종료' };
     var sl = slotStats(p), un = n - a;   // sl: {t 전체 수업 교시, f 채운 교시, fut 오늘 이후 빈 교시} / 5주 초과 과정은 null
     if (!sl || !sl.t) {
       if (cls === 'ok') return { kind: 'ok', text: subjText(s, false) };   // 5주 초과 과정은 교시를 따지지 않으므로 '편성 완료'로 표시하지 않음
       var pt0 = '편성 중 · 강사 ' + a + '/' + n;
-      return { kind: 'info', text: pt0 + (s.ops ? ' · 운영 교시 ' + s.ops : ''), short: pt0 };
+      return { kind: 'info', text: pt0, short: pt0 };
     }
     var fr = '교시 ' + sl.f + '/' + sl.t;
     if (cls === 'ok' && !sl.fut) return { kind: 'done', text: '편성 완료 (교과목 ' + n + '개 · ' + fr + ')', short: '✓ 편성 완료 · ' + fr, sub: '교과목 ' + n + '개', fr: fr, f: sl.f, t: sl.t };
     var pt = '편성 중 · ' + fr + (un ? ' · 강사 미지정 ' + un : '');
-    return { kind: 'info', text: pt + (s.ops ? ' · 운영 교시 ' + s.ops : ''), short: pt, fr: fr, f: sl.f, t: sl.t };
+    return { kind: 'info', text: pt, short: pt, fr: fr, f: sl.f, t: sl.t };
   }
   /* 교시 분수: 전체 수업 교시(수업일 × 하루 수업 교시)와 채운 교시(편성·비워둠 처리·팀 교시). 지난 날의 빈 교시도 센다. 5주 초과 과정·편성 없는 과정은 null */
   function slotStats(p){
@@ -1646,11 +1646,10 @@
     if (s.kind === 'cx') {
       var st0 = sessionsByKey[p['과정+기수']];
       if (!st0 || !st0.total) return '<span class="legend">-</span>';
-      return '<button type="button" class="tag tagbtn t-none" data-open="' + esc(p['과정+기수']) + '" title="남아 있는 편성 보기">' + (subjCount(st0) ? '남은 교과목 ' + subjCount(st0) + '개' : '남은 운영 교시 ' + st0.ops + '개') + ' ›</button>' + chgLastLine(p['과정+기수']);
+      return '<button type="button" class="tag tagbtn t-none" data-open="' + esc(p['과정+기수']) + '" title="남아 있는 편성 보기">' + '남은 교과목 ' + subjCount(st0) + '개' + ' ›</button>' + chgLastLine(p['과정+기수']);
     }
     var cls = s.kind === 'none' || s.kind === 'end' ? 't-none' : (s.kind === 'ok' || s.kind === 'done') ? 't-ok' : 't-info';
     var stx = s.kind === 'ok' ? subjText(sessionsByKey[p['과정+기수']] || { total: 0, assigned: 0, ops: 0 }, true) : (s.short || s.text);
-    if (s.kind === 'done' && sessionsByKey[p['과정+기수']] && sessionsByKey[p['과정+기수']].ops) stx += ' · 운영 교시 ' + sessionsByKey[p['과정+기수']].ops;
     return '<button type="button" class="tag tagbtn ' + cls + '" data-open="' + esc(p['과정+기수']) + '" title="교과목 편성 화면 열기">' + esc(stx) + ' ›</button>' + cflTag(p) + chgLastLine(p['과정+기수']);
   }
 
@@ -2353,7 +2352,7 @@
     if (!st.total) tags += '<span class="tag t-none">교과목 없음</span>';
     else tags += (function(){
         var ss = subjState(p);
-        if (ss.kind === 'done') return '<span class="tag t-ok">' + esc(ss.short) + ' · ' + esc(ss.sub) + (st.ops ? ' · 운영 교시 ' + st.ops : '') + '</span>';
+        if (ss.kind === 'done') return '<span class="tag t-ok">' + esc(ss.short) + ' · ' + esc(ss.sub) + '</span>';
         if (ss.kind === 'end') return '<span class="tag t-none">종료</span><span class="tag ' + (unassigned ? 't-info' : 't-ok') + '">' + esc(subjText(st, false)) + '</span>';
         return '<span class="tag ' + (unassigned ? 't-info' : 't-ok') + '">' + esc(subjText(st, false)) + '</span>';
       })() +
