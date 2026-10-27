@@ -1088,7 +1088,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-26 배정 145</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-27 배정 146</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2720,6 +2720,7 @@
     html += '<div class="it manual" data-manual="' + esc(q) + '">+ "' + esc(q) + '" 강사 목록에 없는 사람으로 직접 입력</div>';
     pk.innerHTML = html;
     pk.style.display = 'block';
+    try { pk.scrollIntoView({ block: 'nearest' }); } catch (e) {}   // 10-27: 교과목 추가 팝업은 높이가 제한돼 추천 목록이 팝업 아래로 잘림 → 목록이 다 보이게 팝업 안을 자동으로 내림
   }
   function hidePicker(){ var pk = $('sPicker'); if (pk) pk.style.display = 'none'; }
 
