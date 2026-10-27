@@ -450,7 +450,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-24 홈 102</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-27 홈 103</div>
 </div>
 </div>
 
@@ -1014,32 +1014,55 @@
     var pc = function(n){ return (n / days * 100).toFixed(3) + '%'; };
     var list = plans.filter(function(p){ var d = normYmd(p['입교 시작일']); return d && Number(d.slice(0, 4)) === y && !isCancelled(p); })
       .sort(function(a, b){ var x = normYmd(a['입교 시작일']), z = normYmd(b['입교 시작일']); return x !== z ? (x < z ? -1 : 1) : String(a['과정명'] || '').localeCompare(String(b['과정명'] || ''), 'ko'); });
-    var mo = '', grid = '', ml = [0, 31, (days === 366 ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31], acc = 0, wk = '';
+    var mo = '', grid = '', ml = [0, 31, (days === 366 ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31], acc = 0, wk = '', mStart = [];
     for (var m = 1; m <= 12; m++) {
       mo += '<div class="gtm" style="left:' + pc(acc) + ';width:' + pc(ml[m]) + ';">' + m + '월</div>';
+      mStart[m] = acc;
+      if (m > 1) grid += '<div class="gm g4" style="left:' + pc(acc) + ';"></div>';   // 10-27: 진한 선은 매월 시작에만
       acc += ml[m];
     }
-    var j1 = new Date(y, 0, 1).getDay(), off = (j1 + 6) % 7;   // 월요일 기준 주 번호: 1월 1일이 속한 주 = 1주
-    for (var dd = 0, first = true; dd < days; dd++) {
-      var isMon = ((dd + off) % 7 === 0);
-      if (!isMon && dd !== 0) continue;
-      var wn = Math.floor((dd + off) / 7) + 1;
+    /* 10-27 금용님(A안): 주 번호를 월별로 다시 셈 — 그 달의 첫 월요일부터 1주(월요일이 5번인 달은 5주까지). 첫 월요일 전 며칠은 앞 달 마지막 주 */
+    var j1 = new Date(y, 0, 1).getDay(), off = (j1 + 6) % 7;
+    for (var dd = 0; dd < days; dd++) {
+      if ((dd + off) % 7 !== 0) continue;
+      var dt = new Date(y, 0, 1 + dd), wn = Math.floor((dt.getDate() - 1) / 7) + 1;
       wk += '<div class="gtw" style="left:' + pc(dd) + ';">' + wn + '</div>';
-      grid += '<div class="gm' + (wn % 4 === 1 ? ' g4' : '') + '" style="left:' + pc(dd) + ';"></div>';
+      grid += '<div class="gm" style="left:' + pc(dd) + ';"></div>';
     }
-    var today = todayStr(), tl = today.slice(0, 4) === String(y) ? gtDoy(today, y) : null;
-    var rows = '<div class="gtr hd"><div class="gtl">과정 · 기수 (' + list.length + '건)<small style="display:block;margin:0;">가로축: 주(월요일 시작)</small></div><div class="gtt">' + mo + wk + '</div></div>';
+    /* 10-27 금용님(B안): 같은 과정은 한 줄에 기수별 막대 여러 개(첫 입교일 순) */
+    var groups = [], gi = {};
     list.forEach(function(p){
-      var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a, t = gtType(p);
-      var s0 = gtDoy(a, y), e0 = gtDoy(b, y), left = Math.max(0, s0), w = Math.max(1, Math.min(days, e0 + 1) - left);
-      rows += '<div class="gtr"><div class="gtl">' + esc(String(p['과정명'] || '')) + '<small>' + esc(String(p['기수'] || '')) + '</small></div><div class="gtt"><div class="gtb" style="left:' + pc(left) + ';width:' + pc(w) + ';background:' + gtColor(t) + ';"></div></div></div>';
+      var nm = String(p['과정명'] || '');
+      if (gi[nm] === undefined) { gi[nm] = groups.length; groups.push({ name: nm, items: [] }); }
+      groups[gi[nm]].items.push(p);
+    });
+    var rows = '<div class="gtr hd"><div class="gtl">과정 (' + groups.length + '과정 · ' + list.length + '회)<small style="display:block;margin:0;">가로축: 월별 주차(월요일 시작)</small></div><div class="gtt">' + mo + wk + '</div></div>';
+    var trackW = Math.max(1700, ($('gtBody') && $('gtBody').clientWidth) || 0) - 210;   // 막대 옆 기수 글자가 다음 막대와 겹치는지 보기 위한 가로 폭(px)
+    groups.forEach(function(g){
+      var pos = g.items.map(function(p){
+        var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a;
+        var s0 = gtDoy(a, y), e0 = gtDoy(b, y), left = Math.max(0, s0);
+        return { p: p, a: a, b: b, left: left, w: Math.max(1, Math.min(days, e0 + 1) - left) };
+      });
+      var bars = pos.map(function(o, i){
+        var p = o.p, t = gtType(p), gs = String(p['기수'] || '');
+        var tip = g.name + ' ' + gs + ' · ' + md(o.a) + (o.b !== o.a ? ' ~ ' + md(o.b) : '');
+        var nx = pos[i + 1], labEnd = (o.left + o.w) / days * trackW + 3 + gs.length * 8;
+        var showLab = gs && (!nx || nx.left / days * trackW > labEnd + 2);   // 다음 막대와 겹치면 글자는 생략(막대에 마우스를 올리면 기수·날짜 표시)
+        return '<div class="gtb" title="' + esc(tip) + '" style="left:' + pc(o.left) + ';width:' + pc(o.w) + ';background:' + gtColor(t) + ';"></div>' +
+          (showLab ? '<div class="gtx" style="left:calc(' + pc(o.left + o.w) + ' + 3px);">' + esc(gs) + '</div>' : '');
+      }).join('');
+      rows += '<div class="gtr"><div class="gtl" title="' + esc(g.name) + '">' + esc(g.name) + (g.items.length > 1 ? '<small>' + g.items.length + '회</small>' : '') + '</div><div class="gtt">' + bars + '</div></div>';
     });
     var used = {}; list.forEach(function(p){ used[gtType(p)] = true; });
-    var leg = GT_TYPES.filter(function(x){ return used[x[0]]; }).map(function(x){ return '<span><i style="background:' + x[1] + ';"></i>' + x[0] + '</span>'; }).join('') +
-      (tl !== null ? '<span><i style="background:#E5484D;width:3px;height:12px;border-radius:0;"></i>오늘</span>' : '');
-    $('gtLeg').innerHTML = leg;
-    $('gtBody').innerHTML = list.length ? '<div class="gtin">' + rows + '<div class="gtgrid">' + grid + (tl !== null ? '<div class="gtday" style="left:' + pc(tl + .5) + ';"><em>오늘 ' + md(today) + '</em></div>' : '') + '</div></div>' : '<div class="gtempty">' + y + '년 연간계획이 없습니다.</div>';
-    if (tl !== null) { var bd = $('gtBody'), inn = bd.firstChild; if (inn && inn.offsetWidth) bd.scrollLeft = Math.max(0, 210 + (inn.offsetWidth - 210) * (tl / days) - bd.clientWidth * 0.7); }
+    $('gtLeg').innerHTML = GT_TYPES.filter(function(x){ return used[x[0]]; }).map(function(x){ return '<span><i style="background:' + x[1] + ';"></i>' + x[0] + '</span>'; }).join('');
+    $('gtBody').innerHTML = list.length ? '<div class="gtin">' + rows + '<div class="gtgrid">' + grid + '</div></div>' : '<div class="gtempty">' + y + '년 연간계획이 없습니다.</div>';
+    /* 오늘 선은 표시하지 않음(10-27). 올해를 열면 이번 달 시작이 보이도록 가로 스크롤만 맞춤 */
+    var today = todayStr();
+    if (list.length && today.slice(0, 4) === String(y)) {
+      var bd = $('gtBody'), inn = bd.firstChild, cm = Number(today.slice(5, 7));
+      if (inn && inn.offsetWidth) bd.scrollLeft = Math.max(0, (inn.offsetWidth - 210) * (mStart[cm] / days) - 60);
+    }
   }
   function openGantt(){
     var ov = $('gtOv');
