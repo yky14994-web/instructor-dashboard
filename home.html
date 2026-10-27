@@ -260,6 +260,9 @@
   #tvOv .tcr.now{background:rgba(47,111,214,.18);box-shadow:0 0 0 3px #2F6FD6 inset;}
   #tvOv .empty{font-size:calc(var(--f)*1.2);padding:40px 10px;}
   #tvOv a{pointer-events:none;}
+  #tvOv .tvi{font:inherit;color:var(--navy);font-weight:700;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;}
+  #tvOv .tvi:hover{text-decoration:underline;} #tvOv .tvi:focus-visible{outline:2px solid #2F6FD6;outline-offset:2px;border-radius:3px;}
+  #tvOv .tvbtn .btn.on{background:#fff;color:var(--navy);border-color:#fff;}
   @media print{ #tvOv{display:none !important;} }
 
   /* 이번 주 */
@@ -451,7 +454,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 홈 104</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 홈 105</div>
 </div>
 </div>
 
@@ -685,24 +688,38 @@
   }
   /* ---------- 오늘 수업 크게 보기 ---------- */
   var tvData = null, tvEl = null, tvOn = false, tvLock = null, tvTimer = null, tvData5 = null;
+  /* 10-28 금용님(B안): 크게 보기에서 "강사 정보 보기"를 켰을 때만 등록 강사 이름을 눌러 강사 카드를 띄움. 열 때마다 꺼짐으로 시작(상황판 노출 방지). 로그인 안 된 화면에서는 단추를 흐리게 */
+  var tvInfo = false;
+  function tvInfoLabel(){
+    var b = document.getElementById('tvInfo'); if (!b) return;
+    var can = !!getPw();
+    if (!can) tvInfo = false;
+    b.disabled = !can; b.style.opacity = can ? '' : '.5';
+    if (!can) b.title = '관리자 로그인 후 사용할 수 있습니다';
+    b.textContent = tvInfo ? '강사 정보 보기 켜짐' : '강사 정보 보기 꺼짐';
+    b.setAttribute('aria-pressed', tvInfo ? 'true' : 'false');
+    b.classList.toggle('on', tvInfo);
+  }
   function tvSupportFs(){ return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled); }
   function tvFsNow(){ return document.fullscreenElement || document.webkitFullscreenElement; }
   function tvBuild(){
     if (tvEl) return;
     tvEl = document.createElement('div');
     tvEl.id = 'tvOv'; tvEl.setAttribute('role', 'dialog'); tvEl.setAttribute('aria-modal', 'true'); tvEl.setAttribute('aria-label', '오늘 수업 크게 보기');
-    tvEl.innerHTML = '<div class="tvbar"><div class="tvt"><b>오늘 수업</b><span id="tvMeta"></span><span id="tvClock"></span></div><div class="tvbtn">' + (tvSupportFs() ? '<button type="button" class="btn" id="tvFs">전체 화면</button>' : '') + '<button type="button" class="btn primary" id="tvClose">닫기</button></div></div><div id="tvBody"></div>';
+    tvEl.innerHTML = '<div class="tvbar"><div class="tvt"><b>오늘 수업</b><span id="tvMeta"></span><span id="tvClock"></span></div><div class="tvbtn"><button type="button" class="btn" id="tvInfo" aria-pressed="false" title="켜면 등록 강사 이름을 눌러 강사 정보 카드를 볼 수 있습니다. 여러 사람이 보는 화면에서는 꺼 두세요">강사 정보 보기 꺼짐</button>' + (tvSupportFs() ? '<button type="button" class="btn" id="tvFs">전체 화면</button>' : '') + '<button type="button" class="btn primary" id="tvClose">닫기</button></div></div><div id="tvBody"></div>';
     document.body.appendChild(tvEl);
     tvEl.addEventListener('click', function(ev){
       var t = ev.target && ev.target.closest ? ev.target.closest('button') : null; if (!t) return;
       if (t.id === 'tvClose') tvClose();
       else if (t.id === 'tvFs') tvToggleFs();
+      else if (t.id === 'tvInfo') { tvInfo = !tvInfo; tvInfoLabel(); tvRender(); }
+      else if (t.classList.contains('tvi') && tvInfo && window.jsfaOpenCard) window.jsfaOpenCard(t.getAttribute('data-iid'), true);
     });
   }
   function tvToggleFs(){
     try {
       if (tvFsNow()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
-      else { var el = tvEl; (el.requestFullscreen || el.webkitRequestFullscreen).call(el); }
+      else { var el = document.documentElement; (el.requestFullscreen || el.webkitRequestFullscreen).call(el); }   // 10-28: 문서 전체를 전체 화면으로(강사 카드 창이 함께 보이도록). 크게 보기 화면이 위를 덮으므로 보이는 모습은 같음
     } catch (e) {}
   }
   function tvFsLabel(){ var b = document.getElementById('tvFs'); if (b) b.textContent = tvFsNow() ? '전체 화면 끄기' : '전체 화면'; }
@@ -726,7 +743,8 @@
     if (!tvData) html = '<div class="empty">불러오는 중입니다.</div>';
     else if (tvData.empty) html = '<div class="empty">' + esc(tvData.empty) + '</div>';
     else html = '<div class="ttwrap"><table class="tt"><thead>' + tvData.th + '</thead><tbody>' + tvData.body + '</tbody></table></div><div class="tcards">' + tvData.cards + '</div>';
-    html = html.replace(/<a\b[^>]*>/g, '<span>').replace(/<\/a>/g, '</span>');   // 상황판에서는 링크 이동 없음
+    if (tvInfo) html = html.replace(/<a class="inm" href="instructor-dashboard\.html#i=([^"]+)"[^>]*>([\s\S]*?)<\/a>/g, function(m0, id, nm){ var v; try { v = decodeURIComponent(id); } catch (e) { v = id; } return '<button type="button" class="tvi" data-iid="' + esc(v) + '">' + nm + '</button>'; });
+    html = html.replace(/<a\b[^>]*>/g, '<span>').replace(/<\/a>/g, '</span>');   // 상황판에서는 링크 이동 없음(강사 정보 보기를 켜면 강사 이름만 단추로)
     var keep = b.scrollTop;
     b.innerHTML = html; b.scrollTop = keep;
     tvFit();
@@ -735,7 +753,7 @@
     try { if (navigator.wakeLock && tvOn && !tvLock) navigator.wakeLock.request('screen').then(function(l){ tvLock = l; l.addEventListener('release', function(){ tvLock = null; }); }).catch(function(){}); } catch (e) {}
   }
   function tvOpen(){
-    tvBuild(); tvOn = true; tvEl.classList.add('on'); document.body.style.overflow = 'hidden';
+    tvBuild(); tvOn = true; tvInfo = false; tvInfoLabel(); tvEl.classList.add('on'); document.body.style.overflow = 'hidden';
     tvRender(); tvWake();
     clearInterval(tvTimer);
     tvTimer = setInterval(function(){ tvClock(); }, 15000);
@@ -750,7 +768,7 @@
     try { if (tvLock) { tvLock.release(); tvLock = null; } } catch (e) {}
   }
   document.addEventListener('click', function(ev){ var t = ev.target && ev.target.closest ? ev.target.closest('#tvOpen') : null; if (t) tvOpen(); });
-  document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape' && tvOn) tvClose(); });
+  document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape' && tvOn && !(window.jsfaCardIsOpen && window.jsfaCardIsOpen())) tvClose(); });   // 강사 카드가 열려 있으면 Esc는 카드만 닫음
   document.addEventListener('fullscreenchange', tvFsLabel); document.addEventListener('webkitfullscreenchange', tvFsLabel);
   document.addEventListener('visibilitychange', function(){ if (!document.hidden) tvWake(); });
   window.addEventListener('resize', function(){ if (tvOn) tvFit(); });
@@ -1934,14 +1952,14 @@
   }
   function send(){ if (ready && pending !== null) { try { fr.contentWindow.postMessage({type:'jsfa-open-card', id:pending}, '*'); } catch (e) {} } }
   function hide(){ if (!ov) return; ov.style.display = 'none'; document.body.style.overflow = ''; clearTimeout(timer); shown = false; pending = null; }
-  function open(id){
+  function open(id, noNav){
     init(); shown = false; pending = id;
     ov.querySelector('.icLoad').style.display = 'flex';
     ov.style.display = 'block'; document.body.style.overflow = 'hidden';
     send();
     clearTimeout(timer);
     // 20초 안에 뜨지 않으면 기존 방식(강사관리 화면으로 이동)으로 대체
-    timer = setTimeout(function(){ if (!shown) { hide(); location.href = 'instructor-dashboard.html#i=' + encodeURIComponent(id); } }, 20000);
+    timer = setTimeout(function(){ if (!shown) { hide(); if (!noNav) location.href = 'instructor-dashboard.html#i=' + encodeURIComponent(id); } }, 20000);   // 크게 보기(noNav)에서는 다른 화면으로 넘어가지 않음
   }
   window.addEventListener('message', function(e){
     if (!fr || e.source !== fr.contentWindow) return;
@@ -1961,6 +1979,8 @@
     e.preventDefault(); open(id);
   }, true);
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && ov && ov.style.display === 'block') hide(); });
+  window.jsfaOpenCard = function(id, noNav){ if (!id || !hasPw()) return false; open(id, noNav); return true; };   // 10-28: 크게 보기에서 사용
+  window.jsfaCardIsOpen = function(){ return !!(ov && ov.style.display === 'block'); };
   // 미리 불러 두어 클릭 시 바로 뜨게 함(로그인된 경우만, 화면이 한가할 때)
   window.addEventListener('load', function(){ if (hasPw()) setTimeout(init, 2500); });
 })();
