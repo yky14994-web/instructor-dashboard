@@ -1098,7 +1098,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-27 배정 149</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-27 배정 150</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -1240,7 +1240,7 @@
   }
 
   /* ---------- 강사 안내 발송 전 확인(담당자 승인) ----------
-     저장·삭제·이동으로 강사에게 메일+문자가 나갈 수 있으면 먼저 확인창을 띄움: [저장하고 안내 발송] [저장만(안내 안 보냄)] [취소].
+     저장·삭제·이동으로 강사에게 메일+문자가 나갈 수 있으면 먼저 확인창을 띄움: [문자·메일 알림 보내기] [알림 보내지 않음] [취소](10-27 버튼 문구 변경).
      '저장만'은 안내발송='아니오'를 서버에 보내 안내만 건너뜀. 화면이 예상하는 발송 대상이며, 강사 상태·연락처에 따라 서버가 일부를 보내지 않을 수 있음 */
   function noticePlan(old, nv){
     var out = [], oldId = old ? String(old['강사ID'] || '') : '', newId = nv ? String(nv['강사ID'] || '') : '';
@@ -1280,11 +1280,11 @@
         '<div style="font-size:16px;font-weight:700;margin-bottom:6px;">강사에게 안내를 보낼까요?</div>' +
         '<div style="font-size:13px;color:#4B5563;margin-bottom:8px;">저장하면 아래 강사에게 메일과 문자가 발송됩니다.</div>' +
         '<ul style="margin:0 0 10px;padding-left:18px;font-size:13px;line-height:1.6;">' + rows + '</ul><style>.ncd{color:#374151;font-size:13px;}</style>' +
-        '<div class="hint" style="margin-bottom:12px;">강사 상태·연락처에 따라 일부는 발송되지 않을 수 있습니다. "저장만"을 고르면 안내 없이 저장되며, 배정 안내는 나중에 "안내 재발송"으로 보낼 수 있습니다(변경·취소 안내는 재발송 대상이 아닙니다).</div>' +
+        '<div class="hint" style="margin-bottom:12px;">강사 상태·연락처에 따라 일부는 발송되지 않을 수 있습니다. "알림 보내지 않음"을 고르면 안내 없이 저장되며, 배정 안내는 나중에 "안내 재발송"으로 보낼 수 있습니다(변경·취소 안내는 재발송 대상이 아닙니다).</div>' +
         '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;">' +
         '<button type="button" class="btn" data-nc="cancel">취소</button>' +
-        '<button type="button" class="btn" data-nc="skip">저장만(안내 안 보냄)</button>' +
-        '<button type="button" class="btn primary" data-nc="send">저장하고 안내 발송</button></div></div>';
+        '<button type="button" class="btn" data-nc="skip">알림 보내지 않음</button>' +
+        '<button type="button" class="btn primary" data-nc="send">문자·메일 알림 보내기</button></div></div>';
       function done(v){ document.removeEventListener('keydown', onKey, true); if (ov.parentNode) ov.parentNode.removeChild(ov); resolve(v); }
       function onKey(ev){ if (ev.key === 'Escape') { ev.stopPropagation(); done('cancel'); } }
       ov.addEventListener('click', function(ev){ var t = ev.target.closest ? ev.target.closest('[data-nc]') : null; if (t) done(t.getAttribute('data-nc')); else if (ev.target === ov) done('cancel'); });
