@@ -324,6 +324,16 @@
   .wl .row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
   .btn.ok{color:var(--navy);}
   .picker .it .bz{flex-shrink:0;text-align:right;font-size:11px;line-height:1.35;}
+  /* 10-27: 목록 폭이 좁을 때(교과목 추가 팝업) 배정·출강불가 표시가 폭을 다 차지해 이름이 세로 한 글자씩 보이던 문제 → 이름 칸 최소 폭 확보, 표시는 줄바꿈 */
+  .picker{container-type:inline-size;}
+  .picker .it.row .tx{min-width:120px;}
+  .picker .it .bz{flex-shrink:1;min-width:0;word-break:keep-all;}
+  @container (max-width:420px){
+    .picker .it.row{flex-wrap:wrap;}
+    .picker .it.row .bz{order:3;flex:1 0 100%;text-align:left;padding-left:46px;}
+    .picker .it.row .bz small{display:inline;margin-left:6px;}
+  }
+  #sFormPanel.fmodal .picker{right:auto;width:min(440px,calc(94vw - 320px));min-width:100%;}
   .picker .it .bz small{display:block;color:var(--warn-fg);margin-top:2px;}
   .picker .it .bz.g small{color:var(--text-muted);}
   .bc.busy{background:#FFFBEF;border-color:#EBD58C;}
@@ -1088,7 +1098,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-27 배정 147</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-27 배정 149</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -6010,7 +6020,20 @@
       }).catch(function(){ errs.push(courseLabel(it.key) + ' ' + it.subj + ': 서버 연결 실패'); })
         .then(function(){ step(i + 1); });
     }
-    step(0);
+    // 10-27: 요청 1번으로 묶어 저장(saveOpsSessions). 서버가 아직 배포 전이면(unknown action) 기존처럼 1건씩 저장
+    if (btn) btn.textContent = '저장 중 (' + todo.length + '건)';
+    api({ action: 'saveOpsSessions', password: getPw(), items: todo.map(function(it){
+      var r = it.row;
+      if (it.status === 'convert' && r) return { 편성ID: String(r['편성ID']), 개설키: it.key, 교과목: String(r['교과목'] || '') };
+      return { 개설키: it.key, 일자: it.date, 시작교시: it.per, 끝교시: it.per, 교과목: it.subj, 강의실: it.room };
+    }) }).then(function(res){
+      if (res && res.status === 'ok') {
+        (res.data || []).forEach(function(v){ upsertSession(v); done++; });
+        (res.errors || []).forEach(function(m){ errs.push(m); });
+        finish();
+      } else if (res && /unknown action/i.test(String(res.message || ''))) step(0);
+      else { errs.push((res && res.message) || '저장 실패'); finish(); }
+    }).catch(function(){ errs.push('서버 연결 실패'); finish(); });
   }
 
   /* --- 이전 기수 교과목 복사 --- */
