@@ -2048,7 +2048,7 @@
 
 
   /* ---------- 강사 평가 점수(평가관리에서 반영 승인된 결과) ----------
-     기준: 회차 10건 이상 = 점수 표시, 누적 20건 이상 = 별점, 10~19건 = 참고용, 10건 미만 = 응답 부족(점수 숨김) */
+     기준: 응답 20명 이상인 회차만 계산·별 표시(EvalCore.MIN_SESSION·MIN_CUM), 20명 미만 회차는 제외, 점수가 없으면 '평가 없음' */
   var EV_STALE_MS = 10 * 60 * 1000, evData = null, evLoadedAt = 0, evLoading = false, evFailed = false, evIdx = {};
   function evRelayout(){
     if (currentKey) { renderSessionList(); var pk1 = $('sPicker'); if (pk1 && pk1.style.display !== 'none') showPicker(); }
