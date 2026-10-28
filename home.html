@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/nanum-myeongjo@5.3.0/korean-800.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/nanum-myeongjo@5.3.0/latin-800.css"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
   :root{
-    --navy:#1B3A5F; --accent:#B85219; --accent-h:#9E4614; --accent-soft:#FDEBDD; --accent-line:#F2B48A; --accent-fg:#A9481A;   /* 10-28 주황 테마(B안): 버튼·선택 표시. 제목·글자는 --navy 유지 */
+    --navy:#1B3A5F;
     --text:#2C2C2A;
     --text-sub:#4A4946;
     --text-muted:#5F6877;
@@ -45,7 +45,7 @@
   header.homebar .sub{margin-top:0;}
   header.homebar .hb-r{display:flex;gap:8px;align-items:center;flex-shrink:0;}
   .hb-desc{height:32px;padding:0 10px;border:none;background:none;color:var(--text-sub);font-family:inherit;font-size:13px;font-weight:700;text-decoration:underline;cursor:pointer;}
-  .hb-desc[aria-pressed=true]{color:var(--accent-fg);}
+  .hb-desc[aria-pressed=true]{color:var(--navy);}
   @media (max-width:640px){
     /* M1: 휴대폰에서 새로고침을 제목 오른쪽 위 작은 버튼으로 */
     header{flex-wrap:nowrap;align-items:flex-start;padding:14px 16px;}
@@ -59,8 +59,8 @@
   .ic.l{margin-right:4px;} .ic.r{margin-left:4px;}
   .btn:hover{background:var(--bg-hover);}
   .btn:active{background:var(--none-bg);}
-  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
-  .btn.primary:hover{background:var(--accent-h);}
+  .btn.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .btn.primary:hover{background:#142a45;}
   .btn.primary:active{background:#0F2236;}
   @media (prefers-reduced-motion:reduce){ .btn{transition:none;} }
   .btn.sm{height:30px;padding:0 10px;font-size:12px;}
@@ -77,8 +77,8 @@
   #loginCard .lg-s1{font-weight:700;margin-bottom:4px;color:#E8590C;}
   #loginCard .lg-s2{margin-bottom:22px;}
   .pin-box{width:48px;height:56px;border:1.5px solid var(--border-input);border-radius:8px;text-align:center;font-size:22px;font-family:inherit;}
-  .pin-box:focus{outline:none;border-color:var(--accent);}
-  #loginBtn{width:100%;height:42px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
+  .pin-box:focus{outline:none;border-color:var(--navy);}
+  #loginBtn{width:100%;height:42px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
   #loginBtn:disabled{opacity:.6;}
   #loginMsg{display:none;color:var(--err-fg);font-size:13px;margin-top:12px;}
 
@@ -99,7 +99,7 @@
   .gnav-brand{display:flex;align-items:center;font-size:17px;font-weight:800;letter-spacing:-0.2px;padding-right:24px;margin-right:10px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
   .gnav-i{display:flex;align-items:center;gap:6px;min-height:56px;padding:0 20px;font-size:16px;font-weight:700;color:rgba(255,255,255,0.9);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;box-sizing:border-box;}
   a.gnav-i:hover{color:#fff;background:rgba(255,255,255,0.08);}
-  .gnav-i.on{color:#fff;border-bottom:4px solid #FFB38A;background:rgba(255,255,255,0.08);}   /* 10-17 B안: 메뉴 바 크게·선명하게 */
+  .gnav-i.on{color:#fff;border-bottom:4px solid #fff;background:rgba(255,255,255,0.08);}   /* 10-17 B안: 메뉴 바 크게·선명하게 */
   .gnav-i.off{color:rgba(255,255,255,0.45);cursor:default;}
   .gnav-i small{font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,0.35);border-radius:999px;padding:1px 7px;color:rgba(255,255,255,0.6);}
   @media (max-width:640px){
@@ -116,7 +116,7 @@
   .dtx{overflow-x:auto;} .dtt a{color:var(--navy);font-weight:700;}
   .dsec{margin:18px 0 4px;font-size:15px;font-weight:800;color:var(--navy);}
   .dsec small{font-weight:600;color:#6B7280;margin-left:6px;}
-  .mhd{display:flex;align-items:baseline;gap:8px;margin:20px 0 4px;padding:8px 12px;background:#E8EEF7;border-left:5px solid var(--accent);border-radius:6px;font-size:16px;font-weight:800;color:var(--navy);}
+  .mhd{display:flex;align-items:baseline;gap:8px;margin:20px 0 4px;padding:8px 12px;background:#E8EEF7;border-left:5px solid var(--navy);border-radius:6px;font-size:16px;font-weight:800;color:var(--navy);}
   .mhd small{font-size:13px;font-weight:700;color:#4B5B73;}
   .mchips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px;} .mchips span{background:var(--bg-hover);border:1px solid #D9E0EA;border-radius:999px;padding:3px 11px;font-size:13px;font-weight:700;color:var(--navy);}
   .quick{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px;}
@@ -138,8 +138,8 @@
 
   .tag{display:inline-block;border-radius:12px;padding:2px 9px;font-size:12px;font-weight:700;line-height:1.5;white-space:nowrap;}
   .t-ok{background:var(--ok-bg);color:var(--ok-fg);}
-  .t-live{background:var(--accent);color:#fff;font-weight:800;}
-  .dtt tr.live td{background:#EEF4FB;} .dtt tr.live td:first-child{box-shadow:inset 4px 0 0 var(--accent);}
+  .t-live{background:var(--navy);color:#fff;font-weight:800;}
+  .dtt tr.live td{background:#EEF4FB;} .dtt tr.live td:first-child{box-shadow:inset 4px 0 0 var(--navy);}
   .t-warn{background:var(--warn-bg);color:var(--warn-fg);}
   .t-err{background:var(--err-bg);color:var(--err-fg);}
   .t-none{background:var(--none-bg);color:var(--none-fg);}
@@ -308,7 +308,7 @@
   .crumb a{color:var(--navy);text-decoration:none;font-weight:800;padding:5px 9px;border-radius:8px;cursor:pointer;background:none;border:none;font-family:inherit;font-size:inherit;}
   .crumb a:hover{background:#E4ECF5;text-decoration:none;}
   .crumb .sep{margin:0 2px;color:#9AA3AF;font-size:18px;font-weight:700;}
-  .crumb .cur{color:#fff;background:var(--accent);font-weight:800;padding:5px 12px;border-radius:8px;}
+  .crumb .cur{color:#fff;background:var(--navy);font-weight:800;padding:5px 12px;border-radius:8px;}
   @media (max-width:640px){ .crumb{font-size:14px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} }
   .nsl{list-style:none;margin:0;padding:0;}
   .nsl li{padding:8px 0;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:flex-start;font-size:14px;}
@@ -454,7 +454,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 홈 107</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 홈 108</div>
 </div>
 </div>
 
