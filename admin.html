@@ -135,7 +135,7 @@
   @page{size:A4;margin:14mm;}
   @media print{
     body{background:#fff;}
-    .gnav,.crumb,#vEval>h1,#vEval>.lead,.tabs,#emsg,.no-print,#verStamp{display:none !important;}
+    .gnav,.crumb,#vEval>h1,#vEval>.lead,.tabs,.ech,.steps,#emsg,.no-print,#verStamp{display:none !important;}
     .wrap{padding:0;max-width:none;}
     .repdoc{border:0;border-radius:0;padding:0;max-width:none;}
     .repdoc table.rt tr{page-break-inside:avoid;}
@@ -227,6 +227,57 @@
   .mailpv .mb p{margin:0 0 10px;}
   .fbfoot{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:14px;}
   @media (max-width:640px){ .fbx{margin-left:0;} .fbh{flex-wrap:wrap;} .fbh .fbm{flex:1 1 calc(100% - 30px);} .fbh .fbb{width:100%;padding-left:28px;} }
+
+  /* 관리자 24: 원스톱 — 과정 목록 + 과정 한 화면(4단계) */
+  .hsel{display:none;}
+  .evhead{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:4px;}
+  .evhead h1{margin:0;}
+  .evtools{display:flex;gap:6px;flex-wrap:wrap;}
+  .evtools a.btn{text-decoration:none;}
+  .evfilter{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px;}
+  .evfilter input[type=text]{flex:1 1 200px;max-width:320px;}
+  .seg{display:inline-flex;border:1px solid var(--border-input);border-radius:8px;overflow:hidden;background:#fff;}
+  .segb{height:36px;padding:0 14px;border:0;background:#fff;color:var(--text-sub);font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background-color .15s ease;}
+  .segb + .segb{border-left:1px solid var(--border-input);}
+  .segb:hover{background:var(--bg-hover);}
+  .segb.on{background:var(--navy);color:#fff;}
+  .segb i{font-style:normal;font-variant-numeric:tabular-nums;margin-left:2px;}
+  .evcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px;}
+  .evc{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid #CBD4E0;border-radius:10px;padding:13px 15px;text-decoration:none;color:inherit;transition:border-color .15s ease,background-color .15s ease;word-break:keep-all;}
+  .evc:hover{border-color:var(--navy);background:var(--bg-hover);}
+  .evc:focus-visible{outline:2px solid var(--navy);outline-offset:2px;}
+  .evc .evt{font-size:15px;font-weight:800;color:var(--navy);line-height:1.4;}
+  .evc .evm{font-size:13px;color:var(--text-muted);font-variant-numeric:tabular-nums;}
+  .evc .evs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .evc .evn{font-size:13px;color:var(--text-sub);line-height:1.5;}
+  .evcards > .loading,.evcards > .note{grid-column:1 / -1;}
+  .ech{margin-bottom:10px;}
+  .echt{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .echt h1{margin:0;}
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 14px;}
+  .stp{display:flex;gap:9px;align-items:center;text-align:left;background:#fff;border:1px solid #CBD4E0;border-radius:10px;padding:9px 12px;font:inherit;color:var(--text-sub);cursor:pointer;min-width:0;transition:border-color .15s ease,background-color .15s ease;}
+  .stp:hover{border-color:var(--navy);}
+  .stp .sn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:1px solid #CBD4E0;background:#fff;color:var(--text-muted);font-size:12px;font-weight:800;}
+  .stp .st{display:flex;flex-direction:column;min-width:0;line-height:1.3;}
+  .stp .st b{font-size:14px;color:var(--navy);}
+  .stp .st small{font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .stp.done .sn{background:var(--ok-bg);border-color:#BFD8C6;color:var(--ok-fg);}
+  .stp.on{border-color:var(--navy);background:var(--info-bg);box-shadow:inset 0 -3px 0 var(--navy);}
+  .stp.on .sn{background:var(--navy);border-color:var(--navy);color:#fff;}
+  details.dcard > summary{cursor:pointer;list-style:none;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;}
+  details.dcard > summary::-webkit-details-marker{display:none;}
+  details.dcard > summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--navy);border-bottom:2px solid var(--navy);transform:rotate(-45deg);align-self:center;transition:transform .15s ease;}
+  details.dcard[open] > summary::before{transform:rotate(45deg);}
+  details.dcard > summary b{color:var(--navy);font-size:15px;}
+  #tPrep .card > .row,#pullCard > .row{align-items:center;}
+  details.alt{margin-top:12px;}
+  details.alt > summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--text-muted);}
+  details.alt[open] > summary{margin-bottom:10px;}
+  @media (max-width:760px){
+    .steps{grid-template-columns:repeat(2,1fr);}
+    .evcards{grid-template-columns:1fr;}
+    .evfilter input[type=text]{max-width:none;}
+  }
 </style>
 </head>
 <body>
@@ -245,7 +296,7 @@
     <div class="menus">
       <button type="button" class="mcard" id="goEval">
         <div class="mt"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>평가관리</div>
-        <div class="md">설문 준비 → 결과 올리기 → 검토·반영 승인 → 점수 조회·결과 보고서 순서로 과정 끝 만족도 평가를 처리합니다.</div>
+        <div class="md">과정을 누르면 설문 → 결과 가져오기·반영 → 보고서 → 강사 환류를 한 화면에서 차례로 처리합니다.</div>
       </button>
       <div class="mcard off">
         <div class="mt"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M8 15h3"/></svg>강사료 정산 <span class="tag t-none">준비 중</span></div>
@@ -258,161 +309,202 @@
     </div>
   </section>
 
-  <!-- 평가관리 -->
+  <!-- 평가관리 (관리자 24: 과정 하나를 고르면 한 화면에서 설문 → 결과·반영 → 보고서 → 환류) -->
   <section id="vEval" hidden>
-    <div class="crumb"><a id="backAdmin" href="#">관리자</a> &rsaquo; 평가관리</div>
-    <h1>평가관리</h1>
-    <p class="lead">설문 준비부터 결과 반영·보고서까지 아래 순서대로 진행합니다.</p>
+    <div class="crumb"><a id="backAdmin" href="#">관리자</a> &rsaquo; <a id="crEval" href="#eval">평가관리</a><span id="crSub"></span></div>
     <div id="emsg" class="msg" hidden></div>
 
-    <div class="tabs" role="tablist" aria-label="평가관리 단계">
-      <button type="button" class="tab" data-t="prep" role="tab"><span class="sn">1</span>설문 준비</button>
-      <button type="button" class="tab on" data-t="up" role="tab"><span class="sn">2</span>결과 올리기</button>
-      <button type="button" class="tab" data-t="review" role="tab"><span class="sn">3</span>검토·반영 <span class="badge" id="waitBadge" title="검토 대기" hidden></span></button>
-      <button type="button" class="tab" data-t="view" role="tab"><span class="sn">4</span>점수 조회</button>
-      <button type="button" class="tab" data-t="rep" role="tab"><span class="sn">5</span>결과 보고서</button>
-      <button type="button" class="tab" data-t="fb" role="tab"><span class="sn">6</span>강사 환류</button>
+    <!-- 과정 목록 -->
+    <div id="evList" hidden>
+      <div class="evhead">
+        <h1>평가관리</h1>
+        <div class="evtools">
+          <a class="btn" href="#view">점수 조회</a>
+          <a class="btn" href="#cmdl">의견 내려받기</a>
+          <button type="button" class="btn" id="btnApiSet2" title="설문 생성기 웹 앱 주소와 비밀값(이 브라우저에 기억)">설문 생성기 연결</button>
+        </div>
+      </div>
+      <p class="lead">과정을 누르면 <b>설문 → 결과·반영 → 보고서 → 환류</b>를 한 화면에서 차례로 진행합니다.</p>
+      <div id="apiSetWrap"></div>
+      <div class="evfilter">
+        <div class="seg" role="group" aria-label="보기">
+          <button type="button" class="segb on" data-f="todo">할 일 있는 과정 <i id="fTodoN"></i></button>
+          <button type="button" class="segb" data-f="all">전체 과정</button>
+        </div>
+        <select id="fYear" aria-label="연도" hidden></select>
+        <input type="text" id="fFind" placeholder="과정명 검색" aria-label="과정명 검색">
+      </div>
+      <div id="genNote" class="note warn" hidden></div>
+      <div id="evCards" class="evcards"><div class="loading">불러오는 중입니다.</div></div>
+      <div class="hint" id="evHint" style="margin-top:10px;"></div>
     </div>
 
-    <!-- 1. 설문 준비 -->
-    <div id="tPrep" hidden>
-      <div class="card">
-        <h2>예상 설문 구성</h2>
-        <div class="hint">과정을 고르면 그 과정의 교과목 편성(주강사·대표 현장교관)으로 만들어질 설문의 차례를 보여 줍니다. 실제 질문 문장은 설문 생성기에서 미리 볼 수 있습니다.</div>
-        <div class="row" style="margin-top:10px;">
-          <div class="fld" style="min-width:260px;flex:1 1 260px;"><label for="selPrep">과정</label><select id="selPrep"></select></div>
-        </div>
-        <div id="prepBody"></div>
+    <!-- 과정 한 화면 -->
+    <div id="evCourse" hidden>
+      <div class="ech">
+        <div class="echt"><h1 id="cTitle"></h1><span id="cState"></span></div>
+        <div class="hint" id="cMeta"></div>
       </div>
-      <div class="card">
-        <h2>설문 링크 만들기</h2>
-        <div class="hint">위에서 고른 과정의 설문(구글 폼)을 만들어 단체톡에 보낼 링크와 안내 문장을 드립니다. 같은 과정은 한 번만 만들어지고, 다시 누르면 이미 만든 링크를 보여 줍니다.</div>
-        <div class="row" style="margin-top:12px;">
-          <button type="button" class="btn primary mk-big" id="btnMk">설문 링크 만들기</button>
-          <button type="button" class="btn sm" id="btnApiSet" title="설문 생성기 웹 앱 주소와 비밀값을 넣거나 고칩니다(이 브라우저에 기억)">연결 설정</button>
-        </div>
-        <div id="apiSet" hidden>
-          <div class="gen-guide" id="apiGuide" style="margin-top:10px;">처음 한 번만 넣습니다. <b>①</b> 설문 생성기 Apps Script에서 <b>배포 → 새 배포(웹 앱)</b>로 받은 주소 <b>②</b> 스크립트 속성 <b>SURVEY_API_KEY</b>에 넣은 비밀값 → <b>[연결 시험 후 저장]</b></div>
-          <div class="row" style="margin-top:8px;">
-            <div class="fld" style="flex:2 1 320px;"><label for="inApi">설문 생성기 웹 앱 주소 <span id="apiUrlNote" style="font-weight:400;color:#6B7280;" hidden>(기본값 · 고칠 필요 없음)</span></label><input type="text" id="inApi" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"></div>
-            <div class="fld" style="flex:1 1 200px;"><label for="inApiKey">비밀값</label><input type="password" id="inApiKey" placeholder="SURVEY_API_KEY 값" autocomplete="off"></div>
-            <button type="button" class="btn" id="btnApiSave">연결 시험 후 저장</button>
+      <div class="steps" role="tablist" aria-label="평가 단계">
+        <button type="button" class="stp" data-s="1" role="tab"><span class="sn">1</span><span class="st"><b>설문</b><small id="s1t"></small></span></button>
+        <button type="button" class="stp" data-s="2" role="tab"><span class="sn">2</span><span class="st"><b>결과·반영</b><small id="s2t"></small></span></button>
+        <button type="button" class="stp" data-s="3" role="tab"><span class="sn">3</span><span class="st"><b>보고서</b><small id="s3t"></small></span></button>
+        <button type="button" class="stp" data-s="4" role="tab"><span class="sn">4</span><span class="st"><b>강사 환류</b><small id="s4t"></small></span></button>
+      </div>
+
+      <!-- 1. 설문 -->
+      <div id="tPrep" hidden>
+        <div class="card">
+          <h2>설문 링크</h2>
+          <div class="hint">이 과정의 교과목 편성으로 설문(구글 폼)을 만들고, 단체톡에 보낼 링크와 안내 문장을 드립니다. 같은 과정은 한 번만 만들어지고, 다시 누르면 이미 만든 링크를 보여 줍니다.</div>
+          <div class="row" style="margin-top:12px;">
+            <button type="button" class="btn primary mk-big" id="btnMk">설문 링크 만들기</button>
+            <button type="button" class="btn sm" id="btnApiSet" title="설문 생성기 웹 앱 주소와 비밀값을 넣거나 고칩니다(이 브라우저에 기억)">연결 설정</button>
           </div>
+          <div id="apiSet" hidden>
+            <div class="gen-guide" id="apiGuide" style="margin-top:10px;">처음 한 번만 넣습니다. <b>①</b> 설문 생성기 Apps Script에서 <b>배포 → 새 배포(웹 앱)</b>로 받은 주소 <b>②</b> 스크립트 속성 <b>SURVEY_API_KEY</b>에 넣은 비밀값 → <b>[연결 시험 후 저장]</b></div>
+            <div class="row" style="margin-top:8px;">
+              <div class="fld" style="flex:2 1 320px;"><label for="inApi">설문 생성기 웹 앱 주소 <span id="apiUrlNote" style="font-weight:400;color:#6B7280;" hidden>(기본값 · 고칠 필요 없음)</span></label><input type="text" id="inApi" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"></div>
+              <div class="fld" style="flex:1 1 200px;"><label for="inApiKey">비밀값</label><input type="password" id="inApiKey" placeholder="SURVEY_API_KEY 값" autocomplete="off"></div>
+              <button type="button" class="btn" id="btnApiSave">연결 시험 후 저장</button>
+            </div>
+          </div>
+          <div id="mkMsg" class="note" hidden></div>
+          <div id="mkOut" hidden></div>
         </div>
-        <div id="mkMsg" class="note" hidden></div>
-        <div id="mkOut" hidden></div>
-        <div class="hint" style="margin-top:10px;">질문 문장, 안내문, 기본정보(소속·근무기간·보직) 선택지, 단체톡 안내 문장은 설문 생성기 시트의 <b>설문문항</b> 탭에서 고칩니다. 항목 이름(강의: 태도·목표·전달·효과, 훈련: 태도·준비성·전문성·적용성)은 점수 계산에 쓰여 고정입니다. 고친 문장은 그 뒤에 새로 만드는 설문부터 적용됩니다.</div>
+        <details class="card dcard">
+          <summary><b>설문 구성 보기</b> <span class="hint" id="prepSum"></span></summary>
+          <div class="hsel"><select id="selPrep" aria-label="과정"></select></div>
+          <div id="prepBody"></div>
+          <div class="hint" style="margin-top:10px;">질문 문장, 안내문, 기본정보(소속·근무기간·보직) 선택지, 단체톡 안내 문장은 설문 생성기 시트의 <b>설문문항</b> 탭에서 고칩니다. 항목 이름(강의: 태도·목표·전달·효과, 훈련: 태도·준비성·전문성·적용성)은 점수 계산에 쓰여 고정입니다. 고친 문장은 그 뒤에 새로 만드는 설문부터 적용됩니다.</div>
+        </details>
+      </div>
+
+      <!-- 2. 결과·반영 -->
+      <div id="tUp" hidden>
+        <div class="card" id="pullCard">
+          <h2>결과 가져오기</h2>
+          <div class="sum" id="pullSum"></div>
+          <div class="row" style="margin-top:6px;">
+            <button type="button" class="btn primary mk-big" id="btnPull">결과 가져오기</button>
+            <button type="button" class="btn sm" id="btnCnt">응답 수 새로고침</button>
+          </div>
+          <div class="hint" style="margin-top:8px;">설문에 들어온 응답을 그대로 가져와 아래에 정리합니다. 응답 수가 그대로 응답 인원(100%)이 됩니다. 가져온 원본은 관리자만 열 수 있는 드라이브 <b>설문원자료</b> 폴더에 보관합니다.</div>
+          <div id="pullMsg" class="note" hidden></div>
+          <details class="alt" id="csvAlt">
+            <summary>다른 방법: 구글 폼에서 내려받은 CSV 파일 올리기</summary>
+            <div class="hsel"><select id="selCourse" aria-label="과정"></select></div>
+            <div class="drop" id="drop" style="margin-top:10px;">구글 폼 응답 탭에서 내려받은 파일(CSV)을 여기에 끌어다 놓거나 선택하세요.
+              <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                <button type="button" class="btn" id="btnPick">파일 선택</button>
+                <button type="button" class="btn" id="btnSample">예시 파일로 미리보기</button>
+              </div>
+              <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv" hidden>
+            </div>
+            <div class="hint" style="margin-top:8px;">설문 생성기에 연결되지 않을 때, 또는 시험·중복 응답을 파일에서 지우고 올릴 때 씁니다. 같은 파일은 다시 올릴 수 없습니다.</div>
+          </details>
+          <div id="upMsg" class="note err" hidden></div>
+        </div>
+
+        <div id="preview" hidden>
+          <div class="card">
+            <h2>가져온 결과 <span class="tag t-info">아직 저장 전</span> <span class="tag t-warn" id="sampleTag" hidden>예시 · 저장 불가</span></h2>
+            <div class="sum" id="sumRow"></div>
+            <div class="swp">표는 좌우로 밀어서 볼 수 있습니다.</div>
+            <div class="tx" style="margin-top:8px;"><table class="t">
+              <thead><tr><th>교과목</th><th>강사</th><th class="n">응답</th><th class="n">태도</th><th class="n">목표</th><th class="n">전달</th><th class="n">효과</th><th class="n">종합(5점)</th><th>표시</th></tr></thead>
+              <tbody id="pvBody"></tbody></table></div>
+            <div id="pvTWrap" hidden>
+              <h3 style="margin:16px 0 4px;font-size:15px;">훈련(현장교관) 문항 <span class="tag t-info">편성에서 현장교관(대표)로 표시한 줄</span></h3>
+              <div class="tx"><table class="t">
+                <thead><tr><th>교과목</th><th>교수</th><th class="n">응답</th><th class="n">태도</th><th class="n">준비성</th><th class="n">전문성</th><th class="n">적용성</th><th class="n">종합(5점)</th><th>표시</th></tr></thead>
+                <tbody id="pvBodyT"></tbody></table></div>
+            </div>
+            <div id="pvCWrap" hidden>
+              <h3 style="margin:16px 0 4px;font-size:15px;">공통 문항 <span class="tag t-info">과정 전체에 한 번씩 묻는 문항 · 평가지표 아님</span></h3>
+              <div class="tx"><table class="t">
+                <thead><tr><th>분야</th><th>항목</th><th class="n">응답</th><th class="n">평균(5점)</th></tr></thead>
+                <tbody id="pvBodyC"></tbody></table></div>
+            </div>
+            <div class="note">강사는 이 과정의 교과목 편성에서 자동으로 찾습니다. 주강사가 둘 이상이거나 편성에 없는 교과목은 직접 선택해 주세요. "저장하지 않음"을 고르면 그 줄은 저장되지 않습니다. 응답이 20명 미만인 교과목은 점수를 저장하되 별점에는 쓰지 않습니다. 종합은 4개 문항 평균이며 5점 만점입니다.</div>
+          </div>
+
+          <div class="card">
+            <h2>응답자 구성 <span class="tag t-none">기본정보 · 점수 계산에 쓰지 않음</span></h2>
+            <div id="pvBasic"></div>
+          </div>
+
+          <div class="card">
+            <h2>서술형 의견 <span class="tag t-none" id="cmTag"></span></h2>
+            <div class="hint">낱말 규칙으로 주제와 성격(칭찬·개선 요청)을 붙였습니다. 연락처 등 개인정보가 의심되는 의견은 반영 체크를 미리 풀어 두었습니다. 체크를 푼 의견은 보고서·환류에 쓰지 않습니다.</div>
+            <div id="pvCm"></div>
+          </div>
+
+          <div class="actions"><button type="button" class="btn" id="btnCancel">취소</button><button type="button" class="btn" id="btnSave" title="저장만 하고 점수에는 아직 넣지 않습니다(다른 사람이 확인한 뒤 반영할 때)">나중에 검토</button><button type="button" class="btn primary" id="btnSaveGo">반영</button></div>
+          <div class="hint" id="saveHint" style="text-align:right;margin-top:6px;"></div>
+        </div>
+
+        <div id="rvPanel" hidden>
+          <div class="card">
+            <div class="rvhead"><h2 id="rvTitle"></h2><span id="rvState"></span></div>
+            <div class="sum" id="rvSum"></div>
+            <div class="hint">반영 체크를 푼 교과목·강사는 점수 조회와 누적 별점에 들어가지 않습니다(저장 기록은 남음).</div>
+            <div class="swp">표는 좌우로 밀어서 볼 수 있습니다.</div>
+            <div class="tx" style="margin-top:8px;"><table class="t">
+              <thead><tr><th class="c">반영</th><th>교과목</th><th>강사</th><th>구분</th><th class="n">응답</th><th class="n">문항1</th><th class="n">문항2</th><th class="n">문항3</th><th class="n">문항4</th><th class="n">종합(5점)</th><th>표시</th></tr></thead>
+              <tbody id="rvBody"></tbody></table></div>
+            <div class="hint ld" style="margin-top:6px;">문항1~4: 강의 = 태도·목표·전달·효과, 훈련 = 태도·준비성·전문성·적용성</div>
+          </div>
+          <div class="card">
+            <h2>응답자 구성</h2>
+            <div id="rvBasic"></div>
+          </div>
+          <div class="card">
+            <h2>서술형 의견 <span class="tag t-none" id="rvCmTag"></span></h2>
+            <div id="rvCm"></div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn danger" id="rvDel">결과 삭제</button>
+            <button type="button" class="btn" id="rvRepull">결과 다시 가져오기</button>
+            <button type="button" class="btn" id="rvUndo" hidden>검토 대기로 되돌리기</button>
+            <button type="button" class="btn primary" id="rvApprove">반영</button>
+          </div>
+          <div class="hint" id="rvHint" style="text-align:right;margin-top:6px;"></div>
+        </div>
+      </div>
+
+      <!-- 3. 결과 보고서(PDF) -->
+      <div id="tRep" hidden>
+        <div class="card no-print" id="repCtl">
+          <h2>결과 보고서 (PDF)</h2>
+          <div class="hint">공문에 첨부할 보고서입니다. 반영에서 제외한 교과목·의견은 넣지 않습니다. "PDF로 저장"을 누르고 인쇄 창에서 대상을 "PDF로 저장"으로 선택해 주세요.</div>
+          <div class="hsel"><select id="repCourse" aria-label="과정"></select></div>
+          <div class="row" style="margin-top:10px;gap:18px;">
+            <label style="font-size:14px;"><input type="checkbox" id="repShowCm"> 서술형 의견 포함</label>
+            <label style="font-size:14px;"><input type="checkbox" id="repShowBasic" checked> 응답자 구성 포함</label>
+          </div>
+          <div class="actions" style="justify-content:flex-start;"><button type="button" class="btn primary" id="btnPdf" disabled>PDF로 저장</button></div>
+          <div id="repMsg" class="hint"></div>
+        </div>
+        <div id="repDoc" class="repdoc"></div>
+      </div>
+
+      <!-- 4. 강사 환류 메일 -->
+      <div id="tFb" hidden>
+        <div class="card">
+          <h2>강사 환류 메일</h2>
+          <div class="fbflow" aria-label="진행 순서"><span><b>1</b>환류지 확인</span><i>›</i><span><b>2</b>메일 미리보기</span><i>›</i><span><b>3</b>보낼 강사 선택</span><i>›</i><span><b>4</b>발송 확인</span></div>
+          <div class="hint">강사 한 분에 교과목별 1통씩, <b>본인 점수와 담당자가 고른 의견만</b> 보냅니다(다른 강사 점수·순위는 넣지 않음). 반영한 결과만 보낼 수 있고, 반영 제외한 교과목·의견은 넣지 않습니다.</div>
+          <div class="hsel"><select id="fbCourse" aria-label="과정"></select></div>
+          <div id="fbMsg" class="note" hidden></div>
+          <div id="fbBody"></div>
+        </div>
       </div>
     </div>
 
-    <!-- 2. 결과 올리기 -->
-    <div id="tUp">
-      <div class="card">
-        <h2>과정과 파일 선택</h2>
-        <div class="row" style="margin-top:8px;">
-          <div class="fld" style="min-width:260px;flex:1 1 260px;"><label for="selCourse">과정</label><select id="selCourse"></select></div>
-        </div>
-        <div class="drop" id="drop" style="margin-top:12px;">구글 폼에서 내려받은 응답 파일(CSV)을 여기에 끌어다 놓거나 선택하세요.
-          <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-            <button type="button" class="btn primary" id="btnPick">파일 선택</button>
-            <button type="button" class="btn" id="btnSample">예시 파일로 미리보기</button>
-          </div>
-          <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv" hidden>
-        </div>
-        <div class="hint" style="margin-top:8px;">파일에 있는 응답 수가 그대로 응답 인원(100%)이 됩니다. 시험·중복 응답은 파일에서 지운 뒤 올려 주세요. 올린 파일 원본은 관리자만 열 수 있는 드라이브 <b>설문원자료</b> 폴더에 보관하고, 시스템에는 교과목·강사별 점수와 의견만 저장합니다. 같은 파일은 다시 올릴 수 없습니다.</div>
-        <div id="upMsg" class="note err" hidden></div>
-      </div>
-
-      <div id="preview" hidden>
-        <div class="card">
-          <h2>규칙으로 정리한 결과 <span class="tag t-info">아직 저장 전</span> <span class="tag t-warn" id="sampleTag" hidden>예시 · 저장 불가</span></h2>
-          <div class="sum" id="sumRow"></div>
-          <div class="swp">표는 좌우로 밀어서 볼 수 있습니다.</div>
-          <div class="tx" style="margin-top:8px;"><table class="t">
-            <thead><tr><th>교과목</th><th>강사</th><th class="n">응답</th><th class="n">태도</th><th class="n">목표</th><th class="n">전달</th><th class="n">효과</th><th class="n">종합(5점)</th><th>표시</th></tr></thead>
-            <tbody id="pvBody"></tbody></table></div>
-          <div id="pvTWrap" hidden>
-            <h3 style="margin:16px 0 4px;font-size:15px;">훈련(현장교관) 문항 <span class="tag t-info">편성에서 현장교관(대표)로 표시한 줄</span></h3>
-            <div class="tx"><table class="t">
-              <thead><tr><th>교과목</th><th>교수</th><th class="n">응답</th><th class="n">태도</th><th class="n">준비성</th><th class="n">전문성</th><th class="n">적용성</th><th class="n">종합(5점)</th><th>표시</th></tr></thead>
-              <tbody id="pvBodyT"></tbody></table></div>
-          </div>
-          <div id="pvCWrap" hidden>
-            <h3 style="margin:16px 0 4px;font-size:15px;">공통 문항 <span class="tag t-info">과정 전체에 한 번씩 묻는 문항 · 평가지표 아님</span></h3>
-            <div class="tx"><table class="t">
-              <thead><tr><th>분야</th><th>항목</th><th class="n">응답</th><th class="n">평균(5점)</th></tr></thead>
-              <tbody id="pvBodyC"></tbody></table></div>
-          </div>
-          <div class="note">강사는 선택한 과정의 교과목 편성에서 자동으로 찾습니다. 주강사가 둘 이상이거나 편성에 없는 교과목은 직접 선택해 주세요. "저장하지 않음"을 고르면 그 줄은 저장되지 않습니다. 응답이 20명 미만인 교과목은 점수를 저장하되 별점에는 쓰지 않습니다. 종합은 4개 문항 평균이며 5점 만점입니다.</div>
-        </div>
-
-        <div class="card">
-          <h2>응답자 구성 <span class="tag t-none">기본정보 · 점수 계산에 쓰지 않음</span></h2>
-          <div id="pvBasic"></div>
-        </div>
-
-        <div class="card">
-          <h2>서술형 의견 <span class="tag t-none" id="cmTag"></span></h2>
-          <div class="hint">낱말 규칙으로 주제와 성격(칭찬·개선 요청)을 붙였습니다. 연락처 등 개인정보가 의심되는 의견은 반영 체크를 미리 풀어 두었습니다. 체크를 푼 의견은 보고서·환류에 쓰지 않습니다.</div>
-          <div id="pvCm"></div>
-        </div>
-
-        <div class="actions"><button type="button" class="btn" id="btnCancel">취소</button><button type="button" class="btn primary" id="btnSave">검토 대기로 저장</button></div>
-        <div class="hint" id="saveHint" style="text-align:right;margin-top:6px;">저장한 뒤 <b>3. 검토·반영</b>에서 [반영 승인]을 눌러야 점수에 들어갑니다.</div>
-      </div>
-    </div>
-
-    <!-- 3. 검토·반영 -->
-    <div id="tReview" hidden>
-      <div class="card" id="cmDlCard">
-        <h2>서술형 의견 내려받기</h2>
-        <div class="hint">반영 승인한 과정의 의견을 저장월·연도별로 받습니다. 삭제하면 의견도 지워지니 먼저 받아 두세요.</div>
-        <div class="row" style="margin-top:8px;">
-          <div class="fld" style="min-width:180px;"><label for="cmDlSel">기간</label><select id="cmDlSel"></select></div>
-          <button type="button" class="btn" id="cmDlCopy">표 복사</button>
-          <button type="button" class="btn" id="cmDlFile">CSV 저장</button>
-        </div>
-        <div class="hint" id="cmDlInfo" style="margin-top:6px;"></div>
-      </div>
-      <div class="card" id="rvListCard">
-        <h2>저장된 결과</h2>
-        <div class="hint">[검토하기]로 내용을 확인한 뒤 [반영 승인]을 누르면 점수 조회와 누적 별점에 들어갑니다. 잘못 올린 결과는 삭제한 뒤 다시 올릴 수 있습니다.</div>
-        <div id="rvLoading" class="loading" hidden>불러오는 중입니다.</div>
-        <div class="swp">표는 좌우로 밀어서 볼 수 있습니다.</div>
-        <div class="tx" style="margin-top:8px;"><table class="t" style="min-width:700px;">
-          <thead><tr><th>과정</th><th class="n">응답</th><th>저장일시</th><th>상태</th><th>원자료</th><th></th></tr></thead>
-          <tbody id="upBody"></tbody></table></div>
-      </div>
-      <div id="rvPanel" hidden>
-        <div class="card">
-          <div class="rvhead"><h2 id="rvTitle"></h2><span id="rvState"></span></div>
-          <div class="sum" id="rvSum"></div>
-          <div class="hint">반영 체크를 푼 교과목·강사는 점수 조회와 누적 별점에 들어가지 않습니다(저장 기록은 남음).</div>
-          <div class="swp">표는 좌우로 밀어서 볼 수 있습니다.</div>
-          <div class="tx" style="margin-top:8px;"><table class="t">
-            <thead><tr><th class="c">반영</th><th>교과목</th><th>강사</th><th>구분</th><th class="n">응답</th><th class="n">문항1</th><th class="n">문항2</th><th class="n">문항3</th><th class="n">문항4</th><th class="n">종합(5점)</th><th>표시</th></tr></thead>
-            <tbody id="rvBody"></tbody></table></div>
-          <div class="hint ld" style="margin-top:6px;">문항1~4: 강의 = 태도·목표·전달·효과, 훈련 = 태도·준비성·전문성·적용성</div>
-        </div>
-        <div class="card">
-          <h2>응답자 구성</h2>
-          <div id="rvBasic"></div>
-        </div>
-        <div class="card">
-          <h2>서술형 의견 <span class="tag t-none" id="rvCmTag"></span></h2>
-          <div id="rvCm"></div>
-        </div>
-        <div class="actions">
-          <button type="button" class="btn" id="rvBack">목록으로</button>
-          <button type="button" class="btn" id="rvUndo" hidden>검토 대기로 되돌리기</button>
-          <button type="button" class="btn primary" id="rvApprove">반영 승인</button>
-        </div>
-        <div class="hint" id="rvHint" style="text-align:right;margin-top:6px;"></div>
-      </div>
-    </div>
-
-    <!-- 4. 점수 조회 -->
+    <!-- 점수 조회 -->
     <div id="tView" hidden>
+      <h1>점수 조회</h1>
       <div id="vwWait" class="note warn" hidden></div>
       <div class="card">
         <h2>강사별 점수</h2>
@@ -426,44 +518,29 @@
         <div class="tx"><table class="t" id="vwTable">
           <thead><tr><th>강사</th><th>교과목</th><th>최근 평가</th><th class="n">최근 점수</th><th>누적 별점</th><th class="n">누적 응답</th><th>상태</th></tr></thead>
           <tbody id="vwBody"></tbody></table></div>
-        <div class="hint" style="margin-top:8px;">반영 승인한 결과만 집계합니다. 누적 별점은 응답 수로 가중한 평균(5점 만점)이며 0.5점 단위로 표시합니다. 응답이 20명 미만인 회차는 점수를 표시하지 않고 누적 평균과 누적 응답 수에서도 뺍니다. 누적 응답이 20명 미만이면 별점을 표시하지 않습니다. 점수는 관리자 화면에서만 보입니다.</div>
+        <div class="hint" style="margin-top:8px;">반영한 결과만 집계합니다. 누적 별점은 응답 수로 가중한 평균(5점 만점)이며 0.5점 단위로 표시합니다. 응답이 20명 미만인 회차는 점수를 표시하지 않고 누적 평균과 누적 응답 수에서도 뺍니다. 누적 응답이 20명 미만이면 별점을 표시하지 않습니다. 점수는 관리자 화면에서만 보입니다.</div>
       </div>
     </div>
 
-    <!-- 5. 결과 보고서(PDF) -->
-    <div id="tRep" hidden>
-      <div class="card no-print" id="repCtl">
-        <h2>결과 보고서 (PDF)</h2>
-        <div class="hint">저장된 평가 결과로 공문에 첨부할 보고서를 만듭니다. 반영에서 제외한 교과목·의견은 넣지 않습니다. 미리보기 확인 후 "PDF로 저장"을 누르고, 인쇄 창에서 대상을 "PDF로 저장"으로 선택해 주세요.</div>
-        <div class="row" style="margin-top:10px;">
-          <div class="fld" style="min-width:260px;flex:1 1 260px;"><label for="repCourse">과정</label><select id="repCourse"></select></div>
+    <!-- 의견 내려받기 -->
+    <div id="tCmDl" hidden>
+      <h1>의견 내려받기</h1>
+      <div class="card" id="cmDlCard">
+        <h2>서술형 의견 내려받기</h2>
+        <div class="hint">반영한 과정의 의견을 저장월·연도별로 받습니다. 결과를 삭제하면 의견도 지워지니 먼저 받아 두세요.</div>
+        <div class="row" style="margin-top:8px;">
+          <div class="fld" style="min-width:180px;"><label for="cmDlSel">기간</label><select id="cmDlSel"></select></div>
+          <button type="button" class="btn" id="cmDlCopy">표 복사</button>
+          <button type="button" class="btn" id="cmDlFile">CSV 저장</button>
         </div>
-        <div class="row" style="margin-top:10px;gap:18px;">
-          <label style="font-size:14px;"><input type="checkbox" id="repShowCm"> 서술형 의견 포함</label>
-          <label style="font-size:14px;"><input type="checkbox" id="repShowBasic" checked> 응답자 구성 포함</label>
-        </div>
-        <div class="actions" style="justify-content:flex-start;"><button type="button" class="btn primary" id="btnPdf" disabled>PDF로 저장</button></div>
-        <div id="repMsg" class="hint"></div>
+        <div class="hint" id="cmDlInfo" style="margin-top:6px;"></div>
       </div>
-      <div id="repDoc" class="repdoc"></div>
-    </div>
-
-    <!-- 6. 강사 환류 메일 -->
-    <div id="tFb" hidden>
-      <div class="card">
-        <h2>강사 환류 메일</h2>
-        <div class="fbflow" aria-label="진행 순서"><span><b>1</b>환류지 확인</span><i>›</i><span><b>2</b>메일 미리보기</span><i>›</i><span><b>3</b>보낼 강사 선택</span><i>›</i><span><b>4</b>발송 확인</span></div>
-        <div class="hint">강사 한 분에 교과목별 1통씩, <b>본인 점수와 담당자가 고른 의견만</b> 보냅니다(다른 강사 점수·순위는 넣지 않음). 반영 승인한 과정만 고를 수 있고, 반영 제외한 교과목·의견은 넣지 않습니다.</div>
-        <div class="row" style="margin-top:10px;">
-          <div class="fld" style="min-width:260px;flex:1 1 260px;"><label for="fbCourse">과정</label><select id="fbCourse"></select></div>
-        </div>
-        <div id="fbMsg" class="note" hidden></div>
-        <div id="fbBody"></div>
-      </div>
+      <!-- 예전 검토 목록(화면에는 보이지 않음, 기존 함수가 그려 둠) -->
+      <div hidden><span id="waitBadge"></span><div id="rvLoading"></div><table><tbody id="upBody"></tbody></table><div id="rvListCard"></div></div>
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-22 관리자 23</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 관리자 24</div>
 </div>
 
 <script src="eval-core.js?v=5"></script>
@@ -559,27 +636,232 @@
   }
   function courseSessions(key){ return sessions.filter(function(s){ return String(s['개설키']) === key; }); }
 
-  /* ---------- 화면 전환 ---------- */
-  var HASH = { prep: 'prep', up: 'eval', review: 'review', view: 'view', rep: 'rep', fb: 'fb' };
+  /* ---------- 화면 전환 (관리자 24: 과정 목록 → 과정 한 화면) ----------
+   * #eval = 과정 목록, #c=과정+기수&s=단계 = 과정 한 화면, #view = 점수 조회, #cmdl = 의견 내려받기
+   * 예전 주소(#prep·#review·#rep·#fb)는 과정 목록으로 엶 */
+  var page = '', curKey = '', curStep = 0, curSv = null, curCnt = null, svList = null, svErr = '', listFilter = 'todo', repull = false;
+  function kstToday(){ return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); }
+  function planOf(key){ return plans.filter(function(p){ return String(p['과정+기수']) === key; })[0] || null; }
   function route(){
-    var h = location.hash.replace('#', '');
-    var t = h === 'prep' ? 'prep' : h === 'review' ? 'review' : h === 'view' ? 'view' : h === 'rep' ? 'rep' : h === 'fb' ? 'fb' : h === 'eval' ? 'up' : '';
-    $('vAdmin').hidden = !!t;
-    $('vEval').hidden = !t;
-    if (t) tab(t);
-  }
-  function tab(t){
-    document.querySelectorAll('.tab').forEach(function(b){ var on = b.getAttribute('data-t') === t; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-    $('tPrep').hidden = t !== 'prep'; $('tUp').hidden = t !== 'up'; $('tReview').hidden = t !== 'review'; $('tView').hidden = t !== 'view'; $('tRep').hidden = t !== 'rep'; $('tFb').hidden = t !== 'fb';
-    if (t === 'prep') renderPrep();
-    if (t === 'review' || t === 'view' || t === 'rep' || t === 'fb') { if (!results) loadResults(); else { renderUploads(); renderView(); renderRepCourses(); renderFbCourses(); } }
-    else if (!results) loadResults(true);   // 검토 대기 건수 표시용(조용히)
+    var h = location.hash.replace(/^#/, '');
+    var m = /^(?:eval\/)?c=([^&]*)(?:&s=(\d))?/.exec(h);
+    var p = m ? 'course' : (h === 'view' ? 'view' : h === 'cmdl' ? 'cmdl' : (['eval', 'prep', 'up', 'review', 'rep', 'fb'].indexOf(h) > -1 ? 'list' : ''));
+    $('vAdmin').hidden = !!p; $('vEval').hidden = !p;
+    if (!p) { page = ''; return; }
+    var key = m ? decodeURIComponent(m[1]) : '';
+    if (p !== page || key !== curKey) { show($('emsg'), 'ok', ''); window.scrollTo(0, 0); }
+    page = p;
+    $('evList').hidden = p !== 'list'; $('evCourse').hidden = p !== 'course'; $('tView').hidden = p !== 'view'; $('tCmDl').hidden = p !== 'cmdl';
+    $('crSub').innerHTML = p === 'course' ? ' &rsaquo; ' + esc(key) : p === 'view' ? ' &rsaquo; 점수 조회' : p === 'cmdl' ? ' &rsaquo; 의견 내려받기' : '';
+    if (p === 'course') { openCourse(key, m[2] ? Number(m[2]) : 0); return; }
+    if (p === 'list') { placeApi('list'); renderList(); if (svList === null && !svErr) loadSurveys(); }
+    if (!results) loadResults(p !== 'view');
   }
   window.addEventListener('hashchange', route);
-  $('goEval').onclick = function(){ location.hash = 'prep'; };   // 평가관리는 1 설문 준비부터 연다(10-17)
-  $('backAdmin').onclick = function(ev){ ev.preventDefault(); location.hash = ''; history.replaceState(null, '', location.pathname); route(); };
-  function goTab(t){ history.replaceState(null, '', '#' + HASH[t]); tab(t); }
-  document.querySelectorAll('.tab').forEach(function(b){ b.onclick = function(){ goTab(b.getAttribute('data-t')); }; });
+  $('goEval').onclick = function(){ location.hash = 'eval'; };
+  $('backAdmin').onclick = function(ev){ ev.preventDefault(); history.replaceState(null, '', location.pathname); route(); };
+
+  /* 설문 생성기 연결 칸(apiSet)·안내(mkMsg)를 과정 목록 또는 과정의 설문 카드로 옮김 */
+  function placeApi(where){
+    var set = $('apiSet'), msg = $('mkMsg');
+    if (where === 'list') { $('apiSetWrap').appendChild(set); $('apiSetWrap').appendChild(msg); }
+    else { var card = $('mkOut').parentNode; card.insertBefore(set, $('mkOut')); card.insertBefore(msg, $('mkOut')); }
+  }
+  $('btnApiSet2').onclick = function(){ placeApi('list'); if ($('apiSet').hidden) openApiSet(); else $('apiSet').hidden = true; };
+
+  /* ---------- 과정 목록 ---------- */
+  function upOf(key){ return uploads().filter(function(u){ return String(u['개설키']) === key; }).sort(function(a, b){ return String(b['저장일시']).localeCompare(String(a['저장일시'])); })[0] || null; }
+  function fbProg(u){
+    var id = String(u['업로드ID']);
+    var n = ((results && results.rows) || []).filter(function(r){ return String(r['업로드ID']) === id && kindOf(r) !== 'C' && String(r['제외'] || '') !== 'Y'; }).length;
+    var done = {}; fbLogs().forEach(function(l){ if (String(l['업로드ID']) === id) done[String(l['집계ID'])] = 1; });
+    return { n: n, sent: Object.keys(done).length };
+  }
+  function svState(key){
+    if (key === curKey && curSv && !curSv.err && !curSv.nokey) return curSv.exists ? 'made' : 'none';
+    if (svList) return svList[key] ? 'made' : 'none';
+    return 'unknown';
+  }
+  /* 과정 상태: wait 검토 대기 / done 반영 완료 / fbpart 환류 일부 / fbdone 환류 완료 / resp 응답 받는 중 / nosv 설문 전 / future 예정 / unk 결과 없음(생성기 미연결) */
+  function stateOf(key){
+    var u = results ? upOf(key) : null;
+    if (u) {
+      if (!isDone(u)) return { k: 'wait', u: u };
+      var f = fbProg(u);
+      return { k: f.sent ? (f.sent >= f.n ? 'fbdone' : 'fbpart') : 'done', u: u, f: f };
+    }
+    var p = planOf(key), today = kstToday();
+    var sv = svState(key);
+    if (sv === 'made') return { k: 'resp' };
+    if (p && dstr(p['입교 시작일']) > today) return { k: 'future' };
+    return { k: sv === 'none' ? 'nosv' : 'unk' };
+  }
+  var ST_LABEL = {
+    wait: ['t-warn', '검토 대기', '검토한 뒤 반영'], done: ['t-ok', '반영 완료', '보고서·강사 환류'], fbpart: ['t-ok', '환류 일부', '남은 강사 환류'],
+    fbdone: ['t-ok', '환류 완료', '끝'], resp: ['t-info', '설문 진행', '결과 가져오기'], nosv: ['t-none', '설문 전', '설문 링크 만들기'],
+    future: ['t-none', '예정', '과정 시작 후 진행'], unk: ['t-none', '결과 없음', '설문 확인']
+  };
+  var ST_ORDER = { wait: 0, resp: 1, nosv: 2, unk: 2, done: 3, fbpart: 3, future: 4, fbdone: 5 };
+  function isTodo(p, st){
+    var today = kstToday(), end = dstr(p['입교 종료일']), start = dstr(p['입교 시작일']);
+    if (st.k === 'wait' || st.k === 'resp') return true;
+    return end.slice(0, 7) === today.slice(0, 7) && start <= today;   // 이번 달에 끝나는(끝난) 과정
+  }
+  function renderList(){
+    if (page !== 'list') return;
+    var all = plans.map(function(p){ var k = String(p['과정+기수']); return { p: p, key: k, st: stateOf(k) }; });
+    var todo = all.filter(function(x){ return isTodo(x.p, x.st); });
+    $('fTodoN').textContent = todo.length;
+    var ys = {}; all.forEach(function(x){ var y = dstr(x.p['입교 시작일']).slice(0, 4); if (y) ys[y] = 1; });
+    var ysel = $('fYear'), ycur = ysel.value || kstToday().slice(0, 4);
+    ysel.innerHTML = Object.keys(ys).sort().reverse().map(function(y){ return '<option value="' + y + '">' + y + '년</option>'; }).join('');
+    if (ys[ycur]) ysel.value = ycur;
+    ysel.hidden = listFilter !== 'all';
+    document.querySelectorAll('.segb').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-f') === listFilter); });
+    var list = listFilter === 'todo' ? todo : all.filter(function(x){ return dstr(x.p['입교 시작일']).slice(0, 4) === ysel.value; });
+    var q = $('fFind').value.replace(/\s+/g, '').toLowerCase();
+    if (q) list = list.filter(function(x){ return x.key.replace(/\s+/g, '').toLowerCase().indexOf(q) > -1; });
+    list.sort(listFilter === 'todo'
+      ? function(a, b){ return (ST_ORDER[a.st.k] - ST_ORDER[b.st.k]) || dstr(b.p['입교 종료일']).localeCompare(dstr(a.p['입교 종료일'])); }
+      : function(a, b){ return dstr(b.p['입교 시작일']).localeCompare(dstr(a.p['입교 시작일'])); });
+    var el = $('evCards');
+    if (!results) { el.innerHTML = '<div class="loading">불러오는 중입니다.</div>'; return; }
+    el.innerHTML = list.length ? list.map(function(x){
+      var L = ST_LABEL[x.st.k], extra = x.st.f && x.st.f.n && x.st.k !== 'fbdone' ? ' · 환류 ' + x.st.f.sent + '/' + x.st.f.n : '';
+      return '<a class="evc" href="#c=' + encodeURIComponent(x.key) + '"><div class="evt">' + esc(x.key) + '</div>' +
+        '<div class="evm">' + shortMd(x.p['입교 시작일']) + '~' + shortMd(x.p['입교 종료일']) + '</div>' +
+        '<div class="evs"><span class="tag ' + L[0] + '">' + L[1] + extra + '</span><span class="evn">다음: ' + L[2] + '</span></div></a>';
+    }).join('') : '<div class="note">' + (listFilter === 'todo' ? '할 일이 있는 과정이 없습니다. 지난 과정은 <b>[전체 과정]</b>에서 찾을 수 있습니다.' : '조건에 맞는 과정이 없습니다.') + '</div>';
+    $('evHint').innerHTML = listFilter === 'todo' ? '할 일 있는 과정: 이번 달에 끝나는 과정, 설문을 진행 중인 과정, 검토 대기 결과가 있는 과정' : '';
+  }
+  document.querySelectorAll('.segb').forEach(function(b){ b.onclick = function(){ listFilter = b.getAttribute('data-f'); renderList(); }; });
+  $('fYear').onchange = renderList; $('fFind').addEventListener('input', renderList);
+  /* 만든 설문 목록(설문 생성기 v7 listSurveys). 연결이 없거나 이전 버전이면 안내만 하고 목록은 결과 기준으로 보여 줌 */
+  function loadSurveys(){
+    var note = $('genNote');
+    if (!apiKey()) { svErr = 'nokey'; note.hidden = false; note.innerHTML = '이 브라우저에 설문 생성기 연결(비밀값)이 없어 과정별 설문 진행 상태를 알 수 없습니다. 위 <b>[설문 생성기 연결]</b>에서 한 번만 넣어 주세요.'; renderList(); return; }
+    return genApi({ action: 'listSurveys' }).then(function(r){
+      if (r.status === 'ok' && r.surveys) { svList = r.surveys; svErr = ''; note.hidden = true; }
+      else { svErr = r.code || 'fail'; note.hidden = false; note.innerHTML = r.code === 'action' ? '설문 생성기가 아직 v7 이전 버전이라 설문 진행 상태와 <b>결과 가져오기</b>를 쓸 수 없습니다(CSV 올리기는 쓸 수 있음). 설문 생성기 v7을 배포해 주세요.' : esc(r.message || '설문 생성기 응답을 확인하지 못했습니다.'); }
+      renderList();
+    }).catch(function(){ svErr = 'net'; note.hidden = false; note.innerHTML = '설문 생성기에 연결하지 못해 설문 진행 상태를 알 수 없습니다. 결과가 있는 과정은 그대로 보입니다.'; renderList(); });
+  }
+
+  /* ---------- 과정 한 화면 ---------- */
+  function openCourse(key, step){
+    var p = planOf(key);
+    if (!p) { show($('emsg'), 'err', '연간계획에서 "' + esc(key) + '" 과정을 찾지 못했습니다(취소되었거나 이름이 바뀜).'); location.hash = 'eval'; return; }
+    if (key !== curKey) {
+      curKey = key; curSv = null; curCnt = null; repull = false; rv = null; pv = null;
+      $('preview').hidden = true; $('rvPanel').hidden = true; mkClear();
+      show($('pullMsg'), 'ok', ''); show($('upMsg'), 'err', ''); show($('fbMsg'), 'ok', ''); $('csvAlt').open = false;
+      $('selPrep').value = key; renderPrep();
+      $('selCourse').value = key; $('selCourse').onchange();
+      loadCourseGen(key);
+    }
+    placeApi('prep');
+    var ss = courseSessions(key);
+    $('cTitle').textContent = key;
+    $('cMeta').textContent = '입교 ' + shortMd(p['입교 시작일']) + '~' + shortMd(p['입교 종료일']) + ' · 설문 대상 교과목·강사 ' + E.surveyPairs(ss).length + '건';
+    if (!results) { renderSteps(); loadResults(true).then(function(){ if (page === 'course' && curKey === key) showStep(step || defaultStep()); }); showStep(step || 1, true); return; }
+    showStep(step || defaultStep());
+  }
+  function loadCourseGen(key){
+    if (!apiKey()) { curSv = { nokey: true }; curCnt = { nokey: true }; renderSteps(); renderPullSum(); return; }
+    genApi({ action: 'getSurvey', course: key }).then(function(g){
+      if (key !== curKey) return;
+      curSv = g.status === 'ok' ? g : { err: true, message: g.message };
+      if (g.status === 'ok' && g.exists) renderMk(g);
+      renderSteps(); if (page === 'list') renderList();
+    }).catch(function(){ if (key === curKey) { curSv = { err: true }; renderSteps(); } });
+    loadCount(key);
+  }
+  function loadCount(key){
+    curCnt = null; renderPullSum();
+    return genApi({ action: 'getResponseCount', course: key }).then(function(r){
+      if (key !== curKey) return;
+      curCnt = r.status === 'ok' ? r : { err: true, old: r.code === 'action', message: r.message };
+      renderSteps(); renderPullSum();
+    }).catch(function(){ if (key === curKey) { curCnt = { err: true }; renderPullSum(); } });
+  }
+  function defaultStep(){
+    var k = stateOf(curKey).k;
+    return k === 'resp' || k === 'wait' ? 2 : k === 'done' || k === 'fbdone' ? 3 : k === 'fbpart' ? 4 : 1;
+  }
+  function renderSteps(){
+    if (!curKey) return;
+    var st = stateOf(curKey), u = st.u;
+    $('cState').innerHTML = '<span class="tag ' + ST_LABEL[st.k][0] + '">' + ST_LABEL[st.k][1] + '</span>';
+    var sv = curSv;
+    $('s1t').textContent = !sv ? '확인 중' : sv.nokey ? '연결 필요' : sv.err ? '확인 못 함' : sv.exists ? '만듦 ' + String(sv.createdAt || '').slice(5, 10).replace('-', '.') : '만들기 전';
+    $('s2t').textContent = u ? (isDone(u) ? '반영 완료' : '검토 대기') : (curCnt && curCnt.exists ? '응답 ' + curCnt.count + '명' : '가져오기 전');
+    $('s3t').textContent = u ? (isDone(u) ? '만들 수 있음' : '검토 대기 결과') : '반영 후';
+    $('s4t').textContent = u && isDone(u) ? (st.f && st.f.sent ? '보냄 ' + st.f.sent + '/' + st.f.n : '보내기 전') : '반영 후';
+    document.querySelectorAll('.stp').forEach(function(b){
+      var s = Number(b.getAttribute('data-s'));
+      var done = s === 1 ? !!(sv && sv.exists) || !!u : s === 2 ? !!(u && isDone(u)) : s === 4 ? st.k === 'fbdone' : false;
+      b.classList.toggle('done', done);
+    });
+  }
+  function showStep(s, early){
+    curStep = s;
+    document.querySelectorAll('.stp').forEach(function(b){ var on = Number(b.getAttribute('data-s')) === s; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    $('tPrep').hidden = s !== 1; $('tUp').hidden = s !== 2; $('tRep').hidden = s !== 3; $('tFb').hidden = s !== 4;
+    history.replaceState(null, '', '#c=' + encodeURIComponent(curKey) + '&s=' + s);
+    renderSteps();
+    if (early) return;
+    var u = results ? upOf(curKey) : null;
+    if (s === 2) {
+      if (pv) { $('pullCard').hidden = false; $('rvPanel').hidden = true; }
+      else if (u && !repull) { $('pullCard').hidden = true; if (!rv || rv.id !== String(u['업로드ID'])) openReview(String(u['업로드ID']), true); else { renderReview(); $('rvPanel').hidden = false; } }
+      else { $('pullCard').hidden = false; $('rvPanel').hidden = true; }
+      renderPullSum();
+    } else if (s === 3) {
+      if (u) { $('repCourse').value = curKey; $('repCtl').hidden = false; renderReport(); }
+      else { $('repCtl').hidden = true; $('repDoc').innerHTML = '<div class="note">결과를 가져와 저장한 뒤에 보고서를 만들 수 있습니다. <a href="#c=' + encodeURIComponent(curKey) + '&s=2">2. 결과·반영으로</a></div>'; }
+    } else if (s === 4) {
+      if (u && isDone(u)) { $('fbCourse').value = String(u['업로드ID']); renderFb(); }
+      else $('fbBody').innerHTML = '<div class="note">' + (u ? '검토 대기 결과입니다. 2. 결과·반영에서 [반영]을 누른 뒤 보낼 수 있습니다.' : '결과를 가져와 반영한 뒤에 강사에게 보낼 수 있습니다.') + ' <a href="#c=' + encodeURIComponent(curKey) + '&s=2">2. 결과·반영으로</a></div>';
+    }
+  }
+  document.querySelectorAll('.stp').forEach(function(b){ b.onclick = function(){ showStep(Number(b.getAttribute('data-s'))); }; });
+  /* 결과를 다시 불러온 뒤 지금 보고 있는 화면을 새로 그림 */
+  function refreshCourse(){ if (page === 'course' && curKey) showStep(curStep || defaultStep()); if (page === 'list') renderList(); }
+
+  /* ---------- 2. 결과 가져오기(설문 생성기 v7 getResponses) ---------- */
+  function renderPullSum(){
+    var c = curCnt, h;
+    if (!apiKey() || (c && c.nokey)) h = '<span>설문 생성기 연결 필요</span>';
+    else if (!c) h = '<span>응답 수 확인 중…</span>';
+    else if (c.err) h = '<span>' + (c.old ? '설문 생성기 v7 배포 전 · CSV 올리기를 쓰세요' : '응답 수를 확인하지 못함') + '</span>';
+    else if (!c.exists) h = '<span>' + (c.deleted ? '설문이 삭제되어 있습니다' : '이 과정의 설문이 아직 없습니다') + '</span>';
+    else h = '<span>응답 ' + c.count + '명</span>' + (c.last ? '<span>마지막 응답 ' + esc(String(c.last).slice(5).replace('-', '.')) + '</span>' : '') + (c.accepting === false ? '<span>응답 받기 닫힘</span>' : '');
+    $('pullSum').innerHTML = h;
+    $('btnPull').disabled = !!(c && (c.old || (c.status === 'ok' && !c.exists)));
+    $('btnCnt').hidden = !!(c && c.old);
+    if (c && c.old) $('csvAlt').open = true;   /* v7 이전 생성기: CSV 올리기를 바로 펼침 */
+  }
+  $('btnCnt').onclick = function(){ if (!apiKey()) { openApiSet(); show($('mkMsg'), 'warn', '먼저 설문 생성기 비밀값을 넣어 주세요.'); showStep(1); return; } loadCount(curKey); };
+  $('btnPull').onclick = function(){
+    var key = curKey, btn = this;
+    show($('pullMsg'), 'ok', ''); show($('upMsg'), 'err', '');
+    if (!apiKey()) { show($('pullMsg'), 'warn', '이 브라우저에 설문 생성기 연결(비밀값)이 없습니다. <b>1. 설문</b>의 [연결 설정]에서 한 번만 넣거나, 아래 "다른 방법"으로 CSV 파일을 올려 주세요.'); $('csvAlt').open = true; return; }
+    btn.disabled = true; btn.textContent = '가져오는 중… (5~20초)';
+    genApi({ action: 'getResponses', course: key }).then(function(r){
+      if (key !== curKey) return;
+      if (r.status !== 'ok') {
+        if (r.code === 'action') { show($('pullMsg'), 'warn', '설문 생성기가 아직 v7 이전 버전이라 결과를 바로 가져올 수 없습니다. 아래 "다른 방법"으로 구글 폼 응답 CSV를 올리거나, 설문 생성기 v7을 배포해 주세요.'); $('csvAlt').open = true; }
+        else show($('pullMsg'), 'err', esc(r.message || '결과를 가져오지 못했습니다.'));
+        return;
+      }
+      if (!r.exists) { show($('pullMsg'), 'warn', r.deleted ? '이 과정의 설문이 드라이브에서 삭제되어 있습니다.' : '이 과정의 설문이 아직 없습니다. <b>1. 설문</b>에서 먼저 만들어 주세요.'); return; }
+      curCnt = { status: 'ok', exists: true, count: r.count, last: r.last }; renderPullSum(); renderSteps();
+      if (!r.count || !r.csv) { show($('pullMsg'), 'warn', '아직 들어온 응답이 없습니다. 교육생이 [제출]까지 눌렀는지 확인해 주세요.'); return; }
+      var buf = new TextEncoder().encode(r.csv).buffer;
+      return fingerprint(buf).then(function(fp){ build(r.csv, fp, r.fileName || (key + '_설문응답.csv'), false); });
+    }).catch(function(){ show($('pullMsg'), 'err', connFailMsg().replace('급하면', '또는 아래 "다른 방법"으로 CSV를 올리거나, 급하면')); $('csvAlt').open = true; })
+      .then(function(){ btn.disabled = false; btn.textContent = '결과 가져오기'; renderPullSum(); });
+  };
 
   /* ---------- 1. 설문 준비 ---------- */
   var OPS_TEAMS = ['교육운영팀', '교육훈련팀'];   // 강의배정의 팀 운영 교시(강사ID 없음)
@@ -600,12 +882,14 @@
   }
   function renderPrep(){
     var key = $('selPrep').value, el = $('prepBody');
+    $('prepSum').textContent = '';
     if (!key) { el.innerHTML = '<div class="hint" style="margin-top:12px;">과정을 선택하면 설문 차례가 여기에 나타납니다.</div>'; return; }
     var ss = courseSessions(key);
-    if (!ss.length) { el.innerHTML = '<div class="note warn">이 과정에는 교과목 편성이 없어 설문을 만들 수 없습니다. 강의배정에서 교과목과 강사를 먼저 입력해 주세요.</div>'; return; }
+    if (!ss.length) { $('prepSum').textContent = '편성 없음'; el.innerHTML = '<div class="note warn">이 과정에는 교과목 편성이 없어 설문을 만들 수 없습니다. 강의배정에서 교과목과 강사를 먼저 입력해 주세요.</div>'; return; }
     var st = prepState(ss), pairs = st.pairs, nT = pairs.filter(function(p){ return p.set === 'T'; }).length;
     var steps = 1 + pairs.length + E.COMMON_SECTIONS.length + 1;
     var mins = Math.max(3, Math.round(1.5 + pairs.length * 0.4));
+    $('prepSum').textContent = '총 ' + steps + '단계 · 약 ' + mins + '분 · 교과목·강사 ' + pairs.length + '건' + (st.miss.length ? ' · 빠지는 교과목 ' + st.miss.length + '개' : '');
     var h = '<div class="sum"><span>총 ' + steps + '단계</span><span>약 ' + mins + '분</span><span>교과목·강사 ' + pairs.length + '건' + (nT ? ' (훈련 ' + nT + ')' : '') + '</span>' + (st.miss.length ? '<span style="color:var(--warn-fg);">설문에서 빠지는 교과목 ' + st.miss.length + '개</span>' : '') + '</div>';
     if (!pairs.length) h += '<div class="note warn">강사가 지정된 교과목이 없어 설문을 만들 수 없습니다.</div>';
     h += '<ol class="sv">';
@@ -902,7 +1186,7 @@
     });
     cmState.pvCm = null;
     pv = { fp: fp, name: name, sample: sample, text: text, fileCount: agg.fileCount, skipped: agg.skipped, items: items, commons: agg.commons || [], basics: agg.basics || {}, noneCount: agg.noneCount || 0 };
-    renderPreview(); $('preview').hidden = false;
+    renderPreview(); $('preview').hidden = false; $('rvPanel').hidden = true; $('pullCard').hidden = false;
     $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   function instOptions(it){
@@ -958,10 +1242,10 @@
   function refreshSave(){
     if (!pv) return;
     var p = problems();
-    $('btnSave').disabled = p.length > 0;
-    $('saveHint').innerHTML = p.length ? esc(p[0]) : '저장한 뒤 <b>3. 검토·반영</b>에서 [반영 승인]을 눌러야 점수에 들어갑니다.';
+    $('btnSave').disabled = $('btnSaveGo').disabled = p.length > 0;
+    $('saveHint').innerHTML = p.length ? esc(p[0]) : '<b>[반영]</b>을 누르면 저장과 함께 점수 조회·누적 별점에 들어갑니다. <b>[나중에 검토]</b>는 저장만 하고 점수에는 넣지 않습니다.';
   }
-  $('btnCancel').onclick = function(){ pv = null; $('preview').hidden = true; };
+  $('btnCancel').onclick = function(){ pv = null; $('preview').hidden = true; if (repull) { repull = false; } refreshCourse(); };
   $('selCourse').onchange = function(){
     courseKey = $('selCourse').value; pv = null; $('preview').hidden = true;
     var ss = courseSessions(courseKey);
@@ -987,29 +1271,42 @@
     var raw = pv.text && pv.text.length < 2900000 ? pv.text : '';
     return { action: 'saveEvalResult', password: getPw(), 개설키: courseKey, 파일지문: pv.fp, 파일명: pv.name, 파일응답수: pv.fileCount, 원자료: raw, 의견없음수: pv.noneCount, 기본정보: pv.basics, rows: rows, comments: comments, 교체: !!replace };
   }
-  function doSave(replace){
-    $('btnSave').disabled = true; $('btnSave').textContent = '저장 중…';
+  /* 관리자 24(C안): [반영] = 저장(saveEvalResult) 후 바로 반영 승인(setEvalStatus). [나중에 검토] = 저장만(검토 대기) */
+  function doSave(replace, go){
+    var btns = [$('btnSave'), $('btnSaveGo')], label = go ? '반영' : '나중에 검토';
+    btns.forEach(function(b){ b.disabled = true; }); (go ? $('btnSaveGo') : $('btnSave')).textContent = go ? '반영 중…' : '저장 중…';
+    var reset = function(){ $('btnSave').textContent = '나중에 검토'; $('btnSaveGo').textContent = '반영'; };
+    var key = courseKey;
     return api(payload(replace)).then(function(r){
-      $('btnSave').textContent = '검토 대기로 저장';
       if (r.status === 'ok') {
         var id = r.업로드ID, nC = (pv.commons || []).length, nS = Math.max(0, (r.저장건수 || 0) - nC);
-        pv = null; $('preview').hidden = true; results = null;
-        show($('emsg'), 'ok', '검토 대기로 저장했습니다. 교과목·강사 ' + nS + '줄' + (nC ? ', 공통 문항 ' + nC + '개' : '') + ', 서술형 의견 ' + r.서술건수 + '건' + (r.교체 ? ' (이전 결과는 교체됨)' : '') + '. 아직 점수에는 반영되지 않았습니다. <a href="#review" id="goRv">지금 검토·반영하기</a>' + (r.warning ? '<br>' + esc(r.warning) : ''));
-        var g = $('goRv'); if (g) g.onclick = function(ev){ ev.preventDefault(); goTab('review'); openWhenReady(id); };
-        loadResults(true);
-        window.scrollTo(0, 0); return;
+        var what = '교과목·강사 ' + nS + '줄' + (nC ? ', 공통 문항 ' + nC + '개' : '') + ', 서술형 의견 ' + r.서술건수 + '건' + (r.교체 ? ' (이전 결과는 교체됨)' : '');
+        pv = null; $('preview').hidden = true; results = null; rv = null; repull = false; reset();
+        var after = function(kind, msg, step){ show($('emsg'), kind, msg + (r.warning ? '<br>' + esc(r.warning) : '')); window.scrollTo(0, 0); loadResults(true).then(function(){ if (curKey === key && page === 'course') showStep(step); }); };
+        if (!go) { after('ok', '검토 대기로 저장했습니다. ' + what + '. 아직 점수에는 들어가지 않았습니다. 확인한 뒤 아래에서 <b>[반영]</b>을 눌러 주세요.', 2); return; }
+        return api({ action: 'setEvalStatus', password: getPw(), 업로드ID: id, 상태: ST_DONE }).then(function(r2){
+          if (r2.status === 'ok') after('ok', '반영했습니다. ' + what + '. 점수 조회와 누적 별점에 들어갔습니다. 이어서 <b>보고서</b>와 <b>강사 환류</b>를 진행하세요.', 3);
+          else after('warn', '저장은 되었지만 반영하지 못했습니다(' + esc(srvMsg(r2.message)) + '). 아래 <b>[반영]</b>을 다시 눌러 주세요.', 2);
+        }).catch(function(err){ after('warn', '저장은 되었지만 반영 결과를 확인하지 못했습니다: ' + esc(err.message) + ' 아래에서 상태를 확인하고 필요하면 <b>[반영]</b>을 다시 눌러 주세요.', 2); });
       }
+      reset();
       if (r.exists && !replace) {
-        if (window.confirm('이 과정의 평가 결과가 이미 저장되어 있습니다.\n이번 결과로 바꿀까요? (이전 결과·의견·원자료 파일은 삭제되고, 다시 검토·반영 승인이 필요합니다)')) return doSave(true);
+        if (window.confirm('이 과정의 평가 결과가 이미 저장되어 있습니다.\n이번 결과로 바꿀까요? (이전 결과·의견·원자료 파일은 삭제되고, 다시 반영해야 합니다)')) return doSave(true, go);
         refreshSave(); return;
       }
       show($('emsg'), 'err', esc(srvMsg(r.message) || '저장하지 못했습니다')); window.scrollTo(0, 0); refreshSave();
     }).catch(function(err){
-      $('btnSave').textContent = '검토 대기로 저장';
-      show($('emsg'), 'err', '저장 결과를 확인하지 못했습니다: ' + esc(err.message) + ' 검토·반영 목록에서 저장되었는지 먼저 확인해 주세요.'); refreshSave();
+      reset();
+      show($('emsg'), 'err', '저장 결과를 확인하지 못했습니다: ' + esc(err.message) + ' 화면을 새로고침해 저장되었는지 먼저 확인해 주세요.'); refreshSave();
     });
   }
-  $('btnSave').onclick = function(){ if (problems().length || !pv) return; show($('emsg'), 'ok', ''); doSave(false); };
+  $('btnSave').onclick = function(){ if (problems().length || !pv) return; show($('emsg'), 'ok', ''); doSave(false, false); };
+  $('btnSaveGo').onclick = function(){
+    if (problems().length || !pv) return;
+    var nx = pv.items.filter(function(it){ return it.inst === 'x'; }).length, ncx = pv.items.reduce(function(n, it){ return n + it.cms.filter(function(c){ return !c.inc; }).length; }, 0);
+    if (!window.confirm('[' + courseKey + '] 결과를 저장하고 반영합니다.\n점수 조회·누적 별점에 바로 들어갑니다.' + (nx || ncx ? '\n저장하지 않음: 교과목 ' + nx + '줄 / 반영 안 함 의견 ' + ncx + '건' : '') + '\n계속할까요?')) return;
+    show($('emsg'), 'ok', ''); doSave(false, true);
+  };
 
   /* ---------- 결과 불러오기 ---------- */
   var pendingOpen = '';
@@ -1023,6 +1320,7 @@
       (results.uploads || []).forEach(function(u){ if (!u['상태']) u['상태'] = ST_DONE; });
       renderBadge(); renderUploads(); renderCmDl(); renderView(); renderRepCourses(); renderFbCourses();
       if (pendingOpen) { var id = pendingOpen; pendingOpen = ''; openReview(id); }
+      refreshCourse();
     }).catch(function(err){ $('vwLoading').hidden = true; $('rvLoading').hidden = true; if (!quiet) show($('emsg'), 'err', '불러오지 못했습니다: ' + esc(err.message)); });
   }
   function uploads(){ return (results && results.uploads) || []; }
@@ -1032,8 +1330,7 @@
     var n = uploads().filter(function(u){ return !isDone(u); }).length;
     $('waitBadge').hidden = !n; $('waitBadge').textContent = n;
     $('vwWait').hidden = !n;
-    if (n) $('vwWait').innerHTML = '검토 대기 결과 ' + n + '건은 아직 점수에 들어가지 않았습니다. <a href="#review" id="goRv2">검토·반영으로 이동</a>';
-    var g = $('goRv2'); if (g) g.onclick = function(ev){ ev.preventDefault(); goTab('review'); };
+    if (n) $('vwWait').innerHTML = '검토 대기 결과 ' + n + '건은 아직 점수에 들어가지 않았습니다. <a href="#eval">과정 목록에서 확인</a>';
   }
 
   /* ---------- 3. 검토·반영 ---------- */
@@ -1110,7 +1407,7 @@
   }
   function kindOf(r){ var t = String(r['유형'] || ''); return t === '훈련' ? 'T' : (t === '공통' ? 'C' : 'L'); }
   function parseBasic(u){ try { return u && u['기본정보'] ? JSON.parse(u['기본정보']) : {}; } catch (e) { return {}; } }
-  function openReview(id){
+  function openReview(id, quiet){
     var u = upMap()[id]; if (!u) return;
     var rows = results.rows.filter(function(r){ return String(r['업로드ID']) === id && kindOf(r) !== 'C'; });
     var cms = results.comments.filter(function(c){ return String(c['업로드ID']) === id; });
@@ -1120,7 +1417,7 @@
     cmState.rvCm = null;
     renderReview();
     $('rvPanel').hidden = false;
-    $('rvPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!quiet) $('rvPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   function renderReview(){
     if (!rv) return;
@@ -1140,7 +1437,7 @@
     $('rvCmTag').textContent = '규칙 분류 · ' + nCm + '건';
     renderCm('rvCm', rv.groups, Number(u['의견없음수']) || 0, refreshRvHint);
     $('rvUndo').hidden = !done;
-    $('rvApprove').textContent = done ? '반영 제외 변경 저장' : '반영 승인';
+    $('rvApprove').textContent = done ? '반영 제외 변경 저장' : '반영';
     refreshRvHint();
   }
   function rvExcluded(){
@@ -1151,7 +1448,7 @@
   function refreshRvHint(){
     if (!rv) return;
     var ex = rvExcluded();
-    $('rvHint').textContent = (isDone(rv.up) ? '체크를 바꾼 뒤 [반영 제외 변경 저장]을 누르면 점수 조회에 바로 반영됩니다.' : '[반영 승인]을 누르면 점수 조회·누적 별점에 들어갑니다.') + (ex.a.length || ex.c.length ? ' 반영 안 함: 교과목·강사 ' + ex.a.length + '줄, 의견 ' + ex.c.length + '건' : '');
+    $('rvHint').textContent = (isDone(rv.up) ? '체크를 바꾼 뒤 [반영 제외 변경 저장]을 누르면 점수 조회에 바로 반영됩니다.' : '[반영]을 누르면 점수 조회·누적 별점에 들어갑니다.') + (ex.a.length || ex.c.length ? ' 반영 안 함: 교과목·강사 ' + ex.a.length + '줄, 의견 ' + ex.c.length + '건' : '');
   }
   function sendStatus(st, btn, okText){
     var ex = rvExcluded();
@@ -1160,20 +1457,34 @@
       btn.disabled = false;
       if (r.status !== 'ok') { show($('emsg'), 'err', esc(srvMsg(r.message) || '처리하지 못했습니다')); window.scrollTo(0, 0); return; }
       show($('emsg'), 'ok', okText); window.scrollTo(0, 0);
-      pendingOpen = rv.id; loadResults();
+      var go3 = st === ST_DONE && !isDone(rv.up); rv = null;
+      loadResults().then(function(){ if (go3 && page === 'course') showStep(3); });
     }).catch(function(err){ btn.disabled = false; show($('emsg'), 'err', '처리 결과를 확인하지 못했습니다: ' + esc(err.message) + ' 목록을 새로 불러와 상태를 확인해 주세요.'); window.scrollTo(0, 0); });
   }
   $('rvApprove').onclick = function(){
     if (!rv) return;
     var done = isDone(rv.up), ex = rvExcluded();
-    if (!done && !window.confirm('[' + rv.up['개설키'] + '] 결과를 반영 승인합니다.\n점수 조회·누적 별점에 들어갑니다.' + (ex.a.length || ex.c.length ? '\n반영 안 함: 교과목·강사 ' + ex.a.length + '줄, 의견 ' + ex.c.length + '건' : '') + '\n계속할까요?')) return;
-    sendStatus(ST_DONE, $('rvApprove'), done ? '반영 제외 변경을 저장했습니다.' : '반영 승인했습니다. 점수 조회에서 확인할 수 있습니다.');
+    if (!done && !window.confirm('[' + rv.up['개설키'] + '] 결과를 반영합니다.\n점수 조회·누적 별점에 들어갑니다.' + (ex.a.length || ex.c.length ? '\n반영 안 함: 교과목·강사 ' + ex.a.length + '줄, 의견 ' + ex.c.length + '건' : '') + '\n계속할까요?')) return;
+    sendStatus(ST_DONE, $('rvApprove'), done ? '반영 제외 변경을 저장했습니다.' : '반영했습니다. 이어서 <b>보고서</b>와 <b>강사 환류</b>를 진행하세요.');
   };
   $('rvUndo').onclick = function(){
     if (!rv || !window.confirm('검토 대기로 되돌리면 이 과정 점수가 점수 조회·누적 별점에서 빠집니다. 계속할까요?')) return;
     sendStatus(ST_WAIT, $('rvUndo'), '검토 대기로 되돌렸습니다.');
   };
-  $('rvBack').onclick = function(){ $('rvPanel').hidden = true; rv = null; $('rvListCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  /* 관리자 24: 과정 화면 안에서 결과 삭제·다시 가져오기 */
+  $('rvRepull').onclick = function(){ if (!rv) return; repull = true; $('rvPanel').hidden = true; $('pullCard').hidden = false; renderPullSum(); show($('pullMsg'), 'warn', '새로 가져온 결과를 저장하면 지금 저장된 결과(점수·의견·원자료 파일)를 바꿉니다. 바꾼 뒤에는 다시 반영해야 합니다. <a href="#" id="rpBack">취소하고 돌아가기</a>'); var b = $('rpBack'); if (b) b.onclick = function(ev){ ev.preventDefault(); repull = false; pv = null; $('preview').hidden = true; show($('pullMsg'), 'ok', ''); refreshCourse(); }; };
+  $('rvDel').onclick = function(){
+    if (!rv) return;
+    var id = rv.id, btn = this, dn = (results.comments || []).filter(function(c){ return String(c['업로드ID']) === id; }).length;
+    if (!window.confirm('이 과정 결과의 점수·서술형 의견' + (dn ? ' ' + dn + '건' : '') + '을 모두 삭제하고, 보관한 원자료 파일은 드라이브 휴지통으로 옮깁니다.\n\n※ 의견은 삭제하면 되돌릴 수 없습니다. 보관이 필요하면 [의견 내려받기]로 먼저 받아 두세요.\n\n계속할까요?')) return;
+    btn.disabled = true;
+    api({ action: 'deleteEvalUpload', password: getPw(), 업로드ID: id }).then(function(r){
+      btn.disabled = false;
+      if (r.status !== 'ok') { show($('emsg'), 'err', esc(r.message || '삭제하지 못했습니다')); return; }
+      show($('emsg'), 'ok', '결과를 삭제했습니다. 필요하면 다시 가져와 주세요.'); window.scrollTo(0, 0);
+      rv = null; $('rvPanel').hidden = true; loadResults().then(function(){ if (page === 'course') showStep(2); });
+    }).catch(function(err){ btn.disabled = false; show($('emsg'), 'err', '삭제 결과를 확인하지 못했습니다: ' + esc(err.message)); });
+  };
 
   /* ---------- 4. 점수 조회 (반영 승인 + 반영 제외 아닌 줄만) ---------- */
   function scoredRows(){
@@ -1211,7 +1522,7 @@
       return '<tr class="' + (shown ? '' : 'low') + '"><td>' + esc(g.name) + (g.trainer ? ' <span class="tag t-info">현장교관</span>' : '') + '</td><td>' + esc(g.subjects.join(', ')) + '</td><td>' + esc(String(g.latest['개설키'])) + '<div class="hint">' + esc(String(g.latest['저장일시']).slice(0, 10)) + ' 저장</div></td>' +
         '<td class="n">' + (latestOk ? fmt(Number(g.latest['종합'])) : '–') + '</td><td>' + (shown ? starHtml(g.cum.avg) : '–') + '</td><td class="n">' + g.cum.n + '</td>' +
         '<td>' + (shown ? '<span class="tag t-ok">표시</span>' : '<span class="tag t-warn">응답이 적어 참고하기 어려움</span>') + '</td></tr>';
-    }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:22px;">반영 승인된 평가 결과가 없습니다. "2. 결과 올리기" → "3. 검토·반영" 순서로 진행해 주세요.</td></tr>';
+    }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:22px;">반영한 평가 결과가 없습니다. 과정 목록에서 과정을 눌러 결과를 가져오고 반영해 주세요.</td></tr>';
   }
   $('selSort').onchange = renderView; $('inFind').addEventListener('input', renderView); $('btnReload').onclick = function(){ loadResults(); };
 

@@ -588,7 +588,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-25 강사관리 34</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 강사관리 35</div>
 </div>
 
 <script>
@@ -1909,13 +1909,24 @@
     if (d) { openDetail(d); postParent({type:'jsfa-card-shown'}); }
     else { postParent({type:'jsfa-card-notfound', id:id}); postParent({type:'jsfa-card-close'}); }
   }
+  /* 10-28(k2): 전체 목록이 오기 전에 누르면 그 강사 한 명만 서버에 물어 카드를 바로 띄움. 서버가 아직 이전 버전이면(unknown action) 기존처럼 목록을 기다림 */
+  function embedQuick(id){
+    var pw = sessionStorage.getItem('jsfa_dash_pw');
+    if (!pw) return;
+    readFetch({ action: 'getInstructorCard', password: pw, 강사ID: id }).then(function(j){
+      if (embedLoaded || embedPending !== id) return;   // 그사이 목록이 왔거나 다른 강사를 눌렀으면 무시
+      if (j && j.status === 'ok' && j.found && j.data) { embedPending = null; openDetail(j.data); postParent({type:'jsfa-card-shown'}); }
+      else if (j && j.status === 'ok' && j.found === false) { embedPending = null; postParent({type:'jsfa-card-notfound', id:id}); postParent({type:'jsfa-card-close'}); }
+    }).catch(function(){});
+  }
   if (EMBED) {
     window.addEventListener('message', function(e){
       if (e.source !== window.parent) return;
       var m = e.data || {};
       if (m.type !== 'jsfa-open-card') return;
-      if (embedLoaded) embedOpen(m.id); else embedPending = m.id;
+      if (embedLoaded) embedOpen(m.id); else { embedPending = m.id; embedQuick(m.id); }
     });
+    postParent({type:'jsfa-card-boot'});   // 10-28: 목록을 받기 전이라도 요청을 받을 수 있음을 알림(한 명 조회로 바로 띄움)
     new MutationObserver(function(){
       if (document.getElementById('overlay').style.display === 'none') postParent({type:'jsfa-card-close'});
     }).observe(document.getElementById('overlay'), {attributes:true, attributeFilter:['style']});

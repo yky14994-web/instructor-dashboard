@@ -1099,7 +1099,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-27 배정 150</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-28 배정 151</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -6621,7 +6621,7 @@
     ov.appendChild(fr);
     document.body.appendChild(ov);
   }
-  function send(){ if (ready && pending !== null) { try { fr.contentWindow.postMessage({type:'jsfa-open-card', id:pending}, '*'); } catch (e) {} } }
+  function send(){ if (ready && pending !== null) { try { fr.contentWindow.postMessage({type:'jsfa-open-card', id:pending}, '*'); } catch (e) {} pending = null; } }   // 보낸 뒤 비움(같은 요청 두 번 보내지 않음)
   function hide(){ if (!ov) return; ov.style.display = 'none'; document.body.style.overflow = ''; clearTimeout(timer); shown = false; pending = null; }
   function open(id){
     init(); shown = false; pending = id;
@@ -6635,7 +6635,7 @@
   window.addEventListener('message', function(e){
     if (!fr || e.source !== fr.contentWindow) return;
     var m = e.data || {};
-    if (m.type === 'jsfa-card-ready') { ready = true; send(); }
+    if (m.type === 'jsfa-card-ready' || m.type === 'jsfa-card-boot') { ready = true; send(); }   // 10-28: boot = 목록 전이라도 요청 받기 가능(한 명 조회)
     else if (m.type === 'jsfa-card-shown') { shown = true; clearTimeout(timer); ov.querySelector('.icLoad').style.display = 'none'; }
     else if (m.type === 'jsfa-card-close') { hide(); }
     else if (m.type === 'jsfa-docreplace-done') { try { window.dispatchEvent(new CustomEvent('jsfa-docreplace-done', { detail: m.id })); } catch (err) {} }
