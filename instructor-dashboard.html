@@ -307,7 +307,7 @@
   .pin-box{width:48px;height:56px;border:1.5px solid var(--border-input);border-radius:8px;text-align:center;font-size:22px;font-family:inherit;box-sizing:border-box;}
   .pin-box:focus{outline:none;border-color:var(--navy);}
   #loginBtn{width:100%;height:42px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
-  #loginBtn:disabled{opacity:.6;}
+  #loginBtn:disabled{opacity:.85;cursor:wait;}
   #loginMsg{display:none;color:#A32D2D;font-size:13px;margin-top:12px;}
 
   /* 공통 상단 메뉴 (강사 조회·강의배정 페이지 동일) */
@@ -588,7 +588,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 강사관리 37</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 강사관리 38</div>
 </div>
 
 <script>
@@ -2005,7 +2005,7 @@
     msg.style.display = 'none';
     if (pw.length < 4) return;
     btn.disabled = true;
-    btn.textContent = '확인 중...';
+    btn.textContent = '로그인 중...';   /* 10-28: 도는 표시는 busy-indicator.js가 붙임 */
 
     loadData(pw)
       .catch(function(err){

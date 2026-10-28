@@ -79,7 +79,7 @@
   .pin-box{width:48px;height:56px;border:1.5px solid var(--border-input);border-radius:8px;text-align:center;font-size:22px;font-family:inherit;}
   .pin-box:focus{outline:none;border-color:var(--navy);}
   #loginBtn{width:100%;height:42px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
-  #loginBtn:disabled{opacity:.6;}
+  #loginBtn:disabled{opacity:.85;cursor:wait;}
   #loginMsg{display:none;color:var(--err-fg);font-size:13px;margin-top:12px;}
 
   /* 공통 상단 메뉴 */
@@ -454,7 +454,7 @@
   </div>
 
   <section class="card" id="cYear" style="display:none;margin-top:16px;"></section>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 홈 108</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 홈 109</div>
 </div>
 </div>
 
@@ -1906,7 +1906,7 @@
     var btn = $('loginBtn'), msg = $('loginMsg');
     msg.style.display = 'none';
     if (pw.length < 4) return;
-    btn.disabled = true; btn.textContent = '확인 중... (서버가 느리면 최대 1분)';
+    btn.disabled = true; btn.textContent = '로그인 중...';   /* 10-28: 대기 시간 안내 문구 삭제. 도는 표시는 busy-indicator.js가 "…중..." 글자를 보고 붙임 */
     loadAll(pw).catch(function(err){
       if (err.auth === true) msg.textContent = /잠겼/.test(err.message || '') ? err.message : '비밀번호가 올바르지 않습니다.';
       else if (err.auth === false) msg.textContent = err.message || '불러오지 못했습니다';

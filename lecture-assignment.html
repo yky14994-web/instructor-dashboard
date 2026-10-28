@@ -78,7 +78,7 @@
   .pin-box{width:48px;height:56px;border:1.5px solid var(--border-input);border-radius:8px;text-align:center;font-size:22px;font-family:inherit;}
   .pin-box:focus{outline:none;border-color:var(--navy);}
   #loginBtn{width:100%;height:42px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
-  #loginBtn:disabled{opacity:.6;}
+  #loginBtn:disabled{opacity:.85;cursor:wait;}
   #loginMsg{display:none;color:var(--err-fg);font-size:13px;margin-top:12px;}
 
   /* 카드·필터 */
@@ -1099,7 +1099,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-28 배정 153</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-28 배정 154</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -6576,7 +6576,7 @@
     var btn = $('loginBtn'), msg = $('loginMsg');
     msg.style.display = 'none';
     if (pw.length < 4) return;
-    btn.disabled = true; btn.textContent = '확인 중... (서버가 느리면 최대 1분)';
+    btn.disabled = true; btn.textContent = '로그인 중...';   /* 10-28: 대기 시간 안내 문구 삭제. 도는 표시는 busy-indicator.js가 "…중..." 글자를 보고 붙임 */
     loadAll(pw).catch(function(err){
       if (err.auth === true) msg.textContent = /잠겼/.test(err.message || '') ? err.message : '비밀번호가 올바르지 않습니다.';
       else if (err.auth === false) msg.textContent = err.message || '불러오지 못했습니다';
