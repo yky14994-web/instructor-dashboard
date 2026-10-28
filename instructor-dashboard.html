@@ -7,7 +7,7 @@
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
   :root{
-    --navy:#1B3A5F;
+    --navy:#1B3A5F; --accent:#B85219; --accent-h:#9E4614; --accent-soft:#FDEBDD; --accent-line:#F2B48A; --accent-fg:#A9481A;   /* 10-28 주황 테마(B안): 버튼·선택 표시. 제목·글자는 --navy 유지 */
     --text:#2C2C2A;
     --text-sub:#4A4946;
     --text-muted:#5F6877;
@@ -58,7 +58,7 @@
   span.badge{background:var(--line);color:var(--navy);border:none;height:28px;padding:0 12px;border-radius:20px;}
   button.badge:hover, .badge[id]:hover{background:var(--bg-hover);}
   button.badge:active{background:var(--none-bg);}
-  #inviteOpenBtn:hover{border-color:var(--navy) !important;}
+  #inviteOpenBtn:hover{border-color:var(--accent) !important;}
   @media (max-width:640px){
     .badge{height:30px;padding:0 10px;font-size:11px;white-space:nowrap;}
     #specialtyToggleRow{flex-wrap:nowrap;gap:4px;}
@@ -88,10 +88,10 @@
     display:flex;flex-direction:column-reverse;
     transition:border-color .15s ease, background-color .15s ease;
   }
-  .card[data-filter]:hover{border-color:var(--navy);}
+  .card[data-filter]:hover{border-color:var(--accent);}
   .card .label{font-size:13px;color:var(--text-sub);margin-top:6px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .card .num{font-size:26px;line-height:1.1;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;}
-  .card.active-filter{border-color:var(--navy);background:#EEF3F8;}
+  .card.active-filter{border-color:var(--accent);background:var(--accent-soft);}
   .stoggle{
     display:inline-flex;align-items:center;gap:8px;
     border:1.5px solid var(--border);background:#F7F6F3;border-radius:22px;
@@ -99,14 +99,14 @@
     font-family:inherit;cursor:pointer;
     transition:background-color .15s ease, border-color .15s ease, color .15s ease;
   }
-  .stoggle:hover{border-color:var(--navy);}
+  .stoggle:hover{border-color:var(--accent);}
   .stoggle span{
     display:inline-flex;align-items:center;justify-content:center;
     min-width:24px;height:24px;padding:0 7px;border-radius:12px;
-    background:var(--navy);color:#fff;font-size:13px;font-weight:800;
+    background:var(--accent);color:#fff;font-size:13px;font-weight:800;
   }
-  .stoggle.active{background:var(--navy);border-color:var(--navy);color:#fff;}
-  .stoggle.active span{background:#fff;color:var(--navy);}
+  .stoggle.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .stoggle.active span{background:#fff;color:var(--accent-fg);}
 
   .toolbar-card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:16px;margin-bottom:20px;}
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;}
@@ -116,7 +116,7 @@
   .uvf .uvf-k{font-weight:700;}
   .uvf input[type=date],.uvf select{height:30px;border:1px solid var(--border-input);border-radius:6px;padding:0 6px;font-family:inherit;font-size:13px;background:#fff;width:auto;}
   .uvf select:disabled{opacity:.45;}
-  .uvf.on{border-color:var(--navy);background:#F2F6FB;}
+  .uvf.on{border-color:var(--accent);background:var(--accent-soft);}
   .uvf-why{display:block;font-size:11.5px;color:#A32D2D;font-weight:600;margin-top:2px;}
   @media (max-width:640px){
     #mobileFilterToggle{display:inline-flex;}
@@ -136,7 +136,7 @@
   }
   #search:focus{
     outline:none;
-    border-color:var(--navy);
+    border-color:var(--accent);
     box-shadow:0 0 0 3px rgba(27,58,95,0.15);
   }
   select.filter{
@@ -152,7 +152,7 @@
   }
   select.filter:focus{
     outline:none;
-    border-color:var(--navy);
+    border-color:var(--accent);
     box-shadow:0 0 0 3px rgba(27,58,95,0.15);
   }
 
@@ -204,7 +204,7 @@
   .route-badge.invite{background:#DCE8F5;color:var(--navy);}
   .route-badge.newbie{background:#FDE8E8;color:#A32D2D;}
   .route-badge.docreq{background:#E3ECF7;color:var(--navy);}
-  .dr-open{border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:14px;padding:2px 12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin:0 2px;}
+  .dr-open{border:1px solid var(--accent);background:#fff;color:var(--navy);border-radius:14px;padding:2px 12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin:0 2px;}
   .dr-open:hover{background:#E3ECF7;}
   .dr-link{background:none;border:none;padding:0;color:var(--navy);font-weight:700;cursor:pointer;font-family:inherit;font-size:inherit;margin-right:14px;}
   .pending-badge{font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;white-space:nowrap;}
@@ -305,8 +305,8 @@
   #loginCard .lg-s1{font-weight:700;margin-bottom:4px;color:#E8590C;}
   #loginCard .lg-s2{margin-bottom:22px;}
   .pin-box{width:48px;height:56px;border:1.5px solid var(--border-input);border-radius:8px;text-align:center;font-size:22px;font-family:inherit;box-sizing:border-box;}
-  .pin-box:focus{outline:none;border-color:var(--navy);}
-  #loginBtn{width:100%;height:42px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
+  .pin-box:focus{outline:none;border-color:var(--accent);}
+  #loginBtn{width:100%;height:42px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
   #loginBtn:disabled{opacity:.6;}
   #loginMsg{display:none;color:#A32D2D;font-size:13px;margin-top:12px;}
 
@@ -327,7 +327,7 @@
   .gnav-brand{display:flex;align-items:center;font-size:17px;font-weight:800;letter-spacing:-0.2px;padding-right:24px;margin-right:10px;border-right:1px solid rgba(255,255,255,0.22);white-space:nowrap;}
   .gnav-i{display:flex;align-items:center;gap:6px;min-height:56px;padding:0 20px;font-size:16px;font-weight:700;color:rgba(255,255,255,0.9);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;box-sizing:border-box;}
   a.gnav-i:hover{color:#fff;background:rgba(255,255,255,0.08);}
-  .gnav-i.on{color:#fff;border-bottom:4px solid #fff;background:rgba(255,255,255,0.08);}   /* 10-17 B안: 메뉴 바 크게·선명하게 */
+  .gnav-i.on{color:#fff;border-bottom:4px solid #FFB38A;background:rgba(255,255,255,0.08);}   /* 10-17 B안: 메뉴 바 크게·선명하게 */
   .gnav-i.off{color:rgba(255,255,255,0.45);cursor:default;}
   .gnav-i small{font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,0.35);border-radius:999px;padding:1px 7px;color:rgba(255,255,255,0.6);}
   @media (max-width:640px){
@@ -347,14 +347,14 @@
   .apv.err{background:#FBE0DD;border-color:#E9B8B2;color:#9B1C12;}
   .apv-head{display:flex;align-items:center;gap:8px;font-size:14px;}
   .apv-sec{margin-left:auto;font-size:12px;color:#5F6877;font-variant-numeric:tabular-nums;}
-  .apv-spin{width:16px;height:16px;border:2px solid var(--navy);border-right-color:transparent;border-radius:50%;animation:apvSpin .8s linear infinite;flex:0 0 auto;}
+  .apv-spin{width:16px;height:16px;border:2px solid var(--accent);border-right-color:transparent;border-radius:50%;animation:apvSpin .8s linear infinite;flex:0 0 auto;}
   @keyframes apvSpin{to{transform:rotate(360deg)}}
   .apv-bar{height:4px;border-radius:2px;background:#D5DCE6;overflow:hidden;margin:9px 0 8px;}
-  .apv-bar i{display:block;width:35%;height:100%;background:var(--navy);border-radius:2px;animation:apvBar 1.4s ease-in-out infinite;}
+  .apv-bar i{display:block;width:35%;height:100%;background:var(--accent);border-radius:2px;animation:apvBar 1.4s ease-in-out infinite;}
   @keyframes apvBar{0%{transform:translateX(-100%)}100%{transform:translateX(290%)}}
   .apv-steps{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
   .apv-st{font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px;background:#fff;border:1px solid #CBD4E0;color:#5F6877;}
-  .apv-st.run{border-color:var(--navy);color:var(--navy);}
+  .apv-st.run{border-color:var(--accent);color:var(--navy);}
   .apv-st.ok{background:#fff;border-color:#B9DDBD;color:#1F6B2B;}
   .apv-st.ok::before{content:"✓ ";}
   .apv-note{margin-top:6px;font-size:12px;color:inherit;opacity:.9;}
@@ -365,7 +365,7 @@
   .crumb a{color:var(--navy);text-decoration:none;font-weight:800;padding:5px 9px;border-radius:8px;}
   .crumb a:hover{background:#E4ECF5;text-decoration:none;}
   .crumb .sep{margin:0 2px;color:var(--text-faint);font-size:18px;font-weight:700;}
-  .crumb .cur{color:#fff;background:var(--navy);font-weight:800;padding:5px 12px;border-radius:8px;}
+  .crumb .cur{color:#fff;background:var(--accent);font-weight:800;padding:5px 12px;border-radius:8px;}
   @media (max-width:640px){ .crumb{font-size:14px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} }
   /* ===== 마이크로 인터랙션 A안 (10-24): 눌림·펼침·팝업 등장·저장 강조·불러오는 중 표시. 0.2초 이하, 이동·투명도만 사용 ===== */
   html{-webkit-tap-highlight-color:transparent;}
@@ -453,7 +453,7 @@
       <div id="inviteMsg" style="font-size:13px;margin-bottom:10px;display:none;"></div>
       <div style="display:flex;gap:8px;">
         <button id="inviteCancelBtn" style="flex:1;height:42px;border:1px solid var(--border-input);border-radius:6px;background:#fff;font-family:inherit;cursor:pointer;">취소</button>
-        <button id="inviteSubmitBtn" style="flex:1;height:42px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-weight:700;font-family:inherit;cursor:pointer;">초대 링크 발송</button>
+        <button id="inviteSubmitBtn" style="flex:1;height:42px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-weight:700;font-family:inherit;cursor:pointer;">초대 링크 발송</button>
       </div>
     </div>
   </div>
@@ -512,13 +512,13 @@
   <div id="exportRow" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 14px 0;">
     <span style="font-size:13px;color:var(--text-sub);">엑셀 내려받기 (모든 정보 포함)</span>
     <button type="button" id="exportFilteredBtn" style="border:1px solid var(--border-input);background:#fff;border-radius:6px;height:34px;padding:0 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--navy);">화면 목록 <span id="exportFilteredCount">0</span>명</button>
-    <button type="button" id="exportAllBtn" style="border:1px solid var(--navy);background:var(--navy);border-radius:6px;height:34px;padding:0 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:#fff;">전체 <span id="exportAllCount">0</span>명</button>
+    <button type="button" id="exportAllBtn" style="border:1px solid var(--accent);background:var(--accent);border-radius:6px;height:34px;padding:0 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:#fff;">전체 <span id="exportAllCount">0</span>명</button>
   </div>
 
   <div id="loading">불러오는 중...</div>
   <div id="loadError" style="display:none;background:#FFF4E5;border:1px solid #F0C98A;border-radius:10px;padding:14px 16px;margin:10px 0;font-size:14px;color:#7A4B00;">
     <div id="loadErrorText" style="margin-bottom:8px;"></div>
-    <button type="button" id="loadRetryBtn" style="border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:6px;height:34px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;">다시 불러오기</button>
+    <button type="button" id="loadRetryBtn" style="border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:6px;height:34px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;">다시 불러오기</button>
   </div>
   <div id="docReplaceNotice" style="display:none;background:#EEF3F9;border:1px solid #B9CBE0;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:14px;color:var(--navy);line-height:1.8;"></div>
   <div id="mailNotice" style="display:none;background:#FFF4E5;border:1px solid #F0C98A;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:14px;color:#7A4B00;line-height:1.6;"></div>
@@ -584,11 +584,11 @@
           <input type="file" id="schoolPhoto" accept="image/*" style="width:100%;">
         </div>
       </div>
-      <button type="submit" id="schoolSaveBtn" style="width:100%;height:46px;margin-top:22px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;">저장하기</button>
+      <button type="submit" id="schoolSaveBtn" style="width:100%;height:46px;margin-top:22px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;">저장하기</button>
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 강사관리 35</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 강사관리 36</div>
 </div>
 
 <script>
@@ -767,12 +767,12 @@
                '<button type="button" data-pf="' + escapeAttr(fid) + '" data-pfm="dl" class="dr-link">다운로드</button>'
              : '<span style="color:var(--text-muted);">교체 없음</span>') + '</div>';
     }
-    return '<div id="docReplaceBox" style="margin-top:18px;border:1.5px solid var(--navy);border-radius:10px;padding:14px 16px;background:var(--bg-hover);font-size:13px;">' +
+    return '<div id="docReplaceBox" style="margin-top:18px;border:1.5px solid var(--accent);border-radius:10px;padding:14px 16px;background:var(--bg-hover);font-size:13px;">' +
       '<div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:8px;">서류 교체 요청 <span style="font-weight:400;color:var(--text-sub);">(' + esc(r.요청일시) + ')</span></div>' +
       pv('새 강사카드', r.강사카드) + pv('새 동의서', r.동의서) +
       '<div style="font-size:12px;color:#A32D2D;margin:8px 0 12px;line-height:1.6;">승인하면 위 파일이 현재 서류가 되고 <b>이전 서류는 영구 삭제</b>됩니다(되돌릴 수 없음). 반려하면 기존 서류가 그대로 유지됩니다. 등록일 기준 3년 보유기간은 바뀌지 않습니다.</div>' +
       '<div style="display:flex;gap:10px;">' +
-        '<button id="drApproveBtn" type="button" style="flex:1;height:42px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">교체 승인 (이전 서류 삭제)</button>' +
+        '<button id="drApproveBtn" type="button" style="flex:1;height:42px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">교체 승인 (이전 서류 삭제)</button>' +
         '<button id="drRejectBtn" type="button" style="flex:1;height:42px;border:1.5px solid #A32D2D;border-radius:6px;background:#fff;color:#A32D2D;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">반려</button>' +
       '</div></div>';
   }
@@ -1001,7 +1001,7 @@
     btn.addEventListener('click', function(){
       view.innerHTML = '<div id="unavEd"></div>' +
         '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">' +
-          '<button type="button" id="unavSave" style="height:32px;padding:0 14px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">저장</button>' +
+          '<button type="button" id="unavSave" style="height:32px;padding:0 14px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">저장</button>' +
           '<button type="button" id="unavCancel" style="height:32px;padding:0 12px;border:1px solid var(--border-input);border-radius:6px;background:#fff;color:var(--text-sub);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">취소</button>' +
           '<span id="unavMsg" style="font-size:12.5px;"></span></div>';
       var ed = window.Unavail.mountEditor(document.getElementById('unavEd'), 'dU', d.출강불가시기 || '', false);
@@ -1202,7 +1202,7 @@
       docReplaceBoxHtml(d, isViewer) +
       (!isViewer && (d.상태 === '승인대기' || d.상태 === '보류중')
         ? '<div id="approvalActions" style="display:flex;gap:10px;margin-top:20px;">' +
-            '<button id="approveBtn" style="flex:1;height:44px;border:none;border-radius:6px;background:var(--navy);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">승인</button>' +
+            '<button id="approveBtn" style="flex:1;height:44px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">승인</button>' +
             '<button id="holdBtn" style="flex:1;height:44px;border:1.5px solid #9AA5B1;border-radius:6px;background:#fff;color:#5F5E5A;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">보류</button>' +
             '<button id="rejectBtn" style="flex:1;height:44px;border:1.5px solid #A32D2D;border-radius:6px;background:#fff;color:#A32D2D;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">반려</button>' +
           '</div>'
