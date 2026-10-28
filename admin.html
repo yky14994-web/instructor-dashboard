@@ -35,8 +35,9 @@
   @media (max-width:640px){ .gnav-in{padding:0 8px;} .gnav-brand{display:none;} .gnav-i{min-height:48px;padding:0 10px;font-size:14px;} }
 
   .wrap{max-width:1280px;margin:0 auto;padding:18px 16px 60px;}
-  .crumb{font-size:13px;color:var(--text-muted);font-weight:600;margin-bottom:10px;}
-  .crumb a{color:var(--navy);cursor:pointer;text-decoration:none;font-weight:700;}
+  .crumb{font-size:14px;color:var(--text-muted);font-weight:600;margin-bottom:22px;}   /* 관리자 25: 경로가 눈에 띄도록 여백·글자 키움 */
+  .crumb a{color:var(--navy);cursor:pointer;text-decoration:none;font-weight:700;text-underline-offset:3px;}
+  .crumb a:hover{text-decoration:underline;}
   h1{margin:0 0 4px;font-size:22px;font-weight:800;color:var(--navy);}
   .lead{font-size:14px;color:var(--text-sub);margin:0 0 16px;}
   .card{background:#fff;border-radius:12px;border:1px solid #CBD4E0;padding:16px 18px;margin-bottom:14px;word-break:keep-all;overflow-wrap:break-word;}
@@ -129,13 +130,19 @@
   .repdoc .rnote{font-size:12px;color:#4B5563;line-height:1.6;margin-top:10px;}
   .repdoc h3.rh{font-size:15px;margin:18px 0 6px;color:#111827;}
   .repdoc .rcm{margin:0 0 10px;}
+  .repdoc table.rsum th{width:96px;background:#F3F4F6;white-space:nowrap;}
+  .repdoc table.rsum td.v{white-space:nowrap;width:1%;}
+  @media (max-width:760px){ .repdoc table.rsum th{width:auto;} .repdoc table.rt:not(.rsum){min-width:620px;} }   /* 모바일: 점수 표는 좌우로 밀어 보기(글자 세로 줄바꿈 방지) */
+  .repdoc table.rsum td{text-align:left;}
+  .repdoc ul.rsl{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.75;}
+  .repdoc ul.rsl b{font-variant-numeric:tabular-nums;}
   .repdoc .rcm b{font-size:13px;}
   .repdoc .rcm ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55;}
   @media (max-width:760px){ .repdoc{padding:16px 12px;overflow-x:auto;} }
   @page{size:A4;margin:14mm;}
   @media print{
     body{background:#fff;}
-    .gnav,.crumb,#vEval>h1,#vEval>.lead,.tabs,.ech,.steps,#emsg,.no-print,#verStamp{display:none !important;}
+    .gnav,.crumb,#vEval>h1,#vEval>.lead,.tabs,.ech,.steps,#cDone,#emsg,.no-print,#verStamp{display:none !important;}
     .wrap{padding:0;max-width:none;}
     .repdoc{border:0;border-radius:0;padding:0;max-width:none;}
     .repdoc table.rt tr{page-break-inside:avoid;}
@@ -251,7 +258,15 @@
   .evc .evs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
   .evc .evn{font-size:13px;color:var(--text-sub);line-height:1.5;}
   .evcards > .loading,.evcards > .note{grid-column:1 / -1;}
-  .ech{margin-bottom:10px;}
+  .ech{margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;}
+  .echm{flex:1 1 auto;min-width:0;}
+  .ech-x{flex:0 0 auto;gap:5px;text-decoration:none;}
+  .donebox{background:var(--ok-bg);border:1px solid #BFD8C6;border-radius:10px;padding:14px 16px;margin:0 0 14px;color:var(--ok-fg);word-break:keep-all;}
+  .donebox .db-t{font-size:16px;font-weight:800;}
+  .donebox .db-s{font-size:14px;margin-top:4px;line-height:1.55;}
+  .donebox .db-h{font-size:13px;margin-top:4px;color:var(--text-sub);line-height:1.55;}
+  .donebox .db-a{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .donebox .db-a a{text-decoration:none;}
   .echt{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
   .echt h1{margin:0;}
   .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 14px;}
@@ -342,8 +357,11 @@
     <!-- 과정 한 화면 -->
     <div id="evCourse" hidden>
       <div class="ech">
-        <div class="echt"><h1 id="cTitle"></h1><span id="cState"></span></div>
-        <div class="hint" id="cMeta"></div>
+        <div class="echm">
+          <div class="echt"><h1 id="cTitle"></h1><span id="cState"></span></div>
+          <div class="hint" id="cMeta"></div>
+        </div>
+        <a class="btn ech-x" id="cClose" href="#eval" title="평가관리 첫 화면(과정 목록)으로 돌아갑니다"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>닫기</a>
       </div>
       <div class="steps" role="tablist" aria-label="평가 단계">
         <button type="button" class="stp" data-s="1" role="tab"><span class="sn">1</span><span class="st"><b>설문</b><small id="s1t"></small></span></button>
@@ -351,6 +369,7 @@
         <button type="button" class="stp" data-s="3" role="tab"><span class="sn">3</span><span class="st"><b>보고서</b><small id="s3t"></small></span></button>
         <button type="button" class="stp" data-s="4" role="tab"><span class="sn">4</span><span class="st"><b>강사 환류</b><small id="s4t"></small></span></button>
       </div>
+      <div id="cDone" class="donebox" role="status" hidden></div>
 
       <!-- 1. 설문 -->
       <div id="tPrep" hidden>
@@ -540,7 +559,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 관리자 24</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 관리자 25</div>
 </div>
 
 <script src="eval-core.js?v=5"></script>
@@ -671,11 +690,13 @@
 
   /* ---------- 과정 목록 ---------- */
   function upOf(key){ return uploads().filter(function(u){ return String(u['개설키']) === key; }).sort(function(a, b){ return String(b['저장일시']).localeCompare(String(a['저장일시'])); })[0] || null; }
+  /* 환류 진행: n 전체 줄, can 메일 주소가 있어 보낼 수 있는 줄, sent 보낸 줄, left 보낼 수 있는데 아직 안 보낸 줄 */
   function fbProg(u){
     var id = String(u['업로드ID']);
-    var n = ((results && results.rows) || []).filter(function(r){ return String(r['업로드ID']) === id && kindOf(r) !== 'C' && String(r['제외'] || '') !== 'Y'; }).length;
+    var rows = ((results && results.rows) || []).filter(function(r){ return String(r['업로드ID']) === id && kindOf(r) !== 'C' && String(r['제외'] || '') !== 'Y'; });
     var done = {}; fbLogs().forEach(function(l){ if (String(l['업로드ID']) === id) done[String(l['집계ID'])] = 1; });
-    return { n: n, sent: Object.keys(done).length };
+    var can = rows.filter(function(r){ var m = fbMail(r['강사ID']); return !!(r['강사ID'] && m && m.있음); });
+    return { n: rows.length, sent: rows.filter(function(r){ return done[String(r['집계ID'])]; }).length, can: can.length, left: can.filter(function(r){ return !done[String(r['집계ID'])]; }).length };
   }
   function svState(key){
     if (key === curKey && curSv && !curSv.err && !curSv.nokey) return curSv.exists ? 'made' : 'none';
@@ -688,7 +709,7 @@
     if (u) {
       if (!isDone(u)) return { k: 'wait', u: u };
       var f = fbProg(u);
-      return { k: f.sent ? (f.sent >= f.n ? 'fbdone' : 'fbpart') : 'done', u: u, f: f };
+      return { k: f.sent ? (f.left === 0 ? 'fbdone' : 'fbpart') : 'done', u: u, f: f };   /* 메일 주소가 있는 줄을 모두 보내면 환류 완료 */
     }
     var p = planOf(key), today = kstToday();
     var sv = svState(key);
@@ -698,15 +719,18 @@
   }
   var ST_LABEL = {
     wait: ['t-warn', '검토 대기', '검토한 뒤 반영'], done: ['t-ok', '반영 완료', '보고서·강사 환류'], fbpart: ['t-ok', '환류 일부', '남은 강사 환류'],
-    fbdone: ['t-ok', '환류 완료', '끝'], resp: ['t-info', '설문 진행', '결과 가져오기'], nosv: ['t-none', '설문 전', '설문 링크 만들기'],
+    fbdone: ['t-ok', '환류 완료', '없음(평가 끝)'], resp: ['t-info', '설문 진행', '결과 가져오기'], nosv: ['t-none', '설문 전', '설문 링크 만들기'],
     future: ['t-none', '예정', '과정 시작 후 진행'], unk: ['t-none', '결과 없음', '설문 확인']
   };
   var ST_ORDER = { wait: 0, resp: 1, nosv: 2, unk: 2, done: 3, fbpart: 3, future: 4, fbdone: 5 };
   function isTodo(p, st){
     var today = kstToday(), end = dstr(p['입교 종료일']), start = dstr(p['입교 시작일']);
+    if (st.k === 'fbdone') return false;   /* 환류까지 끝난 과정은 [전체 과정]에서만 */
     if (st.k === 'wait' || st.k === 'resp') return true;
     return end.slice(0, 7) === today.slice(0, 7) && start <= today;   // 이번 달에 끝나는(끝난) 과정
   }
+  function todoSort(a, b){ return (ST_ORDER[a.st.k] - ST_ORDER[b.st.k]) || dstr(b.p['입교 종료일']).localeCompare(dstr(a.p['입교 종료일'])); }
+  function todoList(){ return plans.map(function(p){ var k = String(p['과정+기수']); return { p: p, key: k, st: stateOf(k) }; }).filter(function(x){ return isTodo(x.p, x.st); }).sort(todoSort); }
   function renderList(){
     if (page !== 'list') return;
     var all = plans.map(function(p){ var k = String(p['과정+기수']); return { p: p, key: k, st: stateOf(k) }; });
@@ -722,7 +746,7 @@
     var q = $('fFind').value.replace(/\s+/g, '').toLowerCase();
     if (q) list = list.filter(function(x){ return x.key.replace(/\s+/g, '').toLowerCase().indexOf(q) > -1; });
     list.sort(listFilter === 'todo'
-      ? function(a, b){ return (ST_ORDER[a.st.k] - ST_ORDER[b.st.k]) || dstr(b.p['입교 종료일']).localeCompare(dstr(a.p['입교 종료일'])); }
+      ? todoSort
       : function(a, b){ return dstr(b.p['입교 시작일']).localeCompare(dstr(a.p['입교 시작일'])); });
     var el = $('evCards');
     if (!results) { el.innerHTML = '<div class="loading">불러오는 중입니다.</div>'; return; }
@@ -732,7 +756,7 @@
         '<div class="evm">' + shortMd(x.p['입교 시작일']) + '~' + shortMd(x.p['입교 종료일']) + '</div>' +
         '<div class="evs"><span class="tag ' + L[0] + '">' + L[1] + extra + '</span><span class="evn">다음: ' + L[2] + '</span></div></a>';
     }).join('') : '<div class="note">' + (listFilter === 'todo' ? '할 일이 있는 과정이 없습니다. 지난 과정은 <b>[전체 과정]</b>에서 찾을 수 있습니다.' : '조건에 맞는 과정이 없습니다.') + '</div>';
-    $('evHint').innerHTML = listFilter === 'todo' ? '할 일 있는 과정: 이번 달에 끝나는 과정, 설문을 진행 중인 과정, 검토 대기 결과가 있는 과정' : '';
+    $('evHint').innerHTML = listFilter === 'todo' ? '할 일 있는 과정: 이번 달에 끝나는 과정, 설문을 진행 중인 과정, 검토 대기 결과가 있는 과정 (강사 환류까지 끝난 과정은 [전체 과정]에서 볼 수 있음)' : '';
   }
   document.querySelectorAll('.segb').forEach(function(b){ b.onclick = function(){ listFilter = b.getAttribute('data-f'); renderList(); }; });
   $('fYear').onchange = renderList; $('fFind').addEventListener('input', renderList);
@@ -802,6 +826,20 @@
       var done = s === 1 ? !!(sv && sv.exists) || !!u : s === 2 ? !!(u && isDone(u)) : s === 4 ? st.k === 'fbdone' : false;
       b.classList.toggle('done', done);
     });
+    renderDone(st);
+  }
+  /* 관리자 25: 강사 환류까지 끝나면 완료 안내 + [과정 목록으로]·[다음 할 일 과정] */
+  function renderDone(st){
+    var el = $('cDone');
+    if (st.k !== 'fbdone') { el.hidden = true; el.innerHTML = ''; return; }
+    var f = st.f, noMail = f.n - f.can, next = todoList().filter(function(x){ return x.key !== curKey; })[0];
+    el.innerHTML = '<div class="db-t">이 과정 평가가 끝났습니다</div>' +
+      '<div class="db-s">결과 반영 완료 · 강사 환류 메일 ' + f.sent + '/' + f.n + '건 보냄' + (noMail ? ' · 메일 주소 없음 ' + noMail + '건(보내지 않음)' : '') + '</div>' +
+      '<div class="db-h">결과 보고서(PDF)가 필요하면 <b>3. 보고서</b>에서 저장하세요.' + (noMail ? ' 메일 주소가 없는 강사는 강사관리에서 이메일을 등록한 뒤 <b>4. 강사 환류</b>에서 보낼 수 있습니다.' : '') + ' 이 과정은 이제 할 일 목록에서 빠지고 [전체 과정]에서 볼 수 있습니다.</div>' +
+      '<div class="db-a">' + (next
+        ? '<a class="btn" href="#eval">과정 목록으로</a><a class="btn primary" href="#c=' + encodeURIComponent(next.key) + '">다음 할 일: ' + esc(next.key) + '</a>'
+        : '<a class="btn primary" href="#eval">과정 목록으로</a><span class="db-h" style="align-self:center;margin:0;">남은 할 일 과정이 없습니다.</span>') + '</div>';
+    el.hidden = false;
   }
   function showStep(s, early){
     curStep = s;
@@ -824,7 +862,7 @@
       else $('fbBody').innerHTML = '<div class="note">' + (u ? '검토 대기 결과입니다. 2. 결과·반영에서 [반영]을 누른 뒤 보낼 수 있습니다.' : '결과를 가져와 반영한 뒤에 강사에게 보낼 수 있습니다.') + ' <a href="#c=' + encodeURIComponent(curKey) + '&s=2">2. 결과·반영으로</a></div>';
     }
   }
-  document.querySelectorAll('.stp').forEach(function(b){ b.onclick = function(){ showStep(Number(b.getAttribute('data-s'))); }; });
+  document.querySelectorAll('.stp').forEach(function(b){ b.onclick = function(){ show($('emsg'), 'ok', ''); showStep(Number(b.getAttribute('data-s'))); }; });   /* 단계를 옮기면 지난 안내는 지움 */
   /* 결과를 다시 불러온 뒤 지금 보고 있는 화면을 새로 그림 */
   function refreshCourse(){ if (page === 'course' && curKey) showStep(curStep || defaultStep()); if (page === 'list') renderList(); }
 
@@ -1549,6 +1587,7 @@
     var h = isDone(up) ? '' : '<div class="rwait">검토 대기(반영 승인 전) 결과입니다</div>';
     h += '<h2 class="rt1">교육 만족도(강의 평가) 결과</h2><div class="rsub">' + esc(key) + '</div>';
     h += '<div class="rmeta"><span>기관: 전남소방학교</span>' + (en ? '<span>입교 인원: ' + en + '명</span>' : '') + '<span>응답 인원: ' + (cf || '–') + '명</span>' + (en ? '<span>응답률: ' + Math.round(cf / en * 100) + '%</span>' : '') + '<span>집계일: ' + esc(String(up['저장일시'] || '').slice(0, 10)) + '</span></div>';
+    h += reportSummary(key, up, rows, rowsL, rowsT, rowsC, cms, en, cf);
     var sec = 0;
     function scoreTable(list, heads, who){
       var cum = E.cumulative(list), t = '<table class="rt"><thead><tr><th>연번</th><th>교과목</th><th>' + who + '</th><th>응답</th>' + heads.map(function(x){ return '<th>' + x + '</th>'; }).join('') + '<th>종합(5점)</th>'  + '</tr></thead><tbody>';
@@ -1587,6 +1626,42 @@
     }
     doc.innerHTML = h;
     $('repMsg').textContent = '';
+  }
+  /* 관리자 25: 보고서 맨 위 과정 개요 + 결과 요약(숫자만, 자동 계산) */
+  function reportSummary(key, up, rows, rowsL, rowsT, rowsC, cms, en, cf){
+    var p = planOf(key) || {}, d1 = dstr(p['입교 시작일']), d2 = dstr(p['입교 종료일']);
+    var dot = function(d){ return d ? d.replace(/-/g, '.') + '.' : ''; };
+    var period = d1 ? dot(d1) + (d2 && d2 !== d1 ? '~' + (d2.slice(0, 4) === d1.slice(0, 4) ? dot(d2.slice(5)) : dot(d2)) : '') + (p['교육기간'] ? '(' + esc(p['교육기간']) + ')' : '') : '–';
+    var subj = {}, ppl = {};
+    rows.forEach(function(r){ subj[String(r['교과목'])] = 1; var w = String(r['강사ID'] || r['강사명'] || ''); if (w) ppl[w] = 1; });
+    var plan = Number(p['계획인원']) || 0, base = en || plan;
+    var rate = base && cf ? ' (' + (en ? '입교' : '계획') + ' ' + base + '명 대비 ' + Math.round(cf / base * 100) + '%)' : '';
+    var h = '<h3 class="rh">□ 과정 개요</h3><table class="rt rsum"><tbody>' +
+      '<tr><th>과정명</th><td colspan="3">' + esc(key) + '</td></tr>' +
+      '<tr><th>교육기간</th><td>' + period + '</td><th>구분</th><td class="v">' + esc(p['구분'] || '–') + '</td></tr>' +
+      '<tr><th>교육대상</th><td>' + esc(p['교육대상'] || '–') + '</td><th>계획인원</th><td class="v">' + (plan ? plan + '명' : '–') + '</td></tr>' +
+      '<tr><th>편성</th><td colspan="3">교과목 ' + Object.keys(subj).length + '개 · 강사 ' + Object.keys(ppl).length + '명</td></tr>' +
+      '<tr><th>설문</th><td colspan="3">응답 ' + (cf || 0) + '명' + rate + '</td></tr></tbody></table>';
+    var li = [];
+    [[rowsL, '강의 평가'], [rowsT, '훈련 평가']].forEach(function(g){
+      if (!g[0].length) return;
+      var cum = E.cumulative(g[0]);
+      li.push(g[1] + ' 전체 평균 ' + (cum.avg == null ? '– (응답 ' + E.MIN_SESSION + '명 이상 교과목 없음)' : '<b>' + f2(cum.avg) + '</b>점(5점 만점)'));
+      var ok = g[0].filter(function(r){ return Number(r['응답수']) >= E.MIN_SESSION && isFinite(Number(r['종합'])); });
+      if (ok.length >= 2) {
+        var hi = ok.reduce(function(a, b){ return Number(b['종합']) > Number(a['종합']) ? b : a; }), lo = ok.reduce(function(a, b){ return Number(b['종합']) < Number(a['종합']) ? b : a; });
+        var nm = function(r){ return esc(r['교과목']) + '(' + esc(r['강사명']) + ')'; };
+        li.push(Number(hi['종합']) === Number(lo['종합']) ? '교과목별 종합 점수 모두 ' + f2(hi['종합']) + '점' : '최고 <b>' + f2(hi['종합']) + '</b> ' + nm(hi) + ' · 최저 <b>' + f2(lo['종합']) + '</b> ' + nm(lo));
+      }
+    });
+    if (rowsC.length) {
+      var bs = {}, order = [];
+      rowsC.forEach(function(r){ var k = String(r['교과목']), c = Number(r['응답수']), v = Number(r['종합']); if (!bs[k]) { bs[k] = { n: 0, s: 0 }; order.push(k); } if (c && isFinite(v)) { bs[k].n += c; bs[k].s += v * c; } });
+      li.push(order.map(function(k){ return esc(k) + ' <b>' + (bs[k].n ? f2(bs[k].s / bs[k].n) : '–') + '</b>'; }).join(' · '));
+    }
+    var tone = { '칭찬': 0, '개선 요청': 0 }; cms.forEach(function(c){ var t = String(c['성격'] || ''); if (t in tone) tone[t]++; });
+    li.push('서술형 의견 ' + cms.length + '건' + (cms.length ? '(칭찬 ' + tone['칭찬'] + ' · 개선 요청 ' + tone['개선 요청'] + ' · 기타 ' + (cms.length - tone['칭찬'] - tone['개선 요청']) + ')' : ''));
+    return h + '<h3 class="rh">□ 결과 요약</h3><ul class="rsl">' + li.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul>';
   }
   $('repCourse').onchange = renderReport; $('repShowCm').onchange = renderReport; $('repShowBasic').onchange = renderReport;
   $('btnPdf').onclick = function(){
@@ -1723,7 +1798,7 @@
         (wait.length ? '<br>발송 대기 ' + wait.length + '통: 오늘 메일 한도가 부족해 1시간마다 이어서 보냅니다.' : '') +
         (bad.length ? '<br>보내지 못한 ' + bad.length + '통: ' + bad.map(function(o){ return esc(o.대상 + '·' + o.교과목 + '(' + o.결과 + ')'); }).join(', ') : ''));
       delete fbCache[st.id];
-      loadResults(true);
+      loadResults(true).then(function(){ if (page === 'course' && !$('cDone').hidden) $('cDone').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
     }).catch(function(err){ btn.disabled = false; btn.textContent = '다시 보내기'; show($('fbMsg'), 'err', '발송 결과를 확인하지 못했습니다: ' + esc(err.message) + ' 중복 발송을 막기 위해 새로고침해 보낸 기록을 먼저 확인해 주세요.'); });
   }
   $('fbCourse').onchange = function(){ show($('fbMsg'), 'ok', ''); renderFb(); };
