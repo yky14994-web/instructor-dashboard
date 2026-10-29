@@ -634,11 +634,11 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-29 관리자 31</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-29 관리자 32</div>
 </div>
 
 <script src="eval-core.js?v=5"></script>
-<script src="hwpx-doc.js?v=2"></script>
+<script src="hwpx-doc.js?v=3"></script>
 <script src="busy-indicator.js" defer></script>
 <script src="highlight-box.js?v=1" defer></script>
 <script src="swipe-nav.js?v=3" defer></script>
@@ -688,6 +688,7 @@
     el.className = el.className.replace(/\b(err|ok|warn)\b/g, '').trim() + ' ' + kind; el.innerHTML = text;
   }
 
+  var periods = [];   /* 교시표(공문 ③ 강의시간 표시용) */
   var plans = [], sessions = [], courseKey = '', courseInst = [], courseInstT = [];
   var pv = null;          // 업로드 미리보기 상태
   var results = null;     // 저장된 결과(listEvalResults)
@@ -702,6 +703,7 @@
       if (a.role !== 'admin') { $('gate').hidden = true; show($('gmsg'), 'err', '관리자 비밀번호로 로그인한 경우에만 사용할 수 있습니다. <a href="home.html">홈으로 돌아가기</a>'); return; }
       plans = (a['연간계획'] || []).filter(function(p){ return String(p['과정+기수'] || '') && !/^취소/.test(String(p['상태'] || '').replace(/\s+/g, '')); });
       sessions = (a['편성'] && a['편성'].data) || [];
+      periods = (a['교시표'] || []).map(function(r){ return { n: Number(r['교시']), start: String(r['시작'] || ''), end: String(r['종료'] || '') }; }).filter(function(x){ return isFinite(x.n); });
       $('gate').hidden = true; $('gmsg').hidden = true;
       fillCourses(); route();
       if (!results) loadResults(true);                    /* 관리자 26: 평가관리를 누르기 전에 미리 받아 둠 */
@@ -1933,9 +1935,9 @@
       title: '「{과정}」 강사 출강 요청', to: '수신자 참조',
       basis: '',
       ask: '전남소방학교에서 운영하는 「{과정}」의 원활한 교육 운영을 위하여 귀 기관 소속 강사의 출강을 아래와 같이 요청드리오니, 업무에 협조하여 주시기 바랍니다.',
-      note: '', admL: '3. 행정사항',
-      adm: '가. 교과목별 출강 일시 및 강사: 붙임 교과목 시간표 참조',
-      att: '「{과정}」 교과목 시간표 1부.  끝.', file: '강사 출강 요청'
+      note: '', admL: '5. 행정사항',
+      adm: '가. 세부 교과목 편성: 붙임 교과목 편성표 참조',
+      att: '「{과정}」 교과목 편성표 1부.  끝.', file: '강사 출강 요청'
     }
   };
   var DOC_SHARED = { 3: { basis: 'jsfa_gd_basis', ask: 'jsfa_gd_ask' } };   /* 강의배정 공문 창과 같은 저장 이름 */
@@ -1969,7 +1971,7 @@
     $('dDueW').hidden = docKind !== 1; $('dAttHint').hidden = docKind === 1;
     $('dPickW').hidden = !k3; $('dTblW').hidden = k3; $('dNoteW').hidden = k3; $('dListW').hidden = k3;
     $('dTitleL').textContent = k3 ? '제목 ({과정}은 고른 과정으로 바뀝니다)' : '제목 ({년}·{월}은 대상 월로 바뀝니다)';
-    $('dAskL').textContent = k3 ? '2. 의뢰 문구 (아래에 교육과정 개요가 자동으로 붙습니다 · 강의배정 공문 창과 같은 문구를 씁니다)' : '2. 본문 문구 (아래에 "□ 과정명 : 규모"와 과정 표가 자동으로 붙습니다)';
+    $('dAskL').textContent = k3 ? '2. 의뢰 문구 (뒤에 3. 교육과정 개요, 4. 교과목 및 강사 현황 표가 자동으로 붙습니다)' : '2. 본문 문구 (아래에 "□ 과정명 : 규모"와 과정 표가 자동으로 붙습니다)';
     $('dFormH').textContent = ['', '① 다음 달 교육과정 안내', '② 과정 설계 및 강사 선정 결과보고', '③ 강사 초빙(출강 요청)'][docKind] + ' 문구';
     Array.prototype.forEach.call(document.querySelectorAll('.dstg [data-dk]'), function(b){ var on = +b.getAttribute('data-dk') === docKind; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
   }
@@ -2034,28 +2036,80 @@
   }
   var DOC_HEAD = ['연번', '구분', '과정명(기수)', '기간', '대상', '인원', '숙식여부', '비고'];
   var DOC_W = [3000, 4600, 13200, 7600, 6800, 3600, 4200, 4622];   /* 합 47622 = A4 본문 폭 */
-  /* ③ 과정별 출강 요청 본문: 개요만 넣고, 일자별 교과목·강사는 붙임 시간표 PDF로 */
+  /* ③ 과정별 출강 요청 본문: 1 근거 · 2 의뢰 · 3 교육과정 개요 · 4 교과목 및 강사 현황(일자·강의시간·교과목·소속·강사명 표) · 5 행정사항 · 붙임(편성표 PDF)
+   * 표는 지웠던 강의배정 [공문 본문]과 같은 규칙: 교육운영팀·교육훈련팀 교시(입교안내·성과측정 등) 제외, 같은 날·교과목·강사의 연속 교시는 한 줄, 같은 날짜 칸은 합침 */
+  var docIns = null, docInsLoading = false, docInsFailed = false;
+  function docLoadIns(){
+    if (docIns || docInsLoading || docInsFailed) return;   /* 실패하면 다시 묻지 않음(새로고침으로 재시도) */
+    docInsLoading = true;
+    api({ action: 'list', password: getPw() }, 2).then(function(j){
+      if (j.status !== 'ok') throw new Error(j.message || 'fail');
+      var m = {}; (j.data || []).forEach(function(d){ m[String(d['강사ID'])] = { name: String(d['성명'] || ''), org: String(d['소속'] || '') }; });
+      docIns = m; docInsFailed = false;
+    }).catch(function(){ docInsFailed = true; }).then(function(){ docInsLoading = false; if (page === 'doc' && docKind === 3) docPreview(); });
+  }
+  function docNormYmd(v){
+    var t = String(v == null ? '' : v).trim();
+    if (/^\d{4}-\d{2}-\d{2}T.*Z$/.test(t)) { var d = new Date(Date.parse(t) + 9 * 3600e3); return isNaN(d) ? '' : d.toISOString().slice(0, 10); }
+    var m = /^(\d{4})\s*[-./]\s*(\d{1,2})\s*[-./]\s*(\d{1,2})/.exec(t); return m ? m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2) : '';
+  }
+  function docMdW(v){ var q = /^(\d{4})-(\d{2})-(\d{2})/.exec(v); if (!q) return String(v || ''); return (+q[2]) + '. ' + (+q[3]) + '.(' + DOW_K[new Date(+q[1], +q[2] - 1, +q[3]).getDay()] + ')'; }
+  var DOC_OPS = ['교육운영팀', '교육훈련팀'], DOC_KL = ['전체', 'A', 'B'];
+  function docRows3(key){
+    var pi = function(n){ for (var i = 0; i < periods.length; i++) if (periods[i].n === n) return periods[i]; return null; };
+    var vt = function(t){ return /^\d{1,2}:\d{2}$/.test(String(t || '')); };
+    var list = sessions.filter(function(r){ return String(r['개설키']) === key && r['일자'] && !(!String(r['강사ID'] || '').trim() && DOC_OPS.indexOf(String(r['강사명'] || '').trim()) > -1); })
+      .map(function(r){ return { r: r, d: docNormYmd(r['일자']) || String(r['일자']) }; })
+      .sort(function(x, y){ return x.d.localeCompare(y.d) || (Number(x.r['시작교시']) - Number(y.r['시작교시'])) || (DOC_KL.indexOf(x.r['반']) - DOC_KL.indexOf(y.r['반'])); });
+    var out = [];
+    list.forEach(function(x){
+      var r = x.r, ins = r['강사ID'] && docIns ? docIns[String(r['강사ID'])] : null;
+      var o = { d: x.d, s: Number(r['시작교시']), e: Number(r['끝교시']), subj: ((r['반'] && r['반'] !== '전체') ? '[' + r['반'] + '반] ' : '') + String(r['교과목'] || ''),
+        org: ins ? ins.org : '', name: ins ? ins.name : String(r['강사명'] || '') };
+      var pv = out[out.length - 1];
+      if (pv && pv.d === o.d && pv.subj === o.subj && pv.name === o.name && pv.org === o.org && o.s <= pv.e + 1) { if (o.e > pv.e) pv.e = o.e; }
+      else out.push(o);
+    });
+    out.forEach(function(o){ var ps = pi(o.s), pe = pi(o.e); o.time = (ps && pe && vt(ps.start) && vt(pe.end)) ? ps.start + '~' + pe.end : (o.s === o.e ? o.s + '교시' : o.s + '~' + o.e + '교시'); });
+    return out;
+  }
   function docPreview3(){
     var key = $('dCourse').value, p = key ? planOf(key) : null;
     if (!p) { docCur = null; $('dPv').innerHTML = ''; show($('dMsg'), 'warn', '출강 요청 공문을 만들 과정을 골라 주세요. 대상 월에 입교하는 과정이 없으면 대상 월을 바꿔 주세요.'); return; }
+    docLoadIns();
     var nm = docName(p), fill = function(v){ return String(v || '').replace(/\{과정\}/g, nm); };
     var a = dstr(p['입교 시작일']), b = dstr(p['입교 종료일']);
     var ov = [['과정명', nm + (p['구분'] ? ' (' + p['구분'] + ')' : '')], ['교육기간', a ? docYmd(a) + (b && b !== a ? ' ~ ' + docYmd(b).replace(/^\d{4}\. /, '') : '') : ''], ['교육인원', Number(p['계획인원']) ? Number(p['계획인원']) + '명' : ''], ['교육장소', String(p['예정 강의실'] || '')]]
       .filter(function(x){ return x[1]; });
+    var rows = docRows3(key), trows = [], i = 0;
+    while (i < rows.length) {
+      var j = i; while (j < rows.length && rows[j].d === rows[i].d) j++;
+      for (var k = i; k < j; k++) trows.push([k === i ? (j - i > 1 ? { text: docMdW(rows[i].d), rs: j - i } : docMdW(rows[i].d)) : null, rows[k].time, rows[k].subj, rows[k].org, rows[k].name]);
+      i = j;
+    }
     var KO = '가나다라마바사', P = [], add = function(t){ String(t).split('\n').forEach(function(l){ P.push({ text: l }); }); };
     add('수신  ' + fill($('dTo').value)); add('(경유)'); add('제목  ' + fill($('dTitle').value)); add('');
     var basis = fill($('dBasis').value).replace(/\s+$/, '');
     if (basis.indexOf('\n') > -1) { add('1. 관련근거'); basis.split('\n').forEach(function(l){ add('  ' + l); }); } else add('1. ' + (basis || '(관련 근거를 입력해 주세요)'));
     add(''); add('2. ' + fill($('dAsk').value));
-    ov.forEach(function(x, i){ add('  ' + KO.charAt(i) + '. ' + x[0] + ' : ' + x[1]); });
+    add(''); add('3. 교육과정 개요');
+    ov.forEach(function(x, n){ add('  ' + KO.charAt(n) + '. ' + x[0] + ' : ' + x[1]); });
+    add(''); add('4. 교과목 및 강사 현황');
+    if (trows.length) P.push({ table: { widths: [7400, 8000, 15400, 8400, 8422], head: ['일자', '강의시간', '교과목', '소속', '강사명'], rows: trows } });
+    else add('  ※ 편성된 교과목이 없습니다.');
     add(''); add(DOC_DEF[3].admL);
     fill($('dAdm').value).split('\n').forEach(function(l){ add('  ' + l); });
     if ($('dAtt').value.trim()) { add(''); add('붙임  ' + fill($('dAtt').value.trim())); }
-    var html = P.map(function(q){ return '<div class="dl">' + esc(q.text) + '</div>'; }).join('');
-    docCur = { paras: P, html: html, text: P.map(function(q){ return q.text; }).join('\n'), course: nm };
+    var tHtml = function(t){ return '<div class="dtw"><table><thead><tr>' + t.head.map(function(h){ return '<th>' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' + t.rows.map(function(r){ return '<tr>' + r.map(function(v){ return v === null ? '' : (v && typeof v === 'object' ? '<td rowspan="' + v.rs + '">' + esc(v.text) + '</td>' : '<td>' + esc(v) + '</td>'); }).join('') + '</tr>'; }).join('') + '</tbody></table></div>'; };
+    var html = P.map(function(q){ return q.table ? tHtml(q.table) : '<div class="dl">' + esc(q.text) + '</div>'; }).join('');
+    var text = P.map(function(q){ return q.table ? [q.table.head].concat(rows.map(function(o){ return [docMdW(o.d), o.time, o.subj, o.org, o.name]; })).map(function(r){ return r.join('\t'); }).join('\n') : q.text; }).join('\n');
+    docCur = { paras: P, html: html, text: text, course: nm };
     $('dPv').innerHTML = html;
-    $('dAttHint').innerHTML = '붙임 시간표 PDF는 <a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '" target="_blank" rel="noopener">강의배정 › ' + esc(nm) + '</a>의 인쇄(PDF로 저장)로 받아 기안에 첨부합니다(새 창).';
-    if ($('dMsg').classList.contains('warn')) show($('dMsg'), 'ok', '');
+    $('dAttHint').innerHTML = '붙임 편성표 PDF는 <a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '" target="_blank" rel="noopener">강의배정 › ' + esc(nm) + '</a>의 인쇄(PDF로 저장)로 받아 기안에 첨부합니다(새 창).';
+    if (!trows.length) show($('dMsg'), 'warn', '이 과정에는 편성된 교과목이 없습니다. 강의배정에서 교과목과 강사를 먼저 편성해 주세요.');
+    else if (docInsLoading || (!docIns && !docInsFailed)) show($('dMsg'), 'warn', '강사 소속을 불러오는 중입니다. 잠시 후 표의 소속 칸이 채워집니다.');
+    else if (docInsFailed) show($('dMsg'), 'warn', '강사 소속을 불러오지 못해 소속 칸이 비어 있습니다. 화면을 새로고침해 다시 시도해 주세요.');
+    else show($('dMsg'), 'ok', '');
   }
   function docPreview(){
     var ym = $('dMonth').value; if (!ym) return;

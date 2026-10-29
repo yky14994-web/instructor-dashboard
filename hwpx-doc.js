@@ -53,11 +53,12 @@
   function gdTable(t, tid){
     var W = t.widths, TW = 0, nr = t.rows.length + 1, tr = '';
     W.forEach(function(w){ TW += w; });
-    var cell = function(txt, c, r, bf){
-      return '<hp:tc name="" header="' + (r === 0 ? 1 : 0) + '" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="' + bf + '"><hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">' + gdPara(String(txt == null ? '' : txt), 27, 0) + '</hp:subList><hp:cellAddr colAddr="' + c + '" rowAddr="' + r + '"/><hp:cellSpan colSpan="1" rowSpan="1"/><hp:cellSz width="' + W[c] + '" height="1800"/><hp:cellMargin left="200" right="200" top="250" bottom="250"/></hp:tc>';
+    var cell = function(txt, c, r, bf, rs){
+      return '<hp:tc name="" header="' + (r === 0 ? 1 : 0) + '" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="' + bf + '"><hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">' + gdPara(String(txt == null ? '' : txt), 27, 0) + '</hp:subList><hp:cellAddr colAddr="' + c + '" rowAddr="' + r + '"/><hp:cellSpan colSpan="1" rowSpan="' + (rs || 1) + '"/><hp:cellSz width="' + W[c] + '" height="1800"/><hp:cellMargin left="200" right="200" top="250" bottom="250"/></hp:tc>';
     };
     tr += '<hp:tr>' + t.head.map(function(h, c){ return cell(h, c, 0, 4); }).join('') + '</hp:tr>';
-    t.rows.forEach(function(row, i){ tr += '<hp:tr>' + row.map(function(v, c){ return cell(v, c, i + 1, 3); }).join('') + '</hp:tr>'; });
+    /* 칸 값: 글자, 또는 { text, rs }(아래로 rs줄 합침). 합쳐져 가려진 칸은 null(건너뜀) */
+    t.rows.forEach(function(row, i){ tr += '<hp:tr>' + row.map(function(v, c){ if (v === null) return ''; return v && typeof v === 'object' ? cell(v.text, c, i + 1, 3, v.rs) : cell(v, c, i + 1, 3); }).join('') + '</hp:tr>'; });
     return '<hp:p id="0" paraPrIDRef="24" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="8"><hp:tbl id="' + tid + '" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" repeatHeader="1" rowCnt="' + nr + '" colCnt="' + W.length + '" cellSpacing="0" borderFillIDRef="3" noAdjust="0"><hp:sz width="' + TW + '" widthRelTo="ABSOLUTE" height="' + (nr * 1800) + '" heightRelTo="ABSOLUTE" protect="0"/><hp:pos treatAsChar="0" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="PARA" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/><hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="510" right="510" top="141" bottom="141"/>' + tr + '</hp:tbl></hp:run></hp:p>';
   }
   /* 문단 목록 → 한글 파일. 항목: { text, kind } (kind 'title' = 제목 글자 모양) 또는 { table: {...} }.
