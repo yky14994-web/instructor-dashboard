@@ -1099,7 +1099,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-28 배정 154</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-29 배정 155</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2389,7 +2389,7 @@
     if (chgBtns && !cxd && !endd) chgBtns = copyBtnHtml(p) + chgBtns;   // 10-20: 복사 버튼은 항상 보임(조건이 안 맞으면 흐리게, 눌렀을 때 이유 안내)
     $('sHead').innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;"><h2>' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') +
       (cxd ? ' <span class="tag t-err" style="vertical-align:middle;">취소됨</span>' : (ci.changed ? ' <span class="tag t-warn" style="vertical-align:middle;">일정 변경됨</span>' : '')) + '</h2>' +
-      '<div class="act">' + (chgBtns || '') + '<button type="button" class="btn sm" data-gdoc="1" title="이 과정의 출강 의뢰 공문 본문(개요·일자별 교과목·소속·강사명)을 만들어 복사하거나 한글 파일로 받습니다">공문 본문</button></div></div>' +
+      (chgBtns ? '<div class="act">' + chgBtns + '</div>' : '') + '</div>' +   /* 10-29 금용님: [공문 본문] 버튼 삭제 → 관리자 › 공문 만들기 ③ 강사 초빙에서 만듦(아래 openGdoc 코드는 호출하는 버튼 없음) */
       (cxd ? '<div class="note-err" style="margin-top:10px;">취소된 기수입니다' + (ci.cancelReason ? ' (사유: ' + esc(ci.cancelReason) + ')' : '') + '. 새 교과목은 추가할 수 없고, 앞으로 남은 편성은 삭제할 수 있습니다(지난 강의는 기록으로 보관).</div>' : '') +
       (endd && !isViewer() ? '<div class="note-info" style="margin-top:10px;">종료된 과정입니다. 편성 기록은 보기만 할 수 있습니다(수정·삭제 불가).</div>' : '') +
       '<dl class="meta">' +

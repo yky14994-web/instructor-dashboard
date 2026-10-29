@@ -340,7 +340,7 @@
       </button>
       <button type="button" class="mcard" id="goDoc">
         <div class="mt"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>공문 만들기</div>
-        <div class="md">① 다음 달 교육과정 안내 ② 과정 설계 및 강사 선정 결과보고 공문을 과정 표와 함께 한글(.hwpx) 파일로 받습니다.</div>
+        <div class="md">① 다음 달 교육과정 안내 ② 과정 설계 및 강사 선정 결과보고 ③ 강사 초빙 공문 본문을 한글(.hwpx) 파일로 받습니다.</div>
       </button>
       <div class="mcard off">
         <div class="mt"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M8 15h3"/></svg>강사료 정산 <span class="tag t-none">준비 중</span></div>
@@ -596,27 +596,30 @@
     <div class="dstg" role="tablist" aria-label="공문 단계">
       <button type="button" class="on" data-dk="1" role="tab"><b>① 다음 달 교육과정 안내</b>전달 중순 · 관련 부서</button>
       <button type="button" data-dk="2" role="tab"><b>② 과정 설계 및 강사 선정 결과보고</b>내부결재 · 붙임: 강의배정 PDF</button>
-      <a href="lecture-assignment.html#v=table" title="강의배정에서 과정을 고른 뒤 [공문 본문 만들기]"><b>③ 강사 초빙</b>강의배정 › 과정 › 공문 본문 만들기</a>
+      <button type="button" data-dk="3" role="tab"><b>③ 강사 초빙</b>과정별 · 붙임: 교과목 시간표 PDF</button>
     </div>
     <div class="card">
       <h2>대상 월과 과정</h2>
-      <div class="dform"><div><label for="dMonth">대상 월</label><input type="month" id="dMonth"></div></div>
+      <div class="dform"><div><label for="dMonth">대상 월</label><input type="month" id="dMonth"></div>
+        <div id="dPickW" hidden><label for="dCourse">출강 요청 공문을 만들 과정</label><select id="dCourse" style="width:100%;max-width:520px;"></select></div></div>
+      <div id="dTblW">
       <div class="hint" style="margin-top:6px;">입교 시작일이 대상 월인 과정을 모읍니다(취소 과정 제외). 공문에서 뺄 과정은 체크를 풀고, 비고는 과정마다 적으면 기억합니다(①·② 공통).</div>
       <div class="tx" style="margin-top:8px;"><table class="t" style="min-width:820px;"><thead><tr><th class="c">포함</th><th>구분</th><th>과정명(기수)</th><th>기간</th><th>대상</th><th class="n">인원</th><th>숙식</th><th style="width:200px;">비고</th></tr></thead><tbody id="dRows"></tbody></table></div>
       <div class="dsum" id="dSum"></div>
+      </div>
     </div>
     <div class="card">
       <h2 id="dFormH">공문 문구</h2>
       <div class="dform">
-        <div><label for="dTitle">제목 ({년}·{월}은 대상 월로 바뀝니다)</label><input type="text" id="dTitle"></div>
+        <div><label for="dTitle" id="dTitleL">제목 ({년}·{월}은 대상 월로 바뀝니다)</label><input type="text" id="dTitle"></div>
         <div><label for="dTo">수신</label><input type="text" id="dTo"></div>
         <div><label for="dBasis">1. 관련 근거 (한 줄이면 "1. 문구", 여러 줄이면 "1. 관련근거" 아래 줄마다)</label><textarea id="dBasis" style="min-height:92px;"></textarea></div>
-        <div><label for="dAsk">2. 본문 문구 (아래에 "□ 과정명 : 규모"와 과정 표가 자동으로 붙습니다)</label><textarea id="dAsk"></textarea></div>
-        <div><label for="dNote">표 아래 ※ 줄 (비우면 넣지 않음)</label><input type="text" id="dNote"></div>
+        <div><label for="dAsk" id="dAskL">2. 본문 문구 (아래에 "□ 과정명 : 규모"와 과정 표가 자동으로 붙습니다)</label><textarea id="dAsk"></textarea></div>
+        <div id="dNoteW"><label for="dNote">표 아래 ※ 줄 (비우면 넣지 않음)</label><input type="text" id="dNote"></div>
         <div><label for="dAdm" id="dAdmL">3. 행정사항</label><textarea id="dAdm" class="tall"></textarea></div>
         <div id="dDueW"><label for="dDue">회신 기한 (행정사항의 {회신일} 자리)</label><input type="date" id="dDue"></div>
-        <div><label for="dAtt">붙임 (비우면 넣지 않음)</label><input type="text" id="dAtt"><div class="hint" id="dAttHint" hidden style="margin-top:4px;">붙임 PDF는 <a href="lecture-assignment.html#v=table">강의배정</a>의 인쇄(PDF로 저장)로 받아 기안에 첨부합니다.</div></div>
-        <div><label style="display:flex;gap:6px;align-items:center;font-weight:600;"><input type="checkbox" id="dList"> 표 위에 구분별 ○ 과정 목록도 넣기 (과정명 끝 '과정'은 빼고 적음)</label></div>
+        <div><label for="dAtt">붙임 (비우면 넣지 않음)</label><input type="text" id="dAtt"><div class="hint" id="dAttHint" hidden style="margin-top:4px;"></div></div>
+        <div id="dListW"><label style="display:flex;gap:6px;align-items:center;font-weight:600;"><input type="checkbox" id="dList"> 표 위에 구분별 ○ 과정 목록도 넣기 (과정명 끝 '과정'은 빼고 적음)</label></div>
         <div><button type="button" class="btn" id="dReset">처음 문구로 되돌리기</button></div>
       </div>
     </div>
@@ -631,7 +634,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 관리자 30</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-29 관리자 31</div>
 </div>
 
 <script src="eval-core.js?v=5"></script>
@@ -1925,12 +1928,22 @@
       note: '', admL: '3. 향후계획',
       adm: '가. 강사진 출강 의뢰 및 교안 취합·사전 약식 심의, 기본교재 제작 추진\n나. 강사관리카드 및 개인정보 수집 이용 및 제공동의서 취합\n다. 교육과정 종료 후 강사수당 지급 등',
       att: '{월}월 교육훈련과정 교과목 편성 및 강사 현황 1부.  끝.', file: '교육과정 설계 및 강사 선정 결과보고'
+    },
+    3: {   /* 과정별 강사 출강 요청. 관련근거·의뢰 문구는 강의배정 [공문 본문 만들기]와 같은 기억값을 씀 */
+      title: '「{과정}」 강사 출강 요청', to: '수신자 참조',
+      basis: '',
+      ask: '전남소방학교에서 운영하는 「{과정}」의 원활한 교육 운영을 위하여 귀 기관 소속 강사의 출강을 아래와 같이 요청드리오니, 업무에 협조하여 주시기 바랍니다.',
+      note: '', admL: '3. 행정사항',
+      adm: '가. 교과목별 출강 일시 및 강사: 붙임 교과목 시간표 참조',
+      att: '「{과정}」 교과목 시간표 1부.  끝.', file: '강사 출강 요청'
     }
   };
+  var DOC_SHARED = { 3: { basis: 'jsfa_gd_basis', ask: 'jsfa_gd_ask' } };   /* 강의배정 공문 창과 같은 저장 이름 */
   var DOC_ID = { title: 'dTitle', to: 'dTo', basis: 'dBasis', ask: 'dAsk', note: 'dNote', adm: 'dAdm', att: 'dAtt' };
   var docKind = 1, docOff = {}, docInit = false, docCur = null;
-  function dlGet(k, d){ try { var v = localStorage.getItem('jsfa_doc' + docKind + '_' + k); return v === null ? d : v; } catch (e) { return d; } }
-  function dlSet(k, v){ try { localStorage.setItem('jsfa_doc' + docKind + '_' + k, v); } catch (e) {} }
+  function dlKey(k){ return (DOC_SHARED[docKind] && DOC_SHARED[docKind][k]) || ('jsfa_doc' + docKind + '_' + k); }
+  function dlGet(k, d){ try { var v = localStorage.getItem(dlKey(k)); return v === null ? d : v; } catch (e) { return d; } }
+  function dlSet(k, v){ try { localStorage.setItem(dlKey(k), v); } catch (e) {} }
   function rmGet(key){ try { return localStorage.getItem('jsfa_docrm_' + key) || ''; } catch (e) { return ''; } }
   function rmSet(key, v){ try { if (v) localStorage.setItem('jsfa_docrm_' + key, v); else localStorage.removeItem('jsfa_docrm_' + key); } catch (e) {} }
   var DOW_K = ['일', '월', '화', '수', '목', '금', '토'];
@@ -1952,8 +1965,12 @@
     Object.keys(DOC_ID).forEach(function(k){ $(DOC_ID[k]).value = dlGet(k, D[k]); });
     $('dList').checked = dlGet('list', '0') === '1';
     $('dAdmL').textContent = D.admL + (docKind === 1 ? ' ({회신일}은 아래 회신 기한으로 바뀝니다)' : '');
-    $('dDueW').hidden = docKind !== 1; $('dAttHint').hidden = docKind !== 2;
-    $('dFormH').textContent = (docKind === 1 ? '① 다음 달 교육과정 안내' : '② 과정 설계 및 강사 선정 결과보고') + ' 문구';
+    var k3 = docKind === 3;
+    $('dDueW').hidden = docKind !== 1; $('dAttHint').hidden = docKind === 1;
+    $('dPickW').hidden = !k3; $('dTblW').hidden = k3; $('dNoteW').hidden = k3; $('dListW').hidden = k3;
+    $('dTitleL').textContent = k3 ? '제목 ({과정}은 고른 과정으로 바뀝니다)' : '제목 ({년}·{월}은 대상 월로 바뀝니다)';
+    $('dAskL').textContent = k3 ? '2. 의뢰 문구 (아래에 교육과정 개요가 자동으로 붙습니다 · 강의배정 공문 창과 같은 문구를 씁니다)' : '2. 본문 문구 (아래에 "□ 과정명 : 규모"와 과정 표가 자동으로 붙습니다)';
+    $('dFormH').textContent = ['', '① 다음 달 교육과정 안내', '② 과정 설계 및 강사 선정 결과보고', '③ 강사 초빙(출강 요청)'][docKind] + ' 문구';
     Array.prototype.forEach.call(document.querySelectorAll('.dstg [data-dk]'), function(b){ var on = +b.getAttribute('data-dk') === docKind; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
   }
   function docInitForm(){
@@ -1963,12 +1980,13 @@
     $('dDue').value = docDueDefault($('dMonth').value);
     docLoadFields();
     $('dMonth').onchange = function(){ docOff = {}; $('dDue').value = docDueDefault($('dMonth').value); renderDoc(); };
+    $('dCourse').onchange = docPreview;
     Object.keys(DOC_ID).forEach(function(k){ $(DOC_ID[k]).addEventListener('input', function(){ dlSet(k, $(DOC_ID[k]).value); docPreview(); }); });
     $('dList').onchange = function(){ dlSet('list', $('dList').checked ? '1' : '0'); docPreview(); };
     $('dDue').onchange = docPreview;
     Array.prototype.forEach.call(document.querySelectorAll('.dstg [data-dk]'), function(b){ b.onclick = function(){ docKind = +b.getAttribute('data-dk'); docLoadFields(); show($('dMsg'), 'ok', ''); docPreview(); }; });
     $('dReset').onclick = function(){
-      if (!window.confirm((docKind === 1 ? '①' : '②') + ' 공문의 제목·수신·근거·본문·' + DOC_DEF[docKind].admL.slice(3) + '·붙임 문구를 처음 문구로 되돌릴까요? 고쳐 쓴 내용은 지워집니다. (과정별 비고는 그대로)')) return;
+      if (!window.confirm(['', '①', '②', '③'][docKind] + ' 공문의 제목·수신·근거·본문·' + DOC_DEF[docKind].admL.slice(3) + '·붙임 문구를 처음 문구로 되돌릴까요? 고쳐 쓴 내용은 지워집니다. (과정별 비고는 그대로)')) return;
       Object.keys(DOC_ID).forEach(function(k){ $(DOC_ID[k]).value = DOC_DEF[docKind][k]; dlSet(k, DOC_DEF[docKind][k]); }); docPreview();
     };
     $('dRows').addEventListener('change', function(ev){ var c = ev.target; if (c && c.getAttribute('data-k') != null) { if (c.checked) delete docOff[c.getAttribute('data-k')]; else docOff[c.getAttribute('data-k')] = 1; docPreview(); } });
@@ -1986,7 +2004,7 @@
       if (!docCur) return;
       try {
         var ym = $('dMonth').value;
-        HwpxDoc.download(HwpxDoc.make(docCur.paras), (+ym.slice(0, 4)) + '년 ' + (+ym.slice(5, 7)) + '월 ' + DOC_DEF[docKind].file + '.hwpx');
+        HwpxDoc.download(HwpxDoc.make(docCur.paras), docKind === 3 ? docCur.course + '_' + DOC_DEF[3].file + '.hwpx' : (+ym.slice(0, 4)) + '년 ' + (+ym.slice(5, 7)) + '월 ' + DOC_DEF[docKind].file + '.hwpx');
         show($('dMsg'), 'ok', '한글 파일을 내려받았습니다. 공직자통합메일로 보내 행정망에서 열 수 있습니다.');
       } catch (e) { show($('dMsg'), 'err', '한글 파일을 만들지 못했습니다: ' + esc(e.message)); }
     };
@@ -2009,12 +2027,40 @@
       return '<tr' + (docOff[k] ? ' class="off"' : '') + '><td class="c"><input type="checkbox" data-k="' + esc(k) + '"' + (docOff[k] ? '' : ' checked') + ' aria-label="' + esc(k) + ' 포함"></td><td>' + esc(docGroup(p['구분'])) + '</td><td>' + esc(docName(p)) + '</td><td>' + esc(docPeriod(p)) + '</td><td>' + esc(p['교육대상'] || '') + '</td><td class="n">' + (Number(p['계획인원']) ? Number(p['계획인원']) + '명' : '<span class="tag t-warn">없음</span>') + '</td><td>' + esc(p['합숙여부'] || '') + '</td>' +
         '<td><input type="text" data-rm="' + esc(k) + '" value="' + esc(rmGet(k)) + '" placeholder="비고" aria-label="' + esc(k) + ' 비고"></td></tr>';
     }).join('') : '<tr><td colspan="8">이 달에 입교하는 과정이 없습니다.</td></tr>';
+    var cs = $('dCourse'), prev = cs.value;
+    cs.innerHTML = list.length ? list.slice().sort(function(a, b){ return dstr(a['입교 시작일']).localeCompare(dstr(b['입교 시작일'])); }).map(function(p){ var k = String(p['과정+기수']); return '<option value="' + esc(k) + '">' + esc(docName(p) + ' (' + docMd(p['입교 시작일']) + ' ~ ' + docMd(p['입교 종료일']) + ')') + '</option>'; }).join('') : '<option value="">이 달에 입교하는 과정이 없습니다</option>';
+    if (prev && Array.prototype.some.call(cs.options, function(o){ return o.value === prev; })) cs.value = prev;
     docPreview();
   }
   var DOC_HEAD = ['연번', '구분', '과정명(기수)', '기간', '대상', '인원', '숙식여부', '비고'];
   var DOC_W = [3000, 4600, 13200, 7600, 6800, 3600, 4200, 4622];   /* 합 47622 = A4 본문 폭 */
+  /* ③ 과정별 출강 요청 본문: 개요만 넣고, 일자별 교과목·강사는 붙임 시간표 PDF로 */
+  function docPreview3(){
+    var key = $('dCourse').value, p = key ? planOf(key) : null;
+    if (!p) { docCur = null; $('dPv').innerHTML = ''; show($('dMsg'), 'warn', '출강 요청 공문을 만들 과정을 골라 주세요. 대상 월에 입교하는 과정이 없으면 대상 월을 바꿔 주세요.'); return; }
+    var nm = docName(p), fill = function(v){ return String(v || '').replace(/\{과정\}/g, nm); };
+    var a = dstr(p['입교 시작일']), b = dstr(p['입교 종료일']);
+    var ov = [['과정명', nm + (p['구분'] ? ' (' + p['구분'] + ')' : '')], ['교육기간', a ? docYmd(a) + (b && b !== a ? ' ~ ' + docYmd(b).replace(/^\d{4}\. /, '') : '') : ''], ['교육인원', Number(p['계획인원']) ? Number(p['계획인원']) + '명' : ''], ['교육장소', String(p['예정 강의실'] || '')]]
+      .filter(function(x){ return x[1]; });
+    var KO = '가나다라마바사', P = [], add = function(t){ String(t).split('\n').forEach(function(l){ P.push({ text: l }); }); };
+    add('수신  ' + fill($('dTo').value)); add('(경유)'); add('제목  ' + fill($('dTitle').value)); add('');
+    var basis = fill($('dBasis').value).replace(/\s+$/, '');
+    if (basis.indexOf('\n') > -1) { add('1. 관련근거'); basis.split('\n').forEach(function(l){ add('  ' + l); }); } else add('1. ' + (basis || '(관련 근거를 입력해 주세요)'));
+    add(''); add('2. ' + fill($('dAsk').value));
+    ov.forEach(function(x, i){ add('  ' + KO.charAt(i) + '. ' + x[0] + ' : ' + x[1]); });
+    add(''); add(DOC_DEF[3].admL);
+    fill($('dAdm').value).split('\n').forEach(function(l){ add('  ' + l); });
+    if ($('dAtt').value.trim()) { add(''); add('붙임  ' + fill($('dAtt').value.trim())); }
+    var html = P.map(function(q){ return '<div class="dl">' + esc(q.text) + '</div>'; }).join('');
+    docCur = { paras: P, html: html, text: P.map(function(q){ return q.text; }).join('\n'), course: nm };
+    $('dPv').innerHTML = html;
+    $('dAttHint').innerHTML = '붙임 시간표 PDF는 <a href="lecture-assignment.html#c=' + encodeURIComponent(key) + '" target="_blank" rel="noopener">강의배정 › ' + esc(nm) + '</a>의 인쇄(PDF로 저장)로 받아 기안에 첨부합니다(새 창).';
+    if ($('dMsg').classList.contains('warn')) show($('dMsg'), 'ok', '');
+  }
   function docPreview(){
     var ym = $('dMonth').value; if (!ym) return;
+    if (docKind === 3) { docPreview3(); return; }
+    $('dAttHint').innerHTML = docKind === 2 ? '붙임 PDF는 <a href="lecture-assignment.html#v=table" target="_blank" rel="noopener">강의배정</a>의 인쇄(PDF로 저장)로 받아 기안에 첨부합니다(새 창).' : '';
     var Y = String(+ym.slice(0, 4)), M = String(+ym.slice(5, 7));
     var fill = function(v){ return String(v || '').replace(/\{년\}/g, Y).replace(/\{월\}/g, M).replace(/\{회신일\}/g, docYmd($('dDue').value) || '(회신 기한)'); };
     Array.prototype.forEach.call($('dRows').querySelectorAll('tr'), function(tr){ var c = tr.querySelector('input[type=checkbox]'); if (c) tr.classList.toggle('off', !c.checked); });
