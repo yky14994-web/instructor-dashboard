@@ -634,10 +634,10 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-29 관리자 32</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-29 관리자 33</div>
 </div>
 
-<script src="eval-core.js?v=5"></script>
+<script src="eval-core.js?v=6"></script>
 <script src="hwpx-doc.js?v=3"></script>
 <script src="busy-indicator.js" defer></script>
 <script src="highlight-box.js?v=1" defer></script>
@@ -775,7 +775,8 @@
   /* 환류 진행: n 전체 줄, can 메일 주소가 있어 보낼 수 있는 줄, sent 보낸 줄, left 보낼 수 있는데 아직 안 보낸 줄 */
   function fbProg(u){
     var id = String(u['업로드ID']);
-    var rows = ((results && results.rows) || []).filter(function(r){ return String(r['업로드ID']) === id && kindOf(r) !== 'C' && String(r['제외'] || '') !== 'Y'; });
+    /* 10-29: 강사ID 없는 줄(미등록 강사 등)은 환류 대상이 아니므로 '환류 n/전체'의 전체에서도 뺌 */
+    var rows = ((results && results.rows) || []).filter(function(r){ return String(r['업로드ID']) === id && kindOf(r) !== 'C' && String(r['제외'] || '') !== 'Y' && String(r['강사ID'] || '').trim(); });
     var done = {}; fbLogs().forEach(function(l){ if (String(l['업로드ID']) === id) done[String(l['집계ID'])] = 1; });
     var can = rows.filter(function(r){ var m = fbMail(r['강사ID']); return !!(r['강사ID'] && m && m.있음); });
     return { n: rows.length, sent: rows.filter(function(r){ return done[String(r['집계ID'])]; }).length, can: can.length, left: can.filter(function(r){ return !done[String(r['집계ID'])]; }).length };
@@ -1037,7 +1038,7 @@
     h += '<li><span class="svn">' + (++no) + '/' + steps + '</span><div><b>응답자 기본정보</b> <span class="tag t-err">필수</span><div class="hint">' + E.BASIC_FIELDS.join(' · ') + ' (이름은 묻지 않음, 점수 계산에 쓰지 않음)</div></div></li>';
     pairs.forEach(function(p){
       var tr = p.set === 'T';
-      h += '<li><span class="svn">' + (++no) + '/' + steps + '</span><div><b>' + esc(p.subject) + '</b> · ' + esc(p.name || '') + (tr ? ' 현장교관' : ' 강사') + ' <span class="tag ' + (tr ? 't-warn' : 't-info') + '">' + (tr ? '훈련 4문항' : '강의 4문항') + '</span><div class="hint">' + E.qList(p.set).join(' · ') + ' + 의견(선택)</div></div></li>';
+      h += '<li><span class="svn">' + (++no) + '/' + steps + '</span><div><b>' + esc(p.subject) + '</b> · ' + esc(p.name || '') + (tr ? ' 현장교관' : ' 강사') + (!tr && !String(p.id || '').trim() ? unregTag() : '') + ' <span class="tag ' + (tr ? 't-warn' : 't-info') + '">' + (tr ? '훈련 4문항' : '강의 4문항') + '</span><div class="hint">' + E.qList(p.set).join(' · ') + ' + 의견(선택)</div></div></li>';
     });
     E.COMMON_SECTIONS.forEach(function(c){
       h += '<li><span class="svn">' + (++no) + '/' + steps + '</span><div><b>' + esc(c.title) + '</b> <span class="tag t-none">' + c.items.length + '문항 · 평가지표 아님</span><div class="hint">' + c.items.map(esc).join(' · ') + (c.title === '구내식당' ? ' (이용한 경우만)' : '') + '</div></div></li>';
@@ -1337,6 +1338,9 @@
     return h;
   }
   function instName(it){ return it.inst && it.inst !== 'x' ? it.inst.split('|').slice(1).join('|') : ''; }
+  /* 10-29 미등록 강사(강사ID 없이 이름만 편성한 일반 강사): 설문·집계·보고서에는 넣고, 별점·누적·환류에는 반영하지 않음 */
+  var UNREG_TIP = '강사 DB에 등록되지 않은 강사입니다. 점수는 집계·보고서에 넣고, 누적 별점과 강사 환류에는 반영하지 않습니다.';
+  function unregTag(){ return ' <span class="tag t-none" title="' + UNREG_TIP + '">미등록</span>'; }
   function pvGroups(){
     return pv.items.filter(function(it){ return it.cms.length && it.inst !== 'x'; }).map(function(it){
       var nm = instName(it); return { label: (it.label || it.subject) + (nm ? ' (' + nm + ')' : ''), list: it.cms };
@@ -1351,7 +1355,8 @@
     function rowHtml(it, i){
       var lowRow = it.n < E.MIN_SESSION, sk = it.inst === 'x';
       var subjCell = it.state === 'none' ? esc(it.subject || '(이름 없음)') + '<div class="hint">편성에서 찾지 못함</div>' : (esc(it.label || it.subject) + (it.how ? '<div class="hint">' + it.how + '으로 연결' + (it.fileSubject && E.normSubject(it.fileSubject) !== E.normSubject(it.label) ? ' · 파일 표기: ' + esc(it.fileSubject) : '') + '</div>' : ''));
-      var tagHtml = !it.hasAll ? '<span class="tag t-err">문항 열 부족</span>' : lowRow ? '<span class="tag t-warn">응답 20명 미만</span>' : '<span class="tag t-ok">표시</span>';
+      var tagHtml = (!it.hasAll ? '<span class="tag t-err">문항 열 부족</span>' : lowRow ? '<span class="tag t-warn">응답 20명 미만</span>' : '<span class="tag t-ok">표시</span>') +
+        (it.set !== 'T' && it.inst && it.inst !== 'x' && !it.inst.split('|')[0] ? unregTag() : '');
       var qs = E.qList(it.set).map(function(q){ return '<td class="n">' + fmt(it.avg[q]) + '</td>'; }).join('');
       return '<tr class="' + (lowRow ? 'low ' : '') + (sk ? 'skip' : '') + '"><td>' + subjCell + '</td><td><select data-i="' + i + '" aria-label="강사 선택">' + instOptions(it) + '</select></td><td class="n">' + it.n + '</td>' + qs +
         '<td class="n">' + (it.overall == null ? '–' : (lowRow ? fmt(it.overall) : starHtml(it.overall))) + '</td><td>' + tagHtml + '</td></tr>';
@@ -1576,7 +1581,7 @@
     $('rvSum').innerHTML = '<span>응답 ' + respN(u) + '명</span><span>교과목·강사 ' + rv.rows.length + '줄' + (exR ? ' (반영 안 함 ' + exR + ')' : '') + '</span><span>서술형 의견 ' + nCm + '건</span>' + (Number(u['의견없음수']) ? '<span>의견 없음 ' + Number(u['의견없음수']) + '건</span>' : '') + '<span>저장 ' + esc(String(u['저장일시'])) + '</span>';
     $('rvBody').innerHTML = rv.rows.length ? rv.rows.map(function(x, i){
       var r = x.r, lowRow = Number(r['응답수']) < E.MIN_SESSION, tr = kindOf(r) === 'T';
-      return '<tr class="' + (x.inc ? (lowRow ? 'low' : '') : 'off') + '"><td class="c"><input type="checkbox" data-ri="' + i + '"' + (x.inc ? ' checked' : '') + ' aria-label="반영"></td><td>' + esc(r['교과목']) + '</td><td>' + esc(r['강사명']) + '</td><td>' + (tr ? '<span class="tag t-warn">훈련</span>' : '<span class="tag t-info">강의</span>') + '</td><td class="n">' + esc(r['응답수']) + '</td>' +
+      return '<tr class="' + (x.inc ? (lowRow ? 'low' : '') : 'off') + '"><td class="c"><input type="checkbox" data-ri="' + i + '"' + (x.inc ? ' checked' : '') + ' aria-label="반영"></td><td>' + esc(r['교과목']) + '</td><td>' + esc(r['강사명']) + (!tr && !String(r['강사ID'] || '').trim() ? unregTag() : '') + '</td><td>' + (tr ? '<span class="tag t-warn">훈련</span>' : '<span class="tag t-info">강의</span>') + '</td><td class="n">' + esc(r['응답수']) + '</td>' +
         ['태도', '목표', '전달', '효과'].map(function(q){ return '<td class="n">' + f2(r[q]) + '</td>'; }).join('') + '<td class="n"><b>' + f2(r['종합']) + '</b></td><td>' + (!x.inc ? '<span class="tag t-none">반영 안 함</span>' : lowRow ? '<span class="tag t-warn">응답 20명 미만</span>' : '<span class="tag t-ok">반영</span>') + '</td></tr>';
     }).join('') : '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:14px;">교과목·강사 점수가 없습니다(공통 문항만 저장된 결과).</td></tr>';
     $('rvBody').querySelectorAll('input[data-ri]').forEach(function(c){ c.onchange = function(){ rv.rows[+c.getAttribute('data-ri')].inc = c.checked; renderReview(); }; });
@@ -1665,10 +1670,11 @@
       return sb - sa || a.name.localeCompare(b.name, 'ko');
     });
     $('vwBody').innerHTML = list.length ? list.map(function(g){
-      var shown = g.cum.n >= E.MIN_CUM, latestOk = Number(g.latest['응답수']) >= E.MIN_SESSION;
-      return '<tr class="' + (shown ? '' : 'low') + '"><td>' + esc(g.name) + (g.trainer ? ' <span class="tag t-info">현장교관</span>' : '') + '</td><td>' + esc(g.subjects.join(', ')) + '</td><td>' + esc(String(g.latest['개설키'])) + '<div class="hint">' + esc(String(g.latest['저장일시']).slice(0, 10)) + ' 저장</div></td>' +
+      var unreg = g.id.indexOf('N:') === 0 && !g.trainer;   /* 10-29 미등록 강사: 점수는 보여 주되 별점·누적 표시는 하지 않음 */
+      var shown = !unreg && g.cum.n >= E.MIN_CUM, latestOk = Number(g.latest['응답수']) >= E.MIN_SESSION;
+      return '<tr class="' + (shown || unreg ? '' : 'low') + '"><td>' + esc(g.name) + (g.trainer ? ' <span class="tag t-info">현장교관</span>' : '') + (unreg ? unregTag() : '') + '</td><td>' + esc(g.subjects.join(', ')) + '</td><td>' + esc(String(g.latest['개설키'])) + '<div class="hint">' + esc(String(g.latest['저장일시']).slice(0, 10)) + ' 저장</div></td>' +
         '<td class="n">' + (latestOk ? fmt(Number(g.latest['종합'])) : '–') + '</td><td>' + (shown ? starHtml(g.cum.avg) : '–') + '</td><td class="n">' + g.cum.n + '</td>' +
-        '<td>' + (shown ? '<span class="tag t-ok">표시</span>' : '<span class="tag t-warn">응답이 적어 참고하기 어려움</span>') + '</td></tr>';
+        '<td>' + (unreg ? '<span class="tag t-none" title="' + UNREG_TIP + '">별점 반영 안 함</span>' : shown ? '<span class="tag t-ok">표시</span>' : '<span class="tag t-warn">응답이 적어 참고하기 어려움</span>') + '</td></tr>';
     }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:22px;">반영한 평가 결과가 없습니다. 과정 목록에서 과정을 눌러 결과를 가져오고 반영해 주세요.</td></tr>';
   }
   $('selSort').onchange = renderView; $('inFind').addEventListener('input', renderView); $('btnReload').onclick = function(){ loadResults(); };
@@ -1702,10 +1708,13 @@
       var cum = E.cumulative(list), t = '<table class="rt"><thead><tr><th>연번</th><th>교과목</th><th>' + who + '</th><th>응답</th>' + heads.map(function(x){ return '<th>' + x + '</th>'; }).join('') + '<th>종합(5점)</th>'  + '</tr></thead><tbody>';
       list.forEach(function(r, i){
         var lowRow = Number(r['응답수']) < E.MIN_SESSION;
-        t += '<tr><td>' + (i + 1) + '</td><td class="l">' + esc(r['교과목']) + '</td><td>' + esc(r['강사명']) + '</td><td>' + esc(r['응답수']) + (lowRow ? '※' : '') + '</td>' +
+        var unreg = who === '강사' && !String(r['강사ID'] || '').trim();
+        t += '<tr><td>' + (i + 1) + '</td><td class="l">' + esc(r['교과목']) + '</td><td>' + esc(r['강사명']) + (unreg ? '<br><small>(미등록)</small>' : '') + '</td><td>' + esc(r['응답수']) + (lowRow ? '※' : '') + '</td>' +
           ['태도', '목표', '전달', '효과'].map(function(q){ return '<td>' + f2(r[q]) + '</td>'; }).join('') + '<td><b>' + f2(r['종합']) + '</b></td>'  + '</tr>';
       });
-      return t + '<tr class="tot"><td colspan="3">전체 평균(응답 수 가중, 응답 20명 미만 교과목 제외)</td><td>' + cum.n + '</td><td colspan="4"></td><td>' + f2(cum.avg) + '</td>'  + '</tr></tbody></table>';
+      var nUnreg = who === '강사' ? list.filter(function(r){ return !String(r['강사ID'] || '').trim(); }).length : 0;
+      return t + '<tr class="tot"><td colspan="3">전체 평균(응답 수 가중, 응답 20명 미만 교과목 제외)</td><td>' + cum.n + '</td><td colspan="4"></td><td>' + f2(cum.avg) + '</td>'  + '</tr></tbody></table>' +
+        (nUnreg ? '<p style="font-size:12px;margin:4px 0 0;">(미등록): 강사 DB에 등록되지 않은 강사로, 이 보고서에만 점수를 넣고 누적 별점에는 반영하지 않습니다.</p>' : '');
     }
     if (rowsL.length) h += '<h3 class="rh">' + (++sec) + '. 교과목·강사별 강의 평가</h3>' + scoreTable(rowsL, ['태도', '목표', '전달', '효과'], '강사');
     if (rowsT.length) h += '<h3 class="rh">' + (++sec) + '. 훈련(현장교관) 평가</h3>' + scoreTable(rowsT, ['태도', '준비성', '전문성', '적용성'], '교수');
@@ -1844,7 +1853,7 @@
       h += '<li class="fbi' + (x.can ? '' : ' off') + '"><div class="fbh"><input type="checkbox" data-fbck="' + i + '"' + (x.send && x.can ? ' checked' : '') + (x.can ? '' : ' disabled') + ' aria-label="' + esc(r['강사명']) + ' 보내기">' +
         '<div class="fbm"><div class="fbt">' + esc(r['교과목']) + ' · ' + esc(r['강사명']) + ' ' + (tr ? '<span class="tag t-warn">훈련</span>' : '<span class="tag t-info">강의</span>') + '</div>' +
         '<div class="fbs"><span>응답 <b>' + n + '</b>명</span><span>종합 <b>' + f2(r['종합']) + '</b>' + (few ? ' <span class="tag t-warn" title="응답 ' + E.MIN_SESSION + '명 미만: 메일에는 점수를 \'참고용\' 문구와 함께 표시하고, 누적·별점에는 반영되지 않습니다">참고용</span>' : '') + '</span><span>넣을 의견 <b>' + nInc + '</b>/' + x.cms.length + '건</span>' +
-        '<span>' + (!r['강사ID'] ? '<span class="tag t-err">강사ID 없음</span>' : m.있음 ? esc(m.메일) : '<span class="tag t-err">메일 주소 없음</span> <span class="hint">강사관리에서 이메일 등록</span>') + '</span>' +
+        '<span>' + (!r['강사ID'] ? (tr ? '<span class="tag t-err">강사ID 없음</span>' : '<span class="tag t-none" title="' + UNREG_TIP + '">미등록 강사 · 환류 대상 아님</span>') : m.있음 ? esc(m.메일) : '<span class="tag t-err">메일 주소 없음</span> <span class="hint">강사관리에서 이메일 등록</span>') + '</span>' +
         '<span>' + fbSentText(x.sent) + '</span></div></div>' +
         '<div class="fbb"><button type="button" class="btn sm' + (x.open ? ' primary' : '') + '" data-fbopen="' + i + '">' + (x.open ? '환류지 닫기' : '환류지·미리보기') + '</button></div></div>';
       if (x.open) {

@@ -249,11 +249,14 @@
     var t = String(s['현장교관'] || '').trim();
     return t === '대표' ? 'T' : (t === '제외' ? 'X' : 'L');
   }
-  /* 그 문항 세트(L 강의 / T 훈련)의 설문 대상 줄인가. 강의는 강사ID가 있어야 하고, 훈련은 이름만 있어도 됨 */
+  /* 그 문항 세트(L 강의 / T 훈련)의 설문 대상 줄인가. 훈련은 이름만 있어도 됨.
+   * 강의는 10-29(설문 생성기 v8)부터 강사ID가 없어도 이름이 있으면 대상(미등록 강사 — 이름 기준 집계, 별점·환류 반영 없음). 교육운영팀·교육훈련팀 교시는 제외 */
+  var OPS_TEAMS = ['교육운영팀', '교육훈련팀'];
+  function isUnregistered(row) { return !String((row && (row['강사ID'] != null ? row['강사ID'] : row.id)) || '').trim(); }
   function usable(s, set) {
     var rs = rowSet(s), id = String(s['강사ID'] || '').trim(), nm = String(s['강사명'] || '').trim();
     if (set === 'T') return rs === 'T' && !!(id || nm);
-    return rs === 'L' && !!id;
+    return rs === 'L' && !!(id || (nm && OPS_TEAMS.indexOf(nm) < 0));
   }
   function personKey(s) {
     var id = String(s['강사ID'] || '').trim();
@@ -402,6 +405,7 @@
   }
 
   var api = {
+    isUnregistered: isUnregistered, OPS_TEAMS: OPS_TEAMS,
     MIN_SESSION: MIN_SESSION, MIN_CUM: MIN_CUM, Q: Q, QT: QT, COMMON_SECTIONS: COMMON_SECTIONS, qList: qList, detectCommons: detectCommons, rowSet: rowSet,
     parseCSV: parseCSV, answerScore: answerScore, classifyHeader: classifyHeader, detectGroups: detectGroups,
     aggregate: aggregate, stars: stars, starPct: starPct, to50: to50, cumulative: cumulative,
