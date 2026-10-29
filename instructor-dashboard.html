@@ -393,6 +393,17 @@
     @media (max-width:640px){ #detail,#histPop,#inviteOverlay>div,#schoolOverlay>div{animation-name:miSheet;} }
   }
 </style>
+<style id="evscore">
+  /* 10-29 강사카드 평가 별점(관리자 전용, 강의배정 화면과 같은 모양): 별은 0.5점 단위로 채움 */
+  .sc{display:flex;align-items:center;flex-wrap:wrap;gap:2px 12px;font-size:13px;color:var(--text-sub);margin-top:6px;}
+  .sc .scp{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+  .sc .scl{color:var(--text-muted);}
+  .sc .st{display:inline-block;font-size:15px;letter-spacing:1px;line-height:1;background:linear-gradient(90deg,#E0A100 var(--p),#D5DCE6 var(--p));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sc b{color:var(--navy);font-variant-numeric:tabular-nums;}
+  .sc .ref{color:#7A5B00;background:#FFF2C9;border-radius:999px;padding:0 7px;font-size:11px;font-weight:700;}
+  .sc .low{color:var(--text-muted);}
+</style>
+<script src="eval-core.js?v=5"></script>
 <script src="busy-indicator.js" defer></script>
 <script src="highlight-box.js?v=1" defer></script>
 <script src="admin-nav.js" defer></script>
@@ -588,7 +599,7 @@
       <div id="schoolMsg" style="margin-top:12px;font-size:13px;display:none;"></div>
     </form>
   </div>
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 강사관리 38</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-29 강사관리 39</div>
 </div>
 
 <script>
@@ -1148,6 +1159,46 @@
     document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && ov.style.display !== 'none') ov.style.display = 'none'; });
   })();
 
+  /* ---------- 10-29 강사카드 평가 별점(관리자만) ----------
+   * 강의배정 화면과 같은 규칙: 평가관리에서 [반영]한 결과만, 응답 20명 미만 회차는 계산에서 뺌, 강의와 훈련(현장교관)은 따로, 점수 없으면 '평가 없음' */
+  var evIdx = null, evAt = 0, evLoading = false, evFailed = false, evWait = [];
+  function evLoad(cb){
+    if (evIdx && Date.now() - evAt < 10 * 60 * 1000) { cb(); return; }
+    evWait.push(cb); if (evLoading) return; evLoading = true;
+    readFetch({ action: 'listEvalResults', password: sessionStorage.getItem('jsfa_dash_pw') || '' }).then(function(j){
+      if (!j || j.status !== 'ok') throw new Error('fail');
+      var um = {}; (j.uploads || []).forEach(function(u){ um[String(u['업로드ID'])] = u; });
+      var idx = {};
+      (j.rows || []).forEach(function(r){
+        var u = um[String(r['업로드ID'])]; if (!u || String(u['상태'] || '반영') !== '반영') return;
+        if (String(r['제외'] || '') === 'Y' || String(r['유형'] || '') === '공통') return;
+        var id = String(r['강사ID'] || ''); if (id) (idx[id] = idx[id] || []).push(r);
+      });
+      evIdx = idx; evAt = Date.now(); evFailed = false;
+    }).catch(function(){ evFailed = true; }).then(function(){ evLoading = false; var w = evWait; evWait = []; w.forEach(function(f){ f(); }); });
+  }
+  function evLineHtml(iid){
+    if (!window.EvalCore) return '';
+    if (evFailed && !evIdx) return '<span class="scp low">평가 점수를 불러오지 못했습니다</span>';
+    var rows = (evIdx && evIdx[String(iid)]) || [];
+    if (!rows.length) return '<span class="scp low">평가 없음</span>';
+    var fmt = function(v){ return (Math.round(v * 100) / 100).toFixed(2); }, parts = [];
+    ['강의', '훈련'].forEach(function(k){
+      var kr = rows.filter(function(r){ return (String(r['유형'] || '') === '훈련') === (k === '훈련'); });
+      if (!kr.length) return;
+      var c = EvalCore.cumulative(kr); if (!c || !c.n) return;
+      parts.push(c.n < EvalCore.MIN_CUM
+        ? '<span class="scp"><span class="scl">' + k + '</span><b>' + fmt(c.avg) + '</b><span class="ref">참고 · 응답 ' + c.n + '</span></span>'
+        : '<span class="scp"><span class="scl">' + k + '</span><span class="st" style="--p:' + EvalCore.starPct(c.avg) + '%" aria-hidden="true">★★★★★</span><b>' + fmt(c.avg) + '</b><span class="scl">(응답 ' + c.n + '명)</span></span>');
+    });
+    return parts.length ? parts.join('') : '<span class="scp low">평가 없음 · 응답 ' + EvalCore.MIN_SESSION + '명 미만</span>';
+  }
+  function evFill(iid){
+    var box = document.getElementById('evCardLine'); if (!box) return;
+    if (evIdx && Date.now() - evAt < 10 * 60 * 1000) { box.innerHTML = evLineHtml(iid); return; }
+    box.innerHTML = '<span class="scp low">평가 점수 불러오는 중…</span>';
+    evLoad(function(){ var b = document.getElementById('evCardLine'); if (b && b.getAttribute('data-iid') === String(iid)) b.innerHTML = evLineHtml(iid); });
+  }
   function openDetail(d){
     if (d && d._stale) { alert('최신 정보를 불러오는 중입니다. 잠시 후 다시 눌러 주세요.'); return; }
     var body = document.getElementById('detailBody');
@@ -1172,6 +1223,7 @@
         '<div>' +
           '<h2 style="margin:0;">' + esc(d.성명||'') + routeBadge(d.등록경로) + ' <span class="status ' + statusClass(d.상태) + '" style="vertical-align:middle;">' + esc(d.상태||'') + '</span></h2>' +
           '<div class="sub">' + esc(d.소속||'') + (d.직위 ? ' · ' + esc(d.직위) : '') + '</div>' +
+          (isViewer || !d.강사ID ? '' : '<div class="sc" id="evCardLine" data-iid="' + escapeAttr(String(d.강사ID)) + '" title="평가관리에서 반영한 설문 결과(응답 20명 이상 회차만 계산) · 관리자에게만 보입니다"></div>') +
         '</div>' +
         photoHtml +
       '</div>' +
@@ -1222,6 +1274,7 @@
       '</div>';
 
     document.getElementById('overlay').style.display = 'flex';
+    if (!isViewer && d.강사ID) evFill(d.강사ID);
 
     document.getElementById('detailCloseBottomBtn').addEventListener('click', function(){
       document.getElementById('overlay').style.display = 'none';

@@ -59,6 +59,21 @@
   .msg.err{background:var(--err-bg);color:var(--err-fg);} .msg.ok{background:var(--ok-bg);color:var(--ok-fg);} .msg.warn{background:var(--warn-bg);color:var(--warn-fg);}
   .msg a{color:inherit;font-weight:800;}
 
+  /* 10-28 공문 만들기 */
+  .dstg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 14px;}
+  .dstg > *{background:#fff;border:1px solid #CBD4E0;border-radius:10px;padding:10px 12px;font-size:13px;color:var(--text-sub);text-decoration:none;display:flex;flex-direction:column;gap:3px;}
+  .dstg b{font-size:14px;color:var(--navy);} .dstg .on{border-color:var(--navy);box-shadow:inset 0 -3px 0 var(--navy);background:var(--info-bg);}
+  .dstg a:hover,.dstg button:hover{border-color:var(--navy);} .dstg .off{opacity:.62;}
+  .dstg button{font-family:inherit;text-align:left;cursor:pointer;}
+  .docpv .dl{min-height:1.85em;} .docpv .dtw{overflow-x:auto;margin:6px 0;} .docpv table{border-collapse:collapse;width:100%;min-width:640px;font-size:13px;line-height:1.45;white-space:normal;} .docpv th,.docpv td{border:1px solid #333;padding:5px 6px;text-align:center;} .docpv th{background:#F3F4F6;}
+  #dRows input[type=text]{width:100%;min-width:140px;height:30px;font-size:13px;}
+  .dform{display:grid;gap:10px;} .dform label{display:block;font-size:13px;font-weight:700;color:var(--text-sub);margin-bottom:4px;}
+  .dform input[type=text]{width:100%;} .dform textarea{width:100%;box-sizing:border-box;min-height:64px;border:1px solid var(--border-input);border-radius:6px;padding:8px 10px;font-family:inherit;font-size:14px;line-height:1.55;}
+  .dform textarea.tall{min-height:150px;}
+  .dform input[type=month],.dform input[type=date]{height:36px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;font-family:inherit;font-size:14px;}
+  .dsum{font-weight:800;color:var(--navy);margin:8px 0 0;}
+  .docpv{background:#fff;border:1px solid #9CA3AF;border-radius:4px;padding:22px 26px;font-size:14.5px;line-height:1.85;white-space:pre-wrap;word-break:keep-all;font-family:'Malgun Gothic','Pretendard',sans-serif;color:#111;}
+  @media (max-width:760px){ .dstg{grid-template-columns:1fr;} .docpv{padding:14px;font-size:13.5px;} }
   .menus{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
   .mcard{background:#fff;border:1px solid #CBD4E0;border-radius:12px;padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-height:118px;transition:border-color .15s ease,background-color .15s ease;font:inherit;text-align:left;color:inherit;}
   .mcard:hover{border-color:var(--navy);background:var(--bg-hover);}
@@ -323,6 +338,10 @@
         <div class="mt"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>평가관리</div>
         <div class="md">과정을 누르면 설문 → 결과 가져오기·반영 → 보고서 → 강사 환류를 한 화면에서 차례로 처리합니다.</div>
       </button>
+      <button type="button" class="mcard" id="goDoc">
+        <div class="mt"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>공문 만들기</div>
+        <div class="md">① 다음 달 교육과정 안내 ② 과정 설계 및 강사 선정 결과보고 공문을 과정 표와 함께 한글(.hwpx) 파일로 받습니다.</div>
+      </button>
       <div class="mcard off">
         <div class="mt"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M8 15h3"/></svg>강사료 정산 <span class="tag t-none">준비 중</span></div>
         <div class="md">월별 강사 시수 집계와 예상 금액 참고표를 만듭니다. 지급 기준 자료를 받은 뒤 진행합니다.</div>
@@ -569,10 +588,54 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 관리자 28</div>
+  <!-- 공문 만들기 (10-28): ① 다음 달 교육과정 안내 / ② 과정 설계 및 강사 선정 결과보고 / ③ 강사 초빙(강의배정) -->
+  <section id="vDoc" hidden>
+    <div class="crumb"><a id="backAdmin2" href="#">관리자</a> &rsaquo; 공문 만들기</div>
+    <h1>공문 만들기</h1>
+    <p class="lead">한 달 교육과정을 운영하며 내는 공문을 강의배정 DB 내용으로 채워 만듭니다. 과정 표는 자동으로 만들고, 문구를 고치면 이 브라우저에 기억해 다음 달에도 그대로 나옵니다.</p>
+    <div class="dstg" role="tablist" aria-label="공문 단계">
+      <button type="button" class="on" data-dk="1" role="tab"><b>① 다음 달 교육과정 안내</b>전달 중순 · 관련 부서</button>
+      <button type="button" data-dk="2" role="tab"><b>② 과정 설계 및 강사 선정 결과보고</b>내부결재 · 붙임: 강의배정 PDF</button>
+      <a href="lecture-assignment.html#v=table" title="강의배정에서 과정을 고른 뒤 [공문 본문 만들기]"><b>③ 강사 초빙</b>강의배정 › 과정 › 공문 본문 만들기</a>
+    </div>
+    <div class="card">
+      <h2>대상 월과 과정</h2>
+      <div class="dform"><div><label for="dMonth">대상 월</label><input type="month" id="dMonth"></div></div>
+      <div class="hint" style="margin-top:6px;">입교 시작일이 대상 월인 과정을 모읍니다(취소 과정 제외). 공문에서 뺄 과정은 체크를 풀고, 비고는 과정마다 적으면 기억합니다(①·② 공통).</div>
+      <div class="tx" style="margin-top:8px;"><table class="t" style="min-width:820px;"><thead><tr><th class="c">포함</th><th>구분</th><th>과정명(기수)</th><th>기간</th><th>대상</th><th class="n">인원</th><th>숙식</th><th style="width:200px;">비고</th></tr></thead><tbody id="dRows"></tbody></table></div>
+      <div class="dsum" id="dSum"></div>
+    </div>
+    <div class="card">
+      <h2 id="dFormH">공문 문구</h2>
+      <div class="dform">
+        <div><label for="dTitle">제목 ({년}·{월}은 대상 월로 바뀝니다)</label><input type="text" id="dTitle"></div>
+        <div><label for="dTo">수신</label><input type="text" id="dTo"></div>
+        <div><label for="dBasis">1. 관련 근거 (한 줄이면 "1. 문구", 여러 줄이면 "1. 관련근거" 아래 줄마다)</label><textarea id="dBasis" style="min-height:92px;"></textarea></div>
+        <div><label for="dAsk">2. 본문 문구 (아래에 "□ 과정명 : 규모"와 과정 표가 자동으로 붙습니다)</label><textarea id="dAsk"></textarea></div>
+        <div><label for="dNote">표 아래 ※ 줄 (비우면 넣지 않음)</label><input type="text" id="dNote"></div>
+        <div><label for="dAdm" id="dAdmL">3. 행정사항</label><textarea id="dAdm" class="tall"></textarea></div>
+        <div id="dDueW"><label for="dDue">회신 기한 (행정사항의 {회신일} 자리)</label><input type="date" id="dDue"></div>
+        <div><label for="dAtt">붙임 (비우면 넣지 않음)</label><input type="text" id="dAtt"><div class="hint" id="dAttHint" hidden style="margin-top:4px;">붙임 PDF는 <a href="lecture-assignment.html#v=table">강의배정</a>의 인쇄(PDF로 저장)로 받아 기안에 첨부합니다.</div></div>
+        <div><label style="display:flex;gap:6px;align-items:center;font-weight:600;"><input type="checkbox" id="dList"> 표 위에 구분별 ○ 과정 목록도 넣기 (과정명 끝 '과정'은 빼고 적음)</label></div>
+        <div><button type="button" class="btn" id="dReset">처음 문구로 되돌리기</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>미리보기</h2>
+      <div id="dMsg" class="msg" hidden></div>
+      <div class="docpv" id="dPv"></div>
+      <div class="row" style="margin-top:12px;gap:8px;display:flex;flex-wrap:wrap;justify-content:flex-end;">
+        <button type="button" class="btn" id="dCopy">본문 복사</button>
+        <button type="button" class="btn primary" id="dHwpx">한글 파일(.hwpx) 받기</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-28 관리자 30</div>
 </div>
 
 <script src="eval-core.js?v=5"></script>
+<script src="hwpx-doc.js?v=2"></script>
 <script src="busy-indicator.js" defer></script>
 <script src="highlight-box.js?v=1" defer></script>
 <script src="swipe-nav.js?v=3" defer></script>
@@ -675,6 +738,8 @@
   function planOf(key){ return plans.filter(function(p){ return String(p['과정+기수']) === key; })[0] || null; }
   function route(){
     var h = location.hash.replace(/^#/, '');
+    $('vDoc').hidden = h !== 'doc';
+    if (h === 'doc') { $('vAdmin').hidden = true; $('vEval').hidden = true; if (page !== 'doc') window.scrollTo(0, 0); page = 'doc'; renderDoc(); return; }
     var m = /^(?:eval\/)?c=([^&]*)(?:&s=(\d))?/.exec(h);
     var p = m ? 'course' : (h === 'view' ? 'view' : h === 'cmdl' ? 'cmdl' : (['eval', 'prep', 'up', 'review', 'rep', 'fb'].indexOf(h) > -1 ? 'list' : ''));
     $('vAdmin').hidden = !!p; $('vEval').hidden = !p;
@@ -1841,6 +1906,152 @@
     }).catch(function(err){ btn.disabled = false; btn.textContent = '다시 보내기'; show($('fbMsg'), 'err', '발송 결과를 확인하지 못했습니다: ' + esc(err.message) + ' 중복 발송을 막기 위해 새로고침해 보낸 기록을 먼저 확인해 주세요.'); });
   }
   $('fbCourse').onchange = function(){ show($('fbMsg'), 'ok', ''); renderFb(); };
+
+  /* ---------- 공문 만들기 (10-28): ① 다음 달 교육과정 안내 / ② 과정 설계 및 강사 선정 결과보고 ----------
+   * 두 공문 모두 "□ 과정명 : ○개과정 ○회 ○명" 아래 과정 표(연번·구분·과정명(기수)·기간·대상·인원·숙식여부·비고)를 자동으로 넣음 */
+  var DOC_DEF = {
+    1: {
+      title: '{년}년 {월}월 전남소방학교 교육훈련과정 운영계획 안내', to: '수신자 참조',
+      basis: '소방교육과-341(2026. 1. 13.)호 “2026 전남소방학교 교육훈련과정 운영계획 알림”',
+      ask: '{년}년 {월}월 교육훈련과정을 다음과 같이 안내하오니 교육대상자 선정 등 관련 업무에 협조하여 주시기 바랍니다.',
+      note: '※ 과정별 교과목은 입교 안내 공문에 포함 예정', admL: '3. 행정사항',
+      adm: '가. (전 부서)\n  ○ 과정별 교육목표 달성을 위한 교과목 편성 의견 제시(최근 정책, 제도 변경사항, 현안업무 등) ※ 메모(담당자), 전자우편(담당자 메일)\n나. (소방행정과)\n  ○ 동일계급 동일과정 기 이수자는 교육 신청 금지\n  ○ 교육 대상자 선발시 우선순위 기준 준수\n  ○ 관서(부서)별 교육대상자 선정 후 회신 : {회신일}',
+      att: '{월}월 전남소방학교 교육훈련과정 운영계획 1부.  끝.', file: '교육과정 안내'
+    },
+    2: {
+      title: '{년}년 {월}월 전남소방학교 교육과정 설계 및 강사 선정 결과보고', to: '내부결재',
+      basis: '가. 소방교육과-10716(2025. 12. 10.)호 「2026년도 교육훈련과정 계획」\n나. 소방교육과-341(2026. 1. 13.)호 「2026년도 전남소방학교 교육과정 운영계획」\n다. 소방교육과-    (    .   .   .)호 「{월}월 전남소방학교 교육과정 운영계획 안내」',
+      ask: '{년}년 {월}월 전남소방학교 교육훈련과정 교과목 설계 및 과목별 강사 선정 결과를 아래와 같이 보고합니다.',
+      note: '', admL: '3. 향후계획',
+      adm: '가. 강사진 출강 의뢰 및 교안 취합·사전 약식 심의, 기본교재 제작 추진\n나. 강사관리카드 및 개인정보 수집 이용 및 제공동의서 취합\n다. 교육과정 종료 후 강사수당 지급 등',
+      att: '{월}월 교육훈련과정 교과목 편성 및 강사 현황 1부.  끝.', file: '교육과정 설계 및 강사 선정 결과보고'
+    }
+  };
+  var DOC_ID = { title: 'dTitle', to: 'dTo', basis: 'dBasis', ask: 'dAsk', note: 'dNote', adm: 'dAdm', att: 'dAtt' };
+  var docKind = 1, docOff = {}, docInit = false, docCur = null;
+  function dlGet(k, d){ try { var v = localStorage.getItem('jsfa_doc' + docKind + '_' + k); return v === null ? d : v; } catch (e) { return d; } }
+  function dlSet(k, v){ try { localStorage.setItem('jsfa_doc' + docKind + '_' + k, v); } catch (e) {} }
+  function rmGet(key){ try { return localStorage.getItem('jsfa_docrm_' + key) || ''; } catch (e) { return ''; } }
+  function rmSet(key, v){ try { if (v) localStorage.setItem('jsfa_docrm_' + key, v); else localStorage.removeItem('jsfa_docrm_' + key); } catch (e) {} }
+  var DOW_K = ['일', '월', '화', '수', '목', '금', '토'];
+  function docYmd(v){ var q = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v || '')); if (!q) return ''; var d = new Date(+q[1], +q[2] - 1, +q[3]); return +q[1] + '. ' + (+q[2]) + '. ' + (+q[3]) + '.(' + DOW_K[d.getDay()] + ')'; }
+  function docMd(v){ var q = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v || '')); return q ? (+q[2]) + '. ' + (+q[3]) + '.' : ''; }
+  function docPeriod(p){
+    var a = docMd(p['입교 시작일']), b = docMd(p['입교 종료일']), n = String(p['교육기간'] == null ? '' : p['교육기간']).trim();
+    if (/^\d+$/.test(n)) n += '일';
+    return (a && b && a !== b ? a + ' ~ ' + b : a) + (n ? '(' + n + ')' : '');
+  }
+  function docDueDefault(ym){   /* 대상 월 전달 11일(지났으면 오늘부터 7일 뒤) */
+    var y = +ym.slice(0, 4), m = +ym.slice(5, 7), d = new Date(y, m - 2, 11), t = kstToday();
+    var s = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-11';
+    if (s < t) s = new Date(Date.parse(t + 'T00:00:00Z') + 7 * 86400e3).toISOString().slice(0, 10);
+    return s;
+  }
+  function docLoadFields(){
+    var D = DOC_DEF[docKind];
+    Object.keys(DOC_ID).forEach(function(k){ $(DOC_ID[k]).value = dlGet(k, D[k]); });
+    $('dList').checked = dlGet('list', '0') === '1';
+    $('dAdmL').textContent = D.admL + (docKind === 1 ? ' ({회신일}은 아래 회신 기한으로 바뀝니다)' : '');
+    $('dDueW').hidden = docKind !== 1; $('dAttHint').hidden = docKind !== 2;
+    $('dFormH').textContent = (docKind === 1 ? '① 다음 달 교육과정 안내' : '② 과정 설계 및 강사 선정 결과보고') + ' 문구';
+    Array.prototype.forEach.call(document.querySelectorAll('.dstg [data-dk]'), function(b){ var on = +b.getAttribute('data-dk') === docKind; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+  }
+  function docInitForm(){
+    if (docInit) return; docInit = true;
+    var t = kstToday(), y = +t.slice(0, 4), m = +t.slice(5, 7) + 1; if (m > 12) { m = 1; y++; }
+    $('dMonth').value = y + '-' + ('0' + m).slice(-2);
+    $('dDue').value = docDueDefault($('dMonth').value);
+    docLoadFields();
+    $('dMonth').onchange = function(){ docOff = {}; $('dDue').value = docDueDefault($('dMonth').value); renderDoc(); };
+    Object.keys(DOC_ID).forEach(function(k){ $(DOC_ID[k]).addEventListener('input', function(){ dlSet(k, $(DOC_ID[k]).value); docPreview(); }); });
+    $('dList').onchange = function(){ dlSet('list', $('dList').checked ? '1' : '0'); docPreview(); };
+    $('dDue').onchange = docPreview;
+    Array.prototype.forEach.call(document.querySelectorAll('.dstg [data-dk]'), function(b){ b.onclick = function(){ docKind = +b.getAttribute('data-dk'); docLoadFields(); show($('dMsg'), 'ok', ''); docPreview(); }; });
+    $('dReset').onclick = function(){
+      if (!window.confirm((docKind === 1 ? '①' : '②') + ' 공문의 제목·수신·근거·본문·' + DOC_DEF[docKind].admL.slice(3) + '·붙임 문구를 처음 문구로 되돌릴까요? 고쳐 쓴 내용은 지워집니다. (과정별 비고는 그대로)')) return;
+      Object.keys(DOC_ID).forEach(function(k){ $(DOC_ID[k]).value = DOC_DEF[docKind][k]; dlSet(k, DOC_DEF[docKind][k]); }); docPreview();
+    };
+    $('dRows').addEventListener('change', function(ev){ var c = ev.target; if (c && c.getAttribute('data-k') != null) { if (c.checked) delete docOff[c.getAttribute('data-k')]; else docOff[c.getAttribute('data-k')] = 1; docPreview(); } });
+    $('dRows').addEventListener('input', function(ev){ var c = ev.target; if (c && c.getAttribute('data-rm') != null) { rmSet(c.getAttribute('data-rm'), c.value.trim()); docPreview(); } });
+    $('dCopy').onclick = function(){
+      if (!docCur) return;
+      var ok = function(){ show($('dMsg'), 'ok', '복사했습니다. 한글이나 기안문에 붙여넣기(Ctrl+V) 하세요.'); };
+      var bad = function(){ show($('dMsg'), 'warn', '복사하지 못했습니다. 미리보기를 드래그해 직접 복사해 주세요.'); };
+      if (navigator.clipboard && window.ClipboardItem) {
+        try { navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([docCur.html], { type: 'text/html' }), 'text/plain': new Blob([docCur.text], { type: 'text/plain' }) })]).then(ok, bad); return; } catch (e) {}
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(docCur.text).then(ok, bad); else bad();
+    };
+    $('dHwpx').onclick = function(){
+      if (!docCur) return;
+      try {
+        var ym = $('dMonth').value;
+        HwpxDoc.download(HwpxDoc.make(docCur.paras), (+ym.slice(0, 4)) + '년 ' + (+ym.slice(5, 7)) + '월 ' + DOC_DEF[docKind].file + '.hwpx');
+        show($('dMsg'), 'ok', '한글 파일을 내려받았습니다. 공직자통합메일로 보내 행정망에서 열 수 있습니다.');
+      } catch (e) { show($('dMsg'), 'err', '한글 파일을 만들지 못했습니다: ' + esc(e.message)); }
+    };
+  }
+  var DOC_ORDER = ['전문교육', '기본교육', '특별교육'];
+  function docGroup(g){ g = String(g || '').replace(/\s+/g, ''); return g ? (/교육$/.test(g) ? g : g + '교육') : '기타'; }
+  function docGi(g){ var i = DOC_ORDER.indexOf(g); return i < 0 ? 9 : i; }
+  function docPlans(){   /* 구분(전문→기본→특별→기타) → 입교 시작일 순 */
+    var ym = $('dMonth').value;
+    return plans.filter(function(p){ return dstr(p['입교 시작일']).slice(0, 7) === ym; })
+      .sort(function(a, b){ return (docGi(docGroup(a['구분'])) - docGi(docGroup(b['구분']))) || docGroup(a['구분']).localeCompare(docGroup(b['구분'])) || dstr(a['입교 시작일']).localeCompare(dstr(b['입교 시작일'])) || String(a['과정+기수']).localeCompare(String(b['과정+기수'])); });
+  }
+  function docName(p){ return (String(p['과정명'] || '') + ' ' + String(p['기수'] || '')).trim() || String(p['과정+기수']); }
+  function renderDoc(){
+    if (!plans.length && $('gate').hidden === false) return;
+    docInitForm();
+    var list = docPlans();
+    $('dRows').innerHTML = list.length ? list.map(function(p){
+      var k = String(p['과정+기수']);
+      return '<tr' + (docOff[k] ? ' class="off"' : '') + '><td class="c"><input type="checkbox" data-k="' + esc(k) + '"' + (docOff[k] ? '' : ' checked') + ' aria-label="' + esc(k) + ' 포함"></td><td>' + esc(docGroup(p['구분'])) + '</td><td>' + esc(docName(p)) + '</td><td>' + esc(docPeriod(p)) + '</td><td>' + esc(p['교육대상'] || '') + '</td><td class="n">' + (Number(p['계획인원']) ? Number(p['계획인원']) + '명' : '<span class="tag t-warn">없음</span>') + '</td><td>' + esc(p['합숙여부'] || '') + '</td>' +
+        '<td><input type="text" data-rm="' + esc(k) + '" value="' + esc(rmGet(k)) + '" placeholder="비고" aria-label="' + esc(k) + ' 비고"></td></tr>';
+    }).join('') : '<tr><td colspan="8">이 달에 입교하는 과정이 없습니다.</td></tr>';
+    docPreview();
+  }
+  var DOC_HEAD = ['연번', '구분', '과정명(기수)', '기간', '대상', '인원', '숙식여부', '비고'];
+  var DOC_W = [3000, 4600, 13200, 7600, 6800, 3600, 4200, 4622];   /* 합 47622 = A4 본문 폭 */
+  function docPreview(){
+    var ym = $('dMonth').value; if (!ym) return;
+    var Y = String(+ym.slice(0, 4)), M = String(+ym.slice(5, 7));
+    var fill = function(v){ return String(v || '').replace(/\{년\}/g, Y).replace(/\{월\}/g, M).replace(/\{회신일\}/g, docYmd($('dDue').value) || '(회신 기한)'); };
+    Array.prototype.forEach.call($('dRows').querySelectorAll('tr'), function(tr){ var c = tr.querySelector('input[type=checkbox]'); if (c) tr.classList.toggle('off', !c.checked); });
+    var inc = docPlans().filter(function(p){ return !docOff[String(p['과정+기수'])]; });
+    var names = {}, groups = [], gmap = {}, people = 0, noPpl = 0;
+    inc.forEach(function(p){
+      var g = docGroup(p['구분']), nm = String(p['과정명'] || p['과정+기수']).trim().replace(/\s*과정$/, '');
+      if (!gmap[g]) { gmap[g] = []; groups.push(g); }
+      if (gmap[g].indexOf(nm) < 0) gmap[g].push(nm);
+      names[String(p['과정명'] || p['과정+기수']).trim()] = 1; var n = Number(p['계획인원']) || 0; people += n; if (!n) noPpl++;
+    });
+    var nC = Object.keys(names).length, sumLine = nC + '개과정 ' + inc.length + '회 ' + people + '명';
+    $('dSum').textContent = '공문에 들어가는 규모: ' + sumLine + (noPpl ? ' (인원 없는 과정 ' + noPpl + '개는 0명으로 셈)' : '');
+    var rows = inc.map(function(p, i){ var n = Number(p['계획인원']) || 0; return [String(i + 1), docGroup(p['구분']), docName(p), docPeriod(p), String(p['교육대상'] || ''), n ? n + '명' : '', String(p['합숙여부'] || ''), rmGet(String(p['과정+기수']))]; });
+    if (rows.length) rows.push(['', '계', nC + '개과정 ' + inc.length + '회', '', '', people + '명', '', '']);
+    var P = [], add = function(t){ String(t).split('\n').forEach(function(l){ P.push({ text: l }); }); };
+    add('수신  ' + fill($('dTo').value)); add('(경유)'); add('제목  ' + fill($('dTitle').value)); add('');
+    var basis = fill($('dBasis').value).replace(/\s+$/, '');
+    if (basis.indexOf('\n') > -1) { add('1. 관련근거'); basis.split('\n').forEach(function(l){ add('  ' + l); }); } else add('1. ' + basis);
+    add(''); add('2. ' + fill($('dAsk').value));
+    add('  □ 과정명 : ' + sumLine);
+    if ($('dList').checked) groups.sort(function(a, b){ return docGi(a) - docGi(b); }).forEach(function(g){ add('   ○ ' + g + '(' + gmap[g].length + ') : ' + gmap[g].join(', ')); });
+    if (rows.length) P.push({ table: { widths: DOC_W, head: DOC_HEAD, rows: rows } });
+    if ($('dNote').value.trim()) add('   ' + fill($('dNote').value.trim()));
+    add(''); add(DOC_DEF[docKind].admL);
+    fill($('dAdm').value).split('\n').forEach(function(l){ add('  ' + l); });
+    if ($('dAtt').value.trim()) { add(''); add('붙임  ' + fill($('dAtt').value.trim())); }
+    var tHtml = function(t){ return '<div class="dtw"><table><thead><tr>' + t.head.map(function(h){ return '<th>' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' + t.rows.map(function(r){ return '<tr>' + r.map(function(v){ return '<td>' + esc(v) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>'; };
+    var html = P.map(function(p){ return p.table ? tHtml(p.table) : '<div class="dl">' + esc(p.text) + '</div>'; }).join('');
+    var text = P.map(function(p){ return p.table ? [p.table.head].concat(p.table.rows).map(function(r){ return r.join('\t'); }).join('\n') : p.text; }).join('\n');
+    docCur = { paras: P, html: html, text: text };
+    $('dPv').innerHTML = html;
+    if (!inc.length) show($('dMsg'), 'warn', '공문에 넣을 과정이 없습니다. 대상 월을 확인해 주세요.');
+    else if ($('dMsg').classList.contains('warn')) show($('dMsg'), 'ok', '');
+  }
+  $('goDoc').onclick = function(){ location.hash = 'doc'; };
+  $('backAdmin2').onclick = function(ev){ ev.preventDefault(); history.replaceState(null, '', location.pathname); route(); };
   boot();
 })();
 </script>
