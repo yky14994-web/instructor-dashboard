@@ -638,6 +638,7 @@
   #sFormPanel.ffold .ffbtn{display:none;}
   #sFormPanel.fmodal .ffbtn{display:none !important;}   /* 10-19: 격자에서 띄운 입력창에는 [접기]를 두지 않음(접으면 빈 창만 남음) */
   #sFormPanel.ffold .funfold{display:inline-flex;margin-top:0;}
+  #sFormPanel.gview.ffold:not(.fmodal){display:none;}   /* 10-31 금용님: 격자 보기에서는 칸을 눌러 여는 팝업만 쓰므로 아래 접힌 '교과목 추가' 카드를 숨김(목록 보기·휴대폰은 그대로) */
   #sFormPanel.ffold{padding:10px 18px;} #sFormPanel.ffold #sFormTitle{display:none;}
   #sFormPanel.ffold .cline, #sFormPanel.ffold .form, #sFormPanel.ffold .fbtn, #sFormPanel.ffold #sMsg{display:none;}
   #sFormPanel.fmodal{position:fixed;z-index:85;top:50%;left:50%;transform:translate(-50%,-50%);width:min(760px,94vw);max-height:92vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);margin:0;}
@@ -1099,7 +1100,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-29 배정 156</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-31 배정 157</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2520,7 +2521,8 @@
     refreshRoomOptions();
     updOpsAuto();
     /* 21:38 금용님: PC에서도 [접기]로 접을 수 있게. PC는 접은 상태를 이 브라우저에 기억, 휴대폰은 과정을 열 때마다 접힘(기존) */
-    panel.classList.toggle('ffold', !form.id && formFold);   // 10-25 금용님: 교과목 추가 카드는 목록·격자 아래에 접힌 한 줄(버튼만)로 둠 — 열기·수정·복사 때만 펼침
+    panel.classList.toggle('ffold', !form.id && formFold);
+    syncFormDock();   // 10-25 금용님: 교과목 추가 카드는 목록·격자 아래에 접힌 한 줄(버튼만)로 둠 — 열기·수정·복사 때만 펼침
     $('sUnfold').addEventListener('click', function(){ formFold = false; panel.classList.remove('ffold'); try { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} });
     $('sFold').addEventListener('click', function(){ formFold = true; panel.classList.add('ffold'); });
     $('sRole').value = form.role === '보조강사' ? '보조강사' : '주강사';
@@ -4570,7 +4572,7 @@
       $('sTableWrap').innerHTML = ''; $('sCards').innerHTML = '';
       $('sEmpty').style.display = 'block';
       var canCopy = !viewer && p && !isCancelled(p) && !planEnded(p);
-      $('sEmpty').innerHTML = (viewer ? '아직 편성된 교과목이 없습니다.' : '아직 편성된 교과목이 없습니다. 위 입력칸에서 첫 교과목을 추가해 보세요.') +
+      $('sEmpty').innerHTML = (viewer ? '아직 편성된 교과목이 없습니다.' : '아직 편성된 교과목이 없습니다. ' + (viewMode === 'grid' && formState === 'ok' ? '격자의 빈 칸을 눌러 첫 교과목을 추가해 보세요.' : '아래 [교과목 추가 열기]를 눌러 첫 교과목을 추가해 보세요.')) +
         (canCopy ? '<div style="margin-top:12px;">' + copyBtnHtml(p).replace('btn sm cpb', 'btn cpb') + '<div class="hint" style="margin-top:6px;">같은 과정의 이전 기수 편성(교과목·교시·강의실·강사)을 새 날짜로 옮겨 한 번에 만듭니다.</div></div>' : '');
       return;
     }
@@ -4630,12 +4632,14 @@
   function addDays(s, n){ var q = parseYmd(s); return ymd(new Date(q.y, q.m - 1, q.d + n)); }
   function mondayOf(s){ var q = parseYmd(s); return addDays(s, -(q.dow === 0 ? 6 : q.dow - 1)); }
   function toMin(t){ var m = /^(\d{1,2}):(\d{2})$/.exec(String(t || '')); return m ? Number(m[1]) * 60 + Number(m[2]) : null; }
+  function syncFormDock(){ var pn = $('sFormPanel'); if (pn) pn.classList.toggle('gview', viewMode === 'grid' && formState === 'ok'); }
   function setView(mode){
     viewMode = mode; mv = null; mvErr = ''; mvNote = '';
     try { sessionStorage.setItem('jsfa_la_view', mode); } catch (e) {}
     $('vList').className = mode === 'list' ? 'on' : '';
     $('vGrid').className = mode === 'grid' ? 'on' : '';
     if (mode !== 'grid') closeFormModal();
+    syncFormDock();
     renderSessionList();
   }
   function formModalOpen(){ return $('sFormPanel').classList.contains('fmodal'); }
