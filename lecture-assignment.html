@@ -125,6 +125,14 @@
   .t-err{background:var(--err-bg);color:var(--err-fg);}
   .t-none{background:var(--none-bg);color:var(--none-fg);}
   .t-info{background:var(--info-bg);color:var(--info-fg);}
+  .t-stat{background:transparent;color:var(--text-sub);border:1px solid var(--border);padding:2px 9px;}   /* 11-06 디자인 A1: 과정 머리의 진행 숫자는 색 없이, 처리할 것(빈 교시·겹침·미지정)만 색 */
+  .gc .db{font-size:0;width:14px;height:14px;padding:0;background:transparent;vertical-align:-2px;position:relative;margin-left:2px;}   /* A2: 격자 칸 서류 표시는 점으로(눌러서 보기 유지) */
+  .gc .db::after{content:"";position:absolute;left:3px;top:3px;width:8px;height:8px;border-radius:50%;}
+  .gc .db.bad::after{background:var(--err-fg);} .gc .db.wn::after{background:var(--warn-fg);} .gc .db.ok{display:none;}
+  .tagbtn.t-stat{border:1px solid var(--border);}
+  .opsrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;margin-top:5px;font-size:12px;color:var(--text-muted);}   /* A4 */
+  .opsb{border:none;background:none;padding:2px 0;font:inherit;white-space:nowrap;font-weight:700;color:var(--navy);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+  .opsb:hover{color:var(--text);}
   .t-ops{background:#E6ECF6;color:#27406B;}
   .chgm{display:block;font-size:11px;margin-top:3px;color:var(--text-sub);line-height:1.3;font-weight:600;}
   .chk{font-size:12px;margin-top:4px;color:var(--text-sub);line-height:1.35;}
@@ -839,7 +847,7 @@
   .crumb a:hover{background:#E4ECF5;text-decoration:none;}
   .crumb .sep{margin:0 2px;color:var(--text-faint);font-size:18px;font-weight:700;}
   .crumb .cur{color:#fff;background:var(--navy);font-weight:800;padding:5px 12px;border-radius:8px;}
-  @media (max-width:640px){ .crumb{font-size:14px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} }
+  @media (max-width:640px){ .crumb{font-size:14px;} .crumb a{padding:4px 7px;} .crumb .cur{padding:4px 9px;} .crumb .cnm{display:none;} }
 
   .psysname{display:none;}
   @media print{
@@ -1100,7 +1108,7 @@
 <div id="bOverlay"><div id="bCard" role="dialog" aria-modal="true" aria-label="강사 찾아보기"></div></div>
 <div id="cOverlay"><div id="cCard" role="dialog" aria-modal="true" aria-label="연간계획 변경"></div></div>
 <div id="pOverlay"><div id="pCard" role="dialog" aria-modal="true" aria-label="이전 기수에서 복사"></div></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-10-31 배정 157</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:14px 0 22px;">화면 버전 2026-11-06 배정 158</div>
 <div id="iOverlay"><div id="iCard" role="dialog" aria-modal="true" aria-label="강사 상세"></div></div>
 
 <script>
@@ -2229,7 +2237,7 @@
       var p = planByKey(currentKey);
       if (cameFrom === 'home') { if (cameBack) out += '<a href="' + backHref() + '">' + esc(BACK_NAME[cameBack] || '이전 목록') + '</a>' + sep; }   // 홈에서 링크로 들어온 경우: 홈의 그 목록으로 돌아가는 경로
       else if (listShown && lastList) out += '<a href="lecture-assignment.html' + lastList.h + '">' + esc(lastList.t) + '</a>' + sep;
-      out += '<span class="cur">교과목 편성' + (p ? ' · ' + esc(String(p['과정명'] || '') + ' ' + String(p['기수'] || '')) : '') + '</span>';
+      out += '<span class="cur">교과목 편성' + (p ? '<span class="cnm"> · ' + esc(String(p['과정명'] || '') + ' ' + String(p['기수'] || '')) + '</span>' : '') + '</span>';   // A5: 휴대폰에서는 과정명(바로 아래 제목에 있음) 생략
     } else {
       var h = headInfo(); lastList = h; listShown = true;
       out += '<span class="cur">' + esc(h.t) + '</span>';
@@ -2366,17 +2374,17 @@
     else tags += (function(){
         var ss = subjState(p);
         if (ss.kind === 'done') return '<span class="tag t-ok">' + esc(ss.short) + ' · ' + esc(ss.sub) + '</span>';
-        if (ss.kind === 'end') return '<span class="tag t-none">종료</span><span class="tag ' + (unassigned ? 't-info' : 't-ok') + '">' + esc(subjText(st, false)) + '</span>';
-        return '<span class="tag ' + (unassigned ? 't-info' : 't-ok') + '">' + esc(subjText(st, false)) + '</span>';
+        if (ss.kind === 'end') return '<span class="tag t-none">종료</span><span class="tag t-stat">' + esc(subjText(st, false)) + '</span>';
+        return '<span class="tag t-stat">' + esc(subjText(st, false)) + '</span>';
       })() +
-      (subjCount(st) >= SUBJ_HRS_MIN ? '<button type="button" class="tag tagbtn t-info" data-shrs="1" aria-expanded="false">교과목별' + ic('chevD', 'r') + '</button>' : '') +
+      (subjCount(st) >= SUBJ_HRS_MIN ? '<button type="button" class="tag tagbtn t-stat" data-shrs="1" aria-expanded="false">교과목별' + ic('chevD', 'r') + '</button>' : '') +
       (unassigned ? '<span class="tag t-warn">강사 미지정 ' + unassigned + '건</span>' : '') +
       (function(){
         var seen = {}, n = 0;
         sessionsOf(currentKey).forEach(function(r){ var s = String(r['교과목'] || ''); if (isNoPlan(r) && !seen[s]) { seen[s] = 1; n++; } });
         return n ? '<span class="tag t-none" title="강의계획서 제출 대상에서 제외한 교과목 수(책자 제작·마감 집계에서 빠짐)">계획서 제외 ' + n + '과목</span>' : '';
       })() +
-      (function(){ if (isCancelled(p)) return ''; var ss = subjState(p), m = (ss.kind === 'info' || ss.kind === 'ok') ? gapMissCount(p) : 0; return (ss.kind === 'info' && ss.fr ? '<span class="tag t-info">' + esc(ss.fr) + '</span>' : '') + (m ? '<span class="tag t-warn">빈 교시 ' + m + '칸</span>' : ''); })();
+      (function(){ if (isCancelled(p)) return ''; var ss = subjState(p), m = (ss.kind === 'info' || ss.kind === 'ok') ? gapMissCount(p) : 0; return (ss.kind === 'info' && ss.fr ? '<span class="tag t-stat">' + esc(ss.fr) + '</span>' : '') + (m ? '<span class="tag t-warn">빈 교시 ' + m + '칸</span>' : ''); })();
     var co = cflByKey[currentKey];
     if (co && co.open) tags += '<span class="tag t-err">겹침 경고 ' + co.open + '건 (미확인)</span>';
     if (co && co.done) tags += '<span class="tag t-none">겹침 ' + co.done + '건 확인됨</span>';
@@ -2479,7 +2487,7 @@
       '<div><label for="sDate">일자</label><input type="date" id="sDate" value="' + esc(defDate) + '"><div class="hint" id="sDow"></div></div>' +
       '<div><label for="sStart">시작 교시</label><select id="sStart">' + periodOptions('start', p1) + '</select></div>' +
       '<div><label for="sEnd">끝 교시</label><select id="sEnd">' + periodOptions('end', p1) + '</select></div>' +
-      '<div class="span3" style="margin-top:-4px;"><div class="hint" id="sPerHint"></div></div>' +
+      '<div style="grid-column:1/-1;margin-top:-6px;"><div class="hint" id="sPerHint"></div></div>' +
       '<div class="span3"><label for="sSubj">교과목</label><input type="text" id="sSubj" maxlength="100" placeholder="예: 소방기본법"></div>' +
       '<div><label for="sCat">교과목 구분</label><select id="sCat"><option value="">(선택 안 함)</option>' +
         CATS.map(function(c){ return '<option value="' + c + '"' + (c === lastCat ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></div>' +
@@ -2491,9 +2499,9 @@
         '<div id="sRoomFree" class="rfpanel" style="display:none;"></div><select id="sRoom">' + roomOptions(defRoom) + '</select>' +
         '<input type="text" id="sRoomText" maxlength="100" placeholder="강의실 이름 직접 입력" style="display:none;margin-top:6px;"></div>' +
       '<div class="span2" style="position:relative;"><div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:6px 8px;margin-bottom:3px;"><label for="sInstr" style="margin:0;white-space:nowrap;">강사</label>' +
-        '<span style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;"><button type="button" class="btn" id="sOps" style="height:26px;padding:0 10px;font-size:12px;" title="입교안내·성과측정처럼 강사 없이 학교(교육운영팀)가 운영하는 교시">교육운영팀 운영</button><button type="button" class="btn" id="sOps2" style="height:26px;padding:0 10px;font-size:12px;" title="강사 없이 교육훈련팀이 운영하는 교시">교육훈련팀 운영</button>' +
-        '<button type="button" class="btn" id="sBrowse" style="height:26px;padding:0 10px;font-size:12px;">강사 찾아보기 (사진·이력)</button></span></div>' +
+        '<button type="button" class="btn" id="sBrowse" style="height:26px;padding:0 10px;font-size:12px;">강사 찾아보기 (사진·이력)</button></div>' +
         '<input type="text" id="sInstr" autocomplete="off" placeholder="이름·소속·분야·교과목으로 검색"><div id="sPicker" class="picker" style="display:none;"></div>' +
+        '<div class="opsrow"><button type="button" class="opsb" id="sOps" title="입교안내·성과측정처럼 강사 없이 학교(교육운영팀)가 운영하는 교시">교육운영팀 운영</button><button type="button" class="opsb" id="sOps2" title="강사 없이 교육훈련팀이 운영하는 교시">교육훈련팀 운영</button></div>' +
         '<div id="sChip"></div>' +
         '<div id="sRoleRow" style="display:flex;flex-wrap:wrap;gap:8px 20px;margin:8px 0 0;align-items:flex-start;">' +
           '<div id="sRoleWrap" style="display:none;flex:1 1 170px;min-width:0;"><div style="display:flex;align-items:center;gap:6px;"><label for="sRole" class="hint" style="margin:0;font-weight:700;" title="2명 이상이면 주·보조로 표시, 누적은 주강사만 집계">역할</label><select id="sRole" style="width:auto;"><option>주강사</option><option>보조강사</option></select></div>' +
@@ -2611,7 +2619,7 @@
     var rg = $('sRange');   // 저장 버튼 옆에 고른 교시 범위를 한 줄로(끝 교시 확인용)
     if (rg) { var a1 = Number(ss.value), b1 = Number(se.value); rg.textContent = (a1 && b1 && b1 >= a1) ? (a1 === b1 ? a1 + '교시' : a1 + '~' + b1 + '교시') + '(' + (b1 - a1 + 1) + '시간)' : ''; }
     var h = $('sPerHint');
-    if (h) h.textContent = any ? (co ? '' : '같은 날 이미 편성된 교시(' + Object.keys(occ).map(Number).sort(function(a, b){ return a - b; }).join('·') + '교시)는 선택할 수 없습니다. 같은 교시에 보조강사를 추가하려면 역할을 "보조강사"로 바꾸세요. 팀 운영 교시에는 강사를 고르면 추가할 수 있습니다.') : '';
+    if (h) h.textContent = any ? (co ? '' : '이미 편성된 ' + Object.keys(occ).map(Number).sort(function(a, b){ return a - b; }).join('·') + '교시는 고를 수 없습니다. 같은 교시에 보조강사를 넣으려면 역할을 "보조강사"로, 팀 운영 교시에는 강사를 고르면 추가됩니다.') : '';
     if (h) h.className = 'hint';
     if (h && !co && !free.length && normYmd($('sDate').value)) { h.textContent = '이 날은 모든 교시가 이미 편성되어 있습니다. 다른 날짜를 선택하세요.'; h.className = 'hint warn'; }
   }
@@ -5030,7 +5038,7 @@
       if (lunch && n === lunch.after) body += '<tr class="lunch"><td colspan="' + (totalCols + 1) + '">점심시간' + (lunch.text ? ' ' + esc(lunch.text) : '') + '</td></tr>';
     });
     var opts = weeks.map(function(w, i){
-      return '<option value="' + w + '"' + (w === gridWeek ? ' selected' : '') + '>' + (i + 1) + '주차 · ' + esc(md(w).replace(/\(.\)/, '')) + '~' + esc(md(addDays(w, 4)).replace(/\(.\)/, '')) + '</option>';
+      return '<option value="' + w + '"' + (w === gridWeek ? ' selected' : '') + '>' + (i + 1) + '/' + weeks.length + '주차 · ' + esc(md(w).replace(/\(.\)/, '')) + '~' + esc(md(addDays(w, 4)).replace(/\(.\)/, '')) + '</option>';
     }).join('');
     var dtabs = days.map(function(d, i){ return '<button type="button" data-gd="' + i + '" class="' + (i === gridDay ? 'on' : '') + '">' + esc(DOW[parseYmd(d).dow]) + ' ' + parseYmd(d).d + '</button>'; }).join('');
     var empty = !wkList.length ? '<div class="hint" style="margin:0 0 8px;">' + (canEdit ? '이 주에 편성된 교과목이 없습니다. 빈 칸을 눌러 추가하세요.' : '이 주에 편성된 교과목이 없습니다.') + '</div>' : '';
