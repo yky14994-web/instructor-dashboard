@@ -192,7 +192,7 @@
   .chip i{font-style:normal;font-weight:800;color:var(--navy);margin-left:4px;font-variant-numeric:tabular-nums;}
 
   /* 서술형 의견(규칙 분류) */
-  .cmf{display:flex;flex-direction:column;gap:8px;margin:10px 0 4px;}
+  .cmf{display:flex;flex-wrap:wrap;gap:8px 22px;margin:10px 0 4px;}   /* B5: 보기·주제·성격 한 줄 */
   .cmf .fl{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
   .cmf .fl > span{font-size:12px;font-weight:700;color:var(--text-muted);min-width:34px;}
   .fb{height:30px;padding:0 11px;border-radius:999px;border:1px solid #CBD4E0;background:#fff;color:var(--text-sub);font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background-color .15s ease,border-color .15s ease;}
@@ -217,6 +217,13 @@
   table.t td.c,table.t th.c{text-align:center;}
   table.t tr.off td{opacity:.5;}
   .rvhead{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  #rvSum{gap:4px 0;margin:6px 0 4px;}   /* B3: 숫자 칩 대신 한 줄 요약 */
+  #rvSum span{background:none;border:none;border-radius:0;padding:0;font-weight:600;color:var(--text-sub);}
+  #rvSum span + span::before{content:"·";margin:0 8px;color:var(--text-muted);}
+  .rvbar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;justify-content:flex-end;gap:6px 14px;flex-wrap:wrap;margin-top:14px;padding:10px 14px;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 -4px 14px rgba(15,35,64,.08);}
+  .rvbar .actions{margin-top:0;}
+  .rvbar .hint{flex:1 1 260px;margin:0;}
+  @media (max-width:640px){ .rvbar{position:static;box-shadow:none;padding:10px;} }   /* 휴대폰: 고정 줄이 화면을 많이 가려 맨 아래에 그대로 둠 */
   .rvhead h2{margin:0;}
   .rwait{border:2px solid #C99A00;color:#7A5B00;background:#FFF8E1;text-align:center;font-weight:800;padding:6px;margin:0 0 12px;font-size:13px;}
   .ld{font-size:11px;color:#6B7280;}
@@ -494,14 +501,13 @@
 
         <div id="rvPanel" hidden>
           <div class="card">
-            <div class="rvhead"><h2 id="rvTitle"></h2><span id="rvState"></span></div>
+            <div class="rvhead"><h2 id="rvTitle">교과목·강사 점수</h2><span id="rvState"></span></div>
             <div class="sum" id="rvSum"></div>
             <div class="hint">반영 체크를 푼 교과목·강사는 점수 조회와 누적 별점에 들어가지 않습니다(저장 기록은 남음).</div>
             <div class="swp">표는 좌우로 밀어서 볼 수 있습니다.</div>
             <div class="tx" style="margin-top:8px;"><table class="t">
-              <thead><tr><th class="c">반영</th><th>교과목</th><th>강사</th><th>구분</th><th class="n">응답</th><th class="n">문항1</th><th class="n">문항2</th><th class="n">문항3</th><th class="n">문항4</th><th class="n">종합(5점)</th><th>표시</th></tr></thead>
+              <thead><tr id="rvHeadRow"></tr></thead>
               <tbody id="rvBody"></tbody></table></div>
-            <div class="hint ld" style="margin-top:6px;">문항1~4: 강의 = 태도·목표·전달·효과, 훈련 = 태도·준비성·전문성·적용성</div>
           </div>
           <div class="card">
             <h2>응답자 구성</h2>
@@ -511,13 +517,15 @@
             <h2>서술형 의견 <span class="tag t-none" id="rvCmTag"></span></h2>
             <div id="rvCm"></div>
           </div>
-          <div class="actions">
-            <button type="button" class="btn danger" id="rvDel">결과 삭제</button>
-            <button type="button" class="btn" id="rvRepull">결과 다시 가져오기</button>
-            <button type="button" class="btn" id="rvUndo" hidden>검토 대기로 되돌리기</button>
-            <button type="button" class="btn primary" id="rvApprove">반영</button>
+          <div class="rvbar">   <!-- 11-06 디자인 B1: 의견이 길어도 저장 버튼이 화면 아래에 늘 보이게 -->
+            <div class="hint" id="rvHint"></div>
+            <div class="actions">
+              <button type="button" class="btn danger" id="rvDel">결과 삭제</button>
+              <button type="button" class="btn" id="rvRepull">결과 다시 가져오기</button>
+              <button type="button" class="btn" id="rvUndo" hidden>검토 대기로 되돌리기</button>
+              <button type="button" class="btn primary" id="rvApprove">반영</button>
+            </div>
           </div>
-          <div class="hint" id="rvHint" style="text-align:right;margin-top:6px;"></div>
         </div>
       </div>
 
@@ -634,7 +642,7 @@
     </div>
   </section>
 
-  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-10-29 관리자 33</div>
+  <div id="verStamp" style="text-align:center;font-size:11px;color:#9AA3AF;padding:18px 0 0;">화면 버전 2026-11-06 관리자 34</div>
 </div>
 
 <script src="eval-core.js?v=6"></script>
@@ -798,14 +806,15 @@
     var sv = svState(key);
     if (sv === 'made') return { k: 'resp' };
     if (p && dstr(p['입교 시작일']) > today) return { k: 'future' };
+    if (sv !== 'none' && p && dstr(p['입교 종료일']) >= today) return { k: 'ing' };   /* 11-06 디자인 B6: 아직 안 끝난 과정은 '결과 없음' 대신 '진행 중' */
     return { k: sv === 'none' ? 'nosv' : 'unk' };
   }
   var ST_LABEL = {
     wait: ['t-warn', '검토 대기', '검토한 뒤 반영'], done: ['t-ok', '반영 완료', '보고서·강사 환류'], fbpart: ['t-ok', '환류 일부', '남은 강사 환류'],
     fbdone: ['t-ok', '환류 완료', '없음(평가 끝)'], resp: ['t-info', '설문 진행', '결과 가져오기'], nosv: ['t-none', '설문 전', '설문 링크 만들기'],
-    future: ['t-none', '예정', '과정 시작 후 진행'], unk: ['t-none', '결과 없음', '설문 확인']
+    future: ['t-none', '예정', '과정 시작 후 진행'], unk: ['t-none', '결과 없음', '설문 확인'], ing: ['t-none', '진행 중', '과정 끝난 뒤 설문']
   };
-  var ST_ORDER = { wait: 0, resp: 1, nosv: 2, unk: 2, done: 3, fbpart: 3, future: 4, fbdone: 5 };
+  var ST_ORDER = { wait: 0, resp: 1, nosv: 2, unk: 2, ing: 2, done: 3, fbpart: 3, future: 4, fbdone: 5 };
   function isTodo(p, st){
     var today = kstToday(), end = dstr(p['입교 종료일']), start = dstr(p['입교 시작일']);
     if (st.k === 'fbdone') return false;   /* 환류까지 끝난 과정은 [전체 과정]에서만 */
@@ -840,7 +849,7 @@
       var L = ST_LABEL[x.st.k], extra = x.st.f && x.st.f.n && x.st.k !== 'fbdone' ? ' · 환류 ' + x.st.f.sent + '/' + x.st.f.n : '';
       return '<a class="evc" href="#c=' + encodeURIComponent(x.key) + '"><div class="evt">' + esc(x.key) + '</div>' +
         '<div class="evm">' + shortMd(x.p['입교 시작일']) + '~' + shortMd(x.p['입교 종료일']) + '</div>' +
-        '<div class="evs">' + (svWait && x.st.k === 'unk' ? '<i class="sk sk-tag" aria-label="설문 상태 확인 중"></i>' : '<span class="tag ' + L[0] + '">' + L[1] + extra + '</span><span class="evn">다음: ' + L[2] + '</span>') + '</div></a>';
+        '<div class="evs">' + (svWait && (x.st.k === 'unk' || x.st.k === 'ing') ? '<i class="sk sk-tag" aria-label="설문 상태 확인 중"></i>' : '<span class="tag ' + L[0] + '">' + L[1] + extra + '</span><span class="evn">다음: ' + L[2] + '</span>') + '</div></a>';
     }).join('') : '<div class="note">' + (listFilter === 'todo' ? '할 일이 있는 과정이 없습니다. 지난 과정은 <b>[전체 과정]</b>에서 찾을 수 있습니다.' : '조건에 맞는 과정이 없습니다.') + '</div>';
     $('evHint').innerHTML = listFilter === 'todo' ? '할 일 있는 과정: 이번 달에 끝나는 과정, 설문을 진행 중인 과정, 검토 대기 결과가 있는 과정 (강사 환류까지 끝난 과정은 [전체 과정]에서 볼 수 있음)' : '';
   }
@@ -1574,15 +1583,16 @@
   function renderReview(){
     if (!rv) return;
     var u = rv.up, done = isDone(u);
-    $('rvTitle').textContent = String(u['개설키']);
     $('rvState').innerHTML = done ? '<span class="tag t-ok">반영</span>' + (u['승인일시'] ? ' <span class="hint">' + esc(String(u['승인일시'])) + ' 승인</span>' : '') : '<span class="tag t-warn">검토 대기 · 아직 점수에 들어가지 않음</span>';
     var nCm = rv.groups.reduce(function(s, g){ return s + g.list.length; }, 0);
     var exR = rv.rows.filter(function(x){ return !x.inc; }).length;
     $('rvSum').innerHTML = '<span>응답 ' + respN(u) + '명</span><span>교과목·강사 ' + rv.rows.length + '줄' + (exR ? ' (반영 안 함 ' + exR + ')' : '') + '</span><span>서술형 의견 ' + nCm + '건</span>' + (Number(u['의견없음수']) ? '<span>의견 없음 ' + Number(u['의견없음수']) + '건</span>' : '') + '<span>저장 ' + esc(String(u['저장일시'])) + '</span>';
+    var nT = rv.rows.filter(function(x){ return kindOf(x.r) === 'T'; }).length, Q = nT === 0 ? ['태도', '목표', '전달', '효과'] : nT === rv.rows.length ? ['태도', '준비성', '전문성', '적용성'] : ['태도', '목표 / 준비성', '전달 / 전문성', '효과 / 적용성'];   /* B2: 문항 이름을 머리글에 바로(강의·훈련 섞이면 둘 다) */
+    $('rvHeadRow').innerHTML = '<th class="c">반영</th><th>교과목</th><th>강사</th><th>구분</th><th class="n">응답</th>' + Q.map(function(q){ return '<th class="n">' + q + '</th>'; }).join('') + '<th class="n">종합(5점)</th><th>비고</th>';
     $('rvBody').innerHTML = rv.rows.length ? rv.rows.map(function(x, i){
       var r = x.r, lowRow = Number(r['응답수']) < E.MIN_SESSION, tr = kindOf(r) === 'T';
       return '<tr class="' + (x.inc ? (lowRow ? 'low' : '') : 'off') + '"><td class="c"><input type="checkbox" data-ri="' + i + '"' + (x.inc ? ' checked' : '') + ' aria-label="반영"></td><td>' + esc(r['교과목']) + '</td><td>' + esc(r['강사명']) + (!tr && !String(r['강사ID'] || '').trim() ? unregTag() : '') + '</td><td>' + (tr ? '<span class="tag t-warn">훈련</span>' : '<span class="tag t-info">강의</span>') + '</td><td class="n">' + esc(r['응답수']) + '</td>' +
-        ['태도', '목표', '전달', '효과'].map(function(q){ return '<td class="n">' + f2(r[q]) + '</td>'; }).join('') + '<td class="n"><b>' + f2(r['종합']) + '</b></td><td>' + (!x.inc ? '<span class="tag t-none">반영 안 함</span>' : lowRow ? '<span class="tag t-warn">응답 20명 미만</span>' : '<span class="tag t-ok">반영</span>') + '</td></tr>';
+        ['태도', '목표', '전달', '효과'].map(function(q){ return '<td class="n">' + f2(r[q]) + '</td>'; }).join('') + '<td class="n"><b>' + f2(r['종합']) + '</b></td><td>' + (!x.inc ? '<span class="tag t-none">반영 안 함</span>' : lowRow ? '<span class="tag t-warn">응답 20명 미만</span>' : '') + '</td></tr>';   /* B4: 반영은 체크로 보이므로 예외만 표시 */
     }).join('') : '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:14px;">교과목·강사 점수가 없습니다(공통 문항만 저장된 결과).</td></tr>';
     $('rvBody').querySelectorAll('input[data-ri]').forEach(function(c){ c.onchange = function(){ rv.rows[+c.getAttribute('data-ri')].inc = c.checked; renderReview(); }; });
     $('rvBasic').innerHTML = basicHtml(parseBasic(u), respN(u));
