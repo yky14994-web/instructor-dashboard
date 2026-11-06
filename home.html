@@ -321,6 +321,11 @@
   .mst .c{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg-soft);display:flex;flex-direction:column;justify-content:center;}
   .mst .c span{display:block;font-size:12px;color:var(--text-muted);font-weight:600;}
   .mst .c b{display:block;font-size:22px;color:var(--navy);margin-top:2px;line-height:1.2;}
+  .mst button.c{font:inherit;text-align:left;cursor:pointer;position:relative;width:100%;transition:border-color .15s ease-out,background-color .15s ease-out;}
+  .mst button.c::after{content:'›';position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--text-muted);}
+  .mst button.c:hover{border-color:var(--navy);background:#fff;}
+  .mst button.c:active{background:var(--bg-soft);}
+  .mst button.c:focus-visible{outline:2px solid var(--navy);outline-offset:2px;}
   .mst .c b small{font-size:12px;font-weight:700;color:var(--text-muted);margin-left:2px;}
 
   /* 연간 통계 */
@@ -1004,8 +1009,7 @@
     });
     total.c = Object.keys(names).length;
     var order = ['기본', '전문', '특별', '민관', '기타'].filter(function(t){ return byType[t]; });
-    html += '<div class="big">' + total.c + '과정 ' + total.n + '회 ' + total.p.toLocaleString('ko-KR') + '명 <small>' + yearSel + '년 계획 기준</small></div>' +
-      '<table class="st"><thead><tr><th>구분</th><th>과정</th><th>회</th><th>인원(명)</th></tr></thead><tbody>' +
+    html += '<table class="st"><thead><tr><th>구분</th><th>과정</th><th>회</th><th>인원(명)</th></tr></thead><tbody>' +
       order.map(function(t){ var b = byType[t], href = t === '기타' ? '' : 'lecture-assignment.html#v=table&y=' + encodeURIComponent(yearSel) + '&t=' + encodeURIComponent(t); return '<tr' + (href ? ' class="rowlink" data-href="' + href + '" title="' + t + ' 과정 목록 보기"' : '') + '><td>' + (href ? '<a href="' + href + '">' : '') + '<span class="tag ' + typeCls(t) + '">' + t + '</span>' + (href ? '<span class="go">목록 보기' + ic('arrowR', 'r') + '</span></a>' : '') + '</td><td>' + Object.keys(b.names).length + '</td><td>' + b.n + '</td><td>' + b.p.toLocaleString('ko-KR') + '</td></tr>'; }).join('') +
       '</tbody><tfoot><tr class="rowlink" data-href="lecture-assignment.html#v=table&y=' + encodeURIComponent(yearSel) + '" title="' + yearSel + '년 전체 과정 목록 보기"><td><a href="lecture-assignment.html#v=table&y=' + encodeURIComponent(yearSel) + '">합계</a><span class="go">전체 보기' + ic('arrowR', 'r') + '</span></td><td>' + total.c + '</td><td>' + total.n + '</td><td>' + total.p.toLocaleString('ko-KR') + '</td></tr></tfoot></table>' +
       '<div class="hint" style="margin-top:8px;">과정 = 과정명 종류, 회 = 기수 수, 인원 = 계획인원 합계(입교 시작일이 ' + yearSel + '년인 기수 기준). 구분 행을 누르면 해당 과정 목록이 열립니다. ' +
@@ -1414,11 +1418,11 @@
       if (a <= today && !dateOver(b)) { run++; rS[p['과정명']] = 1; }
     });
     function cnt(o){ return Object.keys(o).length; }
-    function tile2(l, c, n){ return '<div class="c"><span>' + esc(l) + '</span><b>' + c.toLocaleString('ko-KR') + '<small>과정</small> ' + n.toLocaleString('ko-KR') + '<small>회</small></b></div>'; }
+    function tile2(l, c, n, dk){ return '<button type="button" class="c" data-dt="month:' + dk + '" title="누르면 해당 과정 목록으로 이동합니다"><span>' + esc(l) + '</span><b>' + c.toLocaleString('ko-KR') + '<small>과정</small> ' + n.toLocaleString('ko-KR') + '<small>회</small></b></button>'; }
     function tile(l, n, u){ return '<div class="c"><span>' + esc(l) + '</span><b>' + n.toLocaleString('ko-KR') + '<small>' + u + '</small></b></div>'; }
     el.innerHTML = '<div class="chead"><h2>이번 달 교육 현황</h2><span class="meta">' + q.y + '년 ' + q.m + '월</span></div>' +
-      '<div class="mst">' + tile2('이번 달 개강', cnt(oS), open) + tile('계획인원 합계', ppl, '명') + tile2('지금 진행 중', cnt(rS), run) + tile2('다음 달 개강', cnt(nS), next) + '</div>' +
-      '<div class="foot"><div class="hint" style="margin-bottom:8px;">입교 시작일이 이번 달인 기수 기준이며 인원은 계획인원입니다.' + (cx ? ' 취소된 ' + cx + '회는 제외했습니다.' : '') + '</div><button type="button" class="btn sm" data-dt="month">월 일정 보기</button></div>';
+      '<div class="mst">' + tile2('이번 달 개강', cnt(oS), open, 'open') + tile('계획인원 합계', ppl, '명') + tile2('지금 진행 중', cnt(rS), run, 'run') + tile2('다음 달 개강', cnt(nS), next, 'next') + '</div>' +
+      '<div class="foot"><div class="hint" style="margin-bottom:8px;">입교 시작일이 이번 달인 기수 기준이며 인원은 계획인원입니다.' + (cx ? ' 취소된 ' + cx + '회는 제외했습니다.' : '') + ' 타일을 누르면 해당 과정 목록이 열립니다.</div></div>';
   }
   /* 조회 전용 계정: 편집 작업용 카드(처리할 일·편성이 필요한 과정)는 숨기고 이번 달 교육 현황만 넓게 */
   function renderTrio(){
@@ -1506,6 +1510,21 @@
       return '<div class="chead"><h2>편성이 필요한 과정 전체</h2><span class="meta">' + list.length + '과정</span></div>' +
         '<div class="cdesc">입교 시작일이 오늘부터 2개월 이내이고 아직 끝나지 않은 과정 중, 교과목이 하나도 없거나 오늘 이후 편성할 교시가 남은 과정입니다(5주 넘는 과정 포함). 편성 현황은 과정 전체 수업 교시 기준이며, 모든 교시가 편성되거나 비워둠 처리되면 목록에서 빠집니다. 입교 시작일의 월별로 나누어 보여 줍니다. 과정명을 누르면 교과목 편성 화면으로 이동합니다.</div>' +
         byMonthTables(list) + gapSection(gapCourses(7), '오늘부터 2개월 이내에 시작하거나 진행 중인 과정');
+    }
+    if (kind.indexOf('month:') === 0) {
+      var mk = kind.split(':')[1], mq = parseYmd(today), mym = mq.y + '-' + ('0' + mq.m).slice(-2), mnq = new Date(mq.y, mq.m, 1), mny = mnq.getFullYear() + '-' + ('0' + (mnq.getMonth() + 1)).slice(-2);
+      var msrt = function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : 1; };
+      var mlive = plans.filter(function(p){ return !isCancelled(p) && normYmd(p['입교 시작일']); });
+      var mlist = mlive.filter(function(p){
+        var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a;
+        return mk === 'open' ? a.slice(0, 7) === mym : mk === 'next' ? a.slice(0, 7) === mny : a <= today && !dateOver(b);
+      }).sort(msrt);
+      var mnames = {}; mlist.forEach(function(p){ mnames[p['과정명']] = 1; });
+      var mtitle = mk === 'open' ? '이번 달 개강 과정' : mk === 'next' ? '다음 달 개강 과정' : '지금 진행 중인 과정';
+      var mdesc = mk === 'open' ? '입교 시작일이 ' + mq.m + '월인 기수입니다.' : mk === 'next' ? '입교 시작일이 ' + (mnq.getMonth() + 1) + '월인 기수입니다.' : '입교 시작일이 오늘 이전이고 아직 끝나지 않은 기수입니다(이전 달에 시작한 기수 포함).';
+      return '<div class="chead"><h2>' + mtitle + '</h2><span class="meta">' + Object.keys(mnames).length + '과정 ' + mlist.length + '회</span></div>' +
+        '<div class="cdesc">' + mdesc + ' 취소된 기수는 제외했습니다. 과정명을 누르면 교과목 편성 화면으로 이동합니다.</div>' +
+        dtTable(PCOLS, mlist.map(function(p){ return planRow(p); }), '해당하는 과정이 없습니다.');
     }
     if (kind === 'month') {
       var q = parseYmd(today), ym = q.y + '-' + ('0' + q.m).slice(-2), nq = new Date(q.y, q.m, 1), ny = nq.getFullYear() + '-' + ('0' + (nq.getMonth() + 1)).slice(-2);
@@ -1705,7 +1724,7 @@
     renderTrio(); if (curDetail) showDetailKeep();
   });
   /* 상단 경로: 홈 › (처리할 일) › 상세 이름 */
-  var CRUMB_NAME = { 'todo': '처리할 일', 'nosubj': '편성이 필요한 과정', 'month': '이번 달 교육 현황',
+  var CRUMB_NAME = { 'open': '이번 달 개강 과정', 'run': '지금 진행 중인 과정', 'next': '다음 달 개강 과정', 'todo': '처리할 일', 'nosubj': '편성이 필요한 과정', 'month': '이번 달 교육 현황',
     'plan': '강의계획서 제출 기한 임박 과정', 'unas': '교과목 강사 미지정', 'resv': '교과목 미정 (사전확보 교시)',
     'rvreq': '강의실 대관 승인 대기', 'docreq': '강사 서류 교체 승인 대기', 'lodge': '강사 숙소 신청 확인 대기',
     'gap': '빈 교시가 있는 과정', 'chg': '최근 7일 일정 변경' };
@@ -1717,6 +1736,8 @@
     var out = '<a data-dt="">홈</a>' + sep;
     if (k.indexOf('todo:') === 0) {
       out += '<a data-dt="todo">처리할 일</a>' + sep + '<span class="cur">' + esc(CRUMB_NAME[k.split(':')[1]] || '상세') + '</span>';
+    } else if (k.indexOf('month:') === 0) {
+      out += '<span class="cur">이번 달 교육 현황</span>' + sep + '<span class="cur">' + esc(CRUMB_NAME[k.split(':')[1]] || '상세') + '</span>';
     } else {
       out += '<span class="cur">' + esc(CRUMB_NAME[k] || '상세') + '</span>';
     }
@@ -1761,7 +1782,7 @@
     showDetail(t.getAttribute('data-dt'));
   });
   window.addEventListener('hashchange', function(){
-    var m = /^#d=(todo(?::[a-z]+)?|nosubj|month)$/.exec(location.hash);
+    var m = /^#d=(todo(?::[a-z]+)?|nosubj|month(?::[a-z]+)?)$/.exec(location.hash);
     if ((m ? m[1] : '') !== curDetail && $('app').style.display !== 'none') showDetail(m ? m[1] : '', true);
   });
 
@@ -1850,7 +1871,7 @@
       $('loading').style.display = 'none';
       $('main').style.display = '';
       renderAll();
-      (function(){ var m = /^#d=(todo(?::[a-z]+)?|nosubj|month)$/.exec(location.hash), k = m ? m[1] : curDetail; if (k) showDetail(k, true); })();
+      (function(){ var m = /^#d=(todo(?::[a-z]+)?|nosubj|month(?::[a-z]+)?)$/.exec(location.hash), k = m ? m[1] : curDetail; if (k) showDetail(k, true); })();
   }
 
   document.addEventListener('click', function(e){
