@@ -363,10 +363,16 @@
   #vEquip .savebar .st{font-size:13px;font-weight:700;color:var(--text-sub);} #vEquip .savebar .st b{color:var(--navy);}
   #vEquip .savebar label{font-size:13px;font-weight:700;color:var(--text-sub);display:flex;align-items:center;gap:6px;margin-left:auto;}
   #vEquip .savebar input{height:36px;width:120px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;font-family:inherit;font-size:14px;}
+  #vEquip .course .savebar{position:static;box-shadow:none;margin:0;border-top:1px solid var(--border);background:var(--bg-soft);}
+  #vEquip .sk{display:block;border-radius:6px;background:linear-gradient(90deg,#E6EBF2 25%,#F3F5F9 50%,#E6EBF2 75%);background-size:200% 100%;animation:eqsk 1.3s ease-in-out infinite;}
+  #vEquip .sk.chipk{width:104px;height:38px;border-radius:10px;} #vEquip .sk.l1{width:min(46%,260px);height:18px;} #vEquip .sk.l2{width:84px;height:14px;} #vEquip .sk.tg{width:78px;height:22px;border-radius:11px;margin-left:auto;}
+  #vEquip .skrow{display:flex;align-items:center;gap:12px;padding:16px 18px;}
+  @keyframes eqsk{from{background-position:200% 0;}to{background-position:-200% 0;}}
+  @media (prefers-reduced-motion:reduce){#vEquip .sk{animation:none;}}
   #eqToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:9;max-width:90vw;}
   #eqToast.show{opacity:1;}
   @media (max-width:640px){
-    #vEquip .savebar{position:static;box-shadow:none;margin:0;border:1px solid #CBD4E0;border-radius:12px;}
+    #vEquip .savebar{position:static;box-shadow:none;margin:0;}
     #vEquip .savebar label{margin-left:0;width:100%;} #vEquip .savebar .btn{width:100%;justify-content:center;}
     #vEquip .item{grid-template-columns:1fr;} #vEquip .item .seg{width:100%;} #vEquip .item .seg button{flex:1;}
   }
@@ -697,7 +703,7 @@
     <h1>기자재 현황</h1>
     <p class="lead">과정이 끝난 뒤 강의실·실습장별 기자재를 확인해 <b>이상 없음</b> 또는 <b>이상 있음</b>을 누릅니다. 이상 있음은 내용을 적어야 저장됩니다.</p>
     <div id="eqMsg" class="msg" hidden></div>
-    <div id="eqBody"><div class="loading">불러오는 중입니다.</div></div>
+    <div id="eqBody"></div>
     <div id="eqBar"></div>
   </section>
   <div id="eqToast" role="status"></div>
@@ -2312,7 +2318,7 @@
   }
   function eqCourseHtml(m){
     var c = m.c, open = eqOpenKey === c['개설키'] && m.st !== 'none';
-    var body = (m.recs.length ? eqDoneHtml(m) : '') + m.rooms.filter(function(r){ return r.pend.length; }).map(function(r){ return eqRoomHtml(m, r); }).join('');
+    var body = (m.recs.length ? eqDoneHtml(m) : '') + m.rooms.filter(function(r){ return r.pend.length; }).map(function(r){ return eqRoomHtml(m, r); }).join('') + (open ? eqBarHtml(m) : '');
     return '<div class="card course' + (open ? ' open' : '') + (m.st === 'none' ? ' dis' : '') + '" data-k="' + esc(c['개설키']) + '"><div class="chead">' + (m.st === 'none' ? '' : EQ_CHEV) +
       '<span class="nm">' + esc(c['개설키']) + '</span><span class="meta">' + (c['종료됨'] ? '종료 ' : '종료 예정 ') + esc(eqMd(c['종료'])) + '</span><span class="rt">' + eqTagHtml(m) + '</span></div><div class="cbody">' + body + '</div></div>';
   }
@@ -2322,8 +2328,7 @@
       '<div class="body">' + esc(c['품명']) + ' — ' + esc(c['이상내용']) + '</div><div class="by">점검자 ' + esc(c['점검자']) + ' · ' + esc(eqMd(c['점검일시'])) + (course && course['종료됨'] === false ? ' · 과정 종료 전 점검' : '') + '</div>' +
       '<div class="act"><input type="text" placeholder="조치 내용 (선택, 예: 센서 교체)" aria-label="조치 내용" maxlength="80"><button type="button" class="btn primary sm" data-fix="1">조치 완료</button></div></div>';
   }
-  function eqBarHtml(){
-    var m = eqCur();
+  function eqBarHtml(m){
     if (!m || !m.pend.length) return '';
     var key = m.c['개설키'], n = 0, bad = 0, badNo = 0;
     m.pend.forEach(function(r){ var s = eqSel[key + '|' + r['기자재번호']]; if (s) { n++; if (s.r === '있음') { bad++; if (!(s.why || '').trim()) badNo++; } } });
@@ -2331,12 +2336,16 @@
     if (left > 0) msg = '확인한 기자재 <b>' + n + '</b> / ' + m.pend.length + ' · 남은 ' + left + '개';
     else if (badNo > 0) msg = '이상 있음 ' + badNo + '건에 내용을 입력해 주세요';
     else { msg = '<b>' + m.pend.length + '개</b> 확인 완료 · 이상 있음 ' + bad + '건'; can = true; }
-    return '<div class="savebar"><span class="st">' + esc(key) + ' · ' + msg + '</span><label>점검자<input type="text" id="eqWho" value="' + esc(lsGet(KEY_EQWHO)) + '" placeholder="이름" maxlength="10"></label><button type="button" class="btn primary" id="eqSave"' + (can && !eqBusy ? '' : ' disabled') + '>점검 결과 저장</button></div>';
+    return '<div class="savebar"><span class="st">' + esc(key) + ' · ' + msg + '</span><label>점검자 서명<input type="text" id="eqWho" value="' + esc(lsGet(KEY_EQWHO)) + '" placeholder="이름 입력" maxlength="10" autocomplete="name"></label><button type="button" class="btn primary" id="eqSave"' + (can && !eqBusy ? '' : ' disabled') + '>서명 확인 · 점검 완료</button></div>';
+  }
+  function eqSkelHtml(){
+    var row = '<div class="card course" style="pointer-events:none"><div class="skrow"><span class="sk l1"></span><span class="sk l2"></span><span class="sk tg"></span></div></div>';
+    return '<div aria-busy="true" aria-label="기자재 현황을 불러오는 중입니다"><div class="sum"><span class="sk chipk"></span><span class="sk chipk"></span><span class="sk chipk"></span></div>' + row + row + row + row + row + '</div>';
   }
   function renderEquip(){
     var body = $('eqBody');
     if (!eq) {
-      body.innerHTML = eqErr ? '<div class="msg err">' + esc(eqErr) + ' <button type="button" class="btn sm" id="eqRetry">다시 시도</button></div>' : '<div class="loading">불러오는 중입니다.</div>';
+      body.innerHTML = eqErr ? '<div class="msg err">' + esc(eqErr) + ' <button type="button" class="btn sm" id="eqRetry">다시 시도</button></div>' : eqSkelHtml();
       $('eqBar').innerHTML = ''; return;
     }
     show($('eqMsg'), 'err', eqErr ? esc(eqErr) : '');
@@ -2349,9 +2358,15 @@
     else if (!ms.length) h += '<div class="card"><div class="hint">점검할 과정이 없습니다. 교과목시간표에 강의실이 입력된 과정만 나타납니다.</div></div>';
     else h += ms.map(eqCourseHtml).join('');
     body.innerHTML = h;
-    $('eqBar').innerHTML = eqBarHtml();
+    $('eqBar').innerHTML = '';
   }
-  function eqRefreshBar(){ var who = $('eqWho'); $('eqBar').innerHTML = eqBarHtml(); if (who) { var w2 = $('eqWho'); if (w2) w2.value = who.value; } }
+  function eqRefreshBar(){
+    var old = $('eqBody').querySelector('.course.open .savebar'); if (!old) return;
+    var who = $('eqWho'), v = who ? who.value : null, tmp = document.createElement('div');
+    tmp.innerHTML = eqBarHtml(eqCur()); if (!tmp.firstChild) return;
+    old.parentNode.replaceChild(tmp.firstChild, old);
+    if (v !== null && $('eqWho')) $('eqWho').value = v;
+  }
   function eqSave(){
     var m = eqCur();
     if (!m || eqBusy) return;
@@ -2366,7 +2381,7 @@
       if (a.status !== 'ok') throw new Error(a.message || '저장하지 못했습니다');
       m.pend.forEach(function(r){ delete eqSel[key + '|' + r['기자재번호']]; });
       eqOpenKey = '';
-      eqToast(nBad ? '저장했습니다. 이상 ' + nBad + '건이 홈 처리할 일에 표시됩니다.' : '저장했습니다. 이상 없음으로 기록되었습니다.');
+      eqToast(who + ' 점검자 서명 확인 · ' + (nBad ? '이상 ' + nBad + '건이 홈 처리할 일에 표시됩니다.' : '이상 없음으로 기록되었습니다.')); 
     }).catch(function(err){ eqToast('저장하지 못했습니다. ' + (srvMsg(err.message) || ''), 6000); }).then(function(){ eqBusy = false; eqLoad(); });
   }
   function eqFix(box){

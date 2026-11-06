@@ -469,7 +469,7 @@
   var OPS_NAME = '교육운영팀';
   var DOW = ['일','월','화','수','목','금','토'];
 
-  var plans = [], periods = [], rooms = [], roomSkip = {}, allSessions = [], resv = [], reqs = [], docs = [], lodges = [], pendInst = 0, eqOpen = 0, histRows = [];
+  var plans = [], periods = [], rooms = [], roomSkip = {}, allSessions = [], resv = [], reqs = [], docs = [], lodges = [], pendInst = 0, eqOpen = 0, eqWait = 0, eqWaitAt = 0, histRows = [];
   var sessionsOk = false;
   var yearSel = '';      // 연간 통계 연도('' = 자동)
   var weekOffset = 0;    // 이번 주 기준 주 이동
@@ -1203,6 +1203,23 @@
       return o;
     }).sort(function(a, b){ return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
   }
+  /* 관리자만: 종료됐는데 아직 점검하지 않은 과정 수를 화면이 뜬 뒤 뒤에서 조회해 처리할 일에 한 줄 추가(3분 이내 재조회 생략) */
+  function eqWaitLoad(role){
+    if (role !== 'admin' || Date.now() - eqWaitAt < 180000) return;
+    eqWaitAt = Date.now();
+    api({ action: 'listEquipment', password: getPw() }).then(function(r){
+      if (!r || r.status !== 'ok' || !r['기자재'] || !r['과정']) return;
+      var byRoom = {}, chk = {}, n = 0;
+      r['기자재'].forEach(function(x){ if (/중지|폐기|불용|제외/.test(String(x['사용여부'] || ''))) return; var k = String(x['강의실'] || '').trim(); (byRoom[k] = byRoom[k] || []).push(x); });
+      (r['점검'] || []).forEach(function(c){ chk[c['개설키'] + '|' + c['기자재번호']] = 1; });
+      r['과정'].forEach(function(c){
+        if (!c['종료됨']) return;
+        var pend = 0; (c['강의실'] || []).forEach(function(rn){ (byRoom[String(rn).trim()] || []).forEach(function(x){ if (!chk[c['개설키'] + '|' + x['기자재번호']]) pend++; }); });
+        if (pend) n++;
+      });
+      if (n !== eqWait) { eqWait = n; if ($('main').style.display !== 'none' && sessionsOk && !homeViewer()) renderTodoCard(); }
+    }).catch(function(){ eqWaitAt = 0; });
+  }
   function renderTodoCard(){
     var el = $('cTodo'), today = todayStr();
     if (!sessionsOk) { el.innerHTML = '<div class="chead"><h2>처리할 일</h2></div><div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; return; }
@@ -1231,9 +1248,9 @@
     /* 교과목이 한 건도 없는 과정 중 이미 진행 중이거나 14일 이내 시작하는 과정 */
     var gapKeys = {}; gapCourses(7).forEach(function(o){ gapKeys[String(o.p['과정+기수'])] = true; });   // 빈 교시(7일 이내) 항목에서 이미 세는 과정은 중복 집계 방지
     var nsN = sessionsOk ? needList(false).filter(function(p){ var dd = dayDiff(today, normYmd(p['입교 시작일'])); return dd !== null && dd <= 14 && !gapKeys[String(p['과정+기수'])]; }).length : 0;
-    var pinN = Number(pendInst) || 0, eqN = Number(eqOpen) || 0;
-    var total = soon + unas + nsN + rvn + gapN + rqN + docN + lgN + pinN + eqN;
-    var tdRows = (pinN ? '<li><a class="wn" href="instructor-dashboard.html#st=승인대기"><span class="l"><span class="t">강사 등록 승인 대기</span><small>(누르면 강사 검색의 승인대기 목록으로 이동)</small></span><span class="n">' + pinN + '<small>건</small></span></a></li>' : '') + (eqN ? '<li><a class="wn" href="admin.html#equip"><span class="l"><span class="t">기자재 이상 조치 대기</span><small>(누르면 관리자 기자재 현황으로 이동)</small></span><span class="n">' + eqN + '<small>건</small></span></a></li>' : '') + row('wn', soon, '강의계획서 제출 기한 임박 과정', '2027년 개강 과정은 개강 14일 전, 그 전 과정은 강의일 7일 전', 'plan') + row('wn', unas, '교과목 강사 미지정', '교과목은 있고 강사가 비어 있음 · 강의일 14일 이내', 'unas') + row('wn', nsN, '편성이 필요한 과정', '교과목이 없거나 일부만 편성 · 진행 중이거나 14일 이내 시작', 'nosubj', true) + row('wn', rvn, '교과목 미정 (사전확보 교시)', '교시·강의실만 잡아 둔 건 · 예약일 14일 이내', 'resv') + row('wn', rqN, '강의실 대관 승인 대기', '직원이 신청한 강의실 대관', 'rvreq') + row('wn', docN, '강사 서류 교체 승인 대기', '강사카드·동의서 교체', 'docreq') + (lgN ? row('wn', lgN, '강사 숙소 신청 확인 대기', '강사 임시숙소 · 사용일 확인', 'lodge') : '') + row('wn', gapN, '빈 교시가 있는 과정', '교과목이 없는 교시 · 비워둠 처리 전 · 7일 이내', 'gap') + row('inf', chgN, '최근 7일 일정 변경', '알림용 · 건수 합계 제외', 'chg');
+    var pinN = Number(pendInst) || 0, eqN = Number(eqOpen) || 0, ewN = Number(eqWait) || 0;
+    var total = soon + unas + nsN + rvn + gapN + rqN + docN + lgN + pinN + eqN + ewN;
+    var tdRows = (pinN ? '<li><a class="wn" href="instructor-dashboard.html#st=승인대기"><span class="l"><span class="t">강사 등록 승인 대기</span><small>(누르면 강사 검색의 승인대기 목록으로 이동)</small></span><span class="n">' + pinN + '<small>건</small></span></a></li>' : '') + (ewN ? '<li><a class="wn" href="admin.html#equip"><span class="l"><span class="t">기자재 점검 대기 과정</span><small>(종료된 과정 중 아직 점검하지 않은 과정 · 누르면 관리자 기자재 현황으로 이동)</small></span><span class="n">' + ewN + '<small>건</small></span></a></li>' : '') + (eqN ? '<li><a class="wn" href="admin.html#equip"><span class="l"><span class="t">기자재 이상 조치 대기</span><small>(누르면 관리자 기자재 현황으로 이동)</small></span><span class="n">' + eqN + '<small>건</small></span></a></li>' : '') + row('wn', soon, '강의계획서 제출 기한 임박 과정', '2027년 개강 과정은 개강 14일 전, 그 전 과정은 강의일 7일 전', 'plan') + row('wn', unas, '교과목 강사 미지정', '교과목은 있고 강사가 비어 있음 · 강의일 14일 이내', 'unas') + row('wn', nsN, '편성이 필요한 과정', '교과목이 없거나 일부만 편성 · 진행 중이거나 14일 이내 시작', 'nosubj', true) + row('wn', rvn, '교과목 미정 (사전확보 교시)', '교시·강의실만 잡아 둔 건 · 예약일 14일 이내', 'resv') + row('wn', rqN, '강의실 대관 승인 대기', '직원이 신청한 강의실 대관', 'rvreq') + row('wn', docN, '강사 서류 교체 승인 대기', '강사카드·동의서 교체', 'docreq') + (lgN ? row('wn', lgN, '강사 숙소 신청 확인 대기', '강사 임시숙소 · 사용일 확인', 'lodge') : '') + row('wn', gapN, '빈 교시가 있는 과정', '교과목이 없는 교시 · 비워둠 처리 전 · 7일 이내', 'gap') + row('inf', chgN, '최근 7일 일정 변경', '알림용 · 건수 합계 제외', 'chg');
     el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + (chgN ? ' · 최근 변경 ' + chgN + '건' : '') + '</span></div>' +
       (tdRows ? '<ul class="tdl">' + tdRows + '</ul>' : '<div class="empty">처리할 일이 없습니다.</div>') +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><button type="button" class="btn sm" data-dt="todo">처리할 일 보기</button></div>';
@@ -1848,6 +1865,7 @@
       $('loading').style.display = 'none';
       $('main').style.display = '';
       renderAll();
+      eqWaitLoad(lg && lg.role);
       (function(){ var m = /^#d=(todo(?::[a-z]+)?|nosubj|month)$/.exec(location.hash), k = m ? m[1] : curDetail; if (k) showDetail(k, true); })();
   }
 
