@@ -134,6 +134,10 @@
   .card .chead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
   .card .chead .meta{font-size:13px;color:var(--text-muted);font-weight:600;}
   .hint{font-size:12px;color:var(--text-muted);line-height:1.5;}
+  .eqsk{height:46px;margin:10px 0;border-radius:10px;background:linear-gradient(90deg,#eceff3 25%,#f7f8fa 50%,#eceff3 75%);background-size:200% 100%;animation:eqsk 1.3s linear infinite;}
+  @keyframes eqsk{to{background-position:-200% 0}}
+  @media (prefers-reduced-motion:reduce){.eqsk{animation:none}}
+  #detail .foot{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;}
   .empty{padding:14px 2px;color:var(--text-muted);font-size:14px;}
 
   .tag{display:inline-block;border-radius:12px;padding:2px 9px;font-size:12px;font-weight:700;line-height:1.5;white-space:nowrap;}
@@ -529,7 +533,7 @@
   }
   function api(body, opts){
     /* 조회 전용 요청은 겹쳐 보내기(hedgedPost). 저장·변경 요청은 중복 방지를 위해 1건만 보내고 40초까지 기다림 */
-    var READ = { listAssignmentData:1, listSessions:1, login:1, list:1, getHistory:1, bootstrap:1, listReservations:1 };
+    var READ = { listAssignmentData:1, listSessions:1, login:1, list:1, getHistory:1, bootstrap:1, listReservations:1, listEquipment:1 };
     if (READ[body && body.action]) return hedgedPost(body, opts && opts.onRetry);
     var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 40000) : null;
@@ -1236,7 +1240,7 @@
     var gapKeys = {}; gapCourses(7).forEach(function(o){ gapKeys[String(o.p['과정+기수'])] = true; });   // 빈 교시(7일 이내) 항목에서 이미 세는 과정은 중복 집계 방지
     var pinN = Number(pendInst) || 0, eqN = Number(eqOpen) || 0, evN = Number(evWait) || 0;
     var total = soon + unas + rvn + gapN + rqN + docN + lgN + pinN + eqN + evN;
-    var tdRows = (pinN ? '<li><a class="wn" href="instructor-dashboard.html#st=승인대기"><span class="l"><span class="t">강사 등록 승인 대기</span><small>(누르면 강사 검색의 승인대기 목록으로 이동)</small></span><span class="n">' + pinN + '<small>건</small></span></a></li>' : '') + (evN ? '<li><a class="wn" href="admin.html#eval"><span class="l"><span class="t">평가 후속 처리 대기 과정</span><small>(검토 대기 결과 · 반영 후 환류 미발송 · 누르면 관리자 평가관리로 이동)</small></span><span class="n">' + evN + '<small>건</small></span></a></li>' : '') + (eqN ? '<li><a class="wn" href="admin.html#equip"><span class="l"><span class="t">기자재 이상 조치 대기</span><small>(누르면 관리자 기자재 현황으로 이동)</small></span><span class="n">' + eqN + '<small>건</small></span></a></li>' : '') + row('wn', soon, '강의계획서 제출 기한 임박 과정', '2027년 개강 과정은 개강 14일 전, 그 전 과정은 강의일 7일 전', 'plan') + row('wn', unas, '교과목 강사 미지정', '교과목은 있고 강사가 비어 있음 · 강의일 14일 이내', 'unas') + row('wn', rvn, '교과목 미정 (사전확보 교시)', '교시·강의실만 잡아 둔 건 · 예약일 14일 이내', 'resv') + row('wn', rqN, '강의실 대관 승인 대기', '직원이 신청한 강의실 대관', 'rvreq') + row('wn', docN, '강사 서류 교체 승인 대기', '강사카드·동의서 교체', 'docreq') + (lgN ? row('wn', lgN, '강사 숙소 신청 확인 대기', '강사 임시숙소 · 사용일 확인', 'lodge') : '') + row('wn', gapN, '빈 교시가 있는 과정', '교과목이 없는 교시 · 비워둠 처리 전 · 7일 이내', 'gap') + row('inf', chgN, '최근 7일 일정 변경', '알림용 · 건수 합계 제외', 'chg');
+    var tdRows = (pinN ? '<li><a class="wn" href="instructor-dashboard.html#st=승인대기"><span class="l"><span class="t">강사 등록 승인 대기</span><small>(누르면 강사 검색의 승인대기 목록으로 이동)</small></span><span class="n">' + pinN + '<small>건</small></span></a></li>' : '') + (evN ? '<li><a class="wn" href="admin.html#eval"><span class="l"><span class="t">평가 후속 처리 대기 과정</span><small>(검토 대기 결과 · 반영 후 환류 미발송 · 누르면 관리자 평가관리로 이동)</small></span><span class="n">' + evN + '<small>건</small></span></a></li>' : '') + (eqN ? '<li><a class="wn" href="#d=todo:equip" data-dt="todo:equip"><span class="l"><span class="t">기자재 이상 조치 대기</span><small>(누르면 이상 내용 요약이 열리고, 거기서 기자재 현황으로 이동)</small></span><span class="n">' + eqN + '<small>건</small></span></a></li>' : '') + row('wn', soon, '강의계획서 제출 기한 임박 과정', '2027년 개강 과정은 개강 14일 전, 그 전 과정은 강의일 7일 전', 'plan') + row('wn', unas, '교과목 강사 미지정', '교과목은 있고 강사가 비어 있음 · 강의일 14일 이내', 'unas') + row('wn', rvn, '교과목 미정 (사전확보 교시)', '교시·강의실만 잡아 둔 건 · 예약일 14일 이내', 'resv') + row('wn', rqN, '강의실 대관 승인 대기', '직원이 신청한 강의실 대관', 'rvreq') + row('wn', docN, '강사 서류 교체 승인 대기', '강사카드·동의서 교체', 'docreq') + (lgN ? row('wn', lgN, '강사 숙소 신청 확인 대기', '강사 임시숙소 · 사용일 확인', 'lodge') : '') + row('wn', gapN, '빈 교시가 있는 과정', '교과목이 없는 교시 · 비워둠 처리 전 · 7일 이내', 'gap') + row('inf', chgN, '최근 7일 일정 변경', '알림용 · 건수 합계 제외', 'chg');
     el.innerHTML = '<div class="chead"><h2>처리할 일</h2><span class="meta">' + (total ? '총 ' + total + '건' : '없음') + (chgN ? ' · 최근 변경 ' + chgN + '건' : '') + '</span></div>' +
       (tdRows ? '<ul class="tdl">' + tdRows + '</ul>' : '<div class="empty">처리할 일이 없습니다.</div>') +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">겹침 경고·강사 서류는 강의배정 화면에서 확인합니다.</div><button type="button" class="btn sm" data-dt="todo">처리할 일 보기</button></div>';
@@ -1502,8 +1506,40 @@
         return '<div class="mhd">' + esc(lab(g.k)) + ' 시작<small>' + g.items.length + '과정</small></div>' + dtTable(PCOLS.concat(['편성 현황']), g.items.map(function(p){ return planRow(p, [isLivePlan(p) ? '<b>' + esc(needText(p) || '-') + '</b>' : esc(needText(p) || '-')]); }), '');
       }).join('');
   }
+  /* 기자재 이상 조치 대기 요약: 누르면 기자재 점검 목록을 불러와 '이상 있음 + 조치 대기' 건만 보여 줌(읽기 전용, 조치는 관리자 기자재 현황에서) */
+  var eqData = null, eqBusy = false, eqErr = '', eqT = 0;
+  function eqLoad(){
+    if (eqBusy || eqErr || (eqData && Date.now() - eqT < 30000)) return; eqBusy = true;
+    api({ action: 'listEquipment', password: getPw() }).then(function(j){
+      eqBusy = false;
+      if (!j || j.status !== 'ok') { eqErr = (j && j.message) || '기자재 점검 기록을 불러오지 못했습니다.'; eqData = eqData || null; }
+      else { eqData = j; eqT = Date.now(); }
+      if (curDetail === 'todo:equip') showDetailKeep();
+    }).catch(function(){ eqBusy = false; eqErr = '서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'; if (curDetail === 'todo:equip') showDetailKeep(); });
+  }
+  function eqDetailHtml(){
+    var go = '<a class="btn sm" href="admin.html#equip">기자재 현황으로 이동</a>';
+    var head = '<div class="chead"><h2>기자재 이상 조치 대기</h2><span class="meta">' + (eqData ? '' : (eqBusy ? '불러오는 중' : '')) + '</span></div>';
+    if (!eqData) {
+      if (eqErr) return head + '<div class="empty">' + esc(eqErr) + '</div><div class="foot"><button type="button" class="btn sm" data-eqretry="1">다시 불러오기</button> ' + go + '</div>';
+      var sk = ''; for (var i = 0; i < 4; i++) sk += '<div class="eqsk"></div>';
+      return head + '<div class="cdesc">기자재 점검 기록을 불러오는 중입니다. 잠시 걸릴 수 있습니다.</div>' + sk;
+    }
+    var cname = {}; (eqData.과정 || []).forEach(function(c){ cname[String(c.개설키)] = c; });
+    var rows = (eqData.점검 || []).filter(function(r){ return String(r['결과']) === '있음' && String(r['조치상태']) === '대기'; });
+    rows.sort(function(a, b){ return String(b['점검일시'] || '') < String(a['점검일시'] || '') ? -1 : 1; });
+    var keys = {}; rows.forEach(function(r){ keys[String(r['개설키'])] = 1; });
+    head = '<div class="chead"><h2>기자재 이상 조치 대기</h2><span class="meta">' + rows.length + '건 · ' + Object.keys(keys).length + '과정</span></div>';
+    return head + '<div class="cdesc">점검에서 이상이 보고되고 아직 조치 완료 처리하지 않은 건입니다. 조치 완료 처리와 점검 기록 수정은 기자재 현황에서 합니다.' + (eqBusy ? ' (최신 내용으로 갱신 중)' : '') + '</div>' +
+      dtTable(['기자재', '이상 내용', '과정 · 기수', '강의실', '점검일시', '점검자'], rows.map(function(r){
+        var k = String(r['개설키'] || ''), c = cname[k];
+        return ['<b>' + esc(r['품명'] || r['기자재번호'] || '') + '</b>', esc(r['이상내용'] || '-'), cLink(k, c ? c.과정명 : k), esc(r['강의실'] || '-'), '<span class="nw">' + esc(String(r['점검일시'] || '').slice(0, 16)) + '</span>', esc(r['점검자'] || '-')];
+      }), '조치 대기 중인 이상 건이 없습니다.') +
+      '<div class="foot">' + go + '</div>';
+  }
   function detailHtml(kind){
     var today = todayStr(), html = '';
+    if (kind === 'todo:equip') { eqLoad(); return eqDetailHtml(); }
     if (!sessionsOk) return '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>';
     if (kind === 'nosubj') {
       var list = needList(true).sort(function(x, y){ return normYmd(x['입교 시작일']) < normYmd(y['입교 시작일']) ? -1 : 1; });
@@ -1726,7 +1762,7 @@
   /* 상단 경로: 홈 › (처리할 일) › 상세 이름 */
   var CRUMB_NAME = { 'open': '이번 달 개강 과정', 'run': '지금 진행 중인 과정', 'next': '다음 달 개강 과정', 'todo': '처리할 일', 'nosubj': '편성이 필요한 과정', 'month': '이번 달 교육 현황',
     'plan': '강의계획서 제출 기한 임박 과정', 'unas': '교과목 강사 미지정', 'resv': '교과목 미정 (사전확보 교시)',
-    'rvreq': '강의실 대관 승인 대기', 'docreq': '강사 서류 교체 승인 대기', 'lodge': '강사 숙소 신청 확인 대기',
+    'rvreq': '강의실 대관 승인 대기', 'docreq': '강사 서류 교체 승인 대기', 'lodge': '강사 숙소 신청 확인 대기', 'equip': '기자재 이상 조치 대기',
     'gap': '빈 교시가 있는 과정', 'chg': '최근 7일 일정 변경' };
   function renderCrumb(){
     var el = $('crumb'); if (!el) return;
@@ -1746,6 +1782,7 @@
   function showDetailKeep(){ var k = curDetail, y = window.scrollY; renderDetail(k); window.scrollTo(0, y); var home = ['trio', 'main', 'cYear']; home.forEach(function(id){ var el = $(id); if (el) el.style.display = 'none'; }); }
   function showDetail(kind, noHash){
     var prevDetail = curDetail; curDetail = kind || '';
+    if (curDetail === 'todo:equip' && prevDetail !== curDetail) eqErr = '';
     var home = ['trio', 'main', 'cYear'], quick = document.querySelector('.quick');
     home.forEach(function(id){ var el = $(id); if (!el) return; if (curDetail) { if (!el.hasAttribute('data-hid') || el.style.display !== 'none') el.setAttribute('data-hid', el.style.display || ' '); el.style.display = 'none'; } else if (el.hasAttribute('data-hid')) { var v = el.getAttribute('data-hid'); el.style.display = v === ' ' ? '' : v; el.removeAttribute('data-hid'); } });
     if (quick) quick.style.display = curDetail ? 'none' : '';
@@ -1777,6 +1814,8 @@
     if (lg) { hLodgeOk(lg.getAttribute('data-hlg'), lg); return; }
     var rq = ev.target && ev.target.closest ? ev.target.closest('[data-hrq]') : null;
     if (rq) { hRqDecide(rq.getAttribute('data-hrq'), rq); return; }
+    var rt = ev.target && ev.target.closest ? ev.target.closest('[data-eqretry]') : null;
+    if (rt) { eqErr = ''; eqT = 0; showDetailKeep(); return; }
     var t = ev.target && ev.target.closest ? ev.target.closest('[data-dt]') : null;
     if (!t) return;
     showDetail(t.getAttribute('data-dt'));
