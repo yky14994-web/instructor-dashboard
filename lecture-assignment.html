@@ -696,7 +696,7 @@
   table.g td.empty{cursor:pointer;}
   table.g td.empty:hover{background:var(--bg-hover);}
   /* 11-17 금용님: 격자 두 번 누르기 — 첫 칸=시작 교시, 둘째 칸=끝 교시. 선택 중에는 고를 수 있는 칸만 진하게, 나머지는 흐리게(사전 차단) */
-  .picker .pkhd{color:var(--navy);}
+  .picker .pkhd{color:var(--navy);background:var(--bg-hover,#f5f7fa);}
   .picker button.pkmore{display:block;width:100%;text-align:center;border:0;background:transparent;color:var(--navy);font:inherit;font-weight:700;cursor:pointer;}
   table.g.gsel td.empty{opacity:.3;filter:grayscale(1);cursor:not-allowed;}
   table.g.gsel td.empty:hover{background:transparent;}
@@ -2591,9 +2591,9 @@
     $('sInstr').addEventListener('input', showPicker);
     $('sPicker').addEventListener('click', function(ev){
       var m = ev.target && ev.target.closest ? ev.target.closest('[data-pkmore]') : null;
-      if (m) { ev.stopPropagation(); pkMore = true; showSubjPicker(); }
+      if (m) { ev.stopPropagation(); pkMore[m.getAttribute('data-pkmore')] = true; showSubjPicker(); }
     });
-    $('sSubj').addEventListener('input', function(){ pkMore = false; });
+    $('sSubj').addEventListener('input', function(){ pkMore = { d: false, r: false }; });
     $('sInstr').addEventListener('focus', function(){ ensureInstructors(true); showPicker(); });
     $('sBrowse').addEventListener('click', openBrowse);
     $('sOps').addEventListener('click', function(){ form.iid = ''; form.iname = OPS_NAME; $('sInstr').value = ''; hidePicker(); renderChip(); });
@@ -2722,7 +2722,6 @@
     var pk = $('sPicker');
     var q = $('sInstr').value.trim();
     if (!q) { if (!form.iid && !form.iname && $('sSubj') && $('sSubj').value.trim()) showSubjPicker(); else pk.style.display = 'none'; return; }
-    pkMore = false;
     var html = '';
     if (instructors === null || instrLoading) html += '<div class="info">강사 목록을 불러오는 중입니다…</div>';
     else if (instrFailed) html += '<div class="info">강사 목록을 불러오지 못했습니다. 아래 "직접 입력"은 사용할 수 있습니다.</div>';
@@ -2772,45 +2771,84 @@
   /* 11-18 금용님: 교과목을 쓰고 강사 칸으로 오면(Enter) 검색어 없이 '관련 강사' 후보를 평가 높은 순으로 보여 줌
      관련 = ①이 교과목 평가 반영 ②이 교과목 강의 이력 ③강사 등록 교과목·분야에 교과목 단어 포함(하나라도)
      순서 = 이 교과목 정식 점수(응답 MIN_CUM명 이상) → 전체 강의 정식 점수 → 점수 없음(이 교과목 강의 횟수 순). 참고 점수는 표시만. 상위 3명 + [외 N명 더 보기] */
-  var pkMore = false;
+  var pkMore = { d: false, r: false };
+  /* 11-18 금용님 묶음 방식: 직접 관련(교과목 이름 일치) + 연관 분야(핵심 단어 일치·글자 겹침) */
+  var SUBJ_STOP = ['실무', '이해', '개요', '과정', '기초', '심화', '관련', '교육', '및', '의'];
+  function subjCore(t){   // 일반 단어를 뺀 핵심 글자열과 단어 목록
+    var words = String(t || '').split(/[\s·ㆍ,\/()\[\]\-_+]+/).map(EvalCore.normSubject).filter(Boolean), out = [];
+    words.forEach(function(w){
+      SUBJ_STOP.forEach(function(sw){ if (sw.length >= 2 && w.length > sw.length) w = w.split(sw).join(''); });
+      if (w.length >= 2 && SUBJ_STOP.indexOf(w) < 0) out.push(w);
+    });
+    return { s: out.join(''), w: out };
+  }
+  function bigrams(t){ var m = {}; for (var i = 0; i + 1 < t.length; i++) { var g = t.substr(i, 2); if (g !== '소방') m[g] = 1; } return m; }
+  function subjRel(core, other){   // 0~1 점수와 일치 근거
+    var oc = subjCore(other); if (!oc.s) return null;
+    var hit = core.w.filter(function(w){ return oc.s.indexOf(w) > -1; })[0] || oc.w.filter(function(w){ return core.s.indexOf(w) > -1; })[0];
+    if (hit) return { sc: 1, why: hit };
+    var A = bigrams(core.s), B = bigrams(oc.s), ka = Object.keys(A), kb = Object.keys(B), n = ka.filter(function(g){ return B[g]; }).length;
+    if (n < 2 || !ka.length || !kb.length) return null;
+    var r = n / Math.min(ka.length, kb.length);
+    return r >= 0.5 ? { sc: r * 0.9, why: String(other).trim() } : null;
+  }
   function subjCandidates(subject){
-    var key = EvalCore.normSubject(subject), cand = {}, hist = {};
-    if (!key) return [];
-    allSessions.forEach(function(r){ var id = String(r['강사ID'] || ''); if (id && EvalCore.normSubject(r['교과목']) === key) hist[id] = (hist[id] || 0) + 1; });
+    var key = EvalCore.normSubject(subject), cand = {}, hist = {}, subs = {};
+    if (!key) return { d: [], r: [] };
+    function addSub(id, t){ t = String(t || '').trim(); if (id && t) (subs[id] = subs[id] || {})[t] = 1; }
+    allSessions.forEach(function(r){ var id = String(r['강사ID'] || ''); if (!id) return; addSub(id, r['교과목']); if (EvalCore.normSubject(r['교과목']) === key) hist[id] = (hist[id] || 0) + 1; });
     Object.keys(hist).forEach(function(id){ cand[id] = 1; });
-    Object.keys(evIdx || {}).forEach(function(id){ if ((evIdx[id] || []).some(function(r){ return EvalCore.normSubject(r['교과목']) === key; })) cand[id] = 1; });
-    (instructors || []).forEach(function(x){ var t = EvalCore.normSubject(String(x.subj || '') + ' ' + String(x.field || '')); if (t && (t.indexOf(key) > -1 || (key.length >= 2 && key.indexOf(EvalCore.normSubject(x.subj || '')) > -1 && EvalCore.normSubject(x.subj || '').length >= 2))) cand[x.id] = 1; });
+    Object.keys(evIdx || {}).forEach(function(id){ (evIdx[id] || []).forEach(function(r){ addSub(id, r['교과목']); if (EvalCore.normSubject(r['교과목']) === key) cand[id] = 1; }); });
+    (instructors || []).forEach(function(x){
+      String(x.subj || '').split(/[,\/\n;]+/).forEach(function(t){ addSub(x.id, t); });
+      String(x.field || '').split(/[,\/\n;]+/).forEach(function(t){ addSub(x.id, t); });
+      var t = EvalCore.normSubject(String(x.subj || '') + ' ' + String(x.field || '')); if (t && t.indexOf(key) > -1) cand[x.id] = 1;
+    });
     function formal(c){ return c && c.n >= EvalCore.MIN_CUM ? c.avg : null; }
-    return Object.keys(cand).map(function(id){ return instrById[id]; }).filter(Boolean).map(function(x){
-      var sc = evScore(x.id, subject), g = sc && sc['강의'];
-      return { x: x, s1: formal(g && g.subj), s2: formal(g && g.all), h: hist[x.id] || 0 };
-    }).sort(function(a, b){
+    function mk(x){ var sc = evScore(x.id, subject), g = sc && sc['강의']; return { x: x, s1: formal(g && g.subj), s2: formal(g && g.all), h: hist[x.id] || 0 }; }
+    function byEval(a, b){
       if ((a.s1 != null) !== (b.s1 != null)) return a.s1 != null ? -1 : 1;
       if (a.s1 != null && a.s1 !== b.s1) return b.s1 - a.s1;
       if ((a.s2 != null) !== (b.s2 != null)) return a.s2 != null ? -1 : 1;
       if (a.s2 != null && a.s2 !== b.s2) return b.s2 - a.s2;
       if (a.h !== b.h) return b.h - a.h;
       return a.x.name.localeCompare(b.x.name, 'ko');
+    }
+    var direct = Object.keys(cand).map(function(id){ return instrById[id]; }).filter(Boolean).map(mk).sort(byEval);
+    var core = subjCore(subject), rel = [];
+    if (core.s) (instructors || []).forEach(function(x){
+      if (cand[x.id]) return;
+      var best = null;
+      Object.keys(subs[x.id] || {}).forEach(function(t){ var r = subjRel(core, t); if (r && (!best || r.sc > best.sc)) best = r; });
+      if (best) { var o = mk(x); o.rel = best.sc; o.why = best.why; rel.push(o); }
     });
+    rel.sort(function(a, b){ return a.rel !== b.rel ? b.rel - a.rel : byEval(a, b); });
+    return { d: direct, r: rel };
   }
   function showSubjPicker(){
     var pk = $('sPicker'), subj = $('sSubj').value.trim(), html = '';
     if (instructors === null || instrLoading) html = '<div class="info">강사 목록을 불러오는 중입니다…</div>';
     else if (instrFailed) html = '<div class="info">강사 목록을 불러오지 못했습니다. 이름을 직접 입력할 수 있습니다.</div>';
     else {
-      var list = subjCandidates(subj), show = pkMore ? list.slice(0, 20) : list.slice(0, 3);
-      html = '<div class="info pkhd"><b>\'' + esc(subj) + '\' 관련 강사</b> · 평가 높은 순' + (evData === null && !evFailed ? ' (평가 점수 불러오는 중)' : '') + '</div>';
-      show.forEach(function(h){
+      var c = subjCandidates(subj);
+      var item = function(h){
         var x = h.x, cls = ['활성', '승인', '정식'].indexOf(x.status) > -1 ? 't-ok' : 't-warn';
-        html += '<div class="it row" data-iid="' + esc(x.id) + '">' + avatar(x, '') +
+        return '<div class="it row" data-iid="' + esc(x.id) + '">' + avatar(x, '') +
           '<div class="tx"><b>' + esc(x.name) + ' <span class="tag ' + cls + '">' + esc(x.status || '-') + '</span></b>' +
           '<small>' + esc([x.field, x.org, x.region].filter(Boolean).join(' · ')) + '</small>' +
-          '<small>강의 ' + x.count + '회' + (h.h ? ' · 이 교과목 ' + h.h + '회' : '') + '</small>' + evLine(x.id, subj) + '</div>' +
+          '<small>강의 ' + x.count + '회' + (h.h ? ' · 이 교과목 ' + h.h + '회' : '') + (h.why ? ' · <span style="color:var(--navy);">일치: ' + esc(h.why) + '</span>' : '') + '</small>' + evLine(x.id, subj) + '</div>' +
           busyPickerHtml(x.id) + unavPickerHtml(x.id) +
           '<button type="button" class="detailBtn" data-detail="' + esc(x.id) + '">상세</button></div>';
-      });
-      if (list.length > show.length) html += '<button type="button" class="it pkmore" data-pkmore="1">외 ' + (list.length - show.length) + '명 더 보기</button>';
-      if (!list.length) html += '<div class="info">관련 강사가 없습니다. 이름·소속·분야로 검색하세요.</div>';
+      };
+      var group = function(k, title, list, sub){
+        if (!list.length) return '';
+        var show = pkMore[k] ? list.slice(0, 20) : list.slice(0, 3);
+        return '<div class="info pkhd"><b>' + title + '</b> · ' + sub + '</div>' + show.map(item).join('') +
+          (list.length > show.length ? '<button type="button" class="it pkmore" data-pkmore="' + k + '">외 ' + (list.length - show.length) + '명 더 보기</button>' : '');
+      };
+      html = group('d', '\'' + esc(subj) + '\' 직접 관련', c.d, '평가 높은 순' + (evData === null && !evFailed ? ' (평가 점수 불러오는 중)' : '')) +
+        group('r', '연관 분야', c.r, '비슷한 교과목·분야');
+      if (!c.d.length && !c.r.length) html = '<div class="info">관련 강사가 없습니다. 이름·소속·분야로 검색하세요.</div>';
     }
     pk.innerHTML = html;
     pk.style.display = 'block';
