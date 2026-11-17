@@ -696,6 +696,8 @@
   table.g td.empty{cursor:pointer;}
   table.g td.empty:hover{background:var(--bg-hover);}
   /* 11-17 금용님: 격자 두 번 누르기 — 첫 칸=시작 교시, 둘째 칸=끝 교시. 선택 중에는 고를 수 있는 칸만 진하게, 나머지는 흐리게(사전 차단) */
+  .picker .pkhd{color:var(--navy);}
+  .picker button.pkmore{display:block;width:100%;text-align:center;border:0;background:transparent;color:var(--navy);font:inherit;font-weight:700;cursor:pointer;}
   table.g.gsel td.empty{opacity:.3;filter:grayscale(1);cursor:not-allowed;}
   table.g.gsel td.empty:hover{background:transparent;}
   table.g.gsel td.empty:hover::after{content:none;}
@@ -703,10 +705,6 @@
   table.g.gsel td.gsok:hover::after{content:'여기까지';display:block;text-align:center;color:#2F6DB5;font-size:12px;font-weight:700;margin-top:14px;}
   table.g.gsel td.gsa,table.g.gsel td.gsr{opacity:1;filter:none;background:#DCE9F8 !important;box-shadow:inset 0 0 0 2px #2F6DB5;transition:background .12s ease-out;}
   table.g.gsel td.gsa::after,table.g.gsel td.gsa:hover::after{content:'시작';display:block;text-align:center;color:#2F6DB5;font-size:12px;font-weight:800;margin-top:14px;}
-  #gSelBar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:80;background:#1B2A41;color:#fff;border-radius:12px;padding:10px 12px 10px 16px;font-size:14px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:94vw;animation:vfade .2s ease-out;}
-  #gSelBar b{color:#FFD27A;}
-  #gSelBar button{background:#fff;color:#1B2A41;border:0;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;font:inherit;font-size:13px;}
-  @media (max-width:640px){ #gSelBar{font-size:13px;bottom:10px;} }
   table.g td.gpopen,table.g td.gpdone{vertical-align:middle;text-align:center;}
   table.g td.gpopen{background:repeating-linear-gradient(135deg,#FFF6D8,#FFF6D8 6px,#FFFDF3 6px,#FFFDF3 12px);}
   table.g td.gpdone{background:repeating-linear-gradient(135deg,var(--line),var(--line) 6px,var(--bg-hover) 6px,var(--bg-hover) 12px);}
@@ -2591,6 +2589,11 @@
       if (other) $('sRoomText').focus();
     });
     $('sInstr').addEventListener('input', showPicker);
+    $('sPicker').addEventListener('click', function(ev){
+      var m = ev.target && ev.target.closest ? ev.target.closest('[data-pkmore]') : null;
+      if (m) { ev.stopPropagation(); pkMore = true; showSubjPicker(); }
+    });
+    $('sSubj').addEventListener('input', function(){ pkMore = false; });
     $('sInstr').addEventListener('focus', function(){ ensureInstructors(true); showPicker(); });
     $('sBrowse').addEventListener('click', openBrowse);
     $('sOps').addEventListener('click', function(){ form.iid = ''; form.iname = OPS_NAME; $('sInstr').value = ''; hidePicker(); renderChip(); });
@@ -2718,7 +2721,8 @@
     ensureEval();
     var pk = $('sPicker');
     var q = $('sInstr').value.trim();
-    if (!q) { pk.style.display = 'none'; return; }
+    if (!q) { if (!form.iid && !form.iname && $('sSubj') && $('sSubj').value.trim()) showSubjPicker(); else pk.style.display = 'none'; return; }
+    pkMore = false;
     var html = '';
     if (instructors === null || instrLoading) html += '<div class="info">강사 목록을 불러오는 중입니다…</div>';
     else if (instrFailed) html += '<div class="info">강사 목록을 불러오지 못했습니다. 아래 "직접 입력"은 사용할 수 있습니다.</div>';
@@ -2765,6 +2769,53 @@
     try { pk.scrollIntoView({ block: 'nearest' }); } catch (e) {}   // 10-27: 교과목 추가 팝업은 높이가 제한돼 추천 목록이 팝업 아래로 잘림 → 목록이 다 보이게 팝업 안을 자동으로 내림
   }
   function hidePicker(){ var pk = $('sPicker'); if (pk) pk.style.display = 'none'; }
+  /* 11-18 금용님: 교과목을 쓰고 강사 칸으로 오면(Enter) 검색어 없이 '관련 강사' 후보를 평가 높은 순으로 보여 줌
+     관련 = ①이 교과목 평가 반영 ②이 교과목 강의 이력 ③강사 등록 교과목·분야에 교과목 단어 포함(하나라도)
+     순서 = 이 교과목 정식 점수(응답 MIN_CUM명 이상) → 전체 강의 정식 점수 → 점수 없음(이 교과목 강의 횟수 순). 참고 점수는 표시만. 상위 3명 + [외 N명 더 보기] */
+  var pkMore = false;
+  function subjCandidates(subject){
+    var key = EvalCore.normSubject(subject), cand = {}, hist = {};
+    if (!key) return [];
+    allSessions.forEach(function(r){ var id = String(r['강사ID'] || ''); if (id && EvalCore.normSubject(r['교과목']) === key) hist[id] = (hist[id] || 0) + 1; });
+    Object.keys(hist).forEach(function(id){ cand[id] = 1; });
+    Object.keys(evIdx || {}).forEach(function(id){ if ((evIdx[id] || []).some(function(r){ return EvalCore.normSubject(r['교과목']) === key; })) cand[id] = 1; });
+    (instructors || []).forEach(function(x){ var t = EvalCore.normSubject(String(x.subj || '') + ' ' + String(x.field || '')); if (t && (t.indexOf(key) > -1 || (key.length >= 2 && key.indexOf(EvalCore.normSubject(x.subj || '')) > -1 && EvalCore.normSubject(x.subj || '').length >= 2))) cand[x.id] = 1; });
+    function formal(c){ return c && c.n >= EvalCore.MIN_CUM ? c.avg : null; }
+    return Object.keys(cand).map(function(id){ return instrById[id]; }).filter(Boolean).map(function(x){
+      var sc = evScore(x.id, subject), g = sc && sc['강의'];
+      return { x: x, s1: formal(g && g.subj), s2: formal(g && g.all), h: hist[x.id] || 0 };
+    }).sort(function(a, b){
+      if ((a.s1 != null) !== (b.s1 != null)) return a.s1 != null ? -1 : 1;
+      if (a.s1 != null && a.s1 !== b.s1) return b.s1 - a.s1;
+      if ((a.s2 != null) !== (b.s2 != null)) return a.s2 != null ? -1 : 1;
+      if (a.s2 != null && a.s2 !== b.s2) return b.s2 - a.s2;
+      if (a.h !== b.h) return b.h - a.h;
+      return a.x.name.localeCompare(b.x.name, 'ko');
+    });
+  }
+  function showSubjPicker(){
+    var pk = $('sPicker'), subj = $('sSubj').value.trim(), html = '';
+    if (instructors === null || instrLoading) html = '<div class="info">강사 목록을 불러오는 중입니다…</div>';
+    else if (instrFailed) html = '<div class="info">강사 목록을 불러오지 못했습니다. 이름을 직접 입력할 수 있습니다.</div>';
+    else {
+      var list = subjCandidates(subj), show = pkMore ? list.slice(0, 20) : list.slice(0, 3);
+      html = '<div class="info pkhd"><b>\'' + esc(subj) + '\' 관련 강사</b> · 평가 높은 순' + (evData === null && !evFailed ? ' (평가 점수 불러오는 중)' : '') + '</div>';
+      show.forEach(function(h){
+        var x = h.x, cls = ['활성', '승인', '정식'].indexOf(x.status) > -1 ? 't-ok' : 't-warn';
+        html += '<div class="it row" data-iid="' + esc(x.id) + '">' + avatar(x, '') +
+          '<div class="tx"><b>' + esc(x.name) + ' <span class="tag ' + cls + '">' + esc(x.status || '-') + '</span></b>' +
+          '<small>' + esc([x.field, x.org, x.region].filter(Boolean).join(' · ')) + '</small>' +
+          '<small>강의 ' + x.count + '회' + (h.h ? ' · 이 교과목 ' + h.h + '회' : '') + '</small>' + evLine(x.id, subj) + '</div>' +
+          busyPickerHtml(x.id) + unavPickerHtml(x.id) +
+          '<button type="button" class="detailBtn" data-detail="' + esc(x.id) + '">상세</button></div>';
+      });
+      if (list.length > show.length) html += '<button type="button" class="it pkmore" data-pkmore="1">외 ' + (list.length - show.length) + '명 더 보기</button>';
+      if (!list.length) html += '<div class="info">관련 강사가 없습니다. 이름·소속·분야로 검색하세요.</div>';
+    }
+    pk.innerHTML = html;
+    pk.style.display = 'block';
+    try { pk.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+  }
 
   /* --- 폼 값 채우기/지우기 --- */
   function resetForm(keepDate){
@@ -4723,7 +4774,6 @@
     gSel = null;
     var tb = document.querySelector('#sGridWrap table.g'); if (tb) tb.classList.remove('gsel');
     [].forEach.call(document.querySelectorAll('#sGridWrap .gsa,#sGridWrap .gsok,#sGridWrap .gsr'), function(c){ c.classList.remove('gsa', 'gsok', 'gsr'); });
-    var bar = $('gSelBar'); if (bar) bar.parentNode.removeChild(bar);
   }
   function gSelStart(d, n){
     if (sessEnded(d) || formState !== 'ok') { prefillNew(d, n); return; }   // 종료 일정 안내 등은 기존 처리 그대로
@@ -4733,9 +4783,6 @@
     tb.classList.add('gsel');
     gPl().forEach(function(m){ var c = gCellAt(d, m); if (c && gRangeOk(d, n, m)) c.classList.add('gsok'); });
     var a = gCellAt(d, n); if (a) a.classList.add('gsa');
-    var bar = document.createElement('div'); bar.id = 'gSelBar'; bar.setAttribute('role', 'status');
-    bar.innerHTML = '<span><b>' + esc(md(d)) + ' ' + n + '교시</b> 시작 · 끝 교시 칸을 누르세요 (같은 칸을 다시 누르면 ' + n + '교시만)</span><button type="button" id="gSelCancel">취소</button>';
-    document.body.appendChild(bar);
   }
   function gSelEnd(d, n){
     var s0 = gSel; gSelClear();

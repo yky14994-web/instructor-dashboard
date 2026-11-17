@@ -310,12 +310,13 @@
   .tdl .l small{display:block;font-size:13px;color:var(--text);}
   .tdl li .eqrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 2px;border-top:1px solid var(--border);font-size:14px;}
   .tdl li:first-child .eqrow{border-top:none;}
+  .tdl .eqrow{align-items:flex-start !important;}
   .tdl .eqrow .l{min-width:0;flex:1;}
-  .tdl .eqs{display:block;font-size:13px;color:var(--text);text-decoration:none;line-height:1.5;padding:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .tdl a.eqs:hover{text-decoration:underline;}
-  .tdl .eqs .eqc{color:var(--text-muted);}
-  .tdl .eqs.eqm{color:var(--text-muted);}
-  .tdl .eqr{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none;}
+  .tdl .eqrow .n{flex:none;}
+  .tdl a.eqi{display:block;text-decoration:none;color:var(--text);padding:6px 8px;margin:4px -8px 0;border-radius:8px;transition:background .15s ease-out;}
+  .tdl a.eqi:hover{background:var(--bg-hover,#f2f4f7);}
+  .tdl .eq1{display:block;font-size:14px;line-height:1.45;}
+  .tdl .eq2{display:block;font-size:12.5px;color:var(--text-muted);line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;font-size:16px;color:var(--text-muted);margin:2px 0 12px;font-weight:600;}
   .crumb a{color:var(--navy);text-decoration:none;font-weight:800;padding:5px 9px;border-radius:8px;cursor:pointer;background:none;border:none;font-family:inherit;font-size:inherit;}
   .crumb a:hover{background:#E4ECF5;text-decoration:none;}
@@ -1531,14 +1532,14 @@
       }).join('');
   }
   /* 11-17 금용님: 처리할 일 '기자재 이상' 줄 — 서버(l4)가 내려 준 최근 3건을 한 줄씩 요약, [자세히 보기]는 관리자 기자재 현황에서 해당 과정 카드를 펼쳐 엶 */
-  function eqRowHtml(n){
-    var items = eqList.slice(0, 2), first = items[0] ? items[0]['개설키'] : '';
+  function eqRowHtml(n){   // 11-18 금용님 A안: 건마다 두 줄(1줄 기자재·고장 내용, 2줄 과정·강의실·점검자), [자세히 보기] 버튼 없음 — 줄을 누르면 해당 과정으로
+    var items = eqList.slice(0, 2);
     var lines = items.map(function(x){
-      var k = String(x['개설키'] || '');
-      return '<a class="eqs" href="admin.html#equip=' + encodeURIComponent(k) + '" title="' + esc(k + ' · ' + (x['강의실'] || '') + ' — 누르면 이 과정의 조치 대기 건이 열립니다') + '"><b>' + esc(x['품명'] || '기자재') + '</b>' + (x['이상내용'] ? ' · ' + esc(x['이상내용']) : '') + (x['강의실'] ? '<span class="eqc"> (' + esc(x['강의실']) + ')</span>' : '') + '</a>';
+      var k = String(x['개설키'] || ''), sub = [k, x['강의실'], x['점검자'] ? '점검 ' + x['점검자'] : ''].filter(Boolean).map(esc).join(' · ');
+      return '<a class="eqi" href="admin.html#equip=' + encodeURIComponent(k) + '" title="누르면 관리자 기자재 현황에서 이 과정의 조치 대기 건이 열립니다"><span class="eq1"><b>' + esc(x['품명'] || '기자재') + '</b>' + (x['이상내용'] ? ' · ' + esc(x['이상내용']) : '') + '</span><span class="eq2">' + sub + '</span></a>';
     }).join('');
-    if (!items.length) lines = '<span class="eqs eqm">이상 내용은 [자세히 보기]에서 확인합니다.</span>';
-    return '<li><div class="wn eqrow"><span class="l"><span class="t">기자재 이상 조치 대기</span>' + lines + '</span><span class="eqr"><span class="n">' + n + '<small>건</small></span><a class="btn sm" href="admin.html#equip' + (first ? '=' + encodeURIComponent(first) : '') + '">자세히 보기</a></span></div></li>';
+    if (!items.length) lines = '<a class="eqi" href="admin.html#equip"><span class="eq2">누르면 관리자 기자재 현황에서 이상 내용을 확인합니다.</span></a>';
+    return '<li><div class="wn eqrow"><span class="l"><span class="t">기자재 이상 조치 대기</span>' + lines + '</span><span class="n">' + n + '<small>건</small></span></div></li>';
   }
   /* 기자재 이상 조치 대기 요약: 누르면 기자재 점검 목록을 불러와 '이상 있음 + 조치 대기' 건만 보여 줌(읽기 전용, 조치는 관리자 기자재 현황에서) */
   var eqData = null, eqBusy = false, eqErr = '', eqT = 0;
