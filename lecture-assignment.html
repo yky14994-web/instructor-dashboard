@@ -695,6 +695,18 @@
   table.g td.c{height:56px;padding:3px;}
   table.g td.empty{cursor:pointer;}
   table.g td.empty:hover{background:var(--bg-hover);}
+  /* 11-17 금용님: 격자 두 번 누르기 — 첫 칸=시작 교시, 둘째 칸=끝 교시. 선택 중에는 고를 수 있는 칸만 진하게, 나머지는 흐리게(사전 차단) */
+  table.g.gsel td.empty{opacity:.3;filter:grayscale(1);cursor:not-allowed;}
+  table.g.gsel td.empty:hover{background:transparent;}
+  table.g.gsel td.empty:hover::after{content:none;}
+  table.g.gsel td.gsok{opacity:1;filter:none;cursor:pointer;}
+  table.g.gsel td.gsok:hover::after{content:'여기까지';display:block;text-align:center;color:#2F6DB5;font-size:12px;font-weight:700;margin-top:14px;}
+  table.g.gsel td.gsa,table.g.gsel td.gsr{opacity:1;filter:none;background:#DCE9F8 !important;box-shadow:inset 0 0 0 2px #2F6DB5;transition:background .12s ease-out;}
+  table.g.gsel td.gsa::after,table.g.gsel td.gsa:hover::after{content:'시작';display:block;text-align:center;color:#2F6DB5;font-size:12px;font-weight:800;margin-top:14px;}
+  #gSelBar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:80;background:#1B2A41;color:#fff;border-radius:12px;padding:10px 12px 10px 16px;font-size:14px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:94vw;animation:vfade .2s ease-out;}
+  #gSelBar b{color:#FFD27A;}
+  #gSelBar button{background:#fff;color:#1B2A41;border:0;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;font:inherit;font-size:13px;}
+  @media (max-width:640px){ #gSelBar{font-size:13px;bottom:10px;} }
   table.g td.gpopen,table.g td.gpdone{vertical-align:middle;text-align:center;}
   table.g td.gpopen{background:repeating-linear-gradient(135deg,#FFF6D8,#FFF6D8 6px,#FFFDF3 6px,#FFFDF3 12px);}
   table.g td.gpdone{background:repeating-linear-gradient(135deg,var(--line),var(--line) 6px,var(--bg-hover) 6px,var(--bg-hover) 12px);}
@@ -863,6 +875,12 @@
     body.pgrid table.g td.c .gc .r.rx::before{content:'◆ ';}
     body.pgrid table.g td.c .gc .n{border-top:0;padding-top:0;}
   }
+  /* 11-17 금용님: 화면 전환을 부드럽게 — 페이지 사이 이동은 브라우저 화면 전환(지원 브라우저만), 같은 페이지 안 화면 바뀜은 짧은 페이드 */
+  @view-transition{navigation:auto;}
+  ::view-transition-old(root),::view-transition-new(root){animation-duration:.22s;animation-timing-function:ease-out;}
+  .vfade{animation:vfade .24s ease-out;}
+  @keyframes vfade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none;}.vfade{animation:none;}}
 </style>
 <script src="busy-indicator.js" defer></script>
 <script src="highlight-box.js?v=1" defer></script>
@@ -2563,6 +2581,10 @@
       renderRoomFreePanel();
     });
     $('sSubj').addEventListener('change', renderChip);
+    $('sSubj').addEventListener('keydown', function(ev){   // 11-17: 교과목 입력 후 Enter → 강사 검색으로(교시 → 교과목 → 강사 순서)
+      if (ev.key !== 'Enter' || ev.isComposing || ev.keyCode === 229) return;
+      var si = $('sInstr'); if (si && si.offsetParent !== null) { ev.preventDefault(); si.focus(); }
+    });
     $('sRoom').addEventListener('change', function(){
       var other = $('sRoom').value === '__other';
       $('sRoomText').style.display = other ? '' : 'none';
@@ -4649,7 +4671,9 @@
     if (mode !== 'grid') closeFormModal();
     syncFormDock();
     renderSessionList();
+    vFade($(mode === 'grid' ? 'sGridWrap' : 'sTableWrap'));
   }
+  function vFade(el){ if (!el) return; el.classList.remove('vfade'); void el.offsetWidth; el.classList.add('vfade'); }
   function formModalOpen(){ return $('sFormPanel').classList.contains('fmodal'); }
   function openFormModal(){
     if (viewMode !== 'grid' || formState !== 'ok') return false;
@@ -4687,6 +4711,53 @@
     var a = Number(x['시작교시']), b = Number(x['끝교시']);
     return a === b ? a + '교시' : a + '~' + b + '교시';
   }
+  /* --- 격자 두 번 누르기로 교시 범위 고르기 (11-17 금용님) --- */
+  var gSel = null;
+  function gPl(){ return periods.length ? periods.map(function(x){ return x.n; }) : [1, 2, 3, 4, 5, 6, 7]; }
+  function gCellAt(d, n){ return document.querySelector('#sGridWrap td[data-new="' + d + '|' + n + '"]'); }
+  function gRangeOk(d, a, b){
+    var lo = Math.min(a, b), hi = Math.max(a, b);
+    return gPl().filter(function(n){ return n >= lo && n <= hi; }).every(function(n){ var c = gCellAt(d, n); return c && !c.classList.contains('gpend'); });
+  }
+  function gSelClear(){
+    gSel = null;
+    var tb = document.querySelector('#sGridWrap table.g'); if (tb) tb.classList.remove('gsel');
+    [].forEach.call(document.querySelectorAll('#sGridWrap .gsa,#sGridWrap .gsok,#sGridWrap .gsr'), function(c){ c.classList.remove('gsa', 'gsok', 'gsr'); });
+    var bar = $('gSelBar'); if (bar) bar.parentNode.removeChild(bar);
+  }
+  function gSelStart(d, n){
+    if (sessEnded(d) || formState !== 'ok') { prefillNew(d, n); return; }   // 종료 일정 안내 등은 기존 처리 그대로
+    gSelClear();
+    var tb = document.querySelector('#sGridWrap table.g'); if (!tb) { prefillNew(d, n); return; }
+    gSel = { d: d, n: n };
+    tb.classList.add('gsel');
+    gPl().forEach(function(m){ var c = gCellAt(d, m); if (c && gRangeOk(d, n, m)) c.classList.add('gsok'); });
+    var a = gCellAt(d, n); if (a) a.classList.add('gsa');
+    var bar = document.createElement('div'); bar.id = 'gSelBar'; bar.setAttribute('role', 'status');
+    bar.innerHTML = '<span><b>' + esc(md(d)) + ' ' + n + '교시</b> 시작 · 끝 교시 칸을 누르세요 (같은 칸을 다시 누르면 ' + n + '교시만)</span><button type="button" id="gSelCancel">취소</button>';
+    document.body.appendChild(bar);
+  }
+  function gSelEnd(d, n){
+    var s0 = gSel; gSelClear();
+    var lo = Math.min(s0.n, n), hi = Math.max(s0.n, n);
+    prefillNew(d, lo);
+    var se = $('sEnd'), ss = $('sStart');
+    if (ss && se) {
+      ss.value = String(lo);
+      if (Array.prototype.some.call(se.options, function(o){ return Number(o.value) === hi; })) se.value = String(hi);
+      se.dispatchEvent(new Event('change'));
+    }
+    setTimeout(function(){ var i = $('sSubj'); if (i) i.focus(); }, 60);
+  }
+  function gSelHover(ev){
+    if (!gSel) return;
+    var td = ev.target && ev.target.closest ? ev.target.closest('#sGridWrap td.gsok') : null;
+    [].forEach.call(document.querySelectorAll('#sGridWrap .gsr'), function(c){ c.classList.remove('gsr'); });
+    if (!td) return;
+    var q = td.getAttribute('data-new').split('|'), b = Number(q[1]), lo = Math.min(gSel.n, b), hi = Math.max(gSel.n, b);
+    gPl().forEach(function(m){ if (m >= lo && m <= hi) { var c = gCellAt(gSel.d, m); if (c) c.classList.add('gsr'); } });
+  }
+  document.addEventListener('mouseover', gSelHover);
   function prefillNew(date, n){
     if (sessEnded(date)) { alert('종료된 일정(' + date + ', 강의일 당일 17:50 이후)에는 교과목을 배정할 수 없습니다.'); return; }
     var p = planByKey(currentKey);
@@ -4949,6 +5020,7 @@
     return base.indexOf(rm) < 0 ? ' rx' : '';
   }
   function renderGrid(p, list){
+    if (gSel) gSelClear();
     var box = $('sGridWrap');
     if (mv && mv.key !== currentKey) { mv = null; mvErr = ''; }
     var canEdit = formState === 'ok';
@@ -6387,6 +6459,12 @@
 
   function onListClick(ev){
     var t = ev.target;
+    if (gSel) {   // 시작 칸을 고른 상태: 고를 수 있는 칸이면 끝 교시로, 그 밖(취소 버튼·다른 곳)은 선택 취소
+      var ok = t && t.closest ? t.closest('#sGridWrap td.gsok') : null;
+      if (ok) { var qq = ok.getAttribute('data-new').split('|'); gSelEnd(qq[0], Number(qq[1])); }
+      else gSelClear();
+      return;
+    }
     if (mv && ev.target && ev.target.closest) {   // 이동·맞바꾸기 중에는 칸 안의 강사 이름·서류 배지를 눌러도 도착 칸 선택으로 처리
       var mt = ev.target.closest('[data-mvg],[data-mvto]');
       if (mt) { if (mt.getAttribute('data-mvg')) mvSwap(mt.getAttribute('data-mvg')); else { var q2 = mt.getAttribute('data-mvto').split('|'); mvTo(q2[0], Number(q2[1])); } return; }
@@ -6452,7 +6530,7 @@
     var open = t.getAttribute('data-open');
     if (open) { openCourse(open); return; }
     var nw = t.getAttribute('data-new');
-    if (nw) { var np = nw.split('|'); prefillNew(np[0], Number(np[1])); return; }
+    if (nw) { var np = nw.split('|'); if (viewMode === 'grid') gSelStart(np[0], Number(np[1])); else prefillNew(np[0], Number(np[1])); return; }
     var gw = t.getAttribute('data-gw');
     if (gw) { gridNav(gw); return; }
     var gd = t.getAttribute('data-gd');
@@ -6527,6 +6605,7 @@
   $('pOverlay').addEventListener('click', function(ev){ if (ev.target === $('pOverlay')) closeCopy(); });
   document.addEventListener('keydown', function(ev){
     if (ev.key !== 'Escape') return;
+    if (gSel) { gSelClear(); return; }
     if (mv && !mvBusy && !formModalOpen()) { mvCancel(); return; }
     if ($('cOverlay').style.display === 'flex') { closeChange(); return; }
     if ($('pOverlay').style.display === 'flex') { closeCopy(); return; }

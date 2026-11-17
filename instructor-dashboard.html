@@ -392,6 +392,12 @@
     #detail,#histPop,#inviteOverlay>div,#schoolOverlay>div{animation:miPop .18s cubic-bezier(.2,.8,.2,1);}
     @media (max-width:640px){ #detail,#histPop,#inviteOverlay>div,#schoolOverlay>div{animation-name:miSheet;} }
   }
+  /* 11-17 금용님: 화면 전환을 부드럽게 — 페이지 사이 이동은 브라우저 화면 전환(지원 브라우저만), 같은 페이지 안 화면 바뀜은 짧은 페이드 */
+  @view-transition{navigation:auto;}
+  ::view-transition-old(root),::view-transition-new(root){animation-duration:.22s;animation-timing-function:ease-out;}
+  .vfade{animation:vfade .24s ease-out;}
+  @keyframes vfade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none;}.vfade{animation:none;}}
 </style>
 <style id="evscore">
   /* 10-29 강사카드 평가 별점(관리자 전용, 강의배정 화면과 같은 모양): 별은 0.5점 단위로 채움 */
