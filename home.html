@@ -798,9 +798,10 @@
       });
       extra.sort(function(x, y){ var a = normYmd(planByKey(x)['입교 시작일']) || '', b = normYmd(planByKey(y)['입교 시작일']) || ''; return a < b ? -1 : a > b ? 1 : x < y ? -1 : 1; });
     }
-    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건' + (extra.length ? ' · 교과목 미편성 과정 ' + extra.length + '개' : '') + '</span>' + (sessionsOk ? '<button type="button" class="btn sm" id="tvOpen" title="오늘 수업을 화면 전체에 크게 보여 줍니다">크게 보기</button>' : '') + '</div><div class="cdesc">오늘 진행되는 수업을 교시별·과정별로 보여줍니다. 과정마다 색이 다릅니다. 과정명을 누르면 해당 과정의 오늘 날짜 주간 일정이, <b>강사 이름을 누르면 강사 정보 카드(상세)</b>가 열립니다.</div>';
+    var rs = runStat();
+    var html = '<div class="chead"><h2>오늘 수업</h2><span class="meta">' + q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ')' + (rs.n ? ' · 지금 진행 중 <a href="#d=month:run" data-dt="month:run" style="color:var(--navy);font-weight:800;">' + rs.c + '과정 ' + rs.n + '회</a>' : '') + (extra.length ? ' · 교과목 미편성 과정 ' + extra.length + '개' : '') + '</span>' + (sessionsOk ? '<button type="button" class="btn sm" id="tvOpen" title="오늘 수업을 화면 전체에 크게 보여 줍니다">크게 보기</button>' : '') + '</div><div class="cdesc">오늘 진행되는 수업을 교시별·과정별로 보여줍니다. 과정마다 색이 다릅니다. 과정명을 누르면 해당 과정의 오늘 날짜 주간 일정이, <b>강사 이름을 누르면 강사 정보 카드(상세)</b>가 열립니다.</div>';
     if (!sessionsOk) { tvData = { empty: '교과목 편성 현황을 불러오지 못했습니다.', meta: q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ')' }; $('cToday').innerHTML = html + '<div class="empty">교과목 편성 현황을 불러오지 못했습니다.</div>'; tvRender(); return; }
-    if (!list.length && !extra.length) { tvData = { empty: '오늘 예정된 수업이 없습니다.', meta: q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · 0건' }; $('cToday').innerHTML = html + '<div class="empty">오늘 예정된 수업이 없습니다.</div>'; tvRender(); return; }
+    if (!list.length && !extra.length) { tvData = { empty: '오늘 예정된 수업이 없습니다.', meta: q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ')' }; $('cToday').innerHTML = html + '<div class="empty">오늘 예정된 수업이 없습니다.</div>'; tvRender(); return; }
     // 행: 교시표의 교시 + 수업에 쓰인 교시
     var rowSet = {}; periods.forEach(function(x){ rowSet[x.n] = true; });
     list.forEach(function(o){ for (var n = o.a; n <= o.b && n < o.a + 20; n++) rowSet[n] = true; });
@@ -863,7 +864,7 @@
           '<div class="ro">' + (o.room ? esc(o.room) : '<span class="hint">강의실 미정</span>') + ' · ' + instrHtml(o.rows) + '</div></div></div>';
       }).join('') + '</div>';
     }).join('');
-    tvData = { cols: cols.length, rowsN: rows.length, th: th, body: body, cards: cards, meta: q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ') · ' + list.length + '건' + (extra.length ? ' · 교과목 미편성 과정 ' + extra.length + '개' : '') };
+    tvData = { cols: cols.length, rowsN: rows.length, th: th, body: body, cards: cards, meta: q.m + '월 ' + q.d + '일 (' + DOW[q.dow] + ')' + (extra.length ? ' · 교과목 미편성 과정 ' + extra.length + '개' : '') };
     $('cToday').innerHTML = html + '<div class="ttwrap"><table class="tt" style="min-width:' + (70 + cols.length * 170) + 'px;"><thead>' + th + '</thead><tbody>' + body + '</tbody></table></div>' + (cols.length > 3 ? '<div class="hint ttscroll">과정이 많아 표를 좌우로 밀어서 볼 수 있습니다.</div>' : '') + '<div class="tcards">' + cards + '</div>';
     tvRender();
   }
@@ -1408,6 +1409,16 @@
       gcLine + '<div class="foot">' + (list.length > shownN ? '<div class="hint" style="margin-bottom:8px;">시작일이 빠른 순서로 ' + shownN + '과정만 표시했습니다.</div>' : '') + '<button type="button" class="btn sm" data-dt="nosubj">전체 과정 보기</button></div>';
     el.innerHTML = html;
   }
+  /* 지금 진행 중: 입교 시작일이 오늘 이전이고 아직 끝나지 않은 기수(취소 제외). 오늘 수업 카드 머리에 표시 */
+  function runStat(){
+    var today = todayStr(), names = {}, n = 0;
+    plans.forEach(function(p){
+      var a = normYmd(p['입교 시작일']), b = normYmd(p['입교 종료일']) || a;
+      if (!a || isCancelled(p)) return;
+      if (a <= today && !dateOver(b)) { names[p['과정명']] = 1; n++; }
+    });
+    return { c: Object.keys(names).length, n: n };
+  }
   function renderMonthCard(){
     var el = $('cMonth'), q = parseYmd(todayStr()), ym = q.y + '-' + ('0' + q.m).slice(-2), today = todayStr();
     var nq = new Date(q.y, q.m, 1), ny = nq.getFullYear() + '-' + ('0' + (nq.getMonth() + 1)).slice(-2);
@@ -1425,7 +1436,6 @@
     function tile(l, n, u){ return '<div class="c"><span>' + esc(l) + '</span><b>' + n.toLocaleString('ko-KR') + '<small>' + u + '</small></b></div>'; }
     el.innerHTML = '<div class="chead"><h2>이번 달 교육 현황</h2><span class="meta">' + q.y + '년 ' + q.m + '월</span></div>' +
       '<div class="mst">' + tile2('이번 달 개강', cnt(oS), open, 'open') + tile('이번 달 계획인원', ppl, '명') + tile2('다음 달 개강', cnt(nS), next, 'next') + tile('다음 달 계획인원', pplN, '명') + '</div>' +
-      '<div style="margin-top:10px;font-size:14px;color:var(--text-muted);font-weight:600;">지금 진행 중 <a href="#d=month:run" data-dt="month:run" style="color:var(--navy);font-weight:800;">' + cnt(rS) + '과정 ' + run + '회</a></div>' +
       '<div class="foot"><div class="hint" style="margin-bottom:8px;">입교 시작일이 이번 달인 기수 기준이며 인원은 계획인원입니다.' + (cx ? ' 취소된 ' + cx + '회는 제외했습니다.' : '') + ' 개강 타일을 누르면 해당 과정 목록이 열립니다.</div></div>';
   }
   /* 조회 전용 계정: 편집 작업용 카드(처리할 일·편성이 필요한 과정)는 숨기고 이번 달 교육 현황만 넓게 */
