@@ -175,6 +175,8 @@
   .tt th.cn{padding:8px 8px;font-size:14px;border-radius:6px;text-align:center;}
   .tt th.cn a{color:var(--navy);font-weight:800;text-decoration:none;} .tt th.cn a:hover{text-decoration:underline;}
   .tt td.blk{padding:7px 9px;vertical-align:middle;text-align:center;border-radius:6px;font-size:13px;}   /* 10-28 금용님: 칸 내용 가로·세로 가운데(교시 열은 왼쪽 유지) */
+  .tt td.blk,.tt th.cn{overflow-wrap:anywhere;}   /* 11-20 금용님: 칸이 좁을 때 긴 내용이 옆 과정 칸으로 넘어가지 않고 칸 안에서 줄바꿈 */
+  .tt .tag{white-space:normal;border-radius:10px;}
   .tt td.blk.done{opacity:.55;} .tt td.blk.now{box-shadow:0 0 0 2px #2F6FD6 inset;}
   .tt .sj{font-size:14px;font-weight:800;color:#1F2D45;} .tt .ins{font-size:13px;margin-top:3px;} .tt .ro{font-size:13px;color:var(--text-sub);margin-top:2px;}
   .tt td.emp{background:var(--bg-soft);border-radius:6px;min-height:34px;height:34px;}

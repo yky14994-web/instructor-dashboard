@@ -744,6 +744,8 @@
   .mvbar .mvtx{flex:1;min-width:220px;}
   .mvbar .mverr{color:#7A140D;font-weight:700;margin-top:2px;}
   .mvnote{margin:0 0 8px;}
+  .gopsbar{display:flex;align-items:center;justify-content:space-between;gap:6px 10px;flex-wrap:wrap;margin:0 0 8px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-soft);font-size:13px;}
+  .gopsbar .gotx{flex:1;min-width:0;}
   .db{display:inline-block;font-size:11px;font-weight:800;border-radius:8px;padding:0 6px;line-height:1.6;vertical-align:1px;white-space:nowrap;}
   .db[data-doc]{cursor:pointer;}
   .db[data-doc]:hover{filter:brightness(.94);text-decoration:underline;}
@@ -4802,6 +4804,16 @@
   }
   /* --- 격자 두 번 누르기로 교시 범위 고르기 (11-17 금용님) --- */
   var gSel = null;
+  /* 11-20 금용님: 두 번 누르기는 PC·태블릿(폭 641px 이상)만. 휴대폰은 기존처럼 빈 칸 한 번 누르면 입력창이 열림 */
+  function gTwoClick(){ return !(window.matchMedia && window.matchMedia('(max-width: 640px)').matches); }
+  /* 격자 위 한 줄: 이 과정에 입교안내·성과측정(운영팀 교시)이 아직 없을 때만 */
+  function gOpsBarHtml(p){
+    if (!p || isViewer() || formState !== 'ok' || !sessionsOk) return '';
+    var need = opsItems(p).filter(function(it){ return (it.status === 'add' || it.status === 'convert') && !sessEnded(it.date); });
+    if (!need.length) return '';
+    return '<div class="gnp gopsbar"><span class="gotx">운영팀 교시 없음: <b>' + need.map(function(it){ return esc(it.subj); }).join(' · ') + '</b></span>' +
+      '<button type="button" class="btn sm" data-gopsauto="1" title="첫날 1교시 입교안내, 마지막 날 마지막 교시 성과측정을 교육운영팀 운영으로 추가">운영팀 교시 자동 추가</button></div>';
+  }
   function gPl(){ return periods.length ? periods.map(function(x){ return x.n; }) : [1, 2, 3, 4, 5, 6, 7]; }
   function gCellAt(d, n){ return document.querySelector('#sGridWrap td[data-new="' + d + '|' + n + '"]'); }
   function gRangeOk(d, a, b){
@@ -5237,7 +5249,7 @@
       '<div class="glegend"><span><i style="background:#E3EBF5"></i>편성됨</span><span><i style="background:#fff;border:1.5px dashed #c9a400"></i>강사 미지정</span>' +
       '<span><i style="background:var(--err-bg);border-color:#D8574B"></i>겹침 경고</span><span><i style="background:#FFF2C9;border-color:#D9B100"></i>같은 반 겹침</span><span><i style="background:#F1F1EE"></i>확인됨</span><span><i style="background:repeating-linear-gradient(135deg,#FFF1BF,#FFF1BF 3px,#fff 3px,#fff 6px);border:1px solid #D9B100"></i>빈 교시</span><span><i style="background:repeating-linear-gradient(135deg,#D9DCE0,#D9DCE0 3px,var(--bg-hover) 3px,var(--bg-hover) 6px)"></i>비워둠 처리(편성 아님)</span>' +
       '<span class="docleg"><span class="db ok">서류 완비</span> <span class="db bad">미비 N</span> <span class="db wn">재동의 임박·계획서 대기</span> 강사카드·동의서·강의계획서</span></div>' +
-      mvBarHtml() + empty + '<div class="gdays">' + dtabs + '</div>' +
+      mvBarHtml() + (all ? '' : gOpsBarHtml(p)) + empty + '<div class="gdays">' + dtabs + '</div>' +
       '<div class="gscroll"><table class="g"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
       '<div class="hint gnp ghelp hlp" style="margin-top:8px;">' + (all ? '전체 보기에서는 현재 화면 과정의 칸만 수정창이 열리고, 다른 과정의 칸을 누르면 그 과정의 교과목 편성 화면으로 이동합니다. 새 교과목 추가는 "이 과정만"에서 빈 칸을 눌러 입력하세요.' : canEdit ? '칸을 누르면 수정창, 빈 칸을 누르면 일자·교시가 채워진 입력창이 열립니다. 교과목 시간을 옮기려면 위의 "이동 모드 켜기", 일부러 비워 두는 칸은 "비워둠 처리 켜기"를 누르세요. 강사 이름을 누르면 강사 정보가 열립니다.' : formState === 'end' ? '종료된 과정이라 칸을 눌러도 수정창이 열리지 않습니다. 편성 기록 삭제는 목록 보기에서 할 수 있습니다. 강사 이름을 누르면 강사 정보가 열립니다.' : '강사 이름을 누르면 강사 정보가 열립니다.') + '</div>' +
       (sessEnded(mon) ? '<div class="hint gnp hlp" style="margin-top:4px;">강의일 당일 17:50 이후는 종료된 일정으로 보며, 종료된 일정의 교과목은 배정·수정·삭제할 수 없습니다.</div>' : '') + '</div>';
@@ -6554,7 +6566,7 @@
       var mt = ev.target.closest('[data-mvg],[data-mvto]');
       if (mt) { if (mt.getAttribute('data-mvg')) mvSwap(mt.getAttribute('data-mvg')); else { var q2 = mt.getAttribute('data-mvto').split('|'); mvTo(q2[0], Number(q2[1])); } return; }
     }
-    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-rqgo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-shrs') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel') || t.getAttribute('data-mvmode') || t.getAttribute('data-gpmode') || t.getAttribute('data-pf')))) t = t.parentNode;
+    while (t && t !== document && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-cp') || t.getAttribute('data-cf') || t.getAttribute('data-chg') || t.getAttribute('data-open') || t.getAttribute('data-detail') || t.getAttribute('data-bpick') || t.getAttribute('data-iid') || t.getAttribute('data-new') || t.getAttribute('data-doc') || t.getAttribute('data-gw') || t.getAttribute('data-gd') || t.getAttribute('data-gs') || t.getAttribute('data-gh') || t.getAttribute('data-gopen') || t.getAttribute('data-manual') !== null || t.getAttribute('data-todo') || t.getAttribute('data-rqgo') || t.getAttribute('data-tplink') || t.getAttribute('data-ttab') || t.getAttribute('data-tmore') || t.getAttribute('data-tcat') || t.getAttribute('data-shrs') || t.getAttribute('data-pm') || t.getAttribute('data-cm') || t.getAttribute('data-cday') || t.getAttribute('data-copen') || t.getAttribute('data-cassign') || t.getAttribute('data-cquick') || t.getAttribute('data-qpick') || t.getAttribute('data-qcancel') || t.getAttribute('data-qsave') || t.getAttribute('data-mvsel') || t.getAttribute('data-mvg') || t.getAttribute('data-mvto') || t.getAttribute('data-mvcancel') || t.getAttribute('data-mvmode') || t.getAttribute('data-gpmode') || t.getAttribute('data-pf') || t.getAttribute('data-gopsauto')))) t = t.parentNode;
     if (!t || t === document) return;
     if (t.getAttribute('data-cp')) { openCopy(); return; }
     var tpl = t.getAttribute('data-tplink');
@@ -6615,7 +6627,8 @@
     var open = t.getAttribute('data-open');
     if (open) { openCourse(open); return; }
     var nw = t.getAttribute('data-new');
-    if (nw) { var np = nw.split('|'); if (viewMode === 'grid') gSelStart(np[0], Number(np[1])); else prefillNew(np[0], Number(np[1])); return; }
+    if (t.getAttribute('data-gopsauto')) { openOps([currentKey]); return; }
+    if (nw) { var np = nw.split('|'); if (viewMode === 'grid' && gTwoClick()) gSelStart(np[0], Number(np[1])); else prefillNew(np[0], Number(np[1])); return; }
     var gw = t.getAttribute('data-gw');
     if (gw) { gridNav(gw); return; }
     var gd = t.getAttribute('data-gd');
