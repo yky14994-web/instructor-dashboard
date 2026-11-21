@@ -940,6 +940,10 @@
   .sc .ref{color:#7A5B00;background:#FFF2C9;border-radius:999px;padding:0 7px;font-size:11px;font-weight:700;}
   .sc .low{color:var(--text-muted);}
   .scbox{display:grid;gap:6px;margin:2px 0 4px;}
+  .rcbox{margin-top:6px;display:grid;gap:6px;justify-items:start;}
+  .rcit{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:#fff;}
+  .rcit .tx{min-width:0;flex:1;}
+  .rcit .btn{flex:none;}
   .scbox table{width:100%;font-size:13px;}
   /* ===== 마이크로 인터랙션 A안 (10-24): 눌림·펼침·팝업 등장·저장 강조·불러오는 중 표시. 0.2초 이하, 이동·투명도만 사용 ===== */
   html{-webkit-tap-highlight-color:transparent;}
@@ -2069,6 +2073,7 @@
       if (!bg) { instructors = []; instrFailed = true; }
     }).then(function(){
       instrLoading = false; instrRefreshing = false;
+      if ($('pOverlay') && $('pOverlay').style.display === 'flex' && typeof renderCopy === 'function') renderCopy();
       if (currentKey) { renderSessionList(); renderChip(); var pk0 = $('sPicker'); if (pk0 && pk0.style.display !== 'none') showPicker(); } else { renderTodo(); if (planMode === 'cal') renderPlanCal(); else if (planMode === 'room') renderRoomFree(); }
     });
   }
@@ -6220,7 +6225,7 @@
 
   /* --- 이전 기수 교과목 복사 --- */
   var CP_RANGES = [['입교 시작일', '입교 종료일', '입교'], ['실습(외부) 시작일', '실습(외부) 종료일', '실습(외부)']];
-  var cp = { src: '', instr: true, room: 'src', busy: false, skip: {} };
+  var cp = { src: '', instr: true, room: 'src', busy: false, skip: {}, pick: {}, open: {} };
   var ops = { keys: [], busy: false, abort: false, items: [], off: {} };
   function closeCopy(){ $('pOverlay').style.display = 'none'; cp.busy = false; ops.abort = true; }
   function ymdFmt(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -6320,23 +6325,78 @@
     if (!p || !src) return [];
     return sessionsOf(cp.src).map(function(r){
       var m = mapCopyDate(src, p, String(r['일자']));
-      var iid = cp.instr ? String(r['강사ID'] || '') : '';
-      var iname = cp.instr && !iid ? String(r['강사명'] || '') : '';
+      var pickId = cp.pick[String(r['편성ID'])] || '';   // 추천 후보로 바꾼 강사(관리자가 줄마다 선택)
+      var iid = pickId || (cp.instr ? String(r['강사ID'] || '') : '');
+      var iname = pickId ? '' : (cp.instr && !iid ? String(r['강사명'] || '') : '');
       var row = {
         src: r, date: m.date || '', err: m.err || '', note: m.note || '',
         body: {
           반: String(r['반'] || '전체'), 일자: m.date || '', 시작교시: Number(r['시작교시']), 끝교시: Number(r['끝교시']),
           교과목: String(r['교과목'] || ''), '교과목 구분': String(r['교과목 구분'] || ''), 강사ID: iid, 강사명: iname,
-          '강사 역할': (iid || iname) ? String(r['강사 역할'] || '') : '',
+          '강사 역할': pickId ? '주강사' : ((iid || iname) ? String(r['강사 역할'] || '') : ''),
           강의실: cp.room === 'plan' ? String(p['예정 강의실'] || '') : String(r['강의실'] || ''), 비고: String(r['비고'] || ''),
-          '계획서 불필요': isNoPlan(r) ? NOPLAN : '',
-          '현장교관': (iid || iname) ? String(r['현장교관'] || '') : ''
+          '계획서 불필요': !pickId && isNoPlan(r) ? NOPLAN : '',
+          '현장교관': !pickId && (iid || iname) ? String(r['현장교관'] || '') : ''
         }
       };
       if (!row.err) row.err = copyClash(row.body);
       row.skip = !row.err && !!cp.skip[String(r['편성ID'])];   // 10-20: 교과목 단위로 빼기(체크 해제)
       return row;
     });
+  }
+  /* 11-21: 복사 창 '추천 후보' — 교과목 분야 일치(subjCandidates)·평가 점수 순에, 새 날짜의 시간 겹침·출강 불가·누적 시수를 함께 보여 줌. 교체 여부는 관리자가 줄마다 정함 */
+  function copyHoursOf(iid){
+    var h = 0;
+    allSessions.forEach(function(r){
+      if (String(r['강사ID']) !== String(iid) || isSubRole(r)) return;
+      var p = planByKey(r['개설키']); if (p && isCancelled(p)) return;
+      var a = Number(r['시작교시']), b = Number(r['끝교시']); if (isFinite(a) && isFinite(b) && b >= a) h += b - a + 1;
+    });
+    return h;
+  }
+  function copyBusyAt(iid, date, s, e){
+    if (!date) return null;
+    var hit = null;
+    allSessions.forEach(function(r){
+      if (hit || String(r['강사ID']) !== String(iid) || normYmd(r['일자']) !== date) return;
+      var p = planByKey(r['개설키']); if (p && isCancelled(p)) return;
+      if (Number(r['시작교시']) <= e && Number(r['끝교시']) >= s) hit = r;
+    });
+    return hit;
+  }
+  function copyRecs(r){
+    var s0 = r.src, subj = String(s0['교과목'] || ''), sp = Number(s0['시작교시']), ep = Number(s0['끝교시']);
+    var c = subjCandidates(subj), base = c.d.concat(c.r), origId = String(s0['강사ID'] || ''), good = [], warn = [];
+    base.forEach(function(h){
+      var x = h.x;
+      if (x.id === origId || ['활성', '승인', '정식'].indexOf(x.status) < 0) return;
+      var busy = copyBusyAt(x.id, r.date, sp, ep), um = r.date ? unavMsg(x.id, r.date, sp, ep) : '';
+      var o = { h: h, busy: busy, um: um, hrs: copyHoursOf(x.id) };
+      (busy || um ? warn : good).push(o);
+    });
+    return good.concat(warn).slice(0, 3);
+  }
+  function copyRecHtml(r, sid){
+    var subj = String(r.src['교과목'] || ''), open = !!cp.open[sid];
+    var h = '<div class="rcbox"><button type="button" class="btn sm" data-cprec="' + esc(sid) + '">' + (open ? '추천 후보 접기' : '추천 후보 보기') + '</button>';
+    if (open) {
+      if (instructors === null || instrLoading) h += '<div class="hint">강사 목록을 불러오는 중입니다…</div>';
+      else {
+        var list = copyRecs(r);
+        if (!list.length) h += '<div class="hint">추천할 후보가 없습니다.</div>';
+        else {
+          h += '<div class="hint">\'' + esc(subj) + '\' 분야 일치 · 평가 높은 순 (시간 겹침·출강 불가는 뒤로)</div>';
+          list.forEach(function(o){
+            var x = o.h.x;
+            h += '<div class="rcit"><div class="tx"><b>' + esc(x.name) + '</b> <small>' + esc([x.field, x.org].filter(Boolean).join(' · ')) + ' · 누적 ' + o.hrs + '시간' + (o.h.h ? ' · 이 교과목 ' + o.h.h + '회' : '') + (o.h.why ? ' · 일치: ' + esc(o.h.why) : '') + '</small>' + evLine(x.id, subj) +
+              (o.busy ? '<div class="hint warn">' + ic('alert', 'l') + '그날 ' + esc(periodText(o.busy).txt) + ' ' + esc(courseLabel(o.busy['개설키'])) + '에 배정되어 있습니다</div>' : '') +
+              (o.um ? '<div class="hint warn">' + ic('alert', 'l') + esc(o.um) + '</div>' : '') + '</div>' +
+              '<button type="button" class="btn sm" data-cppk="' + esc(sid) + '" data-iid="' + esc(x.id) + '">이 강사로 교체</button></div>';
+          });
+        }
+      }
+    }
+    return h + '</div>';
   }
   // 복사하면 생길 겹침을 미리 계산(저장하지 않음)
   function copyConflicts(rows){
@@ -6362,7 +6422,7 @@
     if (!onlyOpsRows(currentKey)) { alert('이 기수에는 이미 편성된 교과목이 있어 복사할 수 없습니다.\n(입교안내·성과측정 같은 운영팀 교시만 있을 때는 복사할 수 있습니다)'); return; }
     var c = copyCandidates(p), oth = copyOthers(p);
     if (!c.length && !oth.length) { alert('아직 불러올 수 있는 편성이 없습니다.\n같은 과정(또는 다른 과정)에 교과목이 편성되어 있어야 복사할 수 있습니다. 이 시스템에서 한 번 편성한 과정이 생기면 다음 기수부터 사용할 수 있습니다.'); return; }
-    cp = { src: c.length ? defaultCopySource(p, c) : oth[0]['과정+기수'], instr: true, room: 'src', busy: false, skip: {} };
+    cp = { src: c.length ? defaultCopySource(p, c) : oth[0]['과정+기수'], instr: true, room: 'src', busy: false, skip: {}, pick: {}, open: {} };
     renderCopy();
     $('pOverlay').style.display = 'flex';
   }
@@ -6379,7 +6439,10 @@
       (others.length ? '<optgroup label="다른 과정 (이름이 비슷한 순)">' + others.map(optOf).join('') + '</optgroup>' : '');
     var trs = rows.map(function(r){
       var s0 = r.src, pt = periodText(s0), sid = esc(String(s0['편성ID']));
-      var who = cp.instr ? esc(s0['강사명'] || s0['강사ID'] || '미지정') + evLine(String(s0['강사ID'] || ''), String(s0['교과목'] || '')) : '(복사 안 함)';
+      var pkId = cp.pick[String(s0['편성ID'])] || '', pkx = pkId ? instrById[pkId] : null;
+      var who = pkx ? '<b>' + esc(pkx.name) + '</b> <span class="tag t-info">교체</span> <small>(기존: ' + esc(s0['강사명'] || s0['강사ID'] || '미지정') + ')</small> <button type="button" class="btn sm" data-cprs="' + sid + '">기존 강사로</button>' + evLine(pkId, String(s0['교과목'] || ''))
+        : (cp.instr ? esc(s0['강사명'] || s0['강사ID'] || '미지정') + evLine(String(s0['강사ID'] || ''), String(s0['교과목'] || '')) : '(복사 안 함)');
+      if (!r.err && !r.skip && !isOps(s0)) who += copyRecHtml(r, String(s0['편성ID']));
       return '<tr' + (r.err ? ' class="bad"' : (r.skip ? ' class="off"' : '')) + '><td class="nw"><input type="checkbox" data-cpk="' + sid + '" aria-label="이 교과목 복사"' + (r.err ? ' disabled' : (r.skip ? '' : ' checked')) + '></td><td class="nw">' + esc(md(s0['일자'])) + '</td><td class="nw">' + (r.date ? '→ <b>' + esc(md(r.date)) + '</b>' : '→ -') + '</td>' +
         '<td class="nw">' + esc(pt.txt) + '</td><td>' + esc(s0['교과목']) + '</td><td class="nw">' + esc(s0['반'] || '전체') + '</td><td>' + who + '</td><td>' + esc(r.body.강의실 || '미정') + '</td>' +
         '<td>' + (r.err ? '제외: ' + esc(r.err) : (r.skip ? '복사 안 함' : (r.note ? esc(r.note) : '복사'))) + '</td></tr>';
@@ -6403,14 +6466,23 @@
       (otherSrc ? '<div class="box w"><b>다른 과정(' + esc(courseLabel(cp.src)) + ')에서 가져옵니다.</b> 교과목·교시·강의실' + (cp.instr ? '·강사' : '') + '가 그대로 들어오니, 이 과정에 맞지 않는 줄은 체크를 풀어 빼 주세요.</div>' : '') +
       '<div class="pwrap"><table><thead><tr><th class="nw"><input type="checkbox" id="pAll" aria-label="전체 선택"' + (rows.length && !skipped ? ' checked' : '') + '></th><th>지난 과정 일자</th><th>본 과정 일자</th><th>교시</th><th>교과목</th><th>반</th><th>강사</th><th>강의실</th><th>결과</th></tr></thead><tbody>' + trs + '</tbody></table></div>' +
       cfHtml +
-      '<div class="box w">지난 과정 내용을 그대로 가져옵니다. 저장 후 교과목 편성 화면의 "수정"에서 <b>날짜·교시·교과목·반·강의실·강사·비고를 모두 바꿀 수 있고</b>, 필요 없는 줄은 삭제할 수 있습니다. <b>복사 저장 시 강사에게 안내(메일·문자)는 자동으로 가지 않습니다.</b> 안내가 필요한 교과목은 저장 후 "안내 재발송"으로 보내 주세요.' + (cp.instr ? ' 강사가 달라지는 기수라면 "강사도 복사"를 해제해 비워 둘 수 있습니다.' : ' 강사는 비어 있는 상태("미지정")로 저장됩니다.') + '</div>' +
+      '<div class="box w">지난 과정 내용을 그대로 가져옵니다. 저장 후 교과목 편성 화면의 "수정"에서 <b>날짜·교시·교과목·반·강의실·강사·비고를 모두 바꿀 수 있고</b>, 필요 없는 줄은 삭제할 수 있습니다. <b>복사 저장 시 강사에게 안내(메일·문자)는 자동으로 가지 않습니다.</b> 안내가 필요한 교과목은 저장 후 "안내 재발송"으로 보내 주세요.' + (cp.instr ? ' 강사가 달라지는 기수라면 "강사도 복사"를 해제해 비워 둘 수 있고, 줄마다 "추천 후보 보기"에서 교과목 분야·평가 점수 순 후보로 바꿀 수 있습니다(바꿀지는 관리자가 정합니다).' : ' 강사는 비어 있는 상태("미지정")로 저장됩니다.') + '</div>' +
       '<div class="msg" id="pMsg"></div>' +
       '<div class="btns"><button type="button" class="btn" id="pClose">닫기</button><button type="button" class="btn primary" id="pSave"' + (good.length ? '' : ' disabled') + '>' + good.length + '줄 복사해 저장</button></div>';
     $('pClose').addEventListener('click', closeCopy);
     $('pSave').addEventListener('click', saveCopy);
-    $('pSrc').addEventListener('change', function(){ cp.src = this.value; cp.skip = {}; renderCopy(); });
+    $('pSrc').addEventListener('change', function(){ cp.src = this.value; cp.skip = {}; cp.pick = {}; cp.open = {}; renderCopy(); });
     $('pRoom').addEventListener('change', function(){ cp.room = this.value; renderCopy(); });
     $('pInstr').addEventListener('change', function(){ cp.instr = this.checked; renderCopy(); });
+    Array.prototype.forEach.call($('pCard').querySelectorAll('[data-cprec]'), function(el){
+      el.addEventListener('click', function(){ var k = this.getAttribute('data-cprec'); cp.open[k] = !cp.open[k]; renderCopy(); });
+    });
+    Array.prototype.forEach.call($('pCard').querySelectorAll('[data-cppk]'), function(el){
+      el.addEventListener('click', function(){ cp.pick[this.getAttribute('data-cppk')] = this.getAttribute('data-iid'); renderCopy(); });
+    });
+    Array.prototype.forEach.call($('pCard').querySelectorAll('[data-cprs]'), function(el){
+      el.addEventListener('click', function(){ delete cp.pick[this.getAttribute('data-cprs')]; renderCopy(); });
+    });
     $('pAll').addEventListener('change', function(){
       var on = this.checked; cp.skip = {};
       if (!on) rows.forEach(function(r){ if (!r.err) cp.skip[String(r.src['편성ID'])] = true; });
@@ -6443,8 +6515,10 @@
       var p = planByKey(currentKey);
       if (p) { renderHead(p); renderSessionList(); }
       var nIns = (j.data || []).filter(function(r){ return r['강사ID'] || r['강사명']; }).length;
+      var nPick = good.filter(function(r){ return !!cp.pick[String(r.src['편성ID'])]; }).length;
       showMsg('ok', courseLabel(srcKey) + '에서 교과목 ' + (j.개수 || good.length) + '줄을 복사했습니다. ' +
-        (useInstr ? '강사 ' + nIns + '줄은 지난 과정 그대로 복사했으니, 달라지는 교과목은 "수정"에서 바꿔 주세요. ' : '강사는 비워 두었습니다("강사 지정"으로 입력). ') +
+        (nPick ? '추천 후보로 바꾼 ' + nPick + '줄이 포함되어 있습니다. ' : '') +
+        (useInstr ? '강사 ' + nIns + '줄은 지난 과정 그대로(또는 선택한 후보로) 복사했으니, 달라지는 교과목은 "수정"에서 바꿔 주세요. ' : '강사는 비워 두었습니다("강사 지정"으로 입력). ') +
         '강사 안내는 자동으로 가지 않았습니다(필요한 건은 "안내 재발송"). ' +
         ((j.warnings || []).length ? ' 확인 필요: ' + j.warnings.join(' / ') + '.' : ''));
       window.scrollTo(0, 0);

@@ -319,6 +319,12 @@
   .tdl a.eqi:hover{background:var(--bg-hover,#f2f4f7);}
   .tdl .eq1{display:block;font-size:14px;line-height:1.45;}
   .tdl .eq2{display:block;font-size:12.5px;color:var(--text-muted);line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* 11-20 금용님: 처리할 일 목록 글자가 카드 제목(16px 굵은 남색)과 비슷해 구분이 안 되므로, 항목은 한 단계 작고 어두운 본문색으로 */
+  #cTodo .tdl .l .t{font-size:14px;font-weight:700;color:var(--text);}
+  #cTodo .tdl .n{font-size:16px;}
+  #cTodo .tdl .l small{font-size:12.5px;color:var(--text-sub);}
+  #cTodo .tdl .eq1{font-size:13.5px;}
+  #cTodo .tdl .eq2{font-size:12px;}
   .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;font-size:16px;color:var(--text-muted);margin:2px 0 12px;font-weight:600;}
   .crumb a{color:var(--navy);text-decoration:none;font-weight:800;padding:5px 9px;border-radius:8px;cursor:pointer;background:none;border:none;font-family:inherit;font-size:inherit;}
   .crumb a:hover{background:#E4ECF5;text-decoration:none;}
