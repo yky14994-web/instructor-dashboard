@@ -298,6 +298,13 @@
   tr.cx td{background:#F4F4F4;color:var(--text-faint);}
   tr.cx .course{text-decoration:line-through;}
   tr.cx .tag{opacity:.9;}
+  tr.endsep td{padding:0;background:var(--bg-soft);border-top:1px solid var(--border);}
+  tr.endsep .esb,.rc-endsep .esb{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border:0;background:none;font:inherit;font-size:13.5px;font-weight:700;color:var(--text-sub);cursor:pointer;text-align:left;}
+  tr.endsep .esb:hover,.rc-endsep .esb:hover{background:#E4ECF5;}
+  .rc-endsep{margin:6px 0;border:1px solid var(--border);border-radius:10px;background:var(--bg-soft);overflow:hidden;}
+  tr.ended td{color:var(--text-muted);}
+  tr.ended .course{font-weight:600;}
+  .rc.ended{opacity:.72;}
   .rc.cx{background:#F4F4F4;color:var(--text-faint);}
   .rc.cx .nm{text-decoration:line-through;}
   .orig{display:block;font-size:12px;color:var(--text-muted);}
@@ -1145,6 +1152,7 @@
   var plans = [];      // 연간계획 행(정렬됨)
   var sessionsByKey = {}; // 개설키 -> {total, assigned}
   var shown = [];      // 현재 필터 결과
+  var endedOpen = false;   // 끝난 과정 묶음을 펼쳤는지(기본 접힘)
   var periods = [];    // 교시표 [{n, start, end}]
   var resv = [];       // 강의실 예약(사전확보·대관, 상태 '예약'인 것만)
   var docReqs = [];                   // 강사카드·동의서 교체 요청(관리자만 내려옴, 승인은 강사관리 카드에서)
@@ -1722,6 +1730,7 @@
     var ovOpen = 0, ovDone = 0;
     cfl.forEach(function(c){
       if (!c.keys.some(function(k){ return shownKeys[k]; })) return;
+      if (!cflLive(c)) return;
       if (c.conf) ovDone++; else ovOpen++;
     });
     $('cOverlap').textContent = ovOpen;
@@ -1747,9 +1756,24 @@
     $('tableWrap').style.display = '';
 
     var rows = '', cards = '';
+    /* 끝난 과정은 목록 맨 아래 묶음으로 접어 둠. 월·검색·확인 조건·주 필터를 쓰는 중이면 찾는 중이므로 접지 않음 */
+    var finding = !!($('fMonth').value || $('fText').value.trim() || $('fCheck').value || $('fStatus').value || weekFilter);
+    var endedRest = [], mainList = [];
     shown.forEach(function(p){
-      var cx = isCancelled(p), og = origText(p);
-      rows += '<tr' + (cx ? ' class="cx"' : '') + '>' +
+      if (!isCancelled(p) && planEnded(p)) endedRest.push(p); else mainList.push(p);
+    });
+    var showEnded = finding || endedOpen;
+    var drawList = showEnded ? mainList.concat(endedRest) : mainList;
+    var sepAt = endedRest.length ? mainList.length : -1;   // 구분선은 끝난 과정 묶음 앞(접힌 상태에서는 목록 맨 끝)
+    var sepTxt = '끝난 과정 ' + endedRest.length + '건' + (showEnded && !finding ? ' 접기' : (finding ? ' (찾는 중이라 함께 표시)' : ' 보기'));
+    var sepIcon = finding ? '' : ic(showEnded ? 'chevU' : 'chevD', 'r');
+    function sepRow(){ return '<tr class="endsep"><td colspan="10"><button type="button" class="esb" data-endtog="1"' + (finding ? ' disabled style="cursor:default"' : '') + ' aria-expanded="' + (showEnded ? 'true' : 'false') + '">' + esc(sepTxt) + sepIcon + '</button></td></tr>'; }
+    function sepCard(){ return '<div class="rc-endsep"><button type="button" class="esb" data-endtog="1"' + (finding ? ' disabled style="cursor:default"' : '') + ' aria-expanded="' + (showEnded ? 'true' : 'false') + '">' + esc(sepTxt) + sepIcon + '</button></div>'; }
+    var restSet = {}; endedRest.forEach(function(p){ restSet[p['과정+기수']] = true; });
+    drawList.forEach(function(p, i){
+      if (i === sepAt) { rows += sepRow(); cards += sepCard(); }
+      var cx = isCancelled(p), og = origText(p), isRest = !!restSet[p['과정+기수']];
+      rows += '<tr' + (cx ? ' class="cx"' : (isRest ? ' class="ended"' : '')) + '>' +
         '<td class="nw">' + typeCell(p) + '</td>' +
         '<td>' + courseCell(p) + '</td>' +
         '<td class="nw">' + esc(range(p['입교 시작일'], p['입교 종료일']) || '날짜 미입력') + (og ? '<span class="orig">(' + esc(og) + ')</span>' : '') + '</td>' +
@@ -1761,7 +1785,7 @@
         '<td class="nw">' + subjCell(p) + '</td>' +
         '<td>' + checkCell(p) + '</td>' +
         '</tr>';
-      cards += '<div class="rc' + (cx ? ' cx' : '') + '"><div class="top"><div><div class="nm"><button type="button" class="clink" data-open="' + esc(p['과정+기수']) + '">' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') + '</button>' +
+      cards += '<div class="rc' + (cx ? ' cx' : (isRest ? ' ended' : '')) + '"><div class="top"><div><div class="nm"><button type="button" class="clink" data-open="' + esc(p['과정+기수']) + '">' + esc(p['과정명']) + ' ' + esc(p['기수'] || '') + '</button>' +
         (cx ? ' <span class="tag t-err">취소됨</span>' : (changeInfo(p['과정+기수']).changed ? ' <span class="tag t-warn">일정 변경됨</span>' : '')) + '</div>' +
         '<div class="meta">' + esc([p['구분'], p['세부구분']].filter(Boolean).join(' · ')) + '</div></div>' +
         '<div>' + subjCell(p) + '</div></div>' +
@@ -1772,9 +1796,18 @@
         (checkCell(p) ? '<dt>확인</dt><dd>' + checkCell(p) + '</dd>' : '') + '</dl>' +
         '</div>';
     });
+    if (sepAt === drawList.length) { rows += sepRow(); cards += sepCard(); }
     $('tbody').innerHTML = rows;
     $('cardList').innerHTML = cards;
   }
+
+  ['tableWrap', 'cardList'].forEach(function(id){
+    $(id).addEventListener('click', function(ev){
+      var b = ev.target && ev.target.closest ? ev.target.closest('[data-endtog]') : null;
+      if (!b || b.disabled) return;
+      endedOpen = !endedOpen; render();
+    });
+  });
 
   /* ---------- 불러오기 ---------- */
   function showMsg(kind, text){
@@ -4470,7 +4503,7 @@
       }),
       note: '행을 누르면 해당 과정의 교과목 편성 화면에서 강사를 지정할 수 있습니다.' };
     // ③ 겹침 경고(미확인)
-    var cf = cfl.filter(function(c){ return !c.conf; }).sort(function(a, b){ return String(a.date) < String(b.date) ? -1 : String(a.date) > String(b.date) ? 1 : 0; });
+    var cf = cfl.filter(function(c){ return !c.conf && cflLive(c); }).sort(function(a, b){ return String(a.date) < String(b.date) ? -1 : String(a.date) > String(b.date) ? 1 : 0; });
     D.cfl = { label: '겹침 경고', n: cf.length,
       sum: '확인하지 않은 겹침 <b>' + cf.length + '건</b> (강사·강의실·같은 반)',
       cols: ['구분', '일자', '과정', '내용'],
@@ -5973,6 +6006,10 @@
       }
     });
     return out;
+  }
+  /* 끝난 과정끼리의 겹침은 처리할 일·겹침 카드에서 제외(표의 겹침 표시와 같은 기준). 끝나지 않은 과정이 한쪽이라도 끼어 있으면 계속 표시 */
+  function cflLive(c){
+    return c.keys.some(function(k){ var p = planByKey(k); return !p || !planEnded(p); });
   }
   function refreshConflicts(){
     confMap = buildConfMap();
