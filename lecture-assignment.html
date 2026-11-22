@@ -1730,7 +1730,6 @@
     var ovOpen = 0, ovDone = 0;
     cfl.forEach(function(c){
       if (!c.keys.some(function(k){ return shownKeys[k]; })) return;
-      if (!cflLive(c)) return;
       if (c.conf) ovDone++; else ovOpen++;
     });
     $('cOverlap').textContent = ovOpen;
@@ -4503,7 +4502,7 @@
       }),
       note: '행을 누르면 해당 과정의 교과목 편성 화면에서 강사를 지정할 수 있습니다.' };
     // ③ 겹침 경고(미확인)
-    var cf = cfl.filter(function(c){ return !c.conf && cflLive(c); }).sort(function(a, b){ return String(a.date) < String(b.date) ? -1 : String(a.date) > String(b.date) ? 1 : 0; });
+    var cf = cfl.filter(function(c){ return !c.conf; }).sort(function(a, b){ return String(a.date) < String(b.date) ? -1 : String(a.date) > String(b.date) ? 1 : 0; });
     D.cfl = { label: '겹침 경고', n: cf.length,
       sum: '확인하지 않은 겹침 <b>' + cf.length + '건</b> (강사·강의실·같은 반)',
       cols: ['구분', '일자', '과정', '내용'],
@@ -4626,6 +4625,8 @@
   function renderTodo(){
     var box = $('todo');
     if (!box) return;
+    /* 11-22 금용님: 강의배정 화면에서는 처리할 일 패널을 표시하지 않음(각 항목은 과정 상세·강사관리·강의실 화면에서 확인). 다시 보이려면 이 줄만 지우면 됨 */
+    box.style.display = 'none'; return;
     if (!sessionsOk || planMode !== 'table') { box.style.display = 'none'; return; }
     if (instructors === null) ensureInstructors();
     var D = todoData();
@@ -6006,10 +6007,6 @@
       }
     });
     return out;
-  }
-  /* 끝난 과정끼리의 겹침은 처리할 일·겹침 카드에서 제외(표의 겹침 표시와 같은 기준). 끝나지 않은 과정이 한쪽이라도 끼어 있으면 계속 표시 */
-  function cflLive(c){
-    return c.keys.some(function(k){ var p = planByKey(k); return !p || !planEnded(p); });
   }
   function refreshConflicts(){
     confMap = buildConfMap();
