@@ -299,7 +299,7 @@
   tr.cx .course{text-decoration:line-through;}
   tr.cx .tag{opacity:.9;}
   tr.endsep td{padding:0;background:var(--bg-soft);border-top:1px solid var(--border);}
-  tr.endsep .esb,.rc-endsep .esb{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border:0;background:none;font:inherit;font-size:13.5px;font-weight:700;color:var(--text-sub);cursor:pointer;text-align:left;}
+  tr.endsep .esb,.rc-endsep .esb{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:9px 12px;border:0;background:none;font:inherit;font-size:13.5px;font-weight:700;color:var(--text-sub);cursor:pointer;text-align:left;}
   tr.endsep .esb:hover,.rc-endsep .esb:hover{background:#E4ECF5;}
   .rc-endsep{margin:6px 0;border:1px solid var(--border);border-radius:10px;background:var(--bg-soft);overflow:hidden;}
   tr.ended td{color:var(--text-muted);}
@@ -1100,7 +1100,7 @@
       <thead>
         <tr>
           <th>구분</th><th>과정 · 기수</th><th>입교</th><th>교육기간</th>
-          <th class="num">계획인원</th><th>강의실</th><th>합숙</th><th>편성 담당</th><th>강사 배정 현황</th><th>확인</th><th class="chg" id="thChg" style="display:none !important;">변경</th>
+          <th class="num">계획인원</th><th>강의실</th><th>합숙</th><th>과정장</th><th>강사 배정 현황</th><th>확인</th><th class="chg" id="thChg" style="display:none !important;">변경</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -1791,7 +1791,7 @@
         '<dl><dt>입교</dt><dd>' + esc(ipgyo(p)) + (og ? '<span class="orig">(' + esc(og) + ')</span>' : '') + '</dd>' +
         '<dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd>' +
         '<dt>강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd>' +
-        '<dt>편성 담당</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd>' +
+        '<dt>과정장</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd>' +
         (checkCell(p) ? '<dt>확인</dt><dd>' + checkCell(p) + '</dd>' : '') + '</dl>' +
         '</div>';
     });
@@ -2461,7 +2461,7 @@
       '<div><dt>입교</dt><dd>' + esc(ipgyo(p)) + (og ? '<span class="orig" style="font-weight:500;">(' + esc(og) + ')</span>' : '') + '</dd></div>' +
       '<div><dt>계획인원</dt><dd>' + esc(p['계획인원'] === '' ? '-' : p['계획인원']) + '명 · ' + esc(camp(p)) + '</dd></div>' +
       '<div><dt>예정 강의실</dt><dd>' + esc(p['예정 강의실'] || '-') + '</dd></div>' +
-      '<div><dt>편성 담당</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd></div>' +
+      '<div><dt>과정장</dt><dd>' + esc(p['편성 담당'] || '-') + '</dd></div>' +
       '</dl><div class="sum">' + tags + '</div>' + (subjCount(st) >= SUBJ_HRS_MIN ? subjHoursHtml(currentKey) : '') + chgHeadHtml(currentKey);
   }
 
